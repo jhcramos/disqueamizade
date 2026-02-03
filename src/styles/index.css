@@ -3,133 +3,84 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply bg-zinc-950 text-zinc-50 font-inter antialiased;
+    @apply bg-dark-bg text-white font-inter antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-jakarta;
+    @apply font-orbitron;
   }
 }
 
 @layer components {
+  /* Neon Button */
+  .btn-neon {
+    @apply px-6 py-3 bg-transparent border-2 border-neon-cyan rounded-lg;
+    @apply transition-all duration-300 font-rajdhani font-semibold uppercase tracking-wider;
+    @apply hover:bg-neon-cyan/10 hover:shadow-neon-cyan;
+  }
+
+  .btn-neon-magenta {
+    @apply px-6 py-3 bg-transparent border-2 border-neon-magenta rounded-lg;
+    @apply transition-all duration-300 font-rajdhani font-semibold uppercase tracking-wider;
+    @apply hover:bg-neon-magenta/10 hover:shadow-neon-magenta;
+  }
+
   /* Glass Card */
   .glass-card {
-    @apply bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-2xl;
+    @apply bg-dark-surface/40 backdrop-blur-lg border border-neon-cyan/30 rounded-xl;
+    @apply shadow-lg;
   }
 
-  /* Primary Button */
-  .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl;
-    @apply text-white font-semibold transition-all duration-300;
-    @apply hover:shadow-glow-violet hover:brightness-110;
-    @apply active:scale-[0.98];
+  /* Neon Border */
+  .neon-border {
+    @apply border-2 border-neon-cyan shadow-neon-cyan;
   }
 
-  /* Accent Button */
-  .btn-accent {
-    @apply px-6 py-3 bg-rose-500 rounded-xl;
-    @apply text-white font-semibold transition-all duration-300;
-    @apply hover:bg-rose-400 hover:shadow-glow-rose;
-    @apply active:scale-[0.98];
+  .neon-border-magenta {
+    @apply border-2 border-neon-magenta shadow-neon-magenta;
   }
 
-  /* Modern Input */
-  .input-modern {
-    @apply w-full px-4 py-3 bg-zinc-900 border border-zinc-800;
-    @apply rounded-xl text-zinc-50 placeholder-zinc-500;
-    @apply focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20;
-    @apply transition-all duration-200;
+  /* Glow Effect */
+  .glow-cyan {
+    @apply shadow-neon-cyan;
   }
 
-  /* Gradient Border */
-  .gradient-border {
-    position: relative;
-    border-radius: 1rem;
-    background: theme('colors.zinc.900');
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500'));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    animation: gradient-rotate 4s linear infinite;
+  .glow-magenta {
+    @apply shadow-neon-magenta;
   }
 
-  @keyframes gradient-rotate {
-    0% { background: linear-gradient(0deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500')); }
-    25% { background: linear-gradient(90deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500')); }
-    50% { background: linear-gradient(180deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500')); }
-    75% { background: linear-gradient(270deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500')); }
-    100% { background: linear-gradient(360deg, theme('colors.violet.500'), theme('colors.indigo.500'), theme('colors.rose.500')); }
+  /* Perspective Grid Background */
+  .perspective-grid {
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(0, 240, 255, .05) 25%, rgba(0, 240, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 240, 255, .05) 75%, rgba(0, 240, 255, .05) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 240, 255, .05) 25%, rgba(0, 240, 255, .05) 26%, transparent 27%, transparent 74%, rgba(0, 240, 255, .05) 75%, rgba(0, 240, 255, .05) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+    transform: perspective(500px) rotateX(60deg);
+    transform-origin: center center;
+    animation: grid-scroll 20s linear infinite;
   }
 
-  /* Mesh Gradient Background */
-  .mesh-gradient {
-    position: relative;
-    overflow: hidden;
-  }
-  .mesh-gradient::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 60% at 80% 60%, rgba(99, 102, 241, 0.10) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 40% at 50% 80%, rgba(244, 63, 94, 0.06) 0%, transparent 70%);
-    pointer-events: none;
+  @keyframes grid-scroll {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 50px;
+    }
   }
 
-  /* Grain Texture Overlay */
-  .grain-texture::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    opacity: 0.5;
-  }
-
-  /* Aurora Background */
-  .aurora-bg {
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 70% 100%, rgba(99, 102, 241, 0.10) 0%, transparent 60%),
-      theme('colors.zinc.950');
-  }
-
-  /* Status Indicators */
+  /* Pulsing Status Indicator */
   .status-online {
-    @apply w-3 h-3 rounded-full bg-emerald-500;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    @apply w-3 h-3 rounded-full bg-neon-cyan animate-pulse-glow shadow-neon-cyan;
   }
 
   .status-offline {
-    @apply w-3 h-3 rounded-full bg-zinc-600;
-  }
-
-  /* Video Tile */
-  .video-tile {
-    @apply relative rounded-xl overflow-hidden border border-zinc-800;
-    @apply transition-all duration-300 hover:border-zinc-700;
-  }
-
-  /* Modal */
-  .modal-backdrop {
-    @apply fixed inset-0 bg-black/60 backdrop-blur-md z-40;
-  }
-
-  .modal-content {
-    @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
-    @apply bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 z-50;
-    @apply max-w-2xl w-full max-h-[90vh] overflow-y-auto;
-    @apply animate-fade-in;
+    @apply w-3 h-3 rounded-full bg-gray-600;
   }
 
   /* Custom Scrollbar */
@@ -138,20 +89,45 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-zinc-900;
+    @apply bg-dark-surface/50;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-zinc-700 rounded-full hover:bg-zinc-600;
+    @apply bg-neon-cyan/50 rounded-full hover:bg-neon-cyan/70;
+  }
+
+  /* Input Neon Style */
+  .input-neon {
+    @apply w-full px-4 py-3 bg-dark-surface/50 border border-neon-cyan/30;
+    @apply rounded-lg text-white placeholder-gray-500;
+    @apply focus:outline-none focus:border-neon-cyan focus:shadow-neon-cyan;
+    @apply transition-all duration-300;
+  }
+
+  /* Video Tile */
+  .video-tile {
+    @apply relative rounded-lg overflow-hidden border-2 border-neon-cyan/50;
+    @apply transition-all duration-300 hover:border-neon-cyan hover:shadow-neon-cyan;
+  }
+
+  /* Modal Backdrop */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-40;
+  }
+
+  .modal-content {
+    @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+    @apply glass-card p-6 z-50 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+    @apply custom-scrollbar;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-rose-400;
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
   }
 
-  .text-gradient-violet {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400;
+  .text-glow-magenta {
+    text-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
   }
 }

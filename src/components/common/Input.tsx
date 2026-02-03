@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={clsx('flex flex-col gap-2', fullWidth && 'w-full')}>
         {label && (
-          <label className="text-sm font-medium text-zinc-400">
+          <label className="text-sm font-rajdhani uppercase tracking-wider text-gray-400">
             {label}
           </label>
         )}
@@ -20,15 +20,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={clsx(
-            'input-modern',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+            'input-neon',
+            error && 'border-red-500 focus:border-red-500 focus:shadow-none',
             className
           )}
           {...props}
         />
 
         {error && (
-          <span className="text-sm text-red-400">{error}</span>
+          <span className="text-sm text-red-500 font-inter">{error}</span>
         )}
       </div>
     )

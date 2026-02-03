@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Button, Avatar, Badge } from '@/components/common'
 import { mockRooms, mockUsers, mockMessages } from '@/data/mockRooms'
-import { ArrowLeft, Send, Video, Mic, MicOff, Info } from 'lucide-react'
 
 export const RoomPage = () => {
   const { roomId } = useParams()
@@ -33,9 +32,9 @@ export const RoomPage = () => {
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-50 flex items-center justify-center">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-          <h2 className="text-xl font-semibold text-red-400 mb-4">
+      <div className="min-h-screen bg-dark-bg text-white flex items-center justify-center">
+        <div className="glass-card p-8 text-center">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">
             Sala não encontrada
           </h2>
           <Link to="/rooms">
@@ -47,31 +46,35 @@ export const RoomPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 flex flex-col">
+    <div className="min-h-screen bg-dark-bg text-white flex flex-col">
+      {/* Background Grid */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="perspective-grid"></div>
+      </div>
+
       {/* Header */}
-      <header className="border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl z-40">
-        <div className="container mx-auto px-4 py-3">
+      <header className="border-b border-neon-cyan/30 bg-dark-surface/50 backdrop-blur-lg z-40">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Link to="/rooms">
-                <Button variant="ghost" size="sm" className="!px-2">
-                  <ArrowLeft className="w-4 h-4" />
+                <Button variant="ghost" size="sm">
+                  ← Voltar
                 </Button>
               </Link>
-              <div className="border-l border-zinc-800 pl-3">
-                <h1 className="text-base font-semibold text-zinc-50">
+              <div>
+                <h1 className="text-xl font-bold text-glow-cyan">
                   {room.name}
                 </h1>
-                <p className="text-xs text-zinc-500">{room.description}</p>
+                <p className="text-sm text-gray-400">{room.description}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-sm text-zinc-400">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="text-sm text-gray-400">
                 {room.online_count} online
               </div>
-              <Badge tier="free">Demo</Badge>
+              <Badge tier="free">Modo Demo</Badge>
             </div>
           </div>
         </div>
@@ -80,17 +83,17 @@ export const RoomPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Sidebar - Users */}
-        <aside className="w-64 border-r border-zinc-800/50 bg-zinc-900/30 overflow-y-auto custom-scrollbar hidden md:block">
+        <aside className="w-64 border-r border-neon-cyan/30 bg-dark-surface/30 backdrop-blur-sm overflow-y-auto custom-scrollbar hidden md:block">
           <div className="p-4">
-            <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">
+            <h3 className="text-lg font-bold text-neon-cyan mb-4">
               Participantes ({mockUsers.length})
             </h3>
 
-            <div className="space-y-1">
+            <div className="space-y-3">
               {mockUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/50 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-dark-surface/50 transition-colors"
                 >
                   <Avatar
                     src={user.avatar_url}
@@ -99,19 +102,19 @@ export const RoomPage = () => {
                     status={user.is_online ? 'online' : 'offline'}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate text-zinc-300">
+                    <div className="text-sm font-semibold truncate">
                       {user.username}
                     </div>
                     <div className="flex gap-2 text-xs">
                       {user.video_enabled ? (
-                        <Video className="w-3 h-3 text-violet-400" />
+                        <span className="text-neon-cyan">📹</span>
                       ) : (
-                        <Video className="w-3 h-3 text-zinc-700" />
+                        <span className="text-gray-600">📹</span>
                       )}
                       {user.audio_enabled ? (
-                        <Mic className="w-3 h-3 text-violet-400" />
+                        <span className="text-neon-cyan">🎤</span>
                       ) : (
-                        <MicOff className="w-3 h-3 text-zinc-700" />
+                        <span className="text-gray-600">🎤</span>
                       )}
                     </div>
                   </div>
@@ -124,12 +127,12 @@ export const RoomPage = () => {
         {/* Main Chat Area */}
         <main className="flex-1 flex flex-col">
           {/* Video Grid Placeholder */}
-          <div className="border-b border-zinc-800/50 bg-zinc-900/20 p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-48">
+          <div className="border-b border-neon-cyan/30 bg-dark-surface/20 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-48">
               {mockUsers.slice(0, 4).map((user) => (
                 <div
                   key={user.id}
-                  className="aspect-video bg-zinc-900 rounded-xl border border-zinc-800 flex items-center justify-center relative overflow-hidden"
+                  className="aspect-video bg-dark-surface rounded-lg border border-neon-cyan/30 flex items-center justify-center relative overflow-hidden"
                 >
                   {user.video_enabled ? (
                     <>
@@ -139,7 +142,7 @@ export const RoomPage = () => {
                         className="w-full h-full object-cover opacity-50"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                      <div className="absolute bottom-2 left-2 text-xs font-medium text-zinc-300">
+                      <div className="absolute bottom-2 left-2 text-xs font-bold">
                         {user.username}
                       </div>
                     </>
@@ -150,7 +153,7 @@ export const RoomPage = () => {
                         username={user.username}
                         size="md"
                       />
-                      <div className="text-xs mt-2 text-zinc-500">
+                      <div className="text-xs mt-2 text-gray-400">
                         {user.username}
                       </div>
                     </div>
@@ -161,27 +164,27 @@ export const RoomPage = () => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
             {messages.map((msg) => (
-              <div key={msg.id} className="flex gap-3 group hover:bg-zinc-900/30 rounded-xl p-2 -mx-2 transition-colors">
+              <div key={msg.id} className="flex gap-3">
                 <Avatar
                   src={msg.user.avatar_url}
                   username={msg.user.username}
                   size="sm"
                 />
                 <div className="flex-1">
-                  <div className="flex items-baseline gap-2 mb-0.5">
-                    <span className="font-medium text-sm text-zinc-200">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="font-semibold text-neon-cyan">
                       {msg.user.username}
                     </span>
-                    <span className="text-[11px] text-zinc-600">
+                    <span className="text-xs text-gray-500">
                       {msg.timestamp.toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </span>
                   </div>
-                  <p className="text-sm text-zinc-400">{msg.content}</p>
+                  <p className="text-gray-300">{msg.content}</p>
                 </div>
               </div>
             ))}
@@ -189,25 +192,22 @@ export const RoomPage = () => {
           </div>
 
           {/* Input */}
-          <div className="border-t border-zinc-800/50 bg-zinc-900/30 p-4">
+          <div className="border-t border-neon-cyan/30 bg-dark-surface/30 backdrop-blur-sm p-4">
             <form onSubmit={handleSendMessage} className="flex gap-3">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                className="input-modern flex-1"
+                className="input-neon flex-1"
               />
-              <Button type="submit" disabled={!message.trim()} className="!px-4">
-                <Send className="w-4 h-4" />
+              <Button type="submit" disabled={!message.trim()}>
+                Enviar
               </Button>
             </form>
-            <div className="flex items-center gap-1.5 mt-2">
-              <Info className="w-3 h-3 text-zinc-600" />
-              <p className="text-[11px] text-zinc-600">
-                Modo demo — mensagens não são salvas
-              </p>
-            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              💡 Modo demo - mensagens não são salvas
+            </p>
           </div>
         </main>
       </div>

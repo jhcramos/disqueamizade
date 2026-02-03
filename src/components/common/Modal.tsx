@@ -1,6 +1,5 @@
 import { ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
 
 interface ModalProps {
   isOpen: boolean
@@ -65,15 +64,15 @@ export const Modal = ({
       {/* Modal */}
       <div className={`modal-content ${sizeClasses[size]}`}>
         {title && (
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
-            <h2 className="text-xl font-semibold text-zinc-50">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-neon-cyan/30">
+            <h2 className="text-2xl font-bold text-glow-cyan">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 rounded-lg hover:bg-zinc-800"
+              className="text-gray-400 hover:text-neon-cyan transition-colors text-2xl leading-none"
             >
-              <X className="w-5 h-5" />
+              ✕
             </button>
           </div>
         )}

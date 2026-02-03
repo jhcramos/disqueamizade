@@ -6,9 +6,6 @@ import { ProfilePage } from './pages/ProfilePage'
 import { MarketplacePage } from './pages/MarketplacePage'
 import { PricingPage } from './pages/PricingPage'
 import { AuthPage } from './pages/AuthPage'
-import { SecretCabinsPage } from './pages/SecretCabinsPage'
-import { VideoFiltersPage } from './pages/VideoFiltersPage'
-import { ComponentsShowcase } from './pages/ComponentsShowcase'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { useAuth } from './hooks/useAuth'
 import { Loading } from './components/common/Loading'
@@ -22,7 +19,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 mesh-gradient">
+    <div className="min-h-screen bg-dark-bg text-white">
+      {/* Animated background grid */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="perspective-grid"></div>
+      </div>
+
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
@@ -61,23 +63,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/secret-cabins"
-          element={
-            <ProtectedRoute>
-              <SecretCabinsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/video-filters"
-          element={
-            <ProtectedRoute>
-              <VideoFiltersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/components" element={<ComponentsShowcase />} />
 
         {/* Redirect unknown routes to home */}
         <Route path="*" element={<Navigate to="/" replace />} />

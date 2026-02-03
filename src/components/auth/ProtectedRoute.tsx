@@ -18,10 +18,12 @@ export const ProtectedRoute = ({
   // Wait for auth to initialize
   if (!initialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-zinc-400">Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-card p-8">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin" />
+            <p className="text-xl text-gray-400">Carregando...</p>
+          </div>
         </div>
       </div>
     )

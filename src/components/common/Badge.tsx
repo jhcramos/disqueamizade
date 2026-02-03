@@ -1,5 +1,4 @@
 import clsx from 'clsx'
-import { Crown, Diamond, Circle } from 'lucide-react'
 import type { SubscriptionTier } from '@/types'
 
 interface BadgeProps {
@@ -17,20 +16,20 @@ export const Badge = ({
   size = 'md',
   className,
 }: BadgeProps) => {
-  const baseClasses = 'inline-flex items-center gap-1.5 font-medium rounded-full'
+  const baseClasses = 'inline-flex items-center gap-1 font-rajdhani font-semibold uppercase tracking-wider rounded-full'
 
   const variantClasses = {
-    default: 'bg-zinc-800 text-zinc-300',
-    success: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    warning: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
-    error: 'bg-red-500/10 text-red-400 border border-red-500/20',
-    info: 'bg-violet-500/10 text-violet-400 border border-violet-500/20',
+    default: 'bg-gray-700 text-gray-300',
+    success: 'bg-green-500/20 text-green-400 border border-green-500/30',
+    warning: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+    error: 'bg-red-500/20 text-red-400 border border-red-500/30',
+    info: 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30',
   }
 
   const tierClasses = {
-    free: 'bg-zinc-800 text-zinc-400',
-    basic: 'bg-violet-500/10 text-violet-400 border border-violet-500/20',
-    premium: 'bg-gradient-to-r from-violet-500/15 to-rose-500/15 text-rose-300 border border-rose-500/20',
+    free: 'bg-gray-700 text-gray-300',
+    basic: 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 shadow-neon-cyan',
+    premium: 'bg-neon-magenta/20 text-neon-magenta border border-neon-magenta/30 shadow-neon-magenta',
   }
 
   const sizeClasses = {
@@ -40,9 +39,9 @@ export const Badge = ({
   }
 
   const tierIcons = {
-    free: <Circle className="w-3 h-3" />,
-    basic: <Diamond className="w-3 h-3" />,
-    premium: <Crown className="w-3 h-3" />,
+    free: '⚪',
+    basic: '💎',
+    premium: '👑',
   }
 
   return (
@@ -54,7 +53,7 @@ export const Badge = ({
         className
       )}
     >
-      {tier && tierIcons[tier]}
+      {tier && <span>{tierIcons[tier]}</span>}
       {children}
     </span>
   )

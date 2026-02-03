@@ -1,5 +1,3 @@
-import { Search } from 'lucide-react'
-
 interface RoomFiltersProps {
   selectedTheme: string
   onThemeChange: (theme: string) => void
@@ -8,11 +6,11 @@ interface RoomFiltersProps {
 }
 
 const themes = [
-  { value: 'all', label: 'Todos' },
-  { value: 'vinhos', label: 'Vinhos' },
-  { value: 'idiomas', label: 'Idiomas' },
-  { value: 'cidades', label: 'Cidades' },
-  { value: 'musica', label: 'Música' },
+  { value: 'all', label: 'Todos', icon: '🌟' },
+  { value: 'vinhos', label: 'Vinhos', icon: '🍷' },
+  { value: 'idiomas', label: 'Idiomas', icon: '🌍' },
+  { value: 'cidades', label: 'Cidades', icon: '🏙️' },
+  { value: 'musica', label: 'Música', icon: '🎵' },
 ]
 
 export const RoomFilters = ({
@@ -22,28 +20,25 @@ export const RoomFilters = ({
   onSearchChange,
 }: RoomFiltersProps) => {
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-2xl p-6 mb-8">
+    <div className="glass-card p-6 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Search */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2">
+          <label className="block text-sm font-rajdhani uppercase tracking-wider text-gray-400 mb-2">
             Buscar Sala
           </label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Nome da sala..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="input-modern pl-10"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Nome da sala..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="input-neon"
+          />
         </div>
 
         {/* Theme Filter */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2">
+          <label className="block text-sm font-rajdhani uppercase tracking-wider text-gray-400 mb-2">
             Filtrar por Tema
           </label>
           <div className="flex gap-2 flex-wrap">
@@ -51,13 +46,13 @@ export const RoomFilters = ({
               <button
                 key={theme.value}
                 onClick={() => onThemeChange(theme.value)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg font-rajdhani font-semibold uppercase text-sm transition-all ${
                   selectedTheme === theme.value
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-glow-violet'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                    ? 'bg-neon-cyan text-dark-bg shadow-neon-cyan'
+                    : 'bg-dark-surface/50 text-gray-400 hover:bg-dark-surface hover:text-neon-cyan'
                 }`}
               >
-                {theme.label}
+                {theme.icon} {theme.label}
               </button>
             ))}
           </div>

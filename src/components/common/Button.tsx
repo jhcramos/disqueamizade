@@ -19,13 +19,13 @@ export const Button = ({
   children,
   ...props
 }: ButtonProps) => {
-  const baseStyles = 'font-medium transition-all duration-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]'
+  const baseStyles = 'font-rajdhani font-semibold uppercase tracking-wider transition-all duration-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
 
   const variantStyles = {
-    primary: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-glow-violet hover:brightness-110',
-    secondary: 'bg-rose-500 text-white hover:bg-rose-400 hover:shadow-glow-rose',
-    outline: 'bg-transparent border border-zinc-700 text-zinc-300 hover:border-violet-500 hover:text-violet-400',
-    ghost: 'bg-transparent text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/50',
+    primary: 'bg-neon-cyan text-dark-bg hover:bg-neon-cyan/90 hover:shadow-neon-cyan',
+    secondary: 'bg-neon-magenta text-white hover:bg-neon-magenta/90 hover:shadow-neon-magenta',
+    outline: 'bg-transparent border-2 border-neon-cyan text-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan',
+    ghost: 'bg-transparent text-gray-400 hover:text-neon-cyan hover:bg-dark-surface/50',
   }
 
   const sizeStyles = {

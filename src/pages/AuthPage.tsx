@@ -21,22 +21,22 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
-      {/* Background blobs */}
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      {/* Animated background particles */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-violet-500/8 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-indigo-500/6 rounded-full blur-[100px]" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-neon-cyan/5 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-neon-magenta/5 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-8 md:p-10 max-w-md w-full relative z-10">
+      <div className="glass-card p-8 md:p-12 max-w-md w-full relative z-10">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold">DA</span>
-          </div>
-          <h1 className="text-2xl font-bold text-zinc-50 font-jakarta">
-            Disque Amizade
+          <h1 className="text-4xl md:text-5xl font-bold text-glow-cyan mb-2">
+            DISQUE AMIZADE
           </h1>
+          <p className="text-sm text-gray-400 font-share-tech">
+            // CONECTE-SE AO FUTURO
+          </p>
         </div>
 
         {/* Forms */}
@@ -47,14 +47,14 @@ export const AuthPage = () => {
         )}
 
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-zinc-800">
-          <p className="text-xs text-zinc-600 text-center">
+        <div className="mt-8 pt-6 border-t border-gray-700">
+          <p className="text-xs text-gray-500 text-center">
             Ao continuar, você concorda com nossos{' '}
-            <a href="/terms" className="text-violet-400 hover:underline">
+            <a href="/terms" className="text-neon-cyan hover:underline">
               Termos de Serviço
             </a>{' '}
             e{' '}
-            <a href="/privacy" className="text-violet-400 hover:underline">
+            <a href="/privacy" className="text-neon-cyan hover:underline">
               Política de Privacidade
             </a>
           </p>

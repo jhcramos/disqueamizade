@@ -19,41 +19,41 @@ export const ComponentsShowcase = () => {
   const [showToast, setShowToast] = useState(false)
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 p-8">
+    <div className="min-h-screen bg-dark-bg text-white p-8">
       <div className="container mx-auto">
-        <h1 className="text-5xl font-bold text-zinc-50 mb-8">
+        <h1 className="text-5xl font-bold text-glow-cyan mb-8">
           Design System Components
         </h1>
 
         {/* Avatars */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Avatars</h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Avatars</h2>
+          <div className="glass-card p-8">
             <div className="flex items-end gap-6 mb-6">
               <div>
-                <p className="text-sm text-zinc-400 mb-2">Extra Small</p>
+                <p className="text-sm text-gray-400 mb-2">Extra Small</p>
                 <Avatar username="John" size="xs" status="online" />
               </div>
               <div>
-                <p className="text-sm text-zinc-400 mb-2">Small</p>
+                <p className="text-sm text-gray-400 mb-2">Small</p>
                 <Avatar username="Mary" size="sm" status="online" />
               </div>
               <div>
-                <p className="text-sm text-zinc-400 mb-2">Medium</p>
+                <p className="text-sm text-gray-400 mb-2">Medium</p>
                 <Avatar username="Pedro" size="md" status="busy" />
               </div>
               <div>
-                <p className="text-sm text-zinc-400 mb-2">Large</p>
+                <p className="text-sm text-gray-400 mb-2">Large</p>
                 <Avatar username="Ana" size="lg" status="offline" />
               </div>
               <div>
-                <p className="text-sm text-zinc-400 mb-2">Extra Large</p>
+                <p className="text-sm text-gray-400 mb-2">Extra Large</p>
                 <Avatar username="Carlos" size="xl" status="online" />
               </div>
             </div>
 
-            <div className="border-t border-zinc-800 pt-6">
-              <p className="text-sm text-zinc-400 mb-4">Com imagem:</p>
+            <div className="border-t border-gray-700 pt-6">
+              <p className="text-sm text-gray-400 mb-4">Com imagem:</p>
               <Avatar
                 src="https://i.pravatar.cc/150?img=1"
                 alt="User"
@@ -66,11 +66,11 @@ export const ComponentsShowcase = () => {
 
         {/* Badges */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Badges</h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Badges</h2>
+          <div className="glass-card p-8">
             <div className="space-y-6">
               <div>
-                <p className="text-sm text-zinc-400 mb-3">Subscription Tiers:</p>
+                <p className="text-sm text-gray-400 mb-3">Subscription Tiers:</p>
                 <div className="flex gap-3">
                   <Badge tier="free">Free</Badge>
                   <Badge tier="basic">Basic</Badge>
@@ -78,8 +78,8 @@ export const ComponentsShowcase = () => {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-800 pt-6">
-                <p className="text-sm text-zinc-400 mb-3">Status Variants:</p>
+              <div className="border-t border-gray-700 pt-6">
+                <p className="text-sm text-gray-400 mb-3">Status Variants:</p>
                 <div className="flex gap-3 flex-wrap">
                   <Badge variant="default">Default</Badge>
                   <Badge variant="success">Success</Badge>
@@ -89,8 +89,8 @@ export const ComponentsShowcase = () => {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-800 pt-6">
-                <p className="text-sm text-zinc-400 mb-3">Sizes:</p>
+              <div className="border-t border-gray-700 pt-6">
+                <p className="text-sm text-gray-400 mb-3">Sizes:</p>
                 <div className="flex items-center gap-3">
                   <Badge size="sm" variant="info">Small</Badge>
                   <Badge size="md" variant="info">Medium</Badge>
@@ -103,11 +103,11 @@ export const ComponentsShowcase = () => {
 
         {/* Buttons */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Buttons</h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Buttons</h2>
+          <div className="glass-card p-8">
             <div className="space-y-6">
               <div>
-                <p className="text-sm text-zinc-400 mb-3">Variants:</p>
+                <p className="text-sm text-gray-400 mb-3">Variants:</p>
                 <div className="flex gap-3 flex-wrap">
                   <Button variant="primary">Primary</Button>
                   <Button variant="secondary">Secondary</Button>
@@ -116,8 +116,8 @@ export const ComponentsShowcase = () => {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-800 pt-6">
-                <p className="text-sm text-zinc-400 mb-3">Sizes:</p>
+              <div className="border-t border-gray-700 pt-6">
+                <p className="text-sm text-gray-400 mb-3">Sizes:</p>
                 <div className="flex items-center gap-3">
                   <Button size="sm">Small</Button>
                   <Button size="md">Medium</Button>
@@ -125,8 +125,8 @@ export const ComponentsShowcase = () => {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-800 pt-6">
-                <p className="text-sm text-zinc-400 mb-3">States:</p>
+              <div className="border-t border-gray-700 pt-6">
+                <p className="text-sm text-gray-400 mb-3">States:</p>
                 <div className="flex gap-3">
                   <Button loading>Loading</Button>
                   <Button disabled>Disabled</Button>
@@ -138,7 +138,7 @@ export const ComponentsShowcase = () => {
 
         {/* Cards */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Cards</h2>
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Cards</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card variant="default" hover>
               <CardHeader>
@@ -152,21 +152,21 @@ export const ComponentsShowcase = () => {
               </CardFooter>
             </Card>
 
-            <Card variant="elevated" hover>
+            <Card variant="cyan" hover>
               <CardHeader>
-                <CardTitle>Elevated Card</CardTitle>
+                <CardTitle>Cyan Card</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>Card with elevated style.</p>
+                <p>Card with cyan accent color.</p>
               </CardContent>
             </Card>
 
-            <Card variant="gradient-border" hover>
+            <Card variant="magenta" hover>
               <CardHeader>
-                <CardTitle>Gradient Border</CardTitle>
+                <CardTitle className="text-neon-magenta">Magenta Card</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>Card with animated gradient border.</p>
+                <p>Card with magenta accent color.</p>
               </CardContent>
             </Card>
           </div>
@@ -174,8 +174,8 @@ export const ComponentsShowcase = () => {
 
         {/* Tooltips */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Tooltips</h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Tooltips</h2>
+          <div className="glass-card p-8">
             <div className="flex gap-6 justify-center">
               <Tooltip content="Top tooltip" position="top">
                 <Button>Hover Top</Button>
@@ -195,8 +195,8 @@ export const ComponentsShowcase = () => {
 
         {/* Inputs */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">Inputs</h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">Inputs</h2>
+          <div className="glass-card p-8 max-w-md">
             <div className="space-y-4">
               <Input label="Username" placeholder="Enter username" />
               <Input
@@ -220,10 +220,10 @@ export const ComponentsShowcase = () => {
 
         {/* Modal & Toast */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-zinc-50 mb-6">
+          <h2 className="text-3xl font-bold text-neon-cyan mb-6">
             Modal & Toast
           </h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <div className="glass-card p-8">
             <div className="flex gap-4">
               <Button onClick={() => setShowModal(true)}>
                 Show Modal
@@ -242,8 +242,8 @@ export const ComponentsShowcase = () => {
           title="Example Modal"
         >
           <div className="space-y-4">
-            <p className="text-zinc-400">
-              This is an example modal with modern design.
+            <p className="text-gray-400">
+              This is an example modal with glassmorphism effect.
             </p>
             <Input label="Name" placeholder="Enter your name" />
             <div className="flex gap-3 justify-end">

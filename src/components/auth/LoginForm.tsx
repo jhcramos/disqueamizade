@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
 import { useAuth } from '@/hooks/useAuth'
-import { UserCircle } from 'lucide-react'
 
 interface LoginFormProps {
   onToggleMode: () => void
@@ -11,7 +10,7 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
   const navigate = useNavigate()
-  const { signIn, signInWithGoogle, signInAsGuest, loading } = useAuth()
+  const { signIn, signInWithGoogle, loading } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -47,14 +46,14 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-zinc-50 mb-1 text-center">
+      <h2 className="text-3xl font-bold text-glow-cyan mb-2 text-center">
         Bem-vindo de Volta
       </h2>
-      <p className="text-zinc-500 text-center mb-8 text-sm">
+      <p className="text-gray-400 text-center mb-8">
         Entre para continuar sua jornada
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Input
           label="Email"
           type="email"
@@ -74,8 +73,8 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
         />
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="glass-card border-2 border-red-500 bg-red-500/10 p-4">
+            <p className="text-red-500 text-sm">{error}</p>
           </div>
         )}
 
@@ -91,10 +90,10 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
 
       <div className="relative my-8">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
+          <div className="w-full border-t border-gray-700" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-zinc-900 text-zinc-500">ou</span>
+          <span className="px-4 bg-dark-bg text-gray-400">OU</span>
         </div>
       </div>
 
@@ -128,37 +127,13 @@ export const LoginForm = ({ onToggleMode }: LoginFormProps) => {
         </div>
       </Button>
 
-      <div className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-zinc-900 text-zinc-500">ou</span>
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        variant="ghost"
-        fullWidth
-        onClick={() => {
-          signInAsGuest()
-          navigate('/rooms')
-        }}
-      >
-        <div className="flex items-center justify-center gap-3">
-          <UserCircle className="w-5 h-5" />
-          Entrar como Convidado
-        </div>
-      </Button>
-
       <div className="mt-8 text-center">
-        <p className="text-zinc-500 text-sm">
+        <p className="text-gray-400">
           Não tem uma conta?{' '}
           <button
             type="button"
             onClick={onToggleMode}
-            className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+            className="text-neon-cyan hover:text-neon-cyan/80 font-semibold transition-colors"
           >
             Cadastre-se
           </button>

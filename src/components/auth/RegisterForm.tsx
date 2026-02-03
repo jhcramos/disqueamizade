@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
 import { useAuth } from '@/hooks/useAuth'
-import { Check } from 'lucide-react'
 
 interface RegisterFormProps {
   onToggleMode: () => void
@@ -81,22 +80,16 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
     }
   }
 
-  const requirements = [
-    { text: 'Mínimo 6 caracteres na senha', met: password.length >= 6 },
-    { text: 'Username único (letras, números e _)', met: username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username) },
-    { text: 'Você deve ter 18+ anos', met: false },
-  ]
-
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-zinc-50 mb-1 text-center">
+      <h2 className="text-3xl font-bold text-glow-cyan mb-2 text-center">
         Criar Conta
       </h2>
-      <p className="text-zinc-500 text-center mb-8 text-sm">
+      <p className="text-gray-400 text-center mb-8">
         Junte-se à comunidade Disque Amizade
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Input
           label="Username"
           type="text"
@@ -134,24 +127,15 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
         />
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="glass-card border-2 border-red-500 bg-red-500/10 p-4">
+            <p className="text-red-500 text-sm">{error}</p>
           </div>
         )}
 
-        <div className="space-y-2">
-          {requirements.map((req, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                req.met ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-600'
-              }`}>
-                <Check className="w-3 h-3" />
-              </div>
-              <span className={req.met ? 'text-zinc-300' : 'text-zinc-500'}>
-                {req.text}
-              </span>
-            </div>
-          ))}
+        <div className="text-xs text-gray-400 space-y-1">
+          <p>• Mínimo 6 caracteres na senha</p>
+          <p>• Username único (apenas letras, números e _)</p>
+          <p>• Você deve ter 18+ anos</p>
         </div>
 
         <Button
@@ -166,10 +150,10 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
       <div className="relative my-8">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
+          <div className="w-full border-t border-gray-700" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-zinc-900 text-zinc-500">ou</span>
+          <span className="px-4 bg-dark-bg text-gray-400">OU</span>
         </div>
       </div>
 
@@ -204,12 +188,12 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
       </Button>
 
       <div className="mt-8 text-center">
-        <p className="text-zinc-500 text-sm">
+        <p className="text-gray-400">
           Já tem uma conta?{' '}
           <button
             type="button"
             onClick={onToggleMode}
-            className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+            className="text-neon-cyan hover:text-neon-cyan/80 font-semibold transition-colors"
           >
             Entrar
           </button>
