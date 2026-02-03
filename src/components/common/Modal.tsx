@@ -64,13 +64,13 @@ export const Modal = ({
       {/* Modal */}
       <div className={`modal-content ${sizeClasses[size]}`}>
         {title && (
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-neon-cyan/30">
-            <h2 className="text-2xl font-bold text-glow-cyan">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+            <h2 className="text-2xl font-bold text-white">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-neon-cyan transition-colors text-2xl leading-none"
+              className="text-gray-400 hover:text-white transition-colors text-2xl leading-none"
             >
               ✕
             </button>

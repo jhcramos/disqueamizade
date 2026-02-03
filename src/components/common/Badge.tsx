@@ -16,20 +16,20 @@ export const Badge = ({
   size = 'md',
   className,
 }: BadgeProps) => {
-  const baseClasses = 'inline-flex items-center gap-1 font-rajdhani font-semibold uppercase tracking-wider rounded-full'
+  const baseClasses = 'inline-flex items-center gap-1 font-semibold rounded-full'
 
   const variantClasses = {
     default: 'bg-gray-700 text-gray-300',
-    success: 'bg-green-500/20 text-green-400 border border-green-500/30',
-    warning: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+    success: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+    warning: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
     error: 'bg-red-500/20 text-red-400 border border-red-500/30',
-    info: 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30',
+    info: 'bg-primary/20 text-primary-light border border-primary/30',
   }
 
   const tierClasses = {
     free: 'bg-gray-700 text-gray-300',
-    basic: 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 shadow-neon-cyan',
-    premium: 'bg-neon-magenta/20 text-neon-magenta border border-neon-magenta/30 shadow-neon-magenta',
+    basic: 'bg-primary/20 text-primary-light border border-primary/30',
+    premium: 'bg-accent/20 text-accent border border-accent/30',
   }
 
   const sizeClasses = {

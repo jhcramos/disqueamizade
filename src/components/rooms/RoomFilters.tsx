@@ -20,11 +20,11 @@ export const RoomFilters = ({
   onSearchChange,
 }: RoomFiltersProps) => {
   return (
-    <div className="glass-card p-6 mb-8">
+    <div className="card p-6 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Search */}
         <div>
-          <label className="block text-sm font-rajdhani uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-gray-400 mb-2">
             Buscar Sala
           </label>
           <input
@@ -32,13 +32,13 @@ export const RoomFilters = ({
             placeholder="Nome da sala..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="input-neon"
+            className="input-modern"
           />
         </div>
 
         {/* Theme Filter */}
         <div>
-          <label className="block text-sm font-rajdhani uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-gray-400 mb-2">
             Filtrar por Tema
           </label>
           <div className="flex gap-2 flex-wrap">
@@ -46,10 +46,10 @@ export const RoomFilters = ({
               <button
                 key={theme.value}
                 onClick={() => onThemeChange(theme.value)}
-                className={`px-4 py-2 rounded-lg font-rajdhani font-semibold uppercase text-sm transition-all ${
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                   selectedTheme === theme.value
-                    ? 'bg-neon-cyan text-dark-bg shadow-neon-cyan'
-                    : 'bg-dark-surface/50 text-gray-400 hover:bg-dark-surface hover:text-neon-cyan'
+                    ? 'bg-primary text-white shadow-card-hover'
+                    : 'bg-surface/50 text-gray-400 hover:bg-surface hover:text-primary-light'
                 }`}
               >
                 {theme.icon} {theme.label}

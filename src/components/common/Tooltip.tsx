@@ -88,7 +88,7 @@ export const Tooltip = ({
         createPortal(
           <div
             className={clsx(
-              'fixed z-50 px-3 py-2 text-sm font-inter text-white bg-dark-surface border border-neon-cyan/30 rounded-lg shadow-neon-cyan pointer-events-none',
+              'fixed z-50 px-3 py-2 text-sm text-white bg-surface border border-white/10 rounded-xl shadow-card pointer-events-none',
               positionClasses[position]
             )}
             style={{

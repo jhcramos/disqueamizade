@@ -32,8 +32,8 @@ export const RoomPage = () => {
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-dark-bg text-white flex items-center justify-center">
-        <div className="glass-card p-8 text-center">
+      <div className="min-h-screen bg-dark-bg text-gray-100 flex items-center justify-center">
+        <div className="card p-8 text-center">
           <h2 className="text-2xl font-bold text-red-500 mb-4">
             Sala não encontrada
           </h2>
@@ -46,14 +46,9 @@ export const RoomPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white flex flex-col">
-      {/* Background Grid */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="perspective-grid"></div>
-      </div>
-
+    <div className="min-h-screen bg-dark-bg text-gray-100 flex flex-col">
       {/* Header */}
-      <header className="border-b border-neon-cyan/30 bg-dark-surface/50 backdrop-blur-lg z-40">
+      <header className="border-b border-white/5 bg-surface/50 backdrop-blur-lg z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -63,7 +58,7 @@ export const RoomPage = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-glow-cyan">
+                <h1 className="text-xl font-bold text-white">
                   {room.name}
                 </h1>
                 <p className="text-sm text-gray-400">{room.description}</p>
@@ -83,9 +78,9 @@ export const RoomPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Sidebar - Users */}
-        <aside className="w-64 border-r border-neon-cyan/30 bg-dark-surface/30 backdrop-blur-sm overflow-y-auto custom-scrollbar hidden md:block">
+        <aside className="w-64 border-r border-white/5 bg-surface/30 backdrop-blur-sm overflow-y-auto custom-scrollbar hidden md:block">
           <div className="p-4">
-            <h3 className="text-lg font-bold text-neon-cyan mb-4">
+            <h3 className="text-lg font-bold text-primary-light mb-4">
               Participantes ({mockUsers.length})
             </h3>
 
@@ -93,7 +88,7 @@ export const RoomPage = () => {
               {mockUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-dark-surface/50 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface/50 transition-colors"
                 >
                   <Avatar
                     src={user.avatar_url}
@@ -107,12 +102,12 @@ export const RoomPage = () => {
                     </div>
                     <div className="flex gap-2 text-xs">
                       {user.video_enabled ? (
-                        <span className="text-neon-cyan">📹</span>
+                        <span className="text-primary-light">📹</span>
                       ) : (
                         <span className="text-gray-600">📹</span>
                       )}
                       {user.audio_enabled ? (
-                        <span className="text-neon-cyan">🎤</span>
+                        <span className="text-primary-light">🎤</span>
                       ) : (
                         <span className="text-gray-600">🎤</span>
                       )}
@@ -127,12 +122,12 @@ export const RoomPage = () => {
         {/* Main Chat Area */}
         <main className="flex-1 flex flex-col">
           {/* Video Grid Placeholder */}
-          <div className="border-b border-neon-cyan/30 bg-dark-surface/20 p-4">
+          <div className="border-b border-white/5 bg-surface/20 p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-48">
               {mockUsers.slice(0, 4).map((user) => (
                 <div
                   key={user.id}
-                  className="aspect-video bg-dark-surface rounded-lg border border-neon-cyan/30 flex items-center justify-center relative overflow-hidden"
+                  className="aspect-video bg-surface rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden"
                 >
                   {user.video_enabled ? (
                     <>
@@ -174,7 +169,7 @@ export const RoomPage = () => {
                 />
                 <div className="flex-1">
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-semibold text-neon-cyan">
+                    <span className="font-semibold text-primary-light">
                       {msg.user.username}
                     </span>
                     <span className="text-xs text-gray-500">
@@ -192,14 +187,14 @@ export const RoomPage = () => {
           </div>
 
           {/* Input */}
-          <div className="border-t border-neon-cyan/30 bg-dark-surface/30 backdrop-blur-sm p-4">
+          <div className="border-t border-white/5 bg-surface/30 backdrop-blur-sm p-4">
             <form onSubmit={handleSendMessage} className="flex gap-3">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                className="input-neon flex-1"
+                className="input-modern flex-1"
               />
               <Button type="submit" disabled={!message.trim()}>
                 Enviar

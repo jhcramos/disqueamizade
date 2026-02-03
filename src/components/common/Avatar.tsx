@@ -27,7 +27,7 @@ export const Avatar = ({
   }
 
   const statusClasses = {
-    online: 'bg-neon-cyan shadow-neon-cyan',
+    online: 'bg-emerald-400',
     offline: 'bg-gray-600',
     busy: 'bg-red-500',
   }
@@ -42,12 +42,12 @@ export const Avatar = ({
 
   // Generate gradient based on username
   const gradient = useMemo(() => {
-    if (!username) return 'from-neon-cyan to-neon-magenta'
+    if (!username) return 'from-primary to-primary-dark'
 
     const colors = [
-      'from-neon-cyan to-neon-magenta',
-      'from-neon-magenta to-neon-yellow',
-      'from-neon-yellow to-neon-cyan',
+      'from-primary to-primary-dark',
+      'from-primary-light to-purple-400',
+      'from-violet-500 to-indigo-500',
       'from-purple-500 to-pink-500',
       'from-blue-500 to-cyan-500',
     ]
@@ -86,7 +86,7 @@ export const Avatar = ({
             'absolute bottom-0 right-0 rounded-full border-2 border-dark-bg',
             statusClasses[status],
             statusSizes[size],
-            status === 'online' && 'animate-pulse-glow'
+            status === 'online' && 'animate-pulse'
           )}
         />
       )}

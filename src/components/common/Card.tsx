@@ -3,7 +3,7 @@ import clsx from 'clsx'
 
 interface CardProps {
   children: ReactNode
-  variant?: 'default' | 'cyan' | 'magenta' | 'yellow'
+  variant?: 'default' | 'primary' | 'accent'
   hover?: boolean
   clickable?: boolean
   className?: string
@@ -18,20 +18,18 @@ export const Card = ({
   className,
   onClick,
 }: CardProps) => {
-  const baseClasses = 'glass-card p-6 rounded-xl transition-all duration-300'
+  const baseClasses = 'card p-6 rounded-2xl transition-all duration-300'
 
   const variantClasses = {
-    default: 'border-neon-cyan/30',
-    cyan: 'border-neon-cyan/50',
-    magenta: 'border-neon-magenta/50',
-    yellow: 'border-neon-yellow/50',
+    default: '',
+    primary: 'border-primary/20',
+    accent: 'border-accent/20',
   }
 
   const hoverClasses = {
-    default: 'hover:border-neon-cyan hover:shadow-neon-cyan',
-    cyan: 'hover:border-neon-cyan hover:shadow-neon-cyan',
-    magenta: 'hover:border-neon-magenta hover:shadow-neon-magenta',
-    yellow: 'hover:border-neon-yellow hover:shadow-neon-yellow',
+    default: 'hover:border-primary/20 hover:shadow-card-hover',
+    primary: 'hover:border-primary/30 hover:shadow-card-hover',
+    accent: 'hover:border-accent/30 hover:shadow-card-hover',
   }
 
   return (
@@ -65,7 +63,7 @@ interface CardTitleProps {
 }
 
 export const CardTitle = ({ children, className }: CardTitleProps) => (
-  <h3 className={clsx('text-2xl font-bold text-neon-cyan', className)}>
+  <h3 className={clsx('text-2xl font-bold text-white', className)}>
     {children}
   </h3>
 )
@@ -85,7 +83,7 @@ interface CardFooterProps {
 }
 
 export const CardFooter = ({ children, className }: CardFooterProps) => (
-  <div className={clsx('mt-6 pt-4 border-t border-gray-700', className)}>
+  <div className={clsx('mt-6 pt-4 border-t border-white/5', className)}>
     {children}
   </div>
 )

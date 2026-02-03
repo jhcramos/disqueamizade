@@ -24,10 +24,10 @@ export const Toast = ({
   }, [duration, onClose])
 
   const typeStyles = {
-    success: 'border-green-500 bg-green-500/10 text-green-500',
+    success: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
     error: 'border-red-500 bg-red-500/10 text-red-500',
-    info: 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan',
-    warning: 'border-neon-yellow bg-neon-yellow/10 text-neon-yellow',
+    info: 'border-primary bg-primary/10 text-primary-light',
+    warning: 'border-accent bg-accent/10 text-accent',
   }
 
   const icons = {
@@ -38,16 +38,16 @@ export const Toast = ({
   }
 
   return createPortal(
-    <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+    <div className="fixed top-4 right-4 z-50 animate-fade-in">
       <div
         className={clsx(
-          'glass-card px-6 py-4 min-w-[300px] border-2',
+          'card px-6 py-4 min-w-[300px] border',
           typeStyles[type]
         )}
       >
         <div className="flex items-center gap-3">
           <span className="text-2xl">{icons[type]}</span>
-          <p className="font-inter">{message}</p>
+          <p>{message}</p>
           <button
             onClick={onClose}
             className="ml-auto text-gray-400 hover:text-white transition-colors"
@@ -60,22 +60,3 @@ export const Toast = ({
     document.body
   )
 }
-
-// Animation in global CSS
-const style = document.createElement('style')
-style.textContent = `
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
-`
-document.head.appendChild(style)

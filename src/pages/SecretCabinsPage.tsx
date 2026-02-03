@@ -51,10 +51,10 @@ export const SecretCabinsPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'border-emerald-500/30 bg-emerald-500/5'
-      case 'occupied': return 'border-amber-500/30 bg-amber-500/5'
-      case 'full': return 'border-red-500/30 bg-red-500/5'
-      default: return 'border-zinc-800'
+      case 'available': return 'border-emerald-500/20 bg-emerald-500/5'
+      case 'occupied': return 'border-amber-500/20 bg-amber-500/5'
+      case 'full': return 'border-red-500/20 bg-red-500/5'
+      default: return 'border-white/5'
     }
   }
 
@@ -63,22 +63,22 @@ export const SecretCabinsPage = () => {
       case 'available': return { text: 'Disponível', color: 'text-emerald-400 bg-emerald-500/10' }
       case 'occupied': return { text: 'Parcial', color: 'text-amber-400 bg-amber-500/10' }
       case 'full': return { text: 'Lotada', color: 'text-red-400 bg-red-500/10' }
-      default: return { text: status, color: 'text-zinc-400' }
+      default: return { text: status, color: 'text-gray-400' }
     }
   }
 
   // Premium lock screen
   if (!isPremium) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-50">
-        <header className="border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+      <div className="min-h-screen bg-dark-bg text-gray-100">
+        <header className="border-b border-white/5 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/rooms" className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
                   <span className="text-white font-bold text-sm">DA</span>
                 </div>
-                <h1 className="text-lg font-bold text-zinc-50 font-jakarta">Disque Amizade</h1>
+                <h1 className="text-lg font-bold text-white">Disque Amizade</h1>
               </Link>
             </div>
           </div>
@@ -86,15 +86,15 @@ export const SecretCabinsPage = () => {
 
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="max-w-lg text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-rose-500/20 border border-violet-500/30 flex items-center justify-center mx-auto mb-6">
-              <Lock className="w-10 h-10 text-violet-400" />
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-pink-500/20 border border-primary/30 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-primary-light" />
             </div>
-            <h1 className="text-3xl font-bold text-zinc-50 mb-4 font-jakarta">Cabines Secretas</h1>
-            <p className="text-zinc-400 mb-2">
+            <h1 className="text-3xl font-bold text-white mb-4">Cabines Secretas</h1>
+            <p className="text-gray-400 mb-2">
               Salas exclusivas e privadas para conversas íntimas com vídeo.
             </p>
-            <p className="text-zinc-500 text-sm mb-8">
-              Disponível apenas para assinantes <span className="text-rose-400 font-semibold">Premium</span>.
+            <p className="text-gray-500 text-sm mb-8">
+              Disponível apenas para assinantes <span className="text-accent font-semibold">Premium</span>.
             </p>
             <Link to="/pricing">
               <Button variant="primary" size="lg">
@@ -109,25 +109,25 @@ export const SecretCabinsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50">
+    <div className="min-h-screen bg-dark-bg text-gray-100">
       {/* Header */}
-      <header className="border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+      <header className="border-b border-white/5 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/rooms" className="text-zinc-400 hover:text-zinc-50 transition-colors">
+              <Link to="/rooms" className="text-gray-400 hover:text-white transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-lg font-bold text-zinc-50 font-jakarta flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-violet-400" />
+                <h1 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary-light" />
                   Cabines Secretas
                 </h1>
-                <p className="text-xs text-zinc-500">Conversas privadas e exclusivas</p>
+                <p className="text-xs text-gray-500">Conversas privadas e exclusivas</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full text-xs font-semibold text-rose-400">
+              <span className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-xs font-semibold text-accent">
                 <Crown className="w-3 h-3 inline mr-1" />
                 Premium
               </span>
@@ -140,27 +140,27 @@ export const SecretCabinsPage = () => {
         {/* Stats + Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex gap-4 flex-1">
-            <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex-1">
+            <div className="card rounded-2xl p-5 flex-1">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-violet-400" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-primary-light" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-zinc-50">{mockCabins.length}</div>
-                  <div className="text-xs text-zinc-500">Total de Cabines</div>
+                  <div className="text-2xl font-bold text-white">{mockCabins.length}</div>
+                  <div className="text-xs text-gray-500">Total de Cabines</div>
                 </div>
               </div>
             </div>
-            <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex-1">
+            <div className="card rounded-2xl p-5 flex-1">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                   <Users className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-zinc-50">
+                  <div className="text-2xl font-bold text-white">
                     {mockCabins.filter(c => c.status === 'available').length}
                   </div>
-                  <div className="text-xs text-zinc-500">Disponíveis</div>
+                  <div className="text-xs text-gray-500">Disponíveis</div>
                 </div>
               </div>
             </div>
@@ -173,8 +173,8 @@ export const SecretCabinsPage = () => {
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   filter === f
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-glow-violet'
-                    : 'bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                    ? 'bg-primary text-white shadow-card-hover'
+                    : 'bg-surface text-gray-400 hover:text-white hover:bg-surface-light'
                 }`}
               >
                 {f === 'all' ? 'Todas' : f === 'available' ? 'Livres' : 'Ocupadas'}
@@ -190,10 +190,10 @@ export const SecretCabinsPage = () => {
             return (
               <div
                 key={cabin.id}
-                className={`bg-zinc-900/80 border rounded-2xl p-6 hover:-translate-y-0.5 transition-all ${getStatusColor(cabin.status)}`}
+                className={`card rounded-2xl p-6 hover:-translate-y-0.5 transition-all ${getStatusColor(cabin.status)}`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-zinc-50">
+                  <h3 className="text-lg font-semibold text-white">
                     #{cabin.number} {cabin.name}
                   </h3>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
@@ -201,7 +201,7 @@ export const SecretCabinsPage = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm text-zinc-500 mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                   <Users className="w-4 h-4" />
                   <span>{cabin.occupants.length}/{cabin.capacity} pessoas</span>
                 </div>
@@ -214,7 +214,7 @@ export const SecretCabinsPage = () => {
                         key={occ.user_id}
                         src={occ.avatar_url}
                         alt={occ.username}
-                        className="w-8 h-8 rounded-full ring-2 ring-zinc-900 object-cover"
+                        className="w-8 h-8 rounded-full ring-2 ring-dark-bg object-cover"
                       />
                     ))}
                   </div>
@@ -239,28 +239,28 @@ export const SecretCabinsPage = () => {
         </div>
 
         {/* How it works */}
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
-          <h3 className="text-xl font-bold text-zinc-50 mb-6 font-jakarta flex items-center gap-2">
-            <Info className="w-5 h-5 text-violet-400" />
+        <div className="card rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <Info className="w-5 h-5 text-primary-light" />
             Como Funcionam as Cabines Secretas
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-violet-400" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-primary-light" />
               </div>
               <div>
-                <h4 className="font-semibold text-zinc-200 mb-1">Privacidade Total</h4>
-                <p className="text-sm text-zinc-500">Conversas criptografadas e sem registro. Apenas os participantes têm acesso.</p>
+                <h4 className="font-semibold text-gray-200 mb-1">Privacidade Total</h4>
+                <p className="text-sm text-gray-500">Conversas criptografadas e sem registro. Apenas os participantes têm acesso.</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center flex-shrink-0">
-                <EyeOff className="w-5 h-5 text-rose-400" />
+              <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                <EyeOff className="w-5 h-5 text-pink-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-zinc-200 mb-1">Modo Anônimo</h4>
-                <p className="text-sm text-zinc-500">Ative o modo anônimo para conversar sem revelar seu perfil.</p>
+                <h4 className="font-semibold text-gray-200 mb-1">Modo Anônimo</h4>
+                <p className="text-sm text-gray-500">Ative o modo anônimo para conversar sem revelar seu perfil.</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -268,8 +268,8 @@ export const SecretCabinsPage = () => {
                 <Eye className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-zinc-200 mb-1">Vídeo HD</h4>
-                <p className="text-sm text-zinc-500">Qualidade de vídeo superior com baixa latência para conversas fluidas.</p>
+                <h4 className="font-semibold text-gray-200 mb-1">Vídeo HD</h4>
+                <p className="text-sm text-gray-500">Qualidade de vídeo superior com baixa latência para conversas fluidas.</p>
               </div>
             </div>
           </div>

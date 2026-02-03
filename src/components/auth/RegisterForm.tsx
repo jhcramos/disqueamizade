@@ -82,7 +82,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
   return (
     <div className="w-full">
-      <h2 className="text-3xl font-bold text-glow-cyan mb-2 text-center">
+      <h2 className="text-3xl font-bold text-white mb-2 text-center">
         Criar Conta
       </h2>
       <p className="text-gray-400 text-center mb-8">
@@ -127,7 +127,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
         />
 
         {error && (
-          <div className="glass-card border-2 border-red-500 bg-red-500/10 p-4">
+          <div className="card border border-red-500 bg-red-500/10 p-4">
             <p className="text-red-500 text-sm">{error}</p>
           </div>
         )}
@@ -193,7 +193,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
           <button
             type="button"
             onClick={onToggleMode}
-            className="text-neon-cyan hover:text-neon-cyan/80 font-semibold transition-colors"
+            className="text-primary-light hover:text-primary font-semibold transition-colors"
           >
             Entrar
           </button>

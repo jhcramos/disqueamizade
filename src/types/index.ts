@@ -40,6 +40,73 @@ export type Room = {
   updated_at: string
 }
 
+export type MockRoom = {
+  id: string
+  name: string
+  description: string
+  category: 'cidade' | 'idade' | 'idioma' | 'hobby' | 'gamer' | 'adulta'
+  theme: string
+  participants: number
+  max_users: number
+  is_private: boolean
+  owner: { username: string; avatar: string }
+  has_video: boolean
+  online_count: number
+  badge_color: string
+}
+
+export type MockCreator = {
+  id: string
+  name: string
+  username: string
+  avatar: string
+  bio: string
+  service: string
+  serviceEmoji: string
+  serviceCategory: string
+  rating: number
+  reviewCount: number
+  priceInFichas: number
+  isOnline: boolean
+  isFeatured: boolean
+  sessionsCompleted: number
+  satisfactionRate: number
+  city: string
+  tags: string[]
+  gallery: string[]
+  schedule: string[]
+}
+
+export type MockHobby = {
+  id: string
+  name: string
+  icon: string
+  emoji: string
+  activeRooms: number
+  isPopular: boolean
+  description: string
+  color: string
+}
+
+export type FichaPackage = {
+  id: string
+  amount: number
+  price: string
+  priceValue: number
+  popular?: boolean
+  bonus?: string
+}
+
+export type Plan = {
+  id: string
+  name: string
+  price: string
+  priceValue: number
+  features: string[]
+  highlighted?: boolean
+  badge?: string
+}
+
 export type RoomParticipant = {
   id: string
   room_id: string
@@ -115,7 +182,6 @@ export type ServiceReview = {
   created_at: string
 }
 
-// UI Types
 export type VideoFilter = {
   id: string
   name: string
@@ -140,7 +206,7 @@ export type Notification = {
   type: 'room_invite' | 'new_message' | 'subscription_expiring' | 'service_request' | 'session_accepted'
   title: string
   message: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   read: boolean
   created_at: string
 }

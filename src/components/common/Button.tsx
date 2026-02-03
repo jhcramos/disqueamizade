@@ -1,59 +1,52 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
-import clsx from 'clsx'
+import { ReactNode } from 'react'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
-  fullWidth?: boolean
-  loading?: boolean
+interface ButtonProps {
   children: ReactNode
+  variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+  type?: 'button' | 'submit'
+  fullWidth?: boolean
 }
 
 export const Button = ({
+  children,
   variant = 'primary',
   size = 'md',
+  onClick,
+  disabled = false,
+  className = '',
+  type = 'button',
   fullWidth = false,
-  loading = false,
-  disabled,
-  className,
-  children,
-  ...props
 }: ButtonProps) => {
-  const baseStyles = 'font-rajdhani font-semibold uppercase tracking-wider transition-all duration-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed'
+  const baseClasses = 'font-semibold tracking-wide transition-all duration-300 rounded-xl inline-flex items-center justify-center gap-2'
 
-  const variantStyles = {
-    primary: 'bg-neon-cyan text-dark-bg hover:bg-neon-cyan/90 hover:shadow-neon-cyan',
-    secondary: 'bg-neon-magenta text-white hover:bg-neon-magenta/90 hover:shadow-neon-magenta',
-    outline: 'bg-transparent border-2 border-neon-cyan text-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan',
-    ghost: 'bg-transparent text-gray-400 hover:text-neon-cyan hover:bg-dark-surface/50',
-  }
-
-  const sizeStyles = {
+  const sizeClasses = {
     sm: 'px-4 py-2 text-sm',
     md: 'px-6 py-3 text-base',
     lg: 'px-8 py-4 text-lg',
   }
 
+  const variantClasses = {
+    primary: 'bg-primary text-white hover:bg-primary-dark hover:shadow-card-hover',
+    secondary: 'bg-transparent border border-primary/40 text-primary-light hover:bg-primary/10',
+    accent: 'bg-accent text-dark-bg hover:bg-accent-dark hover:shadow-card-hover',
+    ghost: 'bg-transparent border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white',
+    outline: 'bg-transparent border border-primary/30 text-primary-light hover:bg-primary/10',
+  }
+
   return (
     <button
-      className={clsx(
-        baseStyles,
-        variantStyles[variant],
-        sizeStyles[size],
-        fullWidth && 'w-full',
-        className
-      )}
-      disabled={disabled || loading}
-      {...props}
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${
+        disabled ? 'opacity-50 cursor-not-allowed' : ''
+      } ${fullWidth ? 'w-full' : ''} ${className}`}
     >
-      {loading ? (
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span>Carregando...</span>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </button>
   )
 }
