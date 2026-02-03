@@ -72,7 +72,7 @@ export const HomePage = () => {
           {/* Nostalgia badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08] mb-8 animate-fade-in">
             <Phone className="w-3.5 h-3.5 text-primary-400" />
-            <span className="text-sm text-dark-400">O clássico 0900 reinventado para 2025</span>
+            <span className="text-sm text-dark-400">O clássico 145 reinventado para 2025</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 animate-slide-up">

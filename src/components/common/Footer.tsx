@@ -22,7 +22,7 @@ export const Footer = () => {
             </p>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Phone className="w-3 h-3" />
-              <span className="font-mono">0900-AMIZADE — nostalgia.mode</span>
+              <span className="font-mono">145-AMIZADE — nostalgia.mode</span>
             </div>
           </div>
 
