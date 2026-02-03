@@ -139,4 +139,32 @@
     @apply card p-6 z-50 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
     @apply custom-scrollbar;
   }
+
+  /* ═══ Scrollbar Hide (for horizontal scrollable areas) ═══ */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* ═══ Safe Area (for mobile bottom nav) ═══ */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* ═══ Line Clamp ═══ */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }

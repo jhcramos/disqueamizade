@@ -9,6 +9,7 @@ interface ButtonProps {
   className?: string
   type?: 'button' | 'submit'
   fullWidth?: boolean
+  loading?: boolean
 }
 
 export const Button = ({

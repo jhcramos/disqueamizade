@@ -1,319 +1,172 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/common'
+import { Lock, Star, Sparkles, Camera } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
-import { useAuth } from '@/hooks/useAuth'
-import { PLANS } from '@/config/plans.config'
-import type { SubscriptionTier } from '@/types'
-import {
-  ArrowLeft,
-  Camera,
-  Sparkles,
-  Crown,
-  Check,
-  X,
-  Lock,
-  Palette,
-  User,
-  Layers,
-  Shield,
-  Wand2,
-  Zap,
-  Eye,
-  Cpu,
-} from 'lucide-react'
+import type { VideoFilter } from '@/types'
 
-const FILTER_CATEGORIES = [
-  {
-    type: 'background' as const,
-    name: 'Backgrounds Virtuais',
-    icon: Layers,
-    description: 'Substitua seu fundo por cenários virtuais',
-    requiredTier: 'basic' as SubscriptionTier,
-    filters: [
-      { id: 'bg1', name: 'Escritório Moderno', preview: 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20' },
-      { id: 'bg2', name: 'Praia Tropical', preview: 'bg-gradient-to-br from-amber-500/20 to-orange-500/20' },
-      { id: 'bg3', name: 'Espaço Sideral', preview: 'bg-gradient-to-br from-violet-500/20 to-indigo-500/20' },
-      { id: 'bg4', name: 'Floresta', preview: 'bg-gradient-to-br from-emerald-500/20 to-green-500/20' },
-    ],
-  },
-  {
-    type: 'mask_2d' as const,
-    name: 'Máscaras 2D',
-    icon: User,
-    description: 'Máscaras animadas que seguem seu rosto',
-    requiredTier: 'basic' as SubscriptionTier,
-    filters: [
-      { id: 'm1', name: 'Gato', preview: 'bg-gradient-to-br from-amber-500/20 to-yellow-500/20' },
-      { id: 'm2', name: 'Robô', preview: 'bg-gradient-to-br from-zinc-500/20 to-slate-500/20' },
-      { id: 'm3', name: 'Astronauta', preview: 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20' },
-    ],
-  },
-  {
-    type: 'mask_3d' as const,
-    name: 'Máscaras 3D',
-    icon: Wand2,
-    description: 'Avatares 3D realistas com tracking facial',
-    requiredTier: 'premium' as SubscriptionTier,
-    filters: [
-      { id: '3d1', name: 'Avatar Realista', preview: 'bg-gradient-to-br from-rose-500/20 to-pink-500/20' },
-      { id: '3d2', name: 'Cartoon 3D', preview: 'bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20' },
-    ],
-  },
-  {
-    type: 'color' as const,
-    name: 'Filtros de Cor',
-    icon: Palette,
-    description: 'Ajustes de cor e efeitos visuais no vídeo',
-    requiredTier: 'basic' as SubscriptionTier,
-    filters: [
-      { id: 'c1', name: 'Warm', preview: 'bg-gradient-to-br from-orange-500/20 to-amber-500/20' },
-      { id: 'c2', name: 'Cool', preview: 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20' },
-      { id: 'c3', name: 'Vintage', preview: 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20' },
-      { id: 'c4', name: 'B&W', preview: 'bg-gradient-to-br from-zinc-400/20 to-zinc-600/20' },
-    ],
-  },
-  {
-    type: 'anonymity' as const,
-    name: 'Modo Anonimato',
-    icon: Shield,
-    description: 'Oculte sua identidade com blur ou silhueta',
-    requiredTier: 'basic' as SubscriptionTier,
-    filters: [
-      { id: 'a1', name: 'Blur Facial', preview: 'bg-gradient-to-br from-zinc-500/20 to-zinc-700/20' },
-      { id: 'a2', name: 'Silhueta', preview: 'bg-gradient-to-br from-zinc-600/20 to-zinc-800/20' },
-    ],
-  },
-  {
-    type: 'ar_effect' as const,
-    name: 'Efeitos AR',
-    icon: Sparkles,
-    description: 'Efeitos de realidade aumentada e partículas',
-    requiredTier: 'premium' as SubscriptionTier,
-    filters: [
-      { id: 'ar1', name: 'Partículas Brilho', preview: 'bg-gradient-to-br from-amber-500/20 to-yellow-500/20' },
-      { id: 'ar2', name: 'Glow Suave', preview: 'bg-gradient-to-br from-violet-500/20 to-indigo-500/20' },
-      { id: 'ar3', name: 'Fogo', preview: 'bg-gradient-to-br from-red-500/20 to-orange-500/20' },
-    ],
-  },
+const filters: VideoFilter[] = [
+  // BASIC filters
+  { id: 'blur-bg', name: 'Desfocar Fundo', description: 'Blur suave no fundo', type: 'background', requiredTier: 'basic', emoji: '🌫️', category: 'Fundos' },
+  { id: 'bg-tron', name: 'Grid Tron', description: 'Background futurista neon', type: 'background', requiredTier: 'basic', emoji: '🌐', category: 'Fundos' },
+  { id: 'bg-cyber', name: 'Cidade Cyberpunk', description: 'Fundo de cidade neon', type: 'background', requiredTier: 'basic', emoji: '🏙️', category: 'Fundos' },
+  { id: 'bg-space', name: 'Espaço Sideral', description: 'Estrelas e nebulosas', type: 'background', requiredTier: 'basic', emoji: '🌌', category: 'Fundos' },
+  { id: 'mask-glasses', name: 'Óculos Neon', description: 'Óculos futuristas brilhantes', type: 'mask_2d', requiredTier: 'basic', emoji: '🕶️', category: 'Máscaras 2D' },
+  { id: 'mask-hat', name: 'Chapéu Digital', description: 'Chapéu holográfico', type: 'mask_2d', requiredTier: 'basic', emoji: '🎩', category: 'Máscaras 2D' },
+  { id: 'color-bw', name: 'Preto e Branco', description: 'Clássico monocromático', type: 'color', requiredTier: 'basic', emoji: '⚫', category: 'Filtros de Cor' },
+  { id: 'color-sepia', name: 'Sépia', description: 'Efeito vintage', type: 'color', requiredTier: 'basic', emoji: '🟤', category: 'Filtros de Cor' },
+  { id: 'color-neon', name: 'Neon Boost', description: 'Cores vibrantes cyber', type: 'color', requiredTier: 'basic', emoji: '💠', category: 'Filtros de Cor' },
+  { id: 'anon', name: 'Modo Anônimo', description: 'Pixelização do rosto', type: 'anonymity', requiredTier: 'basic', emoji: '🔒', category: 'Anonimato' },
+  // PREMIUM filters
+  { id: 'mask3d-tron', name: 'Capacete Tron', description: 'Máscara 3D futurista', type: 'mask_3d', requiredTier: 'premium', emoji: '🎭', category: 'Máscaras 3D' },
+  { id: 'mask3d-robot', name: 'Robot Cyborg', description: 'Transformação robótica', type: 'mask_3d', requiredTier: 'premium', emoji: '🤖', category: 'Máscaras 3D' },
+  { id: 'mask3d-alien', name: 'Alien', description: 'Máscara alienígena', type: 'mask_3d', requiredTier: 'premium', emoji: '👽', category: 'Máscaras 3D' },
+  { id: 'bg-matrix', name: 'Matrix Code', description: 'Código Matrix animado', type: 'background', requiredTier: 'premium', emoji: '🟢', category: 'Fundos Animados' },
+  { id: 'bg-cybercity', name: 'Cyber City Animated', description: 'Cidade com parallax', type: 'background', requiredTier: 'premium', emoji: '🌃', category: 'Fundos Animados' },
+  { id: 'fx-glitch', name: 'Glitch Digital', description: 'Efeito de falha digital', type: 'ar_effect', requiredTier: 'premium', emoji: '⚡', category: 'Efeitos Especiais' },
+  { id: 'fx-holo', name: 'Holograma', description: 'Projeção holográfica', type: 'ar_effect', requiredTier: 'premium', emoji: '✨', category: 'Efeitos Especiais' },
+  { id: 'fx-particles', name: 'Partículas Neon', description: 'Partículas flutuantes', type: 'ar_effect', requiredTier: 'premium', emoji: '💫', category: 'Efeitos Especiais' },
 ]
 
-const COMPARISON_ROWS = [
-  { feature: 'Backgrounds Virtuais', basic: true, premium: true },
-  { feature: 'Máscaras 2D', basic: true, premium: true },
-  { feature: 'Filtros de Cor', basic: true, premium: true },
-  { feature: 'Modo Anonimato', basic: true, premium: true },
-  { feature: 'Backgrounds Custom (upload)', basic: true, premium: true },
-  { feature: 'Máscaras 3D Avançadas', basic: false, premium: true },
-  { feature: 'Efeitos AR', basic: false, premium: true },
-  { feature: 'Recording com Filtros', basic: false, premium: true },
-]
+const categories = ['Todos', 'Fundos', 'Máscaras 2D', 'Máscaras 3D', 'Filtros de Cor', 'Efeitos Especiais', 'Anonimato', 'Fundos Animados']
+
+// Demo user tier
+const USER_TIER = 'basic' as string
 
 export const VideoFiltersPage = () => {
-  const { profile } = useAuth()
-  const userTier = profile?.subscription_tier || 'free'
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [previewFilter, setPreviewFilter] = useState<string | null>(null)
 
-  const canUseFilter = (requiredTier: SubscriptionTier) => {
-    const tierOrder: SubscriptionTier[] = ['free', 'basic', 'premium']
-    return tierOrder.indexOf(userTier) >= tierOrder.indexOf(requiredTier)
+  const filteredFilters = selectedCategory === 'Todos'
+    ? filters
+    : filters.filter(f => f.category === selectedCategory)
+
+  const canUse = (tier: string) => {
+    if (USER_TIER === 'premium') return true
+    if (USER_TIER === 'basic' && tier !== 'premium') return true
+    return tier === 'free'
   }
-
-  const filteredCategories = selectedCategory === 'all'
-    ? FILTER_CATEGORIES
-    : FILTER_CATEGORIES.filter((c) => c.type === selectedCategory)
 
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
-        {/* Page Title */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
-              <Camera className="w-8 h-8 text-primary-400" />
-              Filtros de Vídeo
-            </h1>
-            <p className="text-dark-500 mt-1.5 text-sm">
-              Plano atual: <span className="text-primary-400 font-semibold">{userTier.charAt(0).toUpperCase() + userTier.slice(1)}</span>
-            </p>
-          </div>
-          <Link to="/pricing">
-            <button className="btn-secondary flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold">
-              <Crown className="w-4 h-4" />
-              Upgrade
-            </button>
-          </Link>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full pb-24 md:pb-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+            <Sparkles className="w-8 h-8 text-primary-400" />
+            Filtros de Vídeo
+          </h1>
+          <p className="text-dark-500 mt-2 text-sm">
+            18 filtros disponíveis usando MediaPipe — máscaras, fundos e efeitos em tempo real!
+          </p>
         </div>
 
-        {/* Technology cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="card rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-light" />
+        {/* Demo Area */}
+        <div className="card p-6 mb-8 border border-primary-500/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-primary-400" />
+                Área de Preview
+              </h3>
+              <div className="aspect-video bg-dark-900 rounded-xl border border-white/5 flex items-center justify-center">
+                {previewFilter ? (
+                  <div className="text-center">
+                    <div className="text-6xl mb-3">{filters.find(f => f.id === previewFilter)?.emoji}</div>
+                    <p className="text-sm text-white font-medium">{filters.find(f => f.id === previewFilter)?.name}</p>
+                    <p className="text-xs text-dark-500 mt-1">Preview do filtro (MediaPipe em breve)</p>
+                  </div>
+                ) : (
+                  <div className="text-center text-dark-500">
+                    <Camera className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Clique em um filtro para visualizar</p>
+                  </div>
+                )}
               </div>
-              <h3 className="font-semibold text-gray-200">Tempo Real</h3>
             </div>
-            <p className="text-sm text-gray-500">Processamento de filtros em tempo real com baixa latência.</p>
-          </div>
-          <div className="card rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                <Eye className="w-5 h-5 text-pink-400" />
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Seu Plano</h3>
+              <div className="card p-4 border border-primary-500/20 bg-primary-500/5 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="w-5 h-5 text-primary-400" />
+                  <span className="font-bold text-white capitalize">{USER_TIER}</span>
+                </div>
+                <p className="text-xs text-dark-400">
+                  {USER_TIER === 'free' && 'Sem acesso a filtros. Faça upgrade!'}
+                  {USER_TIER === 'basic' && '10 filtros disponíveis. Upgrade para 18!'}
+                  {USER_TIER === 'premium' && 'Todos os 18 filtros desbloqueados!'}
+                </p>
               </div>
-              <h3 className="font-semibold text-gray-200">Detecção Precisa</h3>
-            </div>
-            <p className="text-sm text-gray-500">Tracking facial avançado para máscaras e efeitos perfeitos.</p>
-          </div>
-          <div className="card rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-emerald-400" />
+              <div className="space-y-2 text-xs text-dark-400">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span>Disponível no seu plano</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-3 h-3 text-amber-400" />
+                  <span className="text-amber-400">Requer upgrade</span>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-200">Performance</h3>
             </div>
-            <p className="text-sm text-gray-500">Otimizado para funcionar em qualquer dispositivo sem lag.</p>
           </div>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 flex-wrap mb-8">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedCategory === 'all'
-                ? 'bg-primary text-white shadow-card-hover'
-                : 'bg-surface text-gray-400 hover:text-white hover:bg-surface-light'
-            }`}
-          >
-            Todos
-          </button>
-          {FILTER_CATEGORIES.map((cat) => (
+        {/* Category Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          {categories.map((cat) => (
             <button
-              key={cat.type}
-              onClick={() => setSelectedCategory(cat.type)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                selectedCategory === cat.type
-                  ? 'bg-primary text-white shadow-card-hover'
-                  : 'bg-surface text-gray-400 hover:text-white hover:bg-surface-light'
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                selectedCategory === cat
+                  ? 'bg-primary-500/15 text-primary-400 border border-primary-500/20'
+                  : 'text-dark-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
-              <cat.icon className="w-3.5 h-3.5" />
-              {cat.name}
+              {cat}
             </button>
           ))}
         </div>
 
-        {/* Filter Categories */}
-        <div className="space-y-8 mb-12">
-          {filteredCategories.map((category) => {
-            const unlocked = canUseFilter(category.requiredTier)
+        {/* Filters Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filteredFilters.map((filter) => {
+            const available = canUse(filter.requiredTier)
             return (
-              <div key={category.type}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    unlocked ? 'bg-primary/10' : 'bg-surface'
-                  }`}>
-                    <category.icon className={`w-4 h-4 ${unlocked ? 'text-primary-light' : 'text-gray-600'}`} />
+              <button
+                key={filter.id}
+                onClick={() => available ? setPreviewFilter(filter.id) : undefined}
+                className={`card p-4 text-center transition-all group relative ${
+                  available
+                    ? 'hover:border-primary-500/30 hover:shadow-glow-primary cursor-pointer'
+                    : 'opacity-60 cursor-not-allowed'
+                } ${previewFilter === filter.id ? 'border-primary-500/40 bg-primary-500/5' : ''}`}
+              >
+                {/* Lock for unavailable */}
+                {!available && (
+                  <div className="absolute top-2 right-2">
+                    <Lock className="w-4 h-4 text-amber-400" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-200 flex items-center gap-2">
-                      {category.name}
-                      {!unlocked && (
-                        <span className="px-2 py-0.5 bg-accent/10 text-accent text-xs rounded-full font-medium">
-                          {category.requiredTier === 'premium' ? 'Premium' : 'Basic'}
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-xs text-gray-500">{category.description}</p>
-                  </div>
+                )}
+
+                {/* Tier badge */}
+                <div className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                  filter.requiredTier === 'premium'
+                    ? 'bg-amber-500/15 text-amber-400'
+                    : 'bg-primary-500/15 text-primary-400'
+                }`}>
+                  {filter.requiredTier === 'premium' ? 'PRO' : 'BASIC'}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {category.filters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => unlocked && setSelectedFilter(filter.id === selectedFilter ? null : filter.id)}
-                      className={`relative rounded-2xl border p-4 text-center transition-all ${
-                        !unlocked
-                          ? 'border-white/5 opacity-50 cursor-not-allowed'
-                          : selectedFilter === filter.id
-                          ? 'border-primary bg-primary/10 shadow-card-hover'
-                          : 'border-white/5 hover:border-white/10 bg-surface/50'
-                      }`}
-                    >
-                      <div className={`w-full aspect-square rounded-xl mb-2 ${filter.preview}`} />
-                      <span className="text-xs text-gray-300">{filter.name}</span>
-                      {!unlocked && (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-dark-bg/60">
-                          <Lock className="w-4 h-4 text-gray-500" />
-                        </div>
-                      )}
-                      {selectedFilter === filter.id && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                <div className="text-4xl mb-3 mt-2 group-hover:scale-110 transition-transform">{filter.emoji}</div>
+                <h4 className="text-sm font-semibold text-white mb-1">{filter.name}</h4>
+                <p className="text-[11px] text-dark-500 leading-relaxed">{filter.description}</p>
+                <div className="mt-2">
+                  <span className="text-[10px] text-dark-600 bg-white/[0.03] px-2 py-0.5 rounded-full">{filter.category}</span>
                 </div>
-              </div>
+              </button>
             )
           })}
-        </div>
-
-        {/* Comparison Table */}
-        <div className="card rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-white/5">
-            <h3 className="text-xl font-bold text-white">Comparativo de Planos</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="text-left py-3 px-6 text-sm font-medium text-gray-400">Recurso</th>
-                  <th className="text-center py-3 px-4 bg-primary/5">
-                    <div className="text-primary-light font-bold text-sm">BASIC</div>
-                    <div className="text-xs text-gray-500">R$ {PLANS.basic.price}/mês</div>
-                  </th>
-                  <th className="text-center py-3 px-4 bg-accent/5">
-                    <div className="text-accent font-bold text-sm">PREMIUM</div>
-                    <div className="text-xs text-gray-500">R$ {PLANS.premium.price}/mês</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON_ROWS.map((row, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    <td className="py-3 px-6 text-sm text-gray-300">{row.feature}</td>
-                    <td className="text-center py-3 px-4 bg-primary/5">
-                      {row.basic
-                        ? <Check className="w-4 h-4 text-emerald-400 mx-auto" />
-                        : <X className="w-4 h-4 text-gray-600 mx-auto" />
-                      }
-                    </td>
-                    <td className="text-center py-3 px-4 bg-accent/5">
-                      {row.premium
-                        ? <Check className="w-4 h-4 text-emerald-400 mx-auto" />
-                        : <X className="w-4 h-4 text-gray-600 mx-auto" />
-                      }
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="p-6 text-center">
-            <Link to="/pricing">
-              <Button variant="primary">
-                Fazer Upgrade Agora
-              </Button>
-            </Link>
-          </div>
         </div>
       </main>
       <Footer />

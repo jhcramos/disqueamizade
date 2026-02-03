@@ -1,4 +1,7 @@
-// Database Types
+// ═══════════════════════════════════════════════════════════════════════════
+// Database & Core Types
+// ═══════════════════════════════════════════════════════════════════════════
+
 export type SubscriptionTier = 'free' | 'basic' | 'premium'
 
 export type Profile = {
@@ -9,6 +12,7 @@ export type Profile = {
   age?: number
   city?: string
   languages?: string[]
+  hobbies?: string[]
   subscription_tier: SubscriptionTier
   subscription_expires_at?: string
   is_online: boolean
@@ -20,6 +24,11 @@ export type Profile = {
   total_earnings_stars: number
   rating_average?: number
   total_services_completed: number
+  rooms_visited: number
+  messages_sent: number
+  games_played: number
+  time_online_minutes: number
+  badges: string[]
   created_at: string
   updated_at: string
 }
@@ -53,6 +62,8 @@ export type MockRoom = {
   has_video: boolean
   online_count: number
   badge_color: string
+  is_official?: boolean
+  instance_number?: number
 }
 
 export type MockCreator = {
@@ -95,6 +106,8 @@ export type FichaPackage = {
   priceValue: number
   popular?: boolean
   bonus?: string
+  bonusPercent?: number
+  emoji?: string
 }
 
 export type Plan = {
@@ -111,10 +124,13 @@ export type RoomParticipant = {
   id: string
   room_id: string
   user_id: string
+  username: string
+  avatar_url: string
   role: 'participant' | 'moderator' | 'owner'
   is_broadcasting: boolean
   video_enabled: boolean
   audio_enabled: boolean
+  subscription_tier: SubscriptionTier
   joined_at: string
 }
 
@@ -122,6 +138,8 @@ export type ChatMessage = {
   id: string
   room_id: string
   user_id: string
+  username: string
+  avatar_url: string
   content: string
   message_type: 'text' | 'image' | 'emoji' | 'system'
   created_at: string
@@ -185,9 +203,12 @@ export type ServiceReview = {
 export type VideoFilter = {
   id: string
   name: string
+  description: string
   type: 'background' | 'mask_2d' | 'mask_3d' | 'color' | 'anonymity' | 'ar_effect'
   requiredTier: SubscriptionTier
   thumbnail?: string
+  emoji: string
+  category: string
 }
 
 export type PresenceState = {
@@ -203,10 +224,116 @@ export type PresenceState = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'room_invite' | 'new_message' | 'subscription_expiring' | 'service_request' | 'session_accepted'
+  type: 'room_invite' | 'new_message' | 'subscription_expiring' | 'service_request' | 'session_accepted' | 'game_invite' | 'system'
   title: string
   message: string
   data?: Record<string, unknown>
   read: boolean
+  created_at: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Marriage Game Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type GameStatus = 'waiting' | 'matching' | 'revealing' | 'completed'
+
+export interface GameParticipant {
+  user_id: string
+  username: string
+  avatar_url: string
+  age?: number
+  city?: string
+  bio?: string
+  joined_at: string
+}
+
+export interface MarriagePair {
+  id: string
+  participant1: GameParticipant
+  participant2: GameParticipant
+  matched_at: string
+  chat_room_id?: string
+  accepted_by_both: boolean
+  accepted_by_p1: boolean
+  accepted_by_p2: boolean
+}
+
+export interface MarriageGameSession {
+  id: string
+  room_id: string
+  status: GameStatus
+  participants: GameParticipant[]
+  pairs: MarriagePair[]
+  created_at: string
+  started_at?: string
+  completed_at?: string
+  min_participants: number
+  max_participants: number
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Secret Cabin Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type CabinStatus = 'available' | 'occupied' | 'reserved'
+
+export interface CabinOccupant {
+  user_id: string
+  username: string
+  avatar_url: string
+  joined_at: string
+  is_broadcasting: boolean
+}
+
+export interface SecretCabin {
+  id: string
+  number: number
+  name: string
+  description: string
+  capacity: number
+  status: CabinStatus
+  occupants: CabinOccupant[]
+  room_id?: string
+  reserved_by?: string
+  reserved_until?: string
+  occupied_since?: string
+  icon: string
+  color: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Marketplace Types
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type ServiceCategory = {
+  id: string
+  name: string
+  emoji: string
+  description: string
+  color: string
+}
+
+export type MarketplaceProvider = MockCreator & {
+  services: ProviderService[]
+  availability: string[]
+  reviews: ProviderReview[]
+}
+
+export type ProviderService = {
+  id: string
+  title: string
+  description: string
+  price_stars: number
+  duration_minutes: number
+  category: string
+}
+
+export type ProviderReview = {
+  id: string
+  reviewer_name: string
+  reviewer_avatar: string
+  rating: number
+  comment: string
   created_at: string
 }

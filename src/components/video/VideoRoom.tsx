@@ -10,7 +10,7 @@ interface VideoRoomProps {
   }>
 }
 
-export const VideoRoom: React.FC<VideoRoomProps> = ({ roomId, username, users }) => {
+export const VideoRoom: React.FC<VideoRoomProps> = ({ roomId: _roomId, username: _username, users }) => {
   const [isCameraOn, setIsCameraOn] = useState(false)
   const [isMicOn, setIsMicOn] = useState(false)
   const [isLiveKitConfigured, setIsLiveKitConfigured] = useState(false)
@@ -19,7 +19,7 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({ roomId, username, users })
     // Check if LiveKit is configured
     const livekitUrl = import.meta.env.VITE_LIVEKIT_URL
     const configured = livekitUrl && livekitUrl !== 'wss://your-project.livekit.cloud'
-    setIsLiveKitConfigured(configured)
+    setIsLiveKitConfigured(!!configured)
   }, [])
 
   const toggleCamera = () => {

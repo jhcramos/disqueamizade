@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
 import { RoomsPage } from './pages/RoomsPage'
@@ -9,8 +10,17 @@ import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
 import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
+import { MobileNav } from './components/common/MobileNav'
+import { ToastContainer } from './components/common/ToastContainer'
+import { useAuthStore } from './store/authStore'
 
 function App() {
+  const initialize = useAuthStore((s) => s.initialize)
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
+
   return (
     <div className="min-h-screen bg-dark-950 text-white nostalgia-bg">
       <Routes>
@@ -27,6 +37,8 @@ function App() {
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <MobileNav />
+      <ToastContainer />
     </div>
   )
 }

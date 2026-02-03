@@ -109,6 +109,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       is_service_provider: false,
       total_earnings_stars: 0,
       total_services_completed: 0,
+      rooms_visited: 0,
+      messages_sent: 0,
+      games_played: 0,
+      time_online_minutes: 0,
+      badges: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

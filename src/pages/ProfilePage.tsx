@@ -1,239 +1,286 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Star, MapPin, Clock, Award, Users, Shield, ArrowLeft, Calendar, Lock, Heart } from 'lucide-react'
-import { Header } from '../components/common/Header'
-import { Footer } from '../components/common/Footer'
-import { getCreatorById, mockCreators } from '../data/mockCreators'
+import {
+  MapPin, Clock, Award, Users, Shield, ArrowLeft, Calendar,
+  Lock, Edit3, Bell, Globe, Trash2, Download, MessageCircle,
+  Gamepad2, Eye, Crown, Settings, ChevronRight, Camera,
+} from 'lucide-react'
+import { Header } from '@/components/common/Header'
+import { Footer } from '@/components/common/Footer'
+
+const MOCK_PROFILE = {
+  id: 'me',
+  username: 'disque_user',
+  avatar: 'https://i.pravatar.cc/150?img=68',
+  bio: 'Adoro conhecer pessoas novas e conversar sobre tecnologia, viagens e música! 🎵✈️💻',
+  age: 28,
+  city: 'São Paulo',
+  languages: ['Português', 'Inglês', 'Espanhol'],
+  hobbies: ['Tecnologia', 'Viagens', 'Música', 'Fotografia', 'Games'],
+  subscription_tier: 'basic' as string,
+  stars_balance: 150,
+  is_online: true,
+  is_featured: false,
+  joined_at: '2024-06-15',
+  stats: {
+    rooms_visited: 47,
+    messages_sent: 1234,
+    time_online_hours: 89,
+    games_played: 15,
+  },
+  badges: [
+    { id: 'early', name: 'Early Adopter', emoji: '🏆', description: 'Um dos primeiros usuários' },
+    { id: 'social', name: 'Social Butterfly', emoji: '🦋', description: 'Visitou 25+ salas' },
+    { id: 'chatter', name: 'Tagarela', emoji: '💬', description: 'Enviou 1000+ mensagens' },
+    { id: 'gamer', name: 'Jogador', emoji: '🎮', description: 'Participou de 10+ jogos' },
+  ],
+}
+
+type Tab = 'profile' | 'stats' | 'settings'
 
 export const ProfilePage = () => {
   const { userId } = useParams()
-  const creator = getCreatorById(userId || '') || mockCreators[0]
+  const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [isEditing, setIsEditing] = useState(false)
+  const profile = MOCK_PROFILE
+
+  const isOwnProfile = userId === 'me' || userId === profile.id
 
   return (
-    <div className="min-h-screen bg-dark-bg text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full pb-24 md:pb-8">
         {/* Back */}
-        <Link to="/marketplace" className="inline-flex items-center gap-2 text-gray-400 hover:text-primary-light transition-colors mb-6">
-          <ArrowLeft className="w-4 h-4" />
-          Voltar ao Marketplace
+        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white transition-colors mb-6 text-sm">
+          <ArrowLeft className="w-4 h-4" /> Voltar
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left — Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="card rounded-2xl overflow-hidden sticky top-24">
-              {/* Avatar */}
-              <div className="relative">
-                <div className="aspect-square bg-surface">
-                  <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover" />
-                </div>
-                {creator.isOnline && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-dark-bg/80 backdrop-blur-sm border border-emerald-500/30">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-sm text-emerald-400 font-bold">Online agora</span>
-                  </div>
-                )}
-                {creator.isFeatured && (
-                  <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-bold">
-                    ⭐ Creator Destaque
-                  </div>
-                )}
+        {/* Profile Header Card */}
+        <div className="card overflow-hidden mb-6">
+          {/* Banner */}
+          <div className="h-32 sm:h-40 bg-gradient-to-r from-primary-600 via-primary-500 to-purple-600 relative">
+            {profile.is_featured && (
+              <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 text-amber-300 text-xs font-bold">
+                ⭐ Perfil Destaque
               </div>
-
-              {/* Info */}
-              <div className="p-6">
-                <h1 className="text-2xl font-bold text-white mb-1">{creator.name}</h1>
-                <p className="text-sm text-gray-500 mb-3">@{creator.username}</p>
-
-                <div className="flex items-center gap-2 mb-4">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-400">{creator.city}</span>
-                </div>
-
-                {/* Rating */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${i < Math.floor(creator.rating) ? 'text-accent fill-accent' : 'text-gray-600'}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-lg font-bold text-accent">{creator.rating}</span>
-                  <span className="text-sm text-gray-500">({creator.reviewCount} avaliações)</span>
-                </div>
-
-                {/* Service */}
-                <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
-                  <span className="text-2xl">{creator.serviceEmoji}</span>
-                  <span className="text-primary-light font-bold">{creator.service}</span>
-                </div>
-
-                {/* Price */}
-                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-accent/10 border border-accent/20">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">Preço por sessão</p>
-                    <p className="text-2xl font-bold text-accent">{creator.priceInFichas} fichas</p>
-                  </div>
-                  <div className="text-3xl">🪙</div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark hover:shadow-card-hover transition-all text-lg">
-                    Contratar Sessão
-                  </button>
-                  <button className="w-full py-3.5 rounded-xl border border-primary/30 text-primary-light font-bold hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
-                    <Heart className="w-5 h-5" />
-                    Assinar Creator
-                  </button>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mt-6">
-                  {creator.tags.map((tag) => (
-                    <span key={tag} className="px-3 py-1 text-xs rounded-full bg-surface text-gray-400 border border-white/5">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Right — Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Bio */}
-            <div className="card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Sobre</h2>
-              <p className="text-gray-300 leading-relaxed">{creator.bio}</p>
-            </div>
+          <div className="px-6 pb-6">
+            {/* Avatar */}
+            <div className="relative -mt-16 mb-4 flex items-end justify-between">
+              <div className="relative">
+                <img
+                  src={profile.avatar}
+                  alt={profile.username}
+                  className="w-28 h-28 rounded-2xl object-cover border-4 border-dark-950 shadow-elevated"
+                />
+                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-dark-950 ${
+                  profile.is_online ? 'bg-emerald-400' : 'bg-dark-600'
+                }`} />
+                {isOwnProfile && (
+                  <button className="absolute bottom-0 left-0 p-1.5 rounded-lg bg-dark-950/80 backdrop-blur-sm text-dark-400 hover:text-white transition-colors">
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="card rounded-2xl p-5 text-center">
-                <Award className="w-8 h-8 text-primary-light mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{creator.sessionsCompleted}</div>
-                <div className="text-xs text-gray-500 font-medium">Sessões</div>
-              </div>
-              <div className="card rounded-2xl p-5 text-center">
-                <Star className="w-8 h-8 text-accent mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{creator.satisfactionRate}%</div>
-                <div className="text-xs text-gray-500 font-medium">Satisfação</div>
-              </div>
-              <div className="card rounded-2xl p-5 text-center">
-                <Users className="w-8 h-8 text-primary mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">{creator.reviewCount}</div>
-                <div className="text-xs text-gray-500 font-medium">Avaliações</div>
-              </div>
-              <div className="card rounded-2xl p-5 text-center">
-                <Shield className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">Verificado</div>
-                <div className="text-xs text-gray-500 font-medium">Status</div>
-              </div>
-            </div>
-
-            {/* Schedule */}
-            <div className="card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Disponibilidade
-              </h2>
-              <div className="space-y-3">
-                {creator.schedule.map((s, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-surface/50 border border-white/5">
-                    <Clock className="w-5 h-5 text-primary-light" />
-                    <span className="text-gray-300">{s}</span>
-                  </div>
-                ))}
-              </div>
-              {creator.isOnline ? (
-                <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Disponível agora para sessão!
-                </div>
-              ) : (
-                <div className="mt-4 text-sm text-gray-500">
-                  Creator offline no momento. Você pode agendar uma sessão.
-                </div>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="btn-secondary btn-sm"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  {isEditing ? 'Salvar' : 'Editar'}
+                </button>
               )}
             </div>
 
-            {/* Gallery */}
-            <div className="card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Galeria</h2>
-              {creator.gallery.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {creator.gallery.map((img, i) => (
-                    <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-white/5 group">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-dark-bg/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Lock className="w-6 h-6 text-primary-light" />
-                      </div>
-                    </div>
-                  ))}
-                  {/* Blurred locked items */}
-                  {[1, 2, 3].map((i) => (
-                    <div key={`locked-${i}`} className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-surface">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent backdrop-blur-xl flex flex-col items-center justify-center">
-                        <Lock className="w-6 h-6 text-gray-500 mb-1" />
-                        <span className="text-xs text-gray-500">Assinar para ver</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-surface">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent flex flex-col items-center justify-center">
-                        <Lock className="w-6 h-6 text-gray-500 mb-1" />
-                        <span className="text-xs text-gray-500">Assinar para ver</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-sm text-gray-500 mt-4 text-center">
-                🔒 Assine este creator para desbloquear todo o conteúdo exclusivo
-              </p>
+            {/* Info */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+              <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
+              <div className="flex items-center gap-2">
+                <span className={`badge ${
+                  profile.subscription_tier === 'premium' ? 'badge-amber' :
+                  profile.subscription_tier === 'basic' ? 'badge-primary' :
+                  'bg-dark-800 text-dark-400 border border-dark-700'
+                }`}>
+                  {profile.subscription_tier === 'premium' && <Crown className="w-3 h-3" />}
+                  {profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)}
+                </span>
+                {profile.is_online && (
+                  <span className="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Online</span>
+                )}
+              </div>
             </div>
 
-            {/* Reviews preview */}
-            <div className="card rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Avaliações Recentes</h2>
-              <div className="space-y-4">
-                {[
-                  { name: 'Juliana M.', rating: 5, text: 'Excelente profissional! Super recomendo. Sessão incrível.', date: 'há 2 dias' },
-                  { name: 'Carlos R.', rating: 5, text: 'Muito atencioso(a) e dedicado(a). Voltarei com certeza!', date: 'há 5 dias' },
-                  { name: 'Ana Paula S.', rating: 4, text: 'Boa experiência, aprendi bastante. Preço justo.', date: 'há 1 semana' },
-                ].map((review, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-surface/50 border border-white/5">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-xs font-bold text-white">
-                          {review.name[0]}
-                        </div>
-                        <span className="font-bold text-white text-sm">{review.name}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">{review.date}</span>
-                    </div>
-                    <div className="flex items-center gap-1 mb-2">
-                      {Array.from({ length: review.rating }).map((_, j) => (
-                        <Star key={j} className="w-3 h-3 text-accent fill-accent" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-400">{review.text}</p>
-                  </div>
-                ))}
-              </div>
+            <p className="text-dark-400 text-sm mb-4 max-w-xl">{profile.bio}</p>
+
+            <div className="flex flex-wrap gap-3 text-xs text-dark-400">
+              {profile.city && (
+                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{profile.city}</span>
+              )}
+              {profile.age && (
+                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{profile.age} anos</span>
+              )}
+              <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{profile.languages.join(', ')}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Desde {new Date(profile.joined_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}</span>
+            </div>
+
+            {/* Hobbies */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {profile.hobbies.map((h) => (
+                <span key={h} className="px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/15 text-xs text-primary-400 font-medium">
+                  {h}
+                </span>
+              ))}
             </div>
           </div>
         </div>
-      </main>
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 p-1 bg-white/[0.02] rounded-xl border border-white/5">
+          {([
+            { id: 'profile' as Tab, label: 'Perfil', icon: Users },
+            { id: 'stats' as Tab, label: 'Estatísticas', icon: Award },
+            ...(isOwnProfile ? [{ id: 'settings' as Tab, label: 'Configurações', icon: Settings }] : []),
+          ]).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === id
+                  ? 'bg-primary-500/15 text-primary-400'
+                  : 'text-dark-400 hover:text-white'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ═══ PROFILE TAB ═══ */}
+        {activeTab === 'profile' && (
+          <div className="space-y-6">
+            {/* Badges */}
+            <div className="card p-6">
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" /> Conquistas
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {profile.badges.map((badge) => (
+                  <div key={badge.id} className="card p-3 text-center hover:border-amber-500/20 transition-all">
+                    <div className="text-3xl mb-2">{badge.emoji}</div>
+                    <p className="text-sm font-semibold text-white">{badge.name}</p>
+                    <p className="text-[10px] text-dark-500 mt-1">{badge.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Featured Profile CTA */}
+            {isOwnProfile && !profile.is_featured && (
+              <div className="card p-6 border border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent">
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">⭐</div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white mb-1">Perfil em Destaque</h3>
+                    <p className="text-xs text-dark-400 mb-3">
+                      Apareça no carrossel da página inicial! Mais visibilidade = mais conexões.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all">1 dia — R$ 9,90</button>
+                      <button className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all">7 dias — R$ 49,90</button>
+                      <button className="btn-sm bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-all font-bold">30 dias — R$ 149,90</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ STATS TAB ═══ */}
+        {activeTab === 'stats' && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card p-5 text-center">
+              <MessageCircle className="w-8 h-8 text-primary-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-white">{profile.stats.rooms_visited}</div>
+              <div className="text-xs text-dark-500 mt-1">Salas Visitadas</div>
+            </div>
+            <div className="card p-5 text-center">
+              <MessageCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-white">{profile.stats.messages_sent.toLocaleString()}</div>
+              <div className="text-xs text-dark-500 mt-1">Mensagens Enviadas</div>
+            </div>
+            <div className="card p-5 text-center">
+              <Clock className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-white">{profile.stats.time_online_hours}h</div>
+              <div className="text-xs text-dark-500 mt-1">Tempo Online</div>
+            </div>
+            <div className="card p-5 text-center">
+              <Gamepad2 className="w-8 h-8 text-pink-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-white">{profile.stats.games_played}</div>
+              <div className="text-xs text-dark-500 mt-1">Jogos Jogados</div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ SETTINGS TAB ═══ */}
+        {activeTab === 'settings' && isOwnProfile && (
+          <div className="space-y-4">
+            {/* Notifications */}
+            <div className="card p-5">
+              <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Bell className="w-5 h-5 text-primary-400" /> Notificações</h3>
+              <div className="space-y-3">
+                {['Convites para salas', 'Novas mensagens', 'Convites para jogos', 'Promoções e novidades'].map((item) => (
+                  <label key={item} className="flex items-center justify-between py-2">
+                    <span className="text-sm text-dark-300">{item}</span>
+                    <div className="w-10 h-6 bg-primary-500/30 rounded-full relative cursor-pointer">
+                      <div className="absolute top-1 left-5 w-4 h-4 bg-primary-400 rounded-full transition-all" />
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Privacy */}
+            <div className="card p-5">
+              <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-primary-400" /> Privacidade</h3>
+              <div className="space-y-3">
+                {['Mostrar online status', 'Perfil visível para todos', 'Permitir convites de estranhos'].map((item) => (
+                  <label key={item} className="flex items-center justify-between py-2">
+                    <span className="text-sm text-dark-300">{item}</span>
+                    <div className="w-10 h-6 bg-primary-500/30 rounded-full relative cursor-pointer">
+                      <div className="absolute top-1 left-5 w-4 h-4 bg-primary-400 rounded-full transition-all" />
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* LGPD */}
+            <div className="card p-5">
+              <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Lock className="w-5 h-5 text-primary-400" /> LGPD — Seus Dados</h3>
+              <div className="space-y-2">
+                <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.03] transition-all group">
+                  <span className="flex items-center gap-2 text-sm text-dark-300"><Download className="w-4 h-4" /> Exportar meus dados</span>
+                  <ChevronRight className="w-4 h-4 text-dark-600 group-hover:text-white transition-colors" />
+                </button>
+                <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.03] transition-all group">
+                  <span className="flex items-center gap-2 text-sm text-dark-300"><Eye className="w-4 h-4" /> Política de Privacidade</span>
+                  <ChevronRight className="w-4 h-4 text-dark-600 group-hover:text-white transition-colors" />
+                </button>
+                <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-red-500/5 transition-all group">
+                  <span className="flex items-center gap-2 text-sm text-red-400"><Trash2 className="w-4 h-4" /> Excluir minha conta</span>
+                  <ChevronRight className="w-4 h-4 text-dark-600 group-hover:text-red-400 transition-colors" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
       <Footer />
     </div>
   )
