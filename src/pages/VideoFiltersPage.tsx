@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/common'
+import { Header } from '@/components/common/Header'
+import { Footer } from '@/components/common/Footer'
 import { useAuth } from '@/hooks/useAuth'
 import { PLANS } from '@/config/plans.config'
 import type { SubscriptionTier } from '@/types'
@@ -124,36 +126,29 @@ export const VideoFiltersPage = () => {
     : FILTER_CATEGORIES.filter((c) => c.type === selectedCategory)
 
   return (
-    <div className="min-h-screen bg-dark-bg text-gray-100">
-      {/* Header */}
-      <header className="border-b border-white/5 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/rooms" className="text-gray-400 hover:text-white transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-primary-light" />
-                  Filtros de Vídeo
-                </h1>
-                <p className="text-xs text-gray-500">
-                  Plano atual: <span className="text-primary-light font-semibold">{userTier.charAt(0).toUpperCase() + userTier.slice(1)}</span>
-                </p>
-              </div>
-            </div>
-            <Link to="/pricing">
-              <Button variant="outline" size="sm">
-                <Crown className="w-3.5 h-3.5 mr-1.5 inline" />
-                Upgrade
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+      <Header />
 
-      <div className="container mx-auto px-4 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
+        {/* Page Title */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+              <Camera className="w-8 h-8 text-primary-400" />
+              Filtros de Vídeo
+            </h1>
+            <p className="text-dark-500 mt-1.5 text-sm">
+              Plano atual: <span className="text-primary-400 font-semibold">{userTier.charAt(0).toUpperCase() + userTier.slice(1)}</span>
+            </p>
+          </div>
+          <Link to="/pricing">
+            <button className="btn-secondary flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold">
+              <Crown className="w-4 h-4" />
+              Upgrade
+            </button>
+          </Link>
+        </div>
+
         {/* Technology cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card rounded-2xl p-5">
@@ -320,7 +315,8 @@ export const VideoFiltersPage = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   )
 }

@@ -6,6 +6,9 @@ import { PricingPage } from './pages/PricingPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
+import { RoomPage } from './pages/RoomPage'
+import { SecretCabinsPage } from './pages/SecretCabinsPage'
+import { VideoFiltersPage } from './pages/VideoFiltersPage'
 
 function App() {
   return (
@@ -18,8 +21,9 @@ function App() {
         <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route path="/hobbies" element={<HobbiesPage />} />
         <Route path="/auth" element={<AuthPage />} />
-        {/* Legacy route support */}
-        <Route path="/room/:roomId" element={<Navigate to="/rooms" replace />} />
+        <Route path="/room/:roomId" element={<RoomPage />} />
+        <Route path="/cabines" element={<SecretCabinsPage />} />
+        <Route path="/filtros" element={<VideoFiltersPage />} />
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

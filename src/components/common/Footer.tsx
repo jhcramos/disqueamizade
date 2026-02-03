@@ -34,6 +34,8 @@ export const Footer = () => {
               <li><Link to="/marketplace" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Marketplace</Link></li>
               <li><Link to="/hobbies" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Hobbies</Link></li>
               <li><Link to="/pricing" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Planos & Fichas</Link></li>
+              <li><Link to="/cabines" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Cabines Secretas</Link></li>
+              <li><Link to="/filtros" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Filtros de Vídeo</Link></li>
             </ul>
           </div>
 
@@ -41,6 +43,7 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-primary-light mb-4">Suporte</h4>
             <ul className="space-y-2">
+              <li><Link to="/auth" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Entrar / Cadastrar</Link></li>
               <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Central de Ajuda</a></li>
               <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Segurança</a></li>
               <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Denunciar Abuso</a></li>

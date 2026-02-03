@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/common'
+import { Header } from '@/components/common/Header'
+import { Footer } from '@/components/common/Footer'
 import { useAuth } from '@/hooks/useAuth'
 import {
   Lock,
@@ -70,31 +72,19 @@ export const SecretCabinsPage = () => {
   // Premium lock screen
   if (!isPremium) {
     return (
-      <div className="min-h-screen bg-dark-bg text-gray-100">
-        <header className="border-b border-white/5 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <Link to="/rooms" className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">DA</span>
-                </div>
-                <h1 className="text-lg font-bold text-white">Disque Amizade</h1>
-              </Link>
-            </div>
-          </div>
-        </header>
-
-        <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-lg text-center">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-pink-500/20 border border-primary/30 flex items-center justify-center mx-auto mb-6">
-              <Lock className="w-10 h-10 text-primary-light" />
+              <Lock className="w-10 h-10 text-primary-400" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-4">Cabines Secretas</h1>
-            <p className="text-gray-400 mb-2">
+            <p className="text-dark-400 mb-2">
               Salas exclusivas e privadas para conversas íntimas com vídeo.
             </p>
-            <p className="text-gray-500 text-sm mb-8">
-              Disponível apenas para assinantes <span className="text-accent font-semibold">Premium</span>.
+            <p className="text-dark-500 text-sm mb-8">
+              Disponível apenas para assinantes <span className="text-amber-400 font-semibold">Premium</span>.
             </p>
             <Link to="/pricing">
               <Button variant="primary" size="lg">
@@ -104,39 +94,31 @@ export const SecretCabinsPage = () => {
             </Link>
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-gray-100">
-      {/* Header */}
-      <header className="border-b border-white/5 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/rooms" className="text-gray-400 hover:text-white transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary-light" />
-                  Cabines Secretas
-                </h1>
-                <p className="text-xs text-gray-500">Conversas privadas e exclusivas</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-xs font-semibold text-accent">
-                <Crown className="w-3 h-3 inline mr-1" />
-                Premium
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+      <Header />
 
-      <div className="container mx-auto px-4 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
+        {/* Page Title */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+              <Sparkles className="w-8 h-8 text-primary-400" />
+              Cabines Secretas
+            </h1>
+            <p className="text-dark-500 mt-1.5 text-sm">Conversas privadas e exclusivas</p>
+          </div>
+          <span className="self-start md:self-auto px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full text-sm font-semibold text-amber-400 flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            Premium
+          </span>
+        </div>
+
         {/* Stats + Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex gap-4 flex-1">
@@ -274,7 +256,8 @@ export const SecretCabinsPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   )
 }
