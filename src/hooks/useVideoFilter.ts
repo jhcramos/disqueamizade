@@ -71,16 +71,25 @@ export const useVideoFilter = (
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const faceMeshRef = useRef<any>(null)
   const cameraRef = useRef<any>(null)
+  // ★ Use a ref to always have the latest filterState in the onResults callback
+  const filterStateRef = useRef<FilterState>({
+    enabled: false,
+    currentMask: initialFilter,
+    intensity: 1.0,
+    settings: {}
+  })
 
   const [filterState, setFilterState] = useState<FilterState>(() => {
     try {
       const saved = localStorage.getItem('disque-video-filter')
-      return saved ? JSON.parse(saved) : {
+      const parsed = saved ? JSON.parse(saved) : {
         enabled: false,
         currentMask: initialFilter,
         intensity: 1.0,
         settings: {}
       }
+      filterStateRef.current = parsed
+      return parsed
     } catch {
       return { enabled: false, currentMask: initialFilter, intensity: 1.0, settings: {} }
     }
@@ -92,12 +101,13 @@ export const useVideoFilter = (
   const [mediaPipeReady, setMediaPipeReady] = useState(false)
   const [mediaPipeError, setMediaPipeError] = useState<string | null>(null)
 
-  // Save filter state
+  // ★ Keep the ref in sync with state
   useEffect(() => {
+    filterStateRef.current = filterState
     try { localStorage.setItem('disque-video-filter', JSON.stringify(filterState)) } catch {}
   }, [filterState])
 
-  // Load MediaPipe from CDN
+  // Load MediaPipe from CDN (once)
   useEffect(() => {
     let cancelled = false
     loadMediaPipe()
@@ -122,13 +132,17 @@ export const useVideoFilter = (
           const ctx = canvas.getContext('2d')!
           ctx.clearRect(0, 0, canvas.width, canvas.height)
           if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
-          if (filterState.enabled && filterState.currentMask) {
-            const renderer = MASK_RENDERERS[filterState.currentMask]
+
+          // ★ Read from ref (always current) instead of stale closure
+          const fs = filterStateRef.current
+          if (fs.enabled && fs.currentMask) {
+            const renderer = MASK_RENDERERS[fs.currentMask]
             if (renderer) {
-              try { renderer.render(ctx, landmarks, canvas.width, canvas.height, filterState.settings) }
+              try { renderer.render(ctx, landmarks, canvas.width, canvas.height, fs.settings) }
               catch (e) { console.warn('Filter render error:', e) }
             }
           }
+
           setDetectionResults({
             landmarks,
             confidence: 0.9,
@@ -147,11 +161,6 @@ export const useVideoFilter = (
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Re-apply filter settings when they change
-  useEffect(() => {
-    // faceMesh onResults already reads filterState via closure
-  }, [filterState.enabled, filterState.currentMask, filterState.settings])
 
   // Start camera processing when stream + MediaPipe are ready
   useEffect(() => {
