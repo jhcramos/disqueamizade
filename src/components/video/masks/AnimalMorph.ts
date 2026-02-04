@@ -5,8 +5,6 @@
 import type { NormalizedLandmarkList } from '@mediapipe/face_mesh'
 import type { MaskRenderer } from '../../../types/filters'
 
-type AnimalType = 'cat' | 'dog' | 'fox' | 'owl'
-
 const render = (
   ctx: CanvasRenderingContext2D,
   landmarks: NormalizedLandmarkList,

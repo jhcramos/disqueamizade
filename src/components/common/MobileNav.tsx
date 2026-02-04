@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, MessageSquare, ShoppingBag, User, Shuffle } from 'lucide-react'
+import { Home, MessageSquare, Sparkles, Lock, User } from 'lucide-react'
 
 const mobileNavItems = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/rooms', label: 'Salas', icon: MessageSquare },
-  { to: '/roulette', label: 'Roleta', icon: Shuffle },
-  { to: '/marketplace', label: 'Market', icon: ShoppingBag },
+  { to: '/stories', label: 'Stories', icon: Sparkles },
+  { to: '/exclusive', label: 'Exclusivo', icon: Lock },
   { to: '/profile/me', label: 'Perfil', icon: User },
 ]
 
@@ -22,7 +22,7 @@ export const MobileNav = () => {
           const isActive = location.pathname === to || 
             (to === '/rooms' && location.pathname.startsWith('/rooms')) ||
             (to === '/profile/me' && location.pathname.startsWith('/profile'))
-          const isRoulette = to === '/roulette'
+          const isExclusive = to === '/exclusive'
           
           return (
             <Link
@@ -30,7 +30,7 @@ export const MobileNav = () => {
               to={to}
               className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl min-w-[56px] transition-all ${
                 isActive
-                  ? isRoulette ? 'text-pink-400' : 'text-primary-400'
+                  ? isExclusive ? 'text-amber-400' : 'text-primary-400'
                   : 'text-dark-500 active:text-white'
               }`}
             >

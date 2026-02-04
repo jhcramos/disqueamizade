@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, X, Coins, ChevronDown, ChevronUp, Crown, Zap, Gift, Star, Eye, Shuffle, Users, Shield } from 'lucide-react'
+import { Check, X, Coins, ChevronDown, ChevronUp, Crown, Zap, Gift, Star, Eye, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'

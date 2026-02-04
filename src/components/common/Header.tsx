@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Coins, User, LogIn, Bell, Shuffle, Crown } from 'lucide-react'
+import { Menu, X, Coins, User, LogIn, Bell, Crown } from 'lucide-react'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useFichaStore } from '@/store/fichaStore'
 import { useAuthStore } from '@/store/authStore'
@@ -10,6 +10,8 @@ const navLinks = [
   { to: '/', label: 'Início' },
   { to: '/rooms', label: 'Salas' },
   { to: '/roulette', label: 'Roleta' },
+  { to: '/stories', label: 'Stories' },
+  { to: '/exclusive', label: 'Exclusivo' },
   { to: '/marketplace', label: 'Marketplace' },
   { to: '/hobbies', label: 'Hobbies' },
   { to: '/pricing', label: 'Planos' },

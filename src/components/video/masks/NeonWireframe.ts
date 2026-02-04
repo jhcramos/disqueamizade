@@ -90,7 +90,7 @@ const drawEyebrows = (
   landmarks: NormalizedLandmarkList,
   width: number,
   height: number,
-  color: string
+  _color: string
 ): void => {
   // Left eyebrow landmarks
   const leftEyebrow = [70, 63, 105, 66, 107]
@@ -124,7 +124,7 @@ const drawNoseBridge = (
   landmarks: NormalizedLandmarkList,
   width: number,
   height: number,
-  color: string
+  _color: string
 ): void => {
   // Nose bridge landmarks
   const noseBridge = [6, 8, 9, 10, 151]

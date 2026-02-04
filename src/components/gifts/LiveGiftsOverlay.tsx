@@ -17,7 +17,7 @@ interface LiveGiftsOverlayProps {
   onGiftSent?: (gift: SentGift) => void
 }
 
-export const LiveGiftsOverlay = ({ roomId, receiverId, onGiftSent }: LiveGiftsOverlayProps) => {
+export const LiveGiftsOverlay = ({ roomId, receiverId, onGiftSent: _onGiftSent }: LiveGiftsOverlayProps) => {
   const [showPicker, setShowPicker] = useState(false)
   const [animations, setAnimations] = useState<ActiveGiftAnimation[]>([])
   const { balance, sendGift, canAfford } = useFichaStore()

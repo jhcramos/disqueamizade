@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TrendingUp, DollarSign, Users, Star, Calendar, Eye, ArrowUp, ArrowDown, Coins, Play, BarChart3, Clock } from 'lucide-react'
+import { TrendingUp, DollarSign, Users, Star, Calendar, ArrowUp, Coins, Play, BarChart3, Clock } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 

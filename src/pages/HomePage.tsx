@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle, Video, ShoppingBag, Sparkles, Users, ArrowRight, Star, ChevronRight, Phone, Shuffle, Crown, Trophy, Coins, Zap } from 'lucide-react'
+import { MessageCircle, ShoppingBag, Users, ArrowRight, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { FeaturedCarousel } from '../components/featured/FeaturedCarousel'

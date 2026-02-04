@@ -30,7 +30,7 @@ const CITIES = [
 export const RoulettePage = () => {
   const [status, setStatus] = useState<RouletteStatus>('idle')
   const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState<RouletteFilters>({})
+  const [_filters, _setFilters] = useState<RouletteFilters>({})
   const [currentPartner, setCurrentPartner] = useState<typeof MOCK_PARTNERS[0] | null>(null)
   const [matchesCount, setMatchesCount] = useState(0)
   const [videoEnabled, setVideoEnabled] = useState(true)

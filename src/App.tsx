@@ -12,6 +12,8 @@ import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
+import { StoriesPage } from './pages/StoriesPage'
+import { ExclusivePage } from './pages/ExclusivePage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { useAuthStore } from './store/authStore'
@@ -38,6 +40,8 @@ function App() {
         <Route path="/cabines" element={<SecretCabinsPage />} />
         <Route path="/filtros" element={<VideoFiltersPage />} />
         <Route path="/creator" element={<InfluencerDashboardPage />} />
+        <Route path="/stories" element={<StoriesPage />} />
+        <Route path="/exclusive" element={<ExclusivePage />} />
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -38,7 +38,7 @@ export const FilteredVideo: React.FC<FilteredVideoProps> = ({
     isProcessing,
     enableFilter,
     disableFilter,
-    switchFilter,
+    switchFilter: _switchFilter,
     currentFilter,
     detectionResults
   } = useVideoFilter(videoStream)

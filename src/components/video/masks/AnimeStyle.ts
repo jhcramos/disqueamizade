@@ -14,9 +14,9 @@ const render = (
 ): void => {
   const {
     eyeSize = 1.5,
-    skinSmooth = 0.8,
+    skinSmooth: _skinSmooth = 0.8,
     intensity = 0.7,
-    colorBoost = 1.2
+    colorBoost: _colorBoost = 1.2
   } = settings
 
   ctx.save()
@@ -54,7 +54,7 @@ const drawAnimeEyes = (
   leftEye: any,
   rightEye: any,
   leftEyeOuter: any,
-  rightEyeOuter: any,
+  _rightEyeOuter: any,
   width: number,
   height: number,
   eyeSize: number,
