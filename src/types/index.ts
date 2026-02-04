@@ -1,8 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Database & Core Types
+// Database & Core Types — V2
 // ═══════════════════════════════════════════════════════════════════════════
 
 export type SubscriptionTier = 'free' | 'basic' | 'premium'
+
+export type OstentacaoStatus = {
+  isOstentacao: boolean
+  fichasBalance: number
+  badgeLevel: 'none' | 'bronze' | 'silver' | 'gold' | 'diamond'
+}
 
 export type Profile = {
   id: string
@@ -19,9 +25,13 @@ export type Profile = {
   last_seen_at?: string
   is_featured: boolean
   featured_until?: string
-  stars_balance: number
+  fichas_balance: number
+  is_ostentacao: boolean
+  is_creator: boolean
+  creator_verified: boolean
   is_service_provider: boolean
-  total_earnings_stars: number
+  total_earnings_fichas: number
+  total_spent_fichas: number
   rating_average?: number
   total_services_completed: number
   rooms_visited: number
@@ -31,7 +41,12 @@ export type Profile = {
   badges: string[]
   created_at: string
   updated_at: string
+  // Legacy alias
+  stars_balance: number
+  total_earnings_stars: number
 }
+
+export type RoomType = 'official' | 'community' | 'vip' | 'speed_dating' | 'karaoke' | 'dj'
 
 export type Room = {
   id: string
@@ -45,6 +60,10 @@ export type Room = {
   requires_subscription?: SubscriptionTier
   owner_id: string
   is_active: boolean
+  room_type: RoomType
+  entry_cost_fichas: number
+  category?: string
+  is_fixed: boolean
   created_at: string
   updated_at: string
 }
@@ -53,7 +72,7 @@ export type MockRoom = {
   id: string
   name: string
   description: string
-  category: 'cidade' | 'idade' | 'idioma' | 'hobby' | 'gamer' | 'adulta'
+  category: 'cidade' | 'idade' | 'idioma' | 'hobby' | 'gamer' | 'adulta' | 'especial'
   theme: string
   participants: number
   max_users: number
@@ -64,6 +83,9 @@ export type MockRoom = {
   badge_color: string
   is_official?: boolean
   instance_number?: number
+  room_type?: RoomType
+  entry_cost_fichas?: number
+  is_fixed?: boolean
 }
 
 export type MockCreator = {
@@ -80,12 +102,17 @@ export type MockCreator = {
   priceInFichas: number
   isOnline: boolean
   isFeatured: boolean
+  isLive: boolean
+  liveViewers: number
   sessionsCompleted: number
   satisfactionRate: number
   city: string
   tags: string[]
   gallery: string[]
   schedule: string[]
+  totalEarnings: number
+  weeklyEarnings: number
+  isVerified: boolean
 }
 
 export type MockHobby = {
@@ -108,6 +135,7 @@ export type FichaPackage = {
   bonus?: string
   bonusPercent?: number
   emoji?: string
+  perFicha?: string
 }
 
 export type Plan = {
@@ -131,6 +159,7 @@ export type RoomParticipant = {
   video_enabled: boolean
   audio_enabled: boolean
   subscription_tier: SubscriptionTier
+  is_ostentacao: boolean
   joined_at: string
 }
 
@@ -141,7 +170,8 @@ export type ChatMessage = {
   username: string
   avatar_url: string
   content: string
-  message_type: 'text' | 'image' | 'emoji' | 'system'
+  message_type: 'text' | 'image' | 'emoji' | 'system' | 'gift'
+  is_ostentacao: boolean
   created_at: string
 }
 
@@ -150,7 +180,7 @@ export type UserService = {
   provider_id: string
   title: string
   description: string
-  price_stars: number
+  price_fichas: number
   duration_minutes: number
   category: string
   tags: string[]
@@ -165,7 +195,7 @@ export type PaidSession = {
   service_id: string
   buyer_id: string
   provider_id: string
-  price_stars: number
+  price_fichas: number
   duration_minutes: number
   status: 'requested' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'canceled'
   room_id?: string
@@ -177,18 +207,20 @@ export type PaidSession = {
   expires_at: string
 }
 
-export type StarTransaction = {
+export type FichaTransaction = {
   id: string
   from_user_id: string
   to_user_id: string
-  amount_stars: number
-  transaction_type: 'service_payment' | 'withdrawal' | 'bonus' | 'refund'
-  related_service_id?: string
-  related_session_id?: string
-  platform_fee_stars: number
+  amount: number
+  transaction_type: 'gift' | 'purchase' | 'service' | 'vip_entry' | 'game' | 'withdrawal' | 'bonus' | 'refund'
+  related_id?: string
+  platform_fee: number
   status: 'pending' | 'completed' | 'refunded'
   created_at: string
 }
+
+// Legacy alias
+export type StarTransaction = FichaTransaction
 
 export type ServiceReview = {
   id: string
@@ -224,11 +256,76 @@ export type PresenceState = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'room_invite' | 'new_message' | 'subscription_expiring' | 'service_request' | 'session_accepted' | 'game_invite' | 'system'
+  type: 'room_invite' | 'new_message' | 'subscription_expiring' | 'service_request' | 'session_accepted' | 'game_invite' | 'gift_received' | 'roulette_match' | 'ranking_update' | 'system'
   title: string
   message: string
   data?: Record<string, unknown>
   read: boolean
+  created_at: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Roulette Types — V2
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type RouletteStatus = 'idle' | 'searching' | 'connecting' | 'connected' | 'ended'
+
+export interface RouletteFilters {
+  ageRange?: [number, number]
+  city?: string
+  hobby?: string
+  language?: string
+}
+
+export interface RouletteMatch {
+  id: string
+  partner: {
+    id: string
+    username: string
+    avatar_url: string
+    age?: number
+    city?: string
+    hobbies?: string[]
+    is_ostentacao: boolean
+  }
+  started_at: string
+  ended_at?: string
+}
+
+export interface RouletteSession {
+  id: string
+  user_id: string
+  status: RouletteStatus
+  filters: RouletteFilters
+  current_match?: RouletteMatch
+  matches_count: number
+  created_at: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Live Gifts Types — V2
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface LiveGift {
+  id: string
+  name: string
+  emoji: string
+  fichas_cost: number
+  animation: 'float' | 'bloom' | 'sparkle' | 'fireworks' | 'rain' | 'launch' | 'crown' | 'parade' | 'shower'
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+}
+
+export interface SentGift {
+  id: string
+  gift: LiveGift
+  sender: {
+    id: string
+    username: string
+    avatar_url: string
+    is_ostentacao: boolean
+  }
+  receiver_id: string
+  room_id: string
   created_at: string
 }
 
@@ -270,6 +367,90 @@ export interface MarriageGameSession {
   completed_at?: string
   min_participants: number
   max_participants: number
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Speed Dating Types — V2
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type SpeedDatingStatus = 'waiting' | 'in_round' | 'between_rounds' | 'voting' | 'results'
+
+export interface SpeedDatingParticipant {
+  user_id: string
+  username: string
+  avatar_url: string
+  age?: number
+  city?: string
+  is_ostentacao: boolean
+}
+
+export interface SpeedDatingRound {
+  round_number: number
+  pairs: { user1: SpeedDatingParticipant; user2: SpeedDatingParticipant }[]
+  duration_seconds: number
+  started_at?: string
+}
+
+export interface SpeedDatingSession {
+  id: string
+  room_id: string
+  status: SpeedDatingStatus
+  participants: SpeedDatingParticipant[]
+  rounds: SpeedDatingRound[]
+  current_round: number
+  max_rounds: number
+  round_duration_seconds: number
+  created_at: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Ranking Types — V2
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface RankingEntry {
+  position: number
+  user_id: string
+  username: string
+  avatar_url: string
+  is_ostentacao: boolean
+  amount: number
+  change: number // +2 = subiu 2 posições, -1 = caiu 1
+}
+
+export interface WeeklyRanking {
+  week_start: string
+  week_end: string
+  top_spenders: RankingEntry[]
+  top_earners: RankingEntry[]
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Influencer Dashboard Types — V2
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface CreatorDashboardStats {
+  total_earnings: number
+  weekly_earnings: number
+  monthly_earnings: number
+  total_viewers: number
+  live_viewers: number
+  total_sessions: number
+  average_rating: number
+  total_reviews: number
+  fichas_available: number
+  fichas_pending_withdrawal: number
+}
+
+export interface CreatorScheduleItem {
+  id: string
+  title: string
+  type: 'live' | 'session' | 'course' | 'event'
+  date: string
+  time: string
+  duration_minutes: number
+  price_fichas: number
+  max_participants: number
+  enrolled: number
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -324,7 +505,7 @@ export type ProviderService = {
   id: string
   title: string
   description: string
-  price_stars: number
+  price_fichas: number
   duration_minutes: number
   category: string
 }

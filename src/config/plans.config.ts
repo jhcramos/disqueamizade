@@ -6,6 +6,7 @@ export type PlanFeatures = {
   features: string[]
   canCreateRooms: boolean
   maxRoomsCreated: number
+  canEnterFullRoom: boolean
   hasVideoFilters: boolean
   filterTypes: ('background' | 'mask_2d' | 'mask_3d' | 'color' | 'anonymity' | 'ar_effect')[]
   hasSecretCabins: boolean
@@ -14,22 +15,29 @@ export type PlanFeatures = {
   hasBadge: boolean
   hasAnalytics: boolean
   canRecordBroadcasts: boolean
+  hasAdultContent: boolean
+  hasRouletteFilters: boolean
+  monthlyFichasBonus: number
+  hasCreatorDashboard: boolean
 }
 
 export const PLANS: Record<SubscriptionTier, PlanFeatures> = {
   free: {
-    name: 'Free',
+    name: 'Grátis',
     price: 0,
     features: [
       'Acesso a salas públicas',
       'Chat de texto ilimitado',
       'Transmitir vídeo (broadcast)',
       'Visualizar até 30 vídeos simultâneos',
-      'Ver quem está com câmera ligada',
+      'Criar 1 sala',
       'Perfil básico',
+      'Roleta 1:1 (com anúncios)',
+      '50 fichas iniciais',
     ],
-    canCreateRooms: false,
-    maxRoomsCreated: 0,
+    canCreateRooms: true,
+    maxRoomsCreated: 1,
+    canEnterFullRoom: false,
     hasVideoFilters: false,
     filterTypes: [],
     hasSecretCabins: false,
@@ -38,21 +46,29 @@ export const PLANS: Record<SubscriptionTier, PlanFeatures> = {
     hasBadge: false,
     hasAnalytics: false,
     canRecordBroadcasts: false,
+    hasAdultContent: false,
+    hasRouletteFilters: false,
+    monthlyFichasBonus: 0,
+    hasCreatorDashboard: false,
   },
   basic: {
-    name: 'Basic',
+    name: 'Básico',
     price: 19.90,
     features: [
       'Tudo do plano gratuito',
-      'Máscaras virtuais de vídeo',
       'Criar até 3 salas temáticas',
+      'Entrar em salas cheias',
+      'Filtros de vídeo (backgrounds, máscaras 2D)',
       'Sem anúncios',
-      'Badge exclusivo',
+      'Badge Básico exclusivo',
+      'Roleta com filtros de idade e cidade',
+      '200 fichas/mês bônus',
       'Backgrounds virtuais personalizados',
       'Modo anonimato',
     ],
     canCreateRooms: true,
     maxRoomsCreated: 3,
+    canEnterFullRoom: true,
     hasVideoFilters: true,
     filterTypes: ['background', 'mask_2d', 'color', 'anonymity'],
     hasSecretCabins: false,
@@ -61,23 +77,33 @@ export const PLANS: Record<SubscriptionTier, PlanFeatures> = {
     hasBadge: true,
     hasAnalytics: false,
     canRecordBroadcasts: false,
+    hasAdultContent: false,
+    hasRouletteFilters: true,
+    monthlyFichasBonus: 200,
+    hasCreatorDashboard: false,
   },
   premium: {
     name: 'Premium',
     price: 39.90,
     features: [
       'Tudo do plano básico',
-      'Máscaras 3D avançadas',
       'Salas ilimitadas',
+      'Entrar em salas cheias (prioridade)',
+      'Máscaras 3D e efeitos AR',
       'Acesso a cabines secretas',
-      'Jogos exclusivos',
-      'Prioridade no suporte',
+      'Jogos exclusivos (speed dating, casamento)',
+      'Badge Premium 👑',
+      'Roleta com todos os filtros',
+      '500 fichas/mês bônus',
+      'Dashboard de Creator',
       'Analytics de transmissão',
       'Gravação de broadcasts',
-      'AR effects e efeitos especiais',
+      'Conteúdo adulto 🔞',
+      'Prioridade no suporte',
     ],
     canCreateRooms: true,
     maxRoomsCreated: Infinity,
+    canEnterFullRoom: true,
     hasVideoFilters: true,
     filterTypes: ['background', 'mask_2d', 'mask_3d', 'color', 'anonymity', 'ar_effect'],
     hasSecretCabins: true,
@@ -86,43 +112,38 @@ export const PLANS: Record<SubscriptionTier, PlanFeatures> = {
     hasBadge: true,
     hasAnalytics: true,
     canRecordBroadcasts: true,
+    hasAdultContent: true,
+    hasRouletteFilters: true,
+    monthlyFichasBonus: 500,
+    hasCreatorDashboard: true,
   },
 }
 
-export const STAR_PACKAGES = [
-  {
-    stars: 50,
-    price: 5.00,
-    bonus: 0,
-    popular: false,
-  },
-  {
-    stars: 120,
-    price: 10.00,
-    bonus: 20,
-    popular: true,
-  },
-  {
-    stars: 300,
-    price: 25.00,
-    bonus: 20,
-    popular: false,
-  },
-  {
-    stars: 650,
-    price: 50.00,
-    bonus: 30,
-    popular: false,
-  },
-  {
-    stars: 1500,
-    price: 100.00,
-    bonus: 50,
-    popular: false,
-  },
+// ═══════════════════════════════════════════════════════════════════════════
+// Fichas Configuration
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const FICHA_PACKAGES = [
+  { fichas: 50, price: 9.90, bonus: 0, popular: false, perFicha: 0.20 },
+  { fichas: 150, price: 24.90, bonus: 0, popular: false, perFicha: 0.17 },
+  { fichas: 500, price: 69.90, bonus: 50, popular: true, perFicha: 0.14 },
+  { fichas: 1500, price: 179.90, bonus: 200, popular: false, perFicha: 0.12 },
+  { fichas: 3000, price: 349.90, bonus: 500, popular: false, perFicha: 0.12 },
+  { fichas: 5000, price: 499.90, bonus: 1000, popular: false, perFicha: 0.10 },
+  { fichas: 10000, price: 899.90, bonus: 2500, popular: false, perFicha: 0.09 },
 ]
 
-export const STARS_TO_BRL = 0.10 // 1 star = R$ 0.10
+// ═══════════════════════════════════════════════════════════════════════════
+// Ostentação Configuration
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const OSTENTACAO_THRESHOLD = 300 // fichas para status Ostentação
+export const FICHAS_TO_BRL = 0.10 // 1 ficha ≈ R$ 0.10
 export const PLATFORM_FEE_PERCENTAGE = 20 // 20% commission
 export const WITHDRAWAL_FEE_PERCENTAGE = 5 // 5% withdrawal fee
-export const MIN_WITHDRAWAL_STARS = 100 // R$ 10.00
+export const MIN_WITHDRAWAL_FICHAS = 100 // R$ 10.00
+
+// Legacy aliases
+export const STAR_PACKAGES = FICHA_PACKAGES
+export const STARS_TO_BRL = FICHAS_TO_BRL
+export const MIN_WITHDRAWAL_STARS = MIN_WITHDRAWAL_FICHAS

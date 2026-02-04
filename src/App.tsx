@@ -10,6 +10,8 @@ import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
 import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
+import { RoulettePage } from './pages/RoulettePage'
+import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { useAuthStore } from './store/authStore'
@@ -26,6 +28,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/roulette" element={<RoulettePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
@@ -34,6 +37,7 @@ function App() {
         <Route path="/room/:roomId" element={<RoomPage />} />
         <Route path="/cabines" element={<SecretCabinsPage />} />
         <Route path="/filtros" element={<VideoFiltersPage />} />
+        <Route path="/creator" element={<InfluencerDashboardPage />} />
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

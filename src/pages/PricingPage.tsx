@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Check, X, Coins, ChevronDown, ChevronUp, Crown, Zap, Gift, Star, Eye } from 'lucide-react'
+import { Check, X, Coins, ChevronDown, ChevronUp, Crown, Zap, Gift, Star, Eye, Shuffle, Users, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { spotlightPricing } from '../data/mockCreators'
+import { OSTENTACAO_THRESHOLD } from '../config/plans.config'
 
 const plans = [
   {
@@ -13,34 +14,36 @@ const plans = [
     period: '',
     badge: '',
     features: [
-      { text: 'Até 3 salas simultâneas', included: true },
-      { text: 'Chat por texto ilimitado', included: true },
-      { text: 'Vídeo até 10 min/sessão', included: true },
+      { text: 'Acesso a salas públicas', included: true },
+      { text: 'Chat de texto ilimitado', included: true },
+      { text: 'Criar 1 sala', included: true },
+      { text: 'Roleta 1:1 (com anúncios)', included: true },
       { text: '50 fichas iniciais', included: true },
       { text: 'Perfil básico', included: true },
-      { text: 'Criar salas', included: false },
+      { text: 'Entrar em sala cheia', included: false },
       { text: 'Filtros de vídeo premium', included: false },
-      { text: 'Selo VIP', included: false },
-      { text: 'Prioridade em salas cheias', included: false },
+      { text: 'Speed dating & jogos', included: false },
+      { text: 'Dashboard creator', included: false },
       { text: 'Conteúdo adulto', included: false },
     ],
   },
   {
     id: 'basic',
-    name: 'Basic',
+    name: 'Básico',
     price: 'R$19,90',
     period: '/mês',
     badge: 'Popular',
     features: [
-      { text: 'Salas ilimitadas', included: true },
-      { text: 'Chat por texto ilimitado', included: true },
-      { text: 'Vídeo ilimitado em HD', included: true },
-      { text: '200 fichas/mês bônus', included: true },
-      { text: 'Perfil personalizado', included: true },
+      { text: 'Tudo do Grátis +', included: true },
       { text: 'Criar até 3 salas', included: true },
-      { text: '5 filtros de vídeo', included: true },
-      { text: 'Selo VIP', included: false },
-      { text: 'Prioridade em salas cheias', included: false },
+      { text: 'Entrar em salas cheias ✅', included: true },
+      { text: 'Sem anúncios', included: true },
+      { text: 'Filtros de vídeo (2D, backgrounds)', included: true },
+      { text: 'Roleta com filtros de idade e cidade', included: true },
+      { text: '200 fichas/mês bônus', included: true },
+      { text: 'Badge Básico exclusivo', included: true },
+      { text: 'Modo anonimato', included: true },
+      { text: 'Speed dating & jogos', included: false },
       { text: 'Conteúdo adulto', included: false },
     ],
   },
@@ -49,18 +52,19 @@ const plans = [
     name: 'Premium',
     price: 'R$39,90',
     period: '/mês',
-    badge: 'Completo',
+    badge: '👑 Completo',
     features: [
-      { text: 'Tudo do Basic +', included: true },
-      { text: 'Vídeo em 4K', included: true },
-      { text: '500 fichas/mês bônus', included: true },
+      { text: 'Tudo do Básico +', included: true },
       { text: 'Salas ilimitadas', included: true },
-      { text: 'Perfil destaque', included: true },
-      { text: 'Criar salas ilimitadas', included: true },
-      { text: 'Todos os filtros de vídeo', included: true },
-      { text: 'Selo VIP Premium 👑', included: true },
       { text: 'Prioridade em salas cheias', included: true },
-      { text: 'Conteúdo adulto', included: true },
+      { text: 'Máscaras 3D e efeitos AR', included: true },
+      { text: 'Roleta com todos os filtros', included: true },
+      { text: '500 fichas/mês bônus', included: true },
+      { text: 'Badge Premium 👑', included: true },
+      { text: 'Speed dating & jogos exclusivos', included: true },
+      { text: 'Cabines secretas', included: true },
+      { text: 'Dashboard creator + analytics', included: true },
+      { text: 'Conteúdo adulto 🔞', included: true },
     ],
   },
 ]
@@ -78,27 +82,31 @@ const fichaPackages = [
 const faqs = [
   {
     q: 'O que são fichas?',
-    a: 'Fichas são a moeda virtual da plataforma. Use para contratar creators no marketplace, enviar presentes em salas ao vivo, participar de mini-cursos e eventos especiais.',
+    a: 'Fichas são a moeda virtual da plataforma. Use para contratar creators, enviar presentes ao vivo, participar de jogos, entrar em salas VIP e desbloquear conteúdo exclusivo.',
+  },
+  {
+    q: 'O que é o status Ostentação?',
+    a: `Quando você tem ${OSTENTACAO_THRESHOLD}+ fichas, ganha o status "Ostentação" — um badge dourado brilhante, nome destacado no chat, prioridade em filas e efeitos visuais especiais. Perca fichas e perca o status!`,
+  },
+  {
+    q: 'Como funciona a comissão?',
+    a: 'A plataforma cobra 20% de comissão em todas as transações de fichas entre usuários (presentes, serviços, etc). Se você receber 100 fichas, ficam 80 para você e 20 para a plataforma.',
   },
   {
     q: 'Posso cancelar meu plano a qualquer momento?',
-    a: 'Sim! Você pode cancelar quando quiser. Seu plano fica ativo até o final do período pago. Sem multa, sem complicação.',
+    a: 'Sim! Cancele quando quiser. Seu plano fica ativo até o final do período pago. Sem multa, sem complicação.',
   },
   {
     q: 'As fichas expiram?',
     a: 'Não! Suas fichas nunca expiram. Use quando quiser, no seu ritmo. As fichas bônus dos planos mensais são creditadas automaticamente.',
   },
   {
+    q: 'Como funciona a roleta 1:1?',
+    a: 'Na roleta você é conectado aleatoriamente com outra pessoa para uma conversa de vídeo. Não curtiu? Clique "Próximo" e encontre alguém novo em segundos. Planos pagos permitem usar filtros avançados.',
+  },
+  {
     q: 'Como funciona o conteúdo adulto?',
     a: 'O conteúdo adulto é restrito a maiores de 18 anos com verificação de idade. Apenas disponível no plano Premium. Todas as salas adultas são moderadas.',
-  },
-  {
-    q: 'Posso ser um creator no marketplace?',
-    a: 'Sim! Qualquer usuário com conta verificada pode oferecer serviços. Cadastre seu perfil de creator, defina suas habilidades e preços, e comece a ganhar fichas.',
-  },
-  {
-    q: 'Como funciona o Perfil em Destaque?',
-    a: 'Você paga fichas para ter seu perfil exibido no carrossel da página principal. Quanto mais tempo, menor o custo por dia. É a melhor forma de atrair clientes e ganhar visibilidade.',
   },
   {
     q: 'Quais formas de pagamento vocês aceitam?',
@@ -117,10 +125,10 @@ export const PricingPage = () => {
         {/* Hero */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14 text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">
-            Planos & Fichas
+            Planos, Fichas & Ostentação
           </h1>
           <p className="text-dark-400 max-w-lg mx-auto leading-relaxed">
-            Escolha o plano ideal e compre fichas para aproveitar tudo que a plataforma oferece.
+            Escolha o plano ideal, compre fichas e alcance o status Ostentação!
           </p>
         </section>
 
@@ -147,9 +155,11 @@ export const PricingPage = () => {
 
                   <div className="text-center mb-6 pt-2">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${
-                      isPremium ? 'bg-primary-500/15' : 'bg-white/[0.06]'
+                      isPremium ? 'bg-primary-500/15' : plan.id === 'basic' ? 'bg-blue-500/10' : 'bg-white/[0.06]'
                     }`}>
-                      {isPremium ? <Crown className="w-6 h-6 text-primary-400" /> : <Zap className="w-6 h-6 text-dark-400" />}
+                      {isPremium ? <Crown className="w-6 h-6 text-primary-400" /> :
+                       plan.id === 'basic' ? <Shield className="w-6 h-6 text-blue-400" /> :
+                       <Zap className="w-6 h-6 text-dark-400" />}
                     </div>
                     <h3 className={`text-xl font-bold ${isPremium ? 'text-primary-400' : 'text-white'}`}>{plan.name}</h3>
                     <div className="mt-2">
@@ -186,6 +196,63 @@ export const PricingPage = () => {
               )
             })}
           </div>
+
+          {/* Tier comparison quick note */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-dark-500">
+              ✅ Planos Básico e Premium podem entrar em salas cheias · 
+              🎰 Roleta disponível para todos · 
+              💰 Fichas bônus mensais acumulam
+            </p>
+          </div>
+        </section>
+
+        <div className="divider max-w-7xl mx-auto" />
+
+        {/* ═══ 🏆 OSTENTAÇÃO ═══ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+          <div className="card p-8 relative overflow-hidden bg-gradient-to-br from-amber-500/[0.06] via-transparent to-transparent border-amber-500/15">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/[0.06] rounded-full blur-[60px]" />
+            <div className="relative">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
+                  <Crown className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-400 font-semibold text-sm">Status Especial</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-amber-300 mb-3">Ostentação 🏆</h2>
+                <p className="text-dark-400 max-w-md mx-auto text-sm leading-relaxed">
+                  Tenha <span className="text-amber-400 font-bold">{OSTENTACAO_THRESHOLD}+ fichas</span> no saldo e ganhe automaticamente:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
+                <div className="card p-4 text-center border-amber-500/10">
+                  <div className="text-2xl mb-2">👑</div>
+                  <h4 className="text-xs font-bold text-amber-300">Badge Dourado</h4>
+                  <p className="text-[10px] text-dark-500 mt-1">Brilhante e animado</p>
+                </div>
+                <div className="card p-4 text-center border-amber-500/10">
+                  <div className="text-2xl mb-2">✨</div>
+                  <h4 className="text-xs font-bold text-amber-300">Nome Brilhante</h4>
+                  <p className="text-[10px] text-dark-500 mt-1">Destaque no chat</p>
+                </div>
+                <div className="card p-4 text-center border-amber-500/10">
+                  <div className="text-2xl mb-2">⚡</div>
+                  <h4 className="text-xs font-bold text-amber-300">Prioridade</h4>
+                  <p className="text-[10px] text-dark-500 mt-1">Em filas e salas</p>
+                </div>
+                <div className="card p-4 text-center border-amber-500/10">
+                  <div className="text-2xl mb-2">🌟</div>
+                  <h4 className="text-xs font-bold text-amber-300">Efeitos Visuais</h4>
+                  <p className="text-[10px] text-dark-500 mt-1">Borda e partículas</p>
+                </div>
+              </div>
+
+              <p className="text-center text-xs text-dark-500 mt-6">
+                ⚠️ O status é dinâmico — gaste fichas abaixo de {OSTENTACAO_THRESHOLD} e perde o Ostentação!
+              </p>
+            </div>
+          </div>
         </section>
 
         <div className="divider max-w-7xl mx-auto" />
@@ -199,7 +266,7 @@ export const PricingPage = () => {
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Compre Fichas</h2>
             <p className="text-dark-400 max-w-md mx-auto text-sm leading-relaxed">
-              Use fichas para contratar creators, enviar presentes, participar de eventos e desbloquear conteúdo exclusivo.
+              Use fichas para presentes ao vivo, contratar creators, entrar em salas VIP, jogos e muito mais.
             </p>
           </div>
 
@@ -243,6 +310,14 @@ export const PricingPage = () => {
                     Comprar
                   </button>
                 </div>
+
+                {/* Ostentação indicator */}
+                {pkg.amount >= OSTENTACAO_THRESHOLD && (
+                  <div className="mt-3 pt-3 border-t border-amber-500/10 flex items-center gap-1.5">
+                    <Crown className="w-3 h-3 text-amber-400" />
+                    <span className="text-[10px] text-amber-400 font-semibold">Garante status Ostentação!</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -346,7 +421,6 @@ export const PricingPage = () => {
             })}
           </div>
 
-          {/* Social proof */}
           <p className="text-center text-xs text-dark-500 mt-6">
             ⭐ Creators em destaque recebem em média <span className="text-primary-400 font-semibold">3x mais visualizações</span> no perfil
           </p>
