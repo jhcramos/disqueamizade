@@ -74,6 +74,8 @@ export interface VideoFilterHookResult {
   switchFilter: (maskId: string) => void
   currentFilter: string | null
   detectionResults: DetectionResult | null
+  mediaPipeReady?: boolean
+  mediaPipeError?: string | null
 }
 
 export interface EmotionState {

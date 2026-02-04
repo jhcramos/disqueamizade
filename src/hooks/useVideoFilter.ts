@@ -1,11 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// useVideoFilter Hook — MediaPipe Face Mesh Integration
+// useVideoFilter Hook — MediaPipe Face Mesh Integration (CDN-loaded)
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { FaceMesh } from '@mediapipe/face_mesh'
-import { Camera } from '@mediapipe/camera_utils'
-import type { NormalizedLandmarkList } from '@mediapipe/face_mesh'
 import type { VideoFilterHookResult, FilterState, DetectionResult, MaskRenderer } from '../types/filters'
 
 // Import mask renderers
@@ -32,7 +29,6 @@ const MASK_RENDERERS: Record<string, MaskRenderer> = {
   emoji_tracker: emojiTrackerMask,
   cat_morph: animalMorphMask,
   anime_style: animeStyleMask,
-  // 🔥 80s Legends Collection 🔥
   he_man: heManMask,
   optimus_prime: optimusPrimeMask,
   freddie_mercury: freddieMercuryMask,
@@ -45,111 +41,132 @@ const MASK_RENDERERS: Record<string, MaskRenderer> = {
   cheetara: cheetaraMask
 }
 
+// ── CDN Script Loader ──
+function loadScript(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+    const s = document.createElement('script')
+    s.src = src
+    s.crossOrigin = 'anonymous'
+    s.onload = () => resolve()
+    s.onerror = () => reject(new Error(`Failed to load ${src}`))
+    document.head.appendChild(s)
+  })
+}
+
+async function loadMediaPipe(): Promise<{ FaceMesh: any; Camera: any }> {
+  await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js')
+  await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
+  const w = window as any
+  if (!w.FaceMesh) throw new Error('FaceMesh not found on window after CDN load')
+  if (!w.Camera) throw new Error('Camera not found on window after CDN load')
+  return { FaceMesh: w.FaceMesh, Camera: w.Camera }
+}
+
 export const useVideoFilter = (
   videoStream: MediaStream | null,
   initialFilter: string | null = null
 ): VideoFilterHookResult => {
-  // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const faceMeshRef = useRef<FaceMesh | null>(null)
-  const cameraRef = useRef<Camera | null>(null)
+  const faceMeshRef = useRef<any>(null)
+  const cameraRef = useRef<any>(null)
 
-  // State
   const [filterState, setFilterState] = useState<FilterState>(() => {
-    const saved = localStorage.getItem('disque-video-filter')
-    return saved ? JSON.parse(saved) : {
-      enabled: false,
-      currentMask: initialFilter,
-      intensity: 1.0,
-      settings: {}
+    try {
+      const saved = localStorage.getItem('disque-video-filter')
+      return saved ? JSON.parse(saved) : {
+        enabled: false,
+        currentMask: initialFilter,
+        intensity: 1.0,
+        settings: {}
+      }
+    } catch {
+      return { enabled: false, currentMask: initialFilter, intensity: 1.0, settings: {} }
     }
   })
 
   const [isProcessing, setIsProcessing] = useState(false)
   const [filteredStream, setFilteredStream] = useState<MediaStream | null>(null)
   const [detectionResults, setDetectionResults] = useState<DetectionResult | null>(null)
+  const [mediaPipeReady, setMediaPipeReady] = useState(false)
+  const [mediaPipeError, setMediaPipeError] = useState<string | null>(null)
 
-  // Save filter state to localStorage
+  // Save filter state
   useEffect(() => {
-    localStorage.setItem('disque-video-filter', JSON.stringify(filterState))
+    try { localStorage.setItem('disque-video-filter', JSON.stringify(filterState)) } catch {}
   }, [filterState])
 
-  // Initialize MediaPipe Face Mesh
+  // Load MediaPipe from CDN
   useEffect(() => {
-    const faceMesh = new FaceMesh({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-      }
-    })
-
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    })
-
-    faceMesh.onResults((results) => {
-      if (!canvasRef.current || !results.multiFaceLandmarks?.[0]) {
-        setDetectionResults(null)
-        return
-      }
-
-      const landmarks = results.multiFaceLandmarks[0]
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')!
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
-      // Draw original video frame
-      if (results.image) {
-        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
-      }
-
-      // Apply filter if enabled
-      if (filterState.enabled && filterState.currentMask) {
-        const renderer = MASK_RENDERERS[filterState.currentMask]
-        if (renderer) {
-          try {
-            renderer.render(ctx, landmarks, canvas.width, canvas.height, filterState.settings)
-          } catch (error) {
-            console.warn('Filter rendering error:', error)
+    let cancelled = false
+    loadMediaPipe()
+      .then(({ FaceMesh }) => {
+        if (cancelled) return
+        const faceMesh = new FaceMesh({
+          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+        })
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        })
+        faceMesh.onResults((results: any) => {
+          if (!canvasRef.current || !results.multiFaceLandmarks?.[0]) {
+            setDetectionResults(null)
+            return
           }
-        }
-      }
-
-      // Update detection results
-      setDetectionResults({
-        landmarks,
-        confidence: 0.9, // MediaPipe doesn't provide this directly
-        boundingBox: calculateBoundingBox(landmarks, canvas.width, canvas.height)
+          const landmarks = results.multiFaceLandmarks[0]
+          const canvas = canvasRef.current
+          const ctx = canvas.getContext('2d')!
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
+          if (filterState.enabled && filterState.currentMask) {
+            const renderer = MASK_RENDERERS[filterState.currentMask]
+            if (renderer) {
+              try { renderer.render(ctx, landmarks, canvas.width, canvas.height, filterState.settings) }
+              catch (e) { console.warn('Filter render error:', e) }
+            }
+          }
+          setDetectionResults({
+            landmarks,
+            confidence: 0.9,
+            boundingBox: calcBBox(landmarks, canvas.width, canvas.height)
+          })
+        })
+        faceMeshRef.current = faceMesh
+        setMediaPipeReady(true)
       })
-    })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('MediaPipe load failed:', err)
+          setMediaPipeError(String(err))
+        }
+      })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-    faceMeshRef.current = faceMesh
-    return () => {
-      faceMesh.close()
-    }
+  // Re-apply filter settings when they change
+  useEffect(() => {
+    // faceMesh onResults already reads filterState via closure
   }, [filterState.enabled, filterState.currentMask, filterState.settings])
 
-  // Initialize camera and video processing
+  // Start camera processing when stream + MediaPipe are ready
   useEffect(() => {
-    if (!videoStream || !faceMeshRef.current || !canvasRef.current) {
-      return
-    }
+    if (!videoStream || !faceMeshRef.current || !canvasRef.current || !mediaPipeReady) return
+
+    const w = window as any
+    const CameraClass = w.Camera
+    if (!CameraClass) { console.warn('Camera class not available'); return }
 
     const video = document.createElement('video')
-    video.playsInline = true
-    video.muted = true
-    video.autoplay = true
-    video.width = 640
-    video.height = 480
+    video.playsInline = true; video.muted = true; video.autoplay = true
+    video.width = 640; video.height = 480
 
     const canvas = canvasRef.current
-    canvas.width = 640
-    canvas.height = 480
+    canvas.width = 640; canvas.height = 480
 
     video.srcObject = videoStream
     videoRef.current = video
@@ -157,79 +174,41 @@ export const useVideoFilter = (
     video.onloadedmetadata = () => {
       video.play()
       setIsProcessing(true)
-
-      const camera = new Camera(video, {
+      const camera = new CameraClass(video, {
         onFrame: async () => {
-          if (faceMeshRef.current) {
-            await faceMeshRef.current.send({ image: video })
-          }
+          if (faceMeshRef.current) await faceMeshRef.current.send({ image: video })
         },
-        width: 640,
-        height: 480
+        width: 640, height: 480
       })
-
       camera.start()
       cameraRef.current = camera
-
-      // Create filtered stream from canvas
       const stream = canvas.captureStream(30)
       setFilteredStream(stream)
     }
 
     return () => {
-      if (cameraRef.current) {
-        cameraRef.current.stop()
-      }
-      video.pause()
-      video.srcObject = null
-      setIsProcessing(false)
-      setFilteredStream(null)
+      if (cameraRef.current) cameraRef.current.stop()
+      video.pause(); video.srcObject = null
+      setIsProcessing(false); setFilteredStream(null)
     }
-  }, [videoStream])
+  }, [videoStream, mediaPipeReady])
 
-  // Helper function to calculate bounding box from landmarks
-  const calculateBoundingBox = (
-    landmarks: NormalizedLandmarkList, 
-    width: number, 
-    height: number
-  ) => {
-    const xs = landmarks.map(l => l.x * width)
-    const ys = landmarks.map(l => l.y * height)
-    
-    return {
-      x: Math.min(...xs),
-      y: Math.min(...ys),
-      width: Math.max(...xs) - Math.min(...xs),
-      height: Math.max(...ys) - Math.min(...ys)
-    }
+  const calcBBox = (landmarks: any[], w: number, h: number) => {
+    const xs = landmarks.map((l: any) => l.x * w)
+    const ys = landmarks.map((l: any) => l.y * h)
+    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
   }
 
-  // Filter control functions
   const enableFilter = useCallback((maskId: string) => {
-    if (MASK_RENDERERS[maskId]) {
-      setFilterState(prev => ({
-        ...prev,
-        enabled: true,
-        currentMask: maskId
-      }))
-    }
+    if (MASK_RENDERERS[maskId]) setFilterState(prev => ({ ...prev, enabled: true, currentMask: maskId }))
   }, [])
 
   const disableFilter = useCallback(() => {
-    setFilterState(prev => ({
-      ...prev,
-      enabled: false
-    }))
+    setFilterState(prev => ({ ...prev, enabled: false }))
   }, [])
 
   const switchFilter = useCallback((maskId: string) => {
-    if (MASK_RENDERERS[maskId]) {
-      setFilterState(prev => ({
-        ...prev,
-        enabled: true,
-        currentMask: maskId
-      }))
-    }
+    if (MASK_RENDERERS[maskId]) setFilterState(prev => ({ ...prev, enabled: true, currentMask: maskId }))
   }, [])
 
   return {
@@ -240,6 +219,8 @@ export const useVideoFilter = (
     disableFilter,
     switchFilter,
     currentFilter: filterState.currentMask,
-    detectionResults
+    detectionResults,
+    mediaPipeReady,
+    mediaPipeError
   }
 }
