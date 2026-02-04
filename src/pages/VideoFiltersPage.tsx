@@ -25,9 +25,20 @@ const filters: VideoFilter[] = [
   { id: 'fx-glitch', name: 'Glitch Digital', description: 'Efeito de falha digital', type: 'ar_effect', requiredTier: 'premium', emoji: '⚡', category: 'Efeitos Especiais' },
   { id: 'fx-holo', name: 'Holograma', description: 'Projeção holográfica', type: 'ar_effect', requiredTier: 'premium', emoji: '✨', category: 'Efeitos Especiais' },
   { id: 'fx-particles', name: 'Partículas Neon', description: 'Partículas flutuantes', type: 'ar_effect', requiredTier: 'premium', emoji: '💫', category: 'Efeitos Especiais' },
+  // 🔥 80s Legends Collection 🔥
+  { id: 'he_man', name: 'He-Man', description: 'Coroa dourada, mandíbula forte, aura de poder', type: 'mask_3d', requiredTier: 'premium', emoji: '🗡️', category: '80s Legends' },
+  { id: 'optimus_prime', name: 'Optimus Prime', description: 'Placa facial metálica, olhos azuis brilhantes', type: 'mask_3d', requiredTier: 'premium', emoji: '🤖', category: '80s Legends' },
+  { id: 'freddie_mercury', name: 'Freddie Mercury', description: 'Bigode icônico, coroa, microfone, aura roxa', type: 'mask_3d', requiredTier: 'premium', emoji: '🎤', category: '80s Legends' },
+  { id: 'knight_rider', name: 'Knight Rider', description: 'Cabelo dos 80s, jaqueta de couro, scanner KITT', type: 'mask_3d', requiredTier: 'premium', emoji: '🚗', category: '80s Legends' },
+  { id: 'jaspion', name: 'Jaspion', description: 'Capacete espacial prata/vermelho, visor brilhante', type: 'mask_3d', requiredTier: 'premium', emoji: '🦸', category: '80s Legends' },
+  { id: 'she_ra', name: 'She-Ra', description: 'Tiara dourada, cabelos fluidos, efeitos cintilantes', type: 'mask_3d', requiredTier: 'premium', emoji: '⚔️', category: '80s Legends' },
+  { id: 'jem', name: 'Jem', description: 'Brincos estrela rosa, cabelo holográfico, glitter', type: 'mask_3d', requiredTier: 'premium', emoji: '💎', category: '80s Legends' },
+  { id: 'wonder_woman', name: 'Mulher Maravilha', description: 'Tiara dourada com estrela, laço dourado brilhante', type: 'mask_3d', requiredTier: 'premium', emoji: '🌟', category: '80s Legends' },
+  { id: 'madonna', name: 'Madonna', description: 'Laço rendado, brincos cruz, marca de beleza, neon 80s', type: 'mask_3d', requiredTier: 'premium', emoji: '💋', category: '80s Legends' },
+  { id: 'cheetara', name: 'Cheetara', description: 'Padrão manchado, olhos felinos, listras laranja', type: 'mask_3d', requiredTier: 'premium', emoji: '🐆', category: '80s Legends' },
 ]
 
-const categories = ['Todos', 'Fundos', 'Máscaras 2D', 'Máscaras 3D', 'Filtros de Cor', 'Efeitos Especiais', 'Anonimato', 'Fundos Animados']
+const categories = ['Todos', 'Fundos', 'Máscaras 2D', 'Máscaras 3D', 'Filtros de Cor', 'Efeitos Especiais', 'Anonimato', 'Fundos Animados', '80s Legends']
 
 // Demo user tier
 const USER_TIER = 'basic' as string
@@ -57,7 +68,7 @@ export const VideoFiltersPage = () => {
             Filtros de Vídeo
           </h1>
           <p className="text-dark-500 mt-2 text-sm">
-            18 filtros disponíveis usando MediaPipe — máscaras, fundos e efeitos em tempo real!
+            28 filtros disponíveis usando MediaPipe — máscaras, fundos e efeitos em tempo real! 🔥 Novo: 10 Lendas dos Anos 80!
           </p>
         </div>
 
@@ -93,8 +104,8 @@ export const VideoFiltersPage = () => {
                 </div>
                 <p className="text-xs text-dark-400">
                   {USER_TIER === 'free' && 'Sem acesso a filtros. Faça upgrade!'}
-                  {USER_TIER === 'basic' && '10 filtros disponíveis. Upgrade para 18!'}
-                  {USER_TIER === 'premium' && 'Todos os 18 filtros desbloqueados!'}
+                  {USER_TIER === 'basic' && '10 filtros disponíveis. Upgrade para 28!'}
+                  {USER_TIER === 'premium' && 'Todos os 28 filtros desbloqueados! Inclui 10 Lendas dos 80s!'}
                 </p>
               </div>
               <div className="space-y-2 text-xs text-dark-400">

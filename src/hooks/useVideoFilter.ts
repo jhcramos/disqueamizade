@@ -14,13 +14,35 @@ import { pixelFaceMask } from '../components/video/masks/PixelFace'
 import { emojiTrackerMask } from '../components/video/masks/EmojiTracker'
 import { animalMorphMask } from '../components/video/masks/AnimalMorph'
 import { animeStyleMask } from '../components/video/masks/AnimeStyle'
+// 🔥 80s Legends Collection 🔥
+import { heManMask } from '../components/video/masks/HeMan'
+import { optimusPrimeMask } from '../components/video/masks/OptimusPrime'
+import { freddieMercuryMask } from '../components/video/masks/FreddieMercury'
+import { knightRiderMask } from '../components/video/masks/KnightRider'
+import { jaspionMask } from '../components/video/masks/Jaspion'
+import { sheRaMask } from '../components/video/masks/SheRa'
+import { jemMask } from '../components/video/masks/Jem'
+import { wonderWomanMask } from '../components/video/masks/WonderWoman'
+import { madonnaMask } from '../components/video/masks/Madonna'
+import { cheetaraMask } from '../components/video/masks/Cheetara'
 
 const MASK_RENDERERS: Record<string, MaskRenderer> = {
   neon_wireframe: neonWireframeMask,
   pixel_face: pixelFaceMask,
   emoji_tracker: emojiTrackerMask,
   cat_morph: animalMorphMask,
-  anime_style: animeStyleMask
+  anime_style: animeStyleMask,
+  // 🔥 80s Legends Collection 🔥
+  he_man: heManMask,
+  optimus_prime: optimusPrimeMask,
+  freddie_mercury: freddieMercuryMask,
+  knight_rider: knightRiderMask,
+  jaspion: jaspionMask,
+  she_ra: sheRaMask,
+  jem: jemMask,
+  wonder_woman: wonderWomanMask,
+  madonna: madonnaMask,
+  cheetara: cheetaraMask
 }
 
 export const useVideoFilter = (
