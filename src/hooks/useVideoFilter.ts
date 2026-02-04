@@ -2,7 +2,7 @@
 // useVideoFilter Hook — MediaPipe Face Mesh Integration
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { FaceMesh } from '@mediapipe/face_mesh'
 import { Camera } from '@mediapipe/camera_utils'
 import type { NormalizedLandmarkList } from '@mediapipe/face_mesh'
@@ -51,10 +51,9 @@ export const useVideoFilter = (
 ): VideoFilterHookResult => {
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const faceMeshRef = useRef<FaceMesh | null>(null)
   const cameraRef = useRef<Camera | null>(null)
-  const animationFrameRef = useRef<number>(0)
 
   // State
   const [filterState, setFilterState] = useState<FilterState>(() => {
