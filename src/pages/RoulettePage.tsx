@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Shuffle, SkipForward, UserPlus, Flag, Video, VideoOff, Mic, MicOff, Settings, X, Sparkles } from 'lucide-react'
+import { Shuffle, SkipForward, UserPlus, Flag, Video, VideoOff, Mic, MicOff, Settings, X, Sparkles, AlertTriangle } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { OstentacaoBadge } from '@/components/fichas/OstentacaoBadge'
+import { useCamera } from '@/hooks/useCamera'
 import type { RouletteStatus, RouletteFilters } from '@/types'
 
 const MOCK_PARTNERS = [
@@ -33,10 +34,22 @@ export const RoulettePage = () => {
   const [_filters, _setFilters] = useState<RouletteFilters>({})
   const [currentPartner, setCurrentPartner] = useState<typeof MOCK_PARTNERS[0] | null>(null)
   const [matchesCount, setMatchesCount] = useState(0)
-  const [videoEnabled, setVideoEnabled] = useState(true)
-  const [audioEnabled, setAudioEnabled] = useState(true)
   const [searchTime, setSearchTime] = useState(0)
   const [connectionTime, setConnectionTime] = useState(0)
+
+  // ─── REAL CAMERA ───
+  const {
+    stream,
+    videoRef,
+    isCameraOn,
+    isMicOn,
+    permissionState,
+    error: cameraError,
+    startCamera,
+    stopCamera,
+    toggleCamera,
+    toggleMic,
+  } = useCamera()
 
   // Search timer
   useEffect(() => {
@@ -52,11 +65,23 @@ export const RoulettePage = () => {
     return () => clearInterval(interval)
   }, [status])
 
-  const startSearch = useCallback(() => {
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera()
+    }
+  }, [stopCamera])
+
+  const startSearch = useCallback(async () => {
+    // Start camera when searching
+    if (!stream) {
+      await startCamera()
+    }
+
     setStatus('searching')
     setSearchTime(0)
     setCurrentPartner(null)
-    
+
     // Simulate finding a match
     const delay = 1500 + Math.random() * 3000
     setTimeout(() => {
@@ -69,14 +94,14 @@ export const RoulettePage = () => {
         setMatchesCount(c => c + 1)
       }, 1000)
     }, delay)
-  }, [])
+  }, [stream, startCamera])
 
   const nextMatch = useCallback(() => {
     setStatus('searching')
     setSearchTime(0)
     setCurrentPartner(null)
     setConnectionTime(0)
-    
+
     const delay = 1000 + Math.random() * 2000
     setTimeout(() => {
       setStatus('connecting')
@@ -90,17 +115,34 @@ export const RoulettePage = () => {
     }, delay)
   }, [])
 
-  const endSession = () => {
+  const endSession = useCallback(() => {
     setStatus('idle')
     setCurrentPartner(null)
     setSearchTime(0)
     setConnectionTime(0)
-  }
+    stopCamera()
+  }, [stopCamera])
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
     const s = seconds % 60
     return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
+  const handleToggleVideo = () => {
+    if (!stream) {
+      startCamera()
+    } else {
+      toggleCamera()
+    }
+  }
+
+  const handleToggleMic = () => {
+    if (!stream) {
+      startCamera()
+    } else {
+      toggleMic()
+    }
   }
 
   return (
@@ -133,6 +175,21 @@ export const RoulettePage = () => {
             </button>
           </div>
         </div>
+
+        {/* Camera permission warning */}
+        {permissionState === 'denied' && (
+          <div className="card p-4 mb-6 border-l-4 border-red-500 animate-fade-in">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-red-400 mb-1">Câmera Bloqueada</h4>
+                <p className="text-sm text-gray-400">
+                  {cameraError || 'Habilite o acesso à câmera nas configurações do navegador para usar a roleta.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         {showFilters && (
@@ -172,30 +229,68 @@ export const RoulettePage = () => {
 
         {/* Video Area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          {/* Your video */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-dark-900 border border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-600/10 to-transparent" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              {videoEnabled ? (
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-3 mx-auto">
-                    <Video className="w-8 h-8 text-white" />
+          {/* ═══ YOUR REAL CAMERA (left side) ═══ */}
+          <div className="relative aspect-video rounded-2xl overflow-hidden bg-dark-900 border-2 border-primary-500/30 shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+            {isCameraOn && stream ? (
+              /* Real camera feed */
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              /* Placeholder */
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/10 to-transparent" />
+            )}
+
+            {/* Placeholder content when no camera */}
+            {(!isCameraOn || !stream) && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                {status === 'idle' ? (
+                  <div className="text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500/20 to-primary-700/20 border border-primary-500/30 flex items-center justify-center mb-3 mx-auto">
+                      <Video className="w-8 h-8 text-primary-400" />
+                    </div>
+                    <p className="text-sm text-dark-400">Sua câmera aparecerá aqui</p>
+                    <p className="text-xs text-dark-500 mt-1">Clique em "Encontrar Alguém" para começar</p>
                   </div>
-                  <p className="text-sm text-dark-400">Sua câmera</p>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <VideoOff className="w-10 h-10 text-dark-600 mx-auto mb-2" />
-                  <p className="text-sm text-dark-500">Câmera desligada</p>
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-dark-950/70 backdrop-blur-sm border border-white/10 text-xs text-white font-medium">
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-dark-800 border border-white/10 flex items-center justify-center mb-2 mx-auto">
+                      <VideoOff className="w-7 h-7 text-dark-500" />
+                    </div>
+                    <p className="text-sm text-dark-500">Câmera desligada</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+
+            {/* "Você" label */}
+            <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 text-xs text-primary-400 font-semibold">
               Você
             </div>
+
+            {/* Live indicator */}
+            {isCameraOn && stream && (
+              <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-red-500/80 text-[10px] font-bold text-white animate-pulse">
+                LIVE
+              </div>
+            )}
+
+            {/* Mic status */}
+            {isCameraOn && !isMicOn && (
+              <div className="absolute top-3 left-3">
+                <span className="p-1.5 rounded-lg bg-red-500/20 backdrop-blur-sm"><MicOff className="w-3.5 h-3.5 text-red-400" /></span>
+              </div>
+            )}
           </div>
 
-          {/* Partner video */}
+          {/* ═══ PARTNER VIDEO (right side) ═══ */}
           <div className="relative aspect-video rounded-2xl overflow-hidden bg-dark-900 border border-white/10">
             {status === 'idle' && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -246,6 +341,12 @@ export const RoulettePage = () => {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 via-transparent to-transparent" />
+
+                {/* Connecting overlay for mock partner */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute w-12 h-12 rounded-full border border-cyan-400/20 animate-ping opacity-10" />
+                </div>
+
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-white font-bold text-sm">{currentPartner.username}</span>
@@ -274,22 +375,24 @@ export const RoulettePage = () => {
         <div className="flex items-center justify-center gap-3">
           {/* Video toggle */}
           <button
-            onClick={() => setVideoEnabled(!videoEnabled)}
+            onClick={handleToggleVideo}
             className={`p-3 rounded-xl border transition-all ${
-              videoEnabled ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-red-500/15 border-red-500/30 text-red-400'
+              isCameraOn ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-red-500/15 border-red-500/30 text-red-400'
             }`}
+            title={isCameraOn ? 'Desligar câmera' : 'Ligar câmera'}
           >
-            {videoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+            {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
           </button>
 
           {/* Audio toggle */}
           <button
-            onClick={() => setAudioEnabled(!audioEnabled)}
+            onClick={handleToggleMic}
             className={`p-3 rounded-xl border transition-all ${
-              audioEnabled ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-red-500/15 border-red-500/30 text-red-400'
+              isMicOn ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-red-500/15 border-red-500/30 text-red-400'
             }`}
+            title={isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
           >
-            {audioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+            {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
           </button>
 
           {/* Main action button */}
@@ -344,6 +447,11 @@ export const RoulettePage = () => {
         {status === 'idle' && (
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card p-5 text-center">
+              <div className="text-3xl mb-3">📹</div>
+              <h3 className="font-bold text-white text-sm mb-1">Câmera Real</h3>
+              <p className="text-xs text-dark-500">Sua câmera real é ativada automaticamente ao buscar um match</p>
+            </div>
+            <div className="card p-5 text-center">
               <div className="text-3xl mb-3">🎯</div>
               <h3 className="font-bold text-white text-sm mb-1">Use Filtros</h3>
               <p className="text-xs text-dark-500">Encontre pessoas por idade, cidade ou hobby</p>
@@ -352,11 +460,6 @@ export const RoulettePage = () => {
               <div className="text-3xl mb-3">⚡</div>
               <h3 className="font-bold text-white text-sm mb-1">Rápido e Seguro</h3>
               <p className="text-xs text-dark-500">Pule a qualquer momento com "Próximo"</p>
-            </div>
-            <div className="card p-5 text-center">
-              <div className="text-3xl mb-3">👥</div>
-              <h3 className="font-bold text-white text-sm mb-1">Faça Amigos</h3>
-              <p className="text-xs text-dark-500">Adicione quem curtir e continue a conversa</p>
             </div>
           </div>
         )}

@@ -3,11 +3,12 @@ import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Crown, Lock, Smile, Volume2,
-  Share2, X, Gamepad2, Info, Shield,
+  Share2, X, Gamepad2, Info, Shield, AlertTriangle,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
 import { MarriageGame } from '@/components/games/MarriageGame'
 import { useToastStore } from '@/components/common/ToastContainer'
+import { useCamera } from '@/hooks/useCamera'
 
 // ─── Mock Data ───
 const mockParticipants = [
@@ -49,8 +50,6 @@ export const RoomPage = () => {
   const { roomId } = useParams()
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<MockMessage[]>(mockChatMessages)
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOn, setIsVideoOn] = useState(true)
   const [showChat, setShowChat] = useState(true)
   const [showParticipants, setShowParticipants] = useState(false)
   const [showGameModal, setShowGameModal] = useState(false)
@@ -59,11 +58,32 @@ export const RoomPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
+  // ─── REAL CAMERA ───
+  const {
+    stream,
+    videoRef,
+    isCameraOn,
+    isMicOn,
+    permissionState,
+    error: cameraError,
+    startCamera,
+    stopCamera,
+    toggleCamera,
+    toggleMic,
+  } = useCamera()
+
   const room = mockRooms.find((r) => r.id === roomId)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Cleanup camera on unmount / leaving room
+  useEffect(() => {
+    return () => {
+      stopCamera()
+    }
+  }, [stopCamera])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,6 +104,22 @@ export const RoomPage = () => {
   const handleShareRoom = () => {
     navigator.clipboard?.writeText(window.location.href)
     addToast({ type: 'success', title: 'Link copiado!', message: 'Link da sala copiado para a área de transferência' })
+  }
+
+  const handleToggleVideo = () => {
+    if (!stream && !isCameraOn) {
+      startCamera()
+    } else {
+      toggleCamera()
+    }
+  }
+
+  const handleToggleMic = () => {
+    if (!stream) {
+      startCamera()
+    } else {
+      toggleMic()
+    }
   }
 
   if (!room) {
@@ -125,38 +161,31 @@ export const RoomPage = () => {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs text-emerald-400 font-semibold">{onlineParticipants.length} online</span>
             </div>
-            {/* Game button */}
-            <button
-              onClick={() => setShowGameModal(true)}
-              className="p-2 rounded-xl text-pink-400 hover:bg-pink-500/10 transition-all"
-              title="Casamento Atrás da Porta"
-            >
+            <button onClick={() => setShowGameModal(true)} className="p-2 rounded-xl text-pink-400 hover:bg-pink-500/10 transition-all" title="Casamento Atrás da Porta">
               <Gamepad2 className="w-5 h-5" />
             </button>
-            {/* Info */}
-            <button
-              onClick={() => setShowInfoPanel(!showInfoPanel)}
-              className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}
-            >
+            <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
             </button>
-            {/* Participants (mobile) */}
-            <button
-              onClick={() => { setShowParticipants(!showParticipants); if (!showParticipants) setShowChat(false) }}
-              className={`p-2 rounded-xl transition-all md:hidden ${showParticipants ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}
-            >
+            <button onClick={() => { setShowParticipants(!showParticipants); if (!showParticipants) setShowChat(false) }} className={`p-2 rounded-xl transition-all md:hidden ${showParticipants ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Users className="w-5 h-5" />
             </button>
-            {/* Chat (mobile) */}
-            <button
-              onClick={() => { setShowChat(!showChat); if (!showChat) setShowParticipants(false) }}
-              className={`p-2 rounded-xl transition-all md:hidden ${showChat ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}
-            >
+            <button onClick={() => { setShowChat(!showChat); if (!showChat) setShowParticipants(false) }} className={`p-2 rounded-xl transition-all md:hidden ${showChat ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <MessageCircle className="w-5 h-5" />
             </button>
           </div>
         </div>
       </header>
+
+      {/* Camera permission denied banner */}
+      {permissionState === 'denied' && (
+        <div className="flex-shrink-0 bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <p className="text-xs text-red-400">
+            {cameraError || 'Câmera bloqueada. Habilite nas configurações do navegador.'}
+          </p>
+        </div>
+      )}
 
       {/* ─── Main Content ─── */}
       <div className="flex-1 flex overflow-hidden">
@@ -188,16 +217,8 @@ export const RoomPage = () => {
                       {p.tier === 'premium' && <span className="text-[10px] text-amber-400">👑</span>}
                     </div>
                     <div className="flex gap-2 mt-0.5">
-                      {p.videoEnabled ? (
-                        <Video className="w-3 h-3 text-primary-400" />
-                      ) : (
-                        <VideoOff className="w-3 h-3 text-dark-600" />
-                      )}
-                      {p.audioEnabled ? (
-                        <Volume2 className="w-3 h-3 text-primary-400" />
-                      ) : (
-                        <MicOff className="w-3 h-3 text-dark-600" />
-                      )}
+                      {p.videoEnabled ? <Video className="w-3 h-3 text-primary-400" /> : <VideoOff className="w-3 h-3 text-dark-600" />}
+                      {p.audioEnabled ? <Volume2 className="w-3 h-3 text-primary-400" /> : <MicOff className="w-3 h-3 text-dark-600" />}
                     </div>
                   </div>
                 </button>
@@ -209,42 +230,17 @@ export const RoomPage = () => {
               <div className="mt-6 pt-4 border-t border-white/5 animate-fade-in">
                 <h4 className="text-xs font-semibold text-dark-500 uppercase tracking-wider mb-3">Informações da Sala</h4>
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex justify-between text-dark-400">
-                    <span>Categoria</span>
-                    <span className="text-white capitalize">{room.category}</span>
-                  </div>
-                  <div className="flex justify-between text-dark-400">
-                    <span>Tema</span>
-                    <span className="text-white">{room.theme}</span>
-                  </div>
-                  <div className="flex justify-between text-dark-400">
-                    <span>Dono</span>
-                    <span className="text-primary-400">{room.owner.username}</span>
-                  </div>
-                  {/* Capacity bar */}
+                  <div className="flex justify-between text-dark-400"><span>Categoria</span><span className="text-white capitalize">{room.category}</span></div>
+                  <div className="flex justify-between text-dark-400"><span>Tema</span><span className="text-white">{room.theme}</span></div>
+                  <div className="flex justify-between text-dark-400"><span>Dono</span><span className="text-primary-400">{room.owner.username}</span></div>
                   <div>
-                    <div className="flex justify-between text-dark-400 mb-1">
-                      <span>Capacidade</span>
-                      <span className="text-white">{room.participants}/{room.max_users}</span>
-                    </div>
+                    <div className="flex justify-between text-dark-400 mb-1"><span>Capacidade</span><span className="text-white">{room.participants}/{room.max_users}</span></div>
                     <div className="w-full h-1.5 bg-dark-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          capacityPercent > 90 ? 'bg-red-500' :
-                          capacityPercent > 70 ? 'bg-amber-500' :
-                          'bg-emerald-500'
-                        }`}
-                        style={{ width: `${capacityPercent}%` }}
-                      />
+                      <div className={`h-full rounded-full transition-all ${capacityPercent > 90 ? 'bg-red-500' : capacityPercent > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${capacityPercent}%` }} />
                     </div>
                   </div>
-                  <div className="flex justify-between text-dark-400">
-                    <span>Vídeo</span>
-                    <span className={room.has_video ? 'text-emerald-400' : 'text-dark-600'}>{room.has_video ? 'Ativo' : 'Desativado'}</span>
-                  </div>
+                  <div className="flex justify-between text-dark-400"><span>Vídeo</span><span className={room.has_video ? 'text-emerald-400' : 'text-dark-600'}>{room.has_video ? 'Ativo' : 'Desativado'}</span></div>
                 </div>
-
-                {/* Rules */}
                 <div className="mt-4 p-3 rounded-xl bg-white/[0.02] border border-white/5">
                   <h5 className="text-xs font-semibold text-dark-300 mb-2">📋 Regras</h5>
                   <ul className="text-[11px] text-dark-500 space-y-1">
@@ -253,7 +249,6 @@ export const RoomPage = () => {
                     <li>• Denuncie comportamento inadequado</li>
                   </ul>
                 </div>
-
                 <div className="mt-4 flex gap-2">
                   <button onClick={handleShareRoom} className="flex-1 px-3 py-2 rounded-xl border border-white/5 text-xs text-dark-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5 justify-center">
                     <Share2 className="w-3.5 h-3.5" /> Compartilhar
@@ -271,11 +266,79 @@ export const RoomPage = () => {
         <main className={`flex-1 flex flex-col min-w-0 ${(showChat || showParticipants) ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
             <div className={`grid gap-3 h-full ${
-              videoParticipants.length <= 1 ? 'grid-cols-1' :
-              videoParticipants.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' :
+              videoParticipants.length <= 1 ? 'grid-cols-1 sm:grid-cols-2' :
+              videoParticipants.length <= 2 ? 'grid-cols-2' :
               videoParticipants.length <= 4 ? 'grid-cols-2' :
               'grid-cols-2 lg:grid-cols-3'
             }`}>
+
+              {/* ═══ YOUR REAL CAMERA TILE ═══ */}
+              <div className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[120px] sm:min-h-[160px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                {isCameraOn && stream ? (
+                  /* Real camera feed */
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover absolute inset-0"
+                  />
+                ) : (
+                  /* Placeholder */
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                        isCameraOn
+                          ? 'bg-gradient-to-br from-primary-500 to-primary-700'
+                          : 'bg-dark-800 border border-white/10'
+                      }`}>
+                        {isCameraOn ? (
+                          <Video className="w-7 h-7 text-white" />
+                        ) : (
+                          <VideoOff className="w-7 h-7 text-dark-500" />
+                        )}
+                      </div>
+                      <p className="text-sm text-dark-400">
+                        {permissionState === 'denied' ? 'Câmera bloqueada' : 'Câmera desligada'}
+                      </p>
+                      {!isCameraOn && permissionState !== 'denied' && (
+                        <button
+                          onClick={() => startCamera()}
+                          className="mt-2 px-3 py-1.5 text-xs rounded-lg bg-primary-500/20 text-primary-400 border border-primary-500/30 hover:bg-primary-500/30 transition-all"
+                        >
+                          Ligar Câmera
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                {/* "Você" badge */}
+                <div className="absolute bottom-2 left-2">
+                  <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
+                    Você
+                  </span>
+                </div>
+
+                {/* Live indicator */}
+                {isCameraOn && (
+                  <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-red-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
+                    LIVE
+                  </div>
+                )}
+
+                {/* Mic/Camera status */}
+                <div className="absolute top-2 left-2 flex gap-1">
+                  {isCameraOn && !isMicOn && (
+                    <span className="p-1 rounded-lg bg-red-500/20 backdrop-blur-sm"><MicOff className="w-3 h-3 text-red-400" /></span>
+                  )}
+                </div>
+              </div>
+
+              {/* ═══ OTHER PARTICIPANTS (mock with connecting animation) ═══ */}
               {videoParticipants.map((p) => (
                 <button
                   key={p.id}
@@ -284,6 +347,12 @@ export const RoomPage = () => {
                 >
                   <img src={p.avatar} alt={p.username} className="w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+                  {/* Connecting overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute w-10 h-10 rounded-full border border-primary/20 animate-ping opacity-15" />
+                  </div>
+
                   <div className="absolute bottom-2 left-2 flex items-center gap-2">
                     <span className="px-2 py-1 rounded-lg bg-black/60 text-xs font-medium text-white backdrop-blur-sm">
                       {p.username}
@@ -300,38 +369,11 @@ export const RoomPage = () => {
                       <Crown className="w-3 h-3" /> Dono
                     </div>
                   )}
-                  {/* Live indicator */}
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-red-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
                     LIVE
                   </div>
                 </button>
               ))}
-
-              {/* Your video placeholder */}
-              <div className="relative rounded-2xl border-2 border-primary-500/30 bg-dark-900 overflow-hidden min-h-[120px] sm:min-h-[160px]">
-                <div className="w-full h-full flex items-center justify-center">
-                  {isVideoOn ? (
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mx-auto mb-2">
-                        <Video className="w-7 h-7 text-white" />
-                      </div>
-                      <p className="text-sm text-dark-400">Sua câmera</p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-full bg-dark-800 flex items-center justify-center mx-auto mb-2 border border-white/10">
-                        <VideoOff className="w-7 h-7 text-dark-500" />
-                      </div>
-                      <p className="text-sm text-dark-500">Câmera desligada</p>
-                    </div>
-                  )}
-                </div>
-                <div className="absolute bottom-2 left-2">
-                  <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
-                    Você
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -339,16 +381,18 @@ export const RoomPage = () => {
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur-lg p-3 sm:p-4">
             <div className="flex items-center justify-center gap-2 sm:gap-3">
               <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={`p-3 rounded-2xl transition-all ${isMuted ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                onClick={handleToggleMic}
+                className={`p-3 rounded-2xl transition-all ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                title={isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
               >
-                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
               <button
-                onClick={() => setIsVideoOn(!isVideoOn)}
-                className={`p-3 rounded-2xl transition-all ${!isVideoOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                onClick={handleToggleVideo}
+                className={`p-3 rounded-2xl transition-all ${!isCameraOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                title={isCameraOn ? 'Desligar câmera' : 'Ligar câmera'}
               >
-                {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <button onClick={() => setShowGameModal(true)} className="p-3 rounded-2xl bg-pink-500/10 text-pink-400 border border-pink-500/20 hover:bg-pink-500/20 transition-all" title="Casamento Atrás da Porta">
                 <Gamepad2 className="w-5 h-5" />
