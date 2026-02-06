@@ -9,6 +9,7 @@ import { mockRooms } from '@/data/mockRooms'
 // MarriageGame removido - substituído por Pista/Roleta
 import { useToastStore } from '@/components/common/ToastContainer'
 import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
+import { CamaroteMinimizado } from '@/components/rooms/CamaroteMinimizado'
 import { useCamera } from '@/hooks/useCamera'
 
 // ─── Mock Data ───
@@ -58,6 +59,20 @@ export const RoomPage = () => {
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
   const [isPremiumUser] = useState(true) // Mock: true = pagante, false = free
+  const [minimizedCamarote, setMinimizedCamarote] = useState<{
+    id: string
+    name: string
+    participants: { id: string; username: string; avatar: string; videoEnabled: boolean }[]
+  } | null>({
+    // Mock: simula um camarote minimizado
+    id: 'vip-demo',
+    name: 'Cantinho da Ana',
+    participants: [
+      { id: 'u1', username: 'Ana', avatar: 'https://i.pravatar.cc/150?img=9', videoEnabled: true },
+      { id: 'u2', username: 'Carlos', avatar: 'https://i.pravatar.cc/150?img=3', videoEnabled: true },
+      { id: 'u3', username: 'Julia', avatar: 'https://i.pravatar.cc/150?img=5', videoEnabled: false },
+    ]
+  })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
@@ -572,6 +587,20 @@ export const RoomPage = () => {
       {/* Jogo Pista/Roleta agora acessado via /pista */}
 
       {/* Create Camarote Modal */}
+      {/* Camarote Minimizado (PiP) */}
+      {minimizedCamarote && (
+        <CamaroteMinimizado
+          camaroteId={minimizedCamarote.id}
+          camaroteName={minimizedCamarote.name}
+          participants={minimizedCamarote.participants}
+          onClose={() => {
+            setMinimizedCamarote(null)
+            addToast({ type: 'info', title: 'Saiu do camarote', message: 'Você saiu do camarote' })
+          }}
+          onMaximize={() => setMinimizedCamarote(null)}
+        />
+      )}
+
       <CreateCamaroteModal
         isOpen={showCreateCamarote}
         onClose={() => setShowCreateCamarote(false)}
