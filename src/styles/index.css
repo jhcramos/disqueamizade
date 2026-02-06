@@ -2,112 +2,385 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════
+   🎪 BALADA DIGITAL - Design System
+   Moderno com toques retro Anos 90 (NÃO Tron, NÃO neon)
+   ═══════════════════════════════════════════════════════════════════ */
+
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-dark-950 text-white font-sans antialiased;
+    @apply bg-noite-900 text-white font-sans antialiased;
+    background-image: 
+      radial-gradient(ellipse at top, rgba(255, 107, 53, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, rgba(239, 71, 111, 0.02) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+  
+  /* Seleção de texto com cor da marca */
+  ::selection {
+    @apply bg-balada-500/30 text-white;
   }
 }
 
 @layer components {
-  /* ═══ Buttons ═══ */
+  
+  /* ═══════════════════════════════════════════════════════════════════
+     🎬 GRAIN OVERLAY - Estática de TV Anos 90
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    animation: grain 0.5s steps(10) infinite;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════
+     🔘 BUTTONS - Estilo Anos 90 Modernizado
+     ═══════════════════════════════════════════════════════════════════ */
+  
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl;
-    @apply font-semibold text-sm transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 focus:ring-offset-dark-950;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl;
+    @apply font-display font-semibold text-sm transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-noite-900;
+    @apply active:scale-[0.98];
   }
 
-  .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-500 active:bg-primary-700;
+  .btn-balada {
+    @apply btn bg-gradient-to-r from-balada-500 to-energia-500 text-white;
+    @apply hover:shadow-glow-balada hover:brightness-110;
+    @apply focus:ring-balada-500/40;
+  }
+
+  .btn-energia {
+    @apply btn bg-energia-500 text-white;
+    @apply hover:bg-energia-400 hover:shadow-glow-energia;
+    @apply focus:ring-energia-500/40;
+  }
+  
+  .btn-festa {
+    @apply btn bg-festa-400 text-noite-900 font-bold;
+    @apply hover:bg-festa-300 hover:shadow-glow-conquista;
+    @apply focus:ring-festa-400/40;
+  }
+  
+  .btn-conquista {
+    @apply btn bg-conquista-500 text-noite-900 font-bold;
+    @apply hover:bg-conquista-400 hover:shadow-glow-conquista;
+    @apply focus:ring-conquista-500/40;
   }
 
   .btn-secondary {
-    @apply btn bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20;
+    @apply btn bg-white/5 text-white border-2 border-white/10;
+    @apply hover:bg-white/10 hover:border-white/20;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent text-dark-400 hover:text-white hover:bg-white/5;
+    @apply btn bg-transparent text-noite-400;
+    @apply hover:text-white hover:bg-white/5;
   }
-
-  .btn-amber {
-    @apply btn bg-amber-500 text-dark-950 font-bold hover:bg-amber-400;
+  
+  .btn-elite {
+    @apply btn bg-gradient-elite text-noite-900 font-bold;
+    @apply hover:shadow-glow-elite;
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
   }
-
-  .btn-danger {
-    @apply btn bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20;
+  
+  .btn-darkroom {
+    @apply btn bg-darkroom text-white border border-darkroom-light;
+    @apply hover:bg-darkroom-light hover:shadow-[0_0_20px_rgba(139,0,0,0.4)];
   }
 
   .btn-sm {
-    @apply px-3.5 py-1.5 text-xs rounded-lg;
+    @apply px-3.5 py-1.5 text-xs rounded-xl;
   }
 
   .btn-lg {
-    @apply px-7 py-3.5 text-base rounded-xl;
+    @apply px-8 py-4 text-base rounded-2xl;
+  }
+  
+  .btn-xl {
+    @apply px-10 py-5 text-lg rounded-3xl;
   }
 
-  /* ═══ Cards ═══ */
+  /* ═══════════════════════════════════════════════════════════════════
+     🃏 CARDS - Glassmorphism com borda colorida
+     ═══════════════════════════════════════════════════════════════════ */
+  
   .card {
-    @apply bg-surface-card backdrop-blur-md border border-white/[0.06] rounded-2xl;
-    @apply shadow-card transition-all duration-200;
+    @apply bg-surface-card backdrop-blur-md border border-white/[0.06] rounded-3xl;
+    @apply shadow-card transition-all duration-300;
   }
 
   .card-hover {
-    @apply card hover:border-white/[0.12] hover:shadow-card-hover hover:translate-y-[-1px];
+    @apply card hover:border-white/[0.12] hover:shadow-card-hover hover:-translate-y-1;
   }
 
   .card-interactive {
-    @apply card-hover cursor-pointer active:translate-y-0;
+    @apply card-hover cursor-pointer active:translate-y-0 active:scale-[0.99];
+  }
+  
+  .card-balada {
+    @apply card border-balada-500/20 hover:border-balada-500/40;
+    @apply hover:shadow-glow-balada;
+  }
+  
+  .card-energia {
+    @apply card border-energia-500/20 hover:border-energia-500/40;
+    @apply hover:shadow-glow-energia;
+  }
+  
+  .card-elite {
+    @apply card border-elite/30;
+    @apply bg-gradient-to-br from-elite/5 to-transparent;
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.1);
   }
 
-  /* ═══ Inputs ═══ */
-  .input {
-    @apply w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl;
-    @apply text-white text-sm placeholder-dark-500;
-    @apply transition-all duration-200;
-    @apply focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20;
+  /* ═══════════════════════════════════════════════════════════════════
+     📺 VIDEO TILES - Pista de Dança
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .video-tile {
+    @apply relative aspect-video rounded-2xl overflow-hidden;
+    @apply bg-noite-800 border-2 border-white/10;
+    @apply shadow-video transition-all duration-300;
+  }
+  
+  .video-tile:hover {
+    @apply border-white/20 shadow-video-active;
+    transform: scale(1.02);
+  }
+  
+  .video-tile-active {
+    @apply video-tile border-balada-500 shadow-video-active;
+  }
+  
+  .video-tile-flash {
+    @apply video-tile border-energia-500;
+    animation: flashPing 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  .video-tile-elite {
+    @apply video-tile;
+    border: 2px solid transparent;
+    background: 
+      linear-gradient(#1A1A2E, #1A1A2E) padding-box,
+      linear-gradient(135deg, #DAA520, #ffd700, #DAA520) border-box;
+    box-shadow: 0 0 20px rgba(218, 165, 32, 0.3);
   }
 
-  /* ═══ Badge ═══ */
+  /* ═══════════════════════════════════════════════════════════════════
+     🏷️ BADGES - Status e conquistas
+     ═══════════════════════════════════════════════════════════════════ */
+  
   .badge {
-    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full;
+    @apply text-xs font-display font-semibold;
   }
 
-  .badge-primary {
-    @apply badge bg-primary-500/15 text-primary-400 border border-primary-500/20;
+  .badge-balada {
+    @apply badge bg-balada-500/15 text-balada-400 border border-balada-500/30;
+  }
+  
+  .badge-energia {
+    @apply badge bg-energia-500/15 text-energia-400 border border-energia-500/30;
+  }
+  
+  .badge-festa {
+    @apply badge bg-festa-400/15 text-festa-400 border border-festa-400/30;
   }
 
-  .badge-amber {
-    @apply badge bg-amber-500/15 text-amber-400 border border-amber-500/20;
-  }
-
-  .badge-success {
-    @apply badge bg-success/15 text-success border border-success/20;
-  }
-
-  .badge-danger {
-    @apply badge bg-danger/15 text-danger border border-danger/20;
+  .badge-conquista {
+    @apply badge bg-conquista-500/15 text-conquista-400 border border-conquista-500/30;
   }
 
   .badge-neutral {
-    @apply badge bg-white/5 text-dark-400 border border-white/10;
+    @apply badge bg-white/5 text-noite-400 border border-white/10;
+  }
+  
+  .badge-elite {
+    @apply badge bg-elite/20 text-elite-light border border-elite/40;
+    background: linear-gradient(135deg, rgba(218,165,32,0.2), rgba(255,215,0,0.1));
+  }
+  
+  .badge-vip {
+    @apply badge bg-balada-500/20 text-balada-400 border border-balada-500/40;
+  }
+  
+  .badge-level {
+    @apply badge bg-noite-800 text-white border-2 border-conquista-500/50;
   }
 
-  /* ═══ Status Indicators ═══ */
+  /* ═══════════════════════════════════════════════════════════════════
+     ⚡ FLASH - Animação de interesse
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .flash-button {
+    @apply relative p-3 rounded-full bg-energia-500/10 border border-energia-500/30;
+    @apply text-energia-500 transition-all duration-200;
+    @apply hover:bg-energia-500/20 hover:scale-110;
+    @apply active:scale-95;
+  }
+  
+  .flash-button::after {
+    content: '';
+    @apply absolute inset-0 rounded-full border-2 border-energia-500;
+    @apply opacity-0 scale-100;
+  }
+  
+  .flash-button.flash-sent::after {
+    animation: flashPing 1s cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     🎰 ROLETA - Spinning wheel
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .roleta-wheel {
+    @apply relative w-64 h-64 rounded-full;
+    @apply border-4 border-balada-500;
+    @apply shadow-glow-balada;
+    background: conic-gradient(
+      from 0deg,
+      #FF6B35 0deg 45deg,
+      #FFD166 45deg 90deg,
+      #EF476F 90deg 135deg,
+      #06D6A0 135deg 180deg,
+      #FF6B35 180deg 225deg,
+      #FFD166 225deg 270deg,
+      #EF476F 270deg 315deg,
+      #06D6A0 315deg 360deg
+    );
+  }
+  
+  .roleta-spinning {
+    animation: roleta-spin 4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  
+  @keyframes roleta-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(1800deg); }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     🍿☕🥃 FASES DA CONVERSA - Indicadores
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .phase-indicator {
+    @apply flex items-center gap-2 px-4 py-2 rounded-full;
+    @apply font-display font-semibold text-sm;
+    @apply transition-all duration-300;
+  }
+  
+  .phase-pipoca {
+    @apply phase-indicator bg-festa-400/20 text-festa-400 border border-festa-400/30;
+  }
+  
+  .phase-cafe {
+    @apply phase-indicator bg-balada-500/20 text-balada-400 border border-balada-500/30;
+  }
+  
+  .phase-cachaca {
+    @apply phase-indicator bg-purple-500/20 text-purple-400 border border-purple-500/30;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     👑 OSTENTAÇÃO - Elite effects
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .ostentacao-name {
+    @apply font-display font-bold;
+    background: linear-gradient(135deg, #ffd700, #DAA520, #ffd700);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  .ostentacao-border {
+    border: 2px solid transparent;
+    background: 
+      linear-gradient(var(--bg-color, #1A1A2E), var(--bg-color, #1A1A2E)) padding-box,
+      linear-gradient(135deg, #DAA520, #ffd700, #DAA520) border-box;
+  }
+  
+  .ostentacao-glow {
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.3);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     📊 XP BAR - Progressão
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .xp-bar {
+    @apply relative h-3 bg-noite-800 rounded-full overflow-hidden;
+  }
+  
+  .xp-bar-fill {
+    @apply absolute inset-y-0 left-0 bg-gradient-to-r from-conquista-500 to-conquista-400;
+    @apply rounded-full transition-all duration-500;
+  }
+  
+  .xp-bar-glow {
+    @apply xp-bar;
+    box-shadow: inset 0 0 10px rgba(6, 214, 160, 0.2);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     📝 INPUTS
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .input {
+    @apply w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl;
+    @apply text-white text-sm placeholder-noite-500;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:border-balada-500/50 focus:ring-2 focus:ring-balada-500/20;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     🟢 STATUS INDICATORS
+     ═══════════════════════════════════════════════════════════════════ */
+  
   .status-online {
-    @apply w-2.5 h-2.5 rounded-full bg-success;
-    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+    @apply w-3 h-3 rounded-full bg-conquista-500;
+    box-shadow: 0 0 8px rgba(6, 214, 160, 0.5);
   }
 
   .status-offline {
-    @apply w-2.5 h-2.5 rounded-full bg-dark-600;
+    @apply w-3 h-3 rounded-full bg-noite-600;
+  }
+  
+  .status-busy {
+    @apply w-3 h-3 rounded-full bg-energia-500;
+    box-shadow: 0 0 8px rgba(239, 71, 111, 0.5);
   }
 
-  /* ═══ Scrollbar ═══ */
+  /* ═══════════════════════════════════════════════════════════════════
+     🎨 UTILITIES
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  /* Anos 90 dot pattern background */
+  .pattern-90s {
+    background-image: radial-gradient(rgba(255, 107, 53, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  /* Divider */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent;
+  }
+  
+  /* Scrollbar custom */
   .custom-scrollbar::-webkit-scrollbar {
-    @apply w-1.5;
+    @apply w-2;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -117,30 +390,8 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-white/10 rounded-full hover:bg-white/20;
   }
-
-  /* ═══ Subtle Nostalgia Background ═══ */
-  .nostalgia-bg {
-    background-image: radial-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  /* ═══ Section Divider ═══ */
-  .divider {
-    @apply h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent;
-  }
-
-  /* ═══ Modal ═══ */
-  .modal-backdrop {
-    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40;
-  }
-
-  .modal-content {
-    @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
-    @apply card p-6 z-50 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
-    @apply custom-scrollbar;
-  }
-
-  /* ═══ Scrollbar Hide (for horizontal scrollable areas) ═══ */
+  
+  /* Hide scrollbar */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -148,23 +399,55 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-
-  /* ═══ Safe Area (for mobile bottom nav) ═══ */
+  
+  /* Safe area for mobile */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
+  
+  /* Text gradient */
+  .text-gradient-balada {
+    @apply bg-clip-text text-transparent bg-gradient-balada;
+  }
 
-  /* ═══ Line Clamp ═══ */
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* ═══════════════════════════════════════════════════════════════════
+     📱 MODAL
+     ═══════════════════════════════════════════════════════════════════ */
+  
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-40;
   }
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+
+  .modal-content {
+    @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+    @apply card p-6 z-50 max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto;
+    @apply custom-scrollbar animate-scale-in;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎬 KEYFRAMES
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes flashPing {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(1.8); opacity: 0; }
 }

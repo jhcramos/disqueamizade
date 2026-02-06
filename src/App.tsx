@@ -14,8 +14,10 @@ import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { StoriesPage } from './pages/StoriesPage'
 import { ExclusivePage } from './pages/ExclusivePage'
+import DesignSystemPage from './pages/DesignSystemPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
+import { GrainOverlay } from './components/design-system'
 import { useAuthStore } from './store/authStore'
 
 function App() {
@@ -26,7 +28,10 @@ function App() {
   }, [initialize])
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white nostalgia-bg">
+    <div className="min-h-screen bg-noite-900 text-white pattern-90s">
+      {/* Grain overlay for 90s TV static effect */}
+      <GrainOverlay opacity={0.025} />
+      
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/rooms" element={<RoomsPage />} />
@@ -42,6 +47,8 @@ function App() {
         <Route path="/creator" element={<InfluencerDashboardPage />} />
         <Route path="/stories" element={<StoriesPage />} />
         <Route path="/exclusive" element={<ExclusivePage />} />
+        {/* Design System showcase */}
+        <Route path="/design" element={<DesignSystemPage />} />
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
