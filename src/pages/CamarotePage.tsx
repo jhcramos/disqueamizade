@@ -6,6 +6,7 @@ import {
   Music, AlertTriangle
 } from 'lucide-react'
 import { useToastStore } from '@/components/common/ToastContainer'
+import { useCamaroteStore } from '@/store/camaroteStore'
 import { useCamera } from '@/hooks/useCamera'
 import { PhaseProgress } from '@/components/design-system/PhaseIndicator'
 import type { CamaroteType } from '@/components/balada/CamaroteCard'
@@ -106,6 +107,7 @@ export const CamarotePage = () => {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
+  const { minimizeCamarote } = useCamaroteStore()
 
   // Camera
   const {
@@ -456,8 +458,19 @@ export const CamarotePage = () => {
               <button 
                 onClick={() => {
                   setShowLeaveConfirm(false)
+                  // Salva no store global para aparecer em qualquer página
+                  minimizeCamarote({
+                    id: camaroteId || 'unknown',
+                    name: config.title,
+                    participants: mockParticipants.map(p => ({
+                      id: p.id,
+                      username: p.username,
+                      avatar: p.avatar,
+                      videoEnabled: p.videoEnabled,
+                    })),
+                  })
                   addToast({ type: 'info', title: '🛋️ Camarote minimizado', message: 'Clique no ícone para voltar' })
-                  navigate(-1) // Volta mas mantém sessão (em produção seria WebSocket)
+                  navigate(-1)
                 }}
                 className="w-full px-4 py-3 rounded-xl bg-elite-500/10 text-elite-400 font-semibold border border-elite-500/20 hover:bg-elite-500/20 transition-all flex items-center justify-center gap-2"
               >

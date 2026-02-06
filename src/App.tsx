@@ -19,10 +19,15 @@ import { RoletaPage } from './pages/RoletaPage'
 import { CamarotePage } from './pages/CamarotePage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
+import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
 import { useAuthStore } from './store/authStore'
+import { useCamaroteStore } from './store/camaroteStore'
+import { useToastStore } from './components/common/ToastContainer'
 
 function App() {
   const initialize = useAuthStore((s) => s.initialize)
+  const { minimizedCamarote, clearMinimized } = useCamaroteStore()
+  const { addToast } = useToastStore()
 
   useEffect(() => {
     initialize()
@@ -67,6 +72,20 @@ function App() {
       </Routes>
       <MobileNav />
       <ToastContainer />
+      
+      {/* Camarote minimizado global - aparece em qualquer página */}
+      {minimizedCamarote && (
+        <CamaroteMinimizado
+          camaroteId={minimizedCamarote.id}
+          camaroteName={minimizedCamarote.name}
+          participants={minimizedCamarote.participants}
+          onClose={() => {
+            clearMinimized()
+            addToast({ type: 'info', title: 'Saiu do camarote', message: 'Você saiu do camarote' })
+          }}
+          onMaximize={() => clearMinimized()}
+        />
+      )}
     </div>
   )
 }
