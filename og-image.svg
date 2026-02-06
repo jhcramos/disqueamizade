@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1A1A2E"/>
+  
+  <!-- Gradient orbs -->
+  <circle cx="300" cy="200" r="300" fill="url(#glow1)" opacity="0.3"/>
+  <circle cx="900" cy="400" r="250" fill="url(#glow2)" opacity="0.25"/>
+  
+  <!-- Logo tent -->
+  <g transform="translate(100, 180)">
+    <path d="M80 0 L160 140 L0 140 Z" fill="url(#tentGradient)" opacity="0.9"/>
+    <ellipse cx="80" cy="140" rx="40" ry="10" fill="#1A1A2E"/>
+    <!-- Flag -->
+    <path d="M80 -20 L80 0" stroke="#FF6B35" stroke-width="4" stroke-linecap="round"/>
+    <path d="M80 -20 L100 -10 L80 0" fill="#FF6B35"/>
+  </g>
+  
+  <!-- Main text -->
+  <text x="300" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="white">
+    Disque Amizade
+  </text>
+  
+  <!-- Tagline -->
+  <text x="300" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="url(#textGradient)">
+    A balada que nunca fecha
+  </text>
+  
+  <!-- Features -->
+  <g transform="translate(300, 400)">
+    <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#94a3b8">
+      🎪 Pista • 🎰 Roleta • 🛋️ Camarotes
+    </text>
+  </g>
+  
+  <!-- Avatars mockup -->
+  <g transform="translate(300, 460)">
+    <circle cx="0" cy="20" r="20" fill="#FF6B35"/>
+    <circle cx="35" cy="20" r="20" fill="#EF476F"/>
+    <circle cx="70" cy="20" r="20" fill="#FFD166"/>
+    <circle cx="105" cy="20" r="20" fill="#06D6A0"/>
+    <circle cx="140" cy="20" r="20" fill="#DAA520"/>
+    <text x="180" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#64748b">
+      +2.847 conectando essa semana
+    </text>
+  </g>
+  
+  <!-- URL -->
+  <text x="300" y="580" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#64748b">
+    disqueamizade.com.br
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="1050" cy="150" r="8" fill="#FFD166"/>
+  <circle cx="1100" cy="200" r="5" fill="#EF476F"/>
+  <circle cx="1000" cy="180" r="4" fill="#06D6A0"/>
+  
+  <defs>
+    <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+    <linearGradient id="glow2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF476F"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+    <linearGradient id="tentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="50%" stop-color="#EF476F"/>
+      <stop offset="100%" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="50%" stop-color="#EF476F"/>
+      <stop offset="100%" stop-color="#FFD166"/>
+    </linearGradient>
+  </defs>
+</svg>
