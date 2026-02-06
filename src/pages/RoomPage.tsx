@@ -57,7 +57,7 @@ export const RoomPage = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
-  const [userFichas] = useState(85) // Mock: fichas do usuário
+  const [isPremiumUser] = useState(true) // Mock: true = pagante, false = free
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
@@ -575,7 +575,7 @@ export const RoomPage = () => {
       <CreateCamaroteModal
         isOpen={showCreateCamarote}
         onClose={() => setShowCreateCamarote(false)}
-        userFichas={userFichas}
+        isPremium={isPremiumUser}
         onConfirm={(data) => {
           addToast({ 
             type: 'success', 

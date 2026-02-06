@@ -1,25 +1,23 @@
 import { useState } from 'react'
-import { X, Sparkles, Users } from 'lucide-react'
+import { X, Sparkles, Users, Crown } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 interface CreateCamaroteModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: (data: { name: string }) => void
-  userFichas: number
+  isPremium: boolean // true = pagante, false = free
 }
 
-const COST = 20 // 💎
 const MAX_PARTICIPANTS = 6
 
-export const CreateCamaroteModal = ({ isOpen, onClose, onConfirm, userFichas }: CreateCamaroteModalProps) => {
+export const CreateCamaroteModal = ({ isOpen, onClose, onConfirm, isPremium }: CreateCamaroteModalProps) => {
   const [name, setName] = useState('')
 
   if (!isOpen) return null
 
-  const canAfford = userFichas >= COST
-
   const handleConfirm = () => {
-    if (!name.trim() || !canAfford) return
+    if (!name.trim() || !isPremium) return
     onConfirm({ name: name.trim() })
     setName('')
     onClose()
@@ -45,61 +43,74 @@ export const CreateCamaroteModal = ({ isOpen, onClose, onConfirm, userFichas }: 
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-semibold text-white mb-2">Nome do Camarote</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Ex: Cantinho do Zé"
-              maxLength={30}
-              className="input w-full"
-              autoFocus
-            />
-            <p className="text-xs text-dark-500 mt-1">{name.length}/30 caracteres</p>
-          </div>
-
-          {/* Info */}
-          <div className="p-3 rounded-xl bg-noite-900/50 border border-white/5">
-            <div className="flex items-center gap-2 text-sm text-dark-300">
-              <Users className="w-4 h-4 text-elite-400" />
-              <span>Até <strong className="text-white">{MAX_PARTICIPANTS} pessoas</strong></span>
-            </div>
-            <p className="text-xs text-dark-500 mt-1">Você pode remover participantes a qualquer momento</p>
-          </div>
-
-          {/* Cost */}
-          <div className={`p-4 rounded-xl border ${canAfford ? 'bg-elite-500/5 border-elite-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-            <div className="flex items-center justify-between">
+        <div className="p-4">
+          {isPremium ? (
+            /* Usuário pagante - pode criar */
+            <div className="space-y-4">
+              {/* Name */}
               <div>
-                <div className="text-sm font-semibold text-white">Custo</div>
-                <div className="text-xs text-dark-500">Suas fichas: {userFichas}💎</div>
+                <label className="block text-sm font-semibold text-white mb-2">Nome do Camarote</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ex: Cantinho do Zé"
+                  maxLength={30}
+                  className="input w-full"
+                  autoFocus
+                />
+                <p className="text-xs text-dark-500 mt-1">{name.length}/30 caracteres</p>
               </div>
-              <div className={`text-2xl font-bold ${canAfford ? 'text-elite-400' : 'text-red-400'}`}>
-                {COST}💎
+
+              {/* Info */}
+              <div className="p-3 rounded-xl bg-noite-900/50 border border-white/5">
+                <div className="flex items-center gap-2 text-sm text-dark-300">
+                  <Users className="w-4 h-4 text-elite-400" />
+                  <span>Até <strong className="text-white">{MAX_PARTICIPANTS} pessoas</strong></span>
+                </div>
+                <p className="text-xs text-dark-500 mt-1">Você pode remover participantes a qualquer momento</p>
               </div>
             </div>
-            {!canAfford && (
-              <p className="text-xs text-red-400 mt-2">Fichas insuficientes! Compre mais fichas.</p>
-            )}
-          </div>
+          ) : (
+            /* Usuário free - não pode criar */
+            <div className="text-center py-4">
+              <div className="w-16 h-16 rounded-full bg-elite-500/10 flex items-center justify-center mx-auto mb-4">
+                <Crown className="w-8 h-8 text-elite-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Recurso Premium</h3>
+              <p className="text-sm text-dark-400 mb-4">
+                Apenas usuários pagantes podem criar Camarotes VIP.
+              </p>
+              <p className="text-xs text-dark-500">
+                Faça upgrade para criar salas privadas, ter destaque e muito mais!
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="flex gap-3 p-4 border-t border-white/5">
           <button onClick={onClose} className="flex-1 btn-ghost">
-            Cancelar
+            {isPremium ? 'Cancelar' : 'Fechar'}
           </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!name.trim() || !canAfford}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-elite-500 to-elite-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-elite-500/30 transition-all flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Criar (20💎)
-          </button>
+          
+          {isPremium ? (
+            <button
+              onClick={handleConfirm}
+              disabled={!name.trim()}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-elite-500 to-elite-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-elite-500/30 transition-all flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Criar
+            </button>
+          ) : (
+            <Link to="/pricing" className="flex-1">
+              <button className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-elite-500 to-elite-600 text-white font-bold hover:shadow-lg hover:shadow-elite-500/30 transition-all flex items-center justify-center gap-2">
+                <Crown className="w-4 h-4" />
+                Fazer Upgrade
+              </button>
+            </Link>
+          )}
         </div>
       </div>
     </div>
