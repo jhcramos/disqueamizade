@@ -262,6 +262,64 @@ export const RoomPage = () => {
                 </div>
               </div>
             )}
+
+            {/* ─── Camarotes VIP nesta sala ─── */}
+            <div className="mt-6 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-elite-400 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Camarotes VIP
+                </h4>
+                <button 
+                  onClick={() => setShowCreateCamarote(true)}
+                  className="text-[10px] text-elite-400 hover:text-elite-300"
+                >
+                  + Criar
+                </button>
+              </div>
+              
+              {/* Lista de camarotes ativos (mock) */}
+              <div className="space-y-2">
+                {/* Camarote exemplo 1 */}
+                <button 
+                  onClick={() => navigate('/camarote/vip-1')}
+                  className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-white truncate">Cantinho da Ana</span>
+                    <span className="text-[10px] text-dark-500">3/6</span>
+                  </div>
+                  <div className="flex -space-x-1.5">
+                    <img src="https://i.pravatar.cc/150?img=9" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=1" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=5" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                  </div>
+                </button>
+
+                {/* Camarote exemplo 2 */}
+                <button 
+                  onClick={() => navigate('/camarote/vip-2')}
+                  className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-white truncate">Gamers BR</span>
+                    <span className="text-[10px] text-dark-500">5/6</span>
+                  </div>
+                  <div className="flex -space-x-1.5">
+                    <img src="https://i.pravatar.cc/150?img=3" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=7" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=12" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=20" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                    <img src="https://i.pravatar.cc/150?img=25" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
+                  </div>
+                </button>
+
+                {/* Vazio */}
+                {false && (
+                  <p className="text-xs text-dark-600 text-center py-2">Nenhum camarote ativo</p>
+                )}
+              </div>
+            </div>
           </div>
         </aside>
 
