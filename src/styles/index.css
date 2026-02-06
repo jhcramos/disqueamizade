@@ -155,8 +155,7 @@
   }
   
   .video-tile:hover {
-    @apply border-white/20 shadow-video-active;
-    transform: scale(1.02);
+    @apply border-white/20;
   }
   
   .video-tile-active {
@@ -164,8 +163,7 @@
   }
   
   .video-tile-flash {
-    @apply video-tile border-energia-500;
-    animation: flashPing 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    @apply video-tile border-energia-500 shadow-glow-energia;
   }
   
   .video-tile-elite {
@@ -236,8 +234,8 @@
     @apply opacity-0 scale-100;
   }
   
-  .flash-button.flash-sent::after {
-    animation: flashPing 1s cubic-bezier(0, 0, 0.2, 1);
+  .flash-button.flash-sent {
+    @apply bg-energia-500/30 border-energia-500;
   }
 
   /* ═══════════════════════════════════════════════════════════════════

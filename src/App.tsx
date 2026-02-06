@@ -1,25 +1,19 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { HomePage } from './pages/HomePage'
+import HomePageV3 from './pages/HomePageV3'
 import { RoomsPage } from './pages/RoomsPage'
 import { MarketplacePage } from './pages/MarketplacePage'
 import { PricingPage } from './pages/PricingPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
-import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
-import { StoriesPage } from './pages/StoriesPage'
-import { ExclusivePage } from './pages/ExclusivePage'
-import DesignSystemPage from './pages/DesignSystemPage'
 import PistaPage from './pages/PistaPage'
-import HomePageV3 from './pages/HomePageV3'
+import DesignSystemPage from './pages/DesignSystemPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
-// import { GrainOverlay } from './components/design-system'
 import { useAuthStore } from './store/authStore'
 
 function App() {
@@ -30,31 +24,33 @@ function App() {
   }, [initialize])
 
   return (
-    <div className="min-h-screen bg-noite-900 text-white pattern-90s">
-      {/* Grain overlay disabled - Juliano não curtiu o flickering */}
-      {/* <GrainOverlay opacity={0.015} /> */}
-      
+    <div className="min-h-screen bg-noite-900 text-white">
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/rooms" element={<RoomsPage />} />
-        <Route path="/roulette" element={<RoulettePage />} />
-        <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/profile/:userId" element={<ProfilePage />} />
-        <Route path="/hobbies" element={<HobbiesPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/room/:roomId" element={<RoomPage />} />
-        <Route path="/cabines" element={<SecretCabinsPage />} />
-        <Route path="/filtros" element={<VideoFiltersPage />} />
-        <Route path="/creator" element={<InfluencerDashboardPage />} />
-        <Route path="/stories" element={<StoriesPage />} />
-        <Route path="/exclusive" element={<ExclusivePage />} />
-        {/* V3 Balada Digital */}
-        <Route path="/v3" element={<HomePageV3 />} />
+        {/* Home */}
+        <Route path="/" element={<HomePageV3 />} />
+        
+        {/* Core: Pista + Roleta + Salas */}
         <Route path="/pista" element={<PistaPage />} />
-        {/* Design System showcase */}
+        <Route path="/roleta" element={<RoulettePage />} />
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/room/:roomId" element={<RoomPage />} />
+        
+        {/* Creators & Marketplace (ao vivo) */}
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/creator" element={<InfluencerDashboardPage />} />
+        
+        {/* User */}
+        <Route path="/profile/:userId" element={<ProfilePage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Features */}
+        <Route path="/filtros" element={<VideoFiltersPage />} />
+        
+        {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />
-        {/* Catch all */}
+        
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <MobileNav />
