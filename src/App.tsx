@@ -1,16 +1,19 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import HomePageV3 from './pages/HomePageV3'
+import { HomePage } from './pages/HomePage'
 import { RoomsPage } from './pages/RoomsPage'
 import { MarketplacePage } from './pages/MarketplacePage'
 import { PricingPage } from './pages/PricingPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
+import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import PistaPage from './pages/PistaPage'
+import HomePageV3 from './pages/HomePageV3'
 import DesignSystemPage from './pages/DesignSystemPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
@@ -26,16 +29,21 @@ function App() {
   return (
     <div className="min-h-screen bg-noite-900 text-white">
       <Routes>
-        {/* Home */}
-        <Route path="/" element={<HomePageV3 />} />
+        {/* Home original */}
+        <Route path="/" element={<HomePage />} />
         
-        {/* Core: Pista + Roleta + Salas */}
-        <Route path="/pista" element={<PistaPage />} />
-        <Route path="/roleta" element={<RoulettePage />} />
+        {/* Salas e experiências */}
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/room/:roomId" element={<RoomPage />} />
+        <Route path="/roulette" element={<RoulettePage />} />
+        <Route path="/cabines" element={<SecretCabinsPage />} />
+        <Route path="/hobbies" element={<HobbiesPage />} />
         
-        {/* Creators & Marketplace (ao vivo) */}
+        {/* V3 Balada Digital (novo jogo dentro das salas) */}
+        <Route path="/pista" element={<PistaPage />} />
+        <Route path="/v3" element={<HomePageV3 />} />
+        
+        {/* Creators & Marketplace */}
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/creator" element={<InfluencerDashboardPage />} />
         
