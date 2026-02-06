@@ -5,7 +5,7 @@ import {
   MessageCircle, Gamepad2, Heart, Flame, Mic, Music, Eye, EyeOff
 } from 'lucide-react'
 import { RoletaWheel } from '@/components/balada/RoletaWheel'
-import { CamaroteCard, type CamaroteType } from '@/components/balada/CamaroteCard'
+import { type CamaroteType } from '@/components/balada/CamaroteCard'
 import { FlashButton } from '@/components/balada/FlashButton'
 
 // Mock data
@@ -17,20 +17,11 @@ const MOCK_PISTA_PARTICIPANTS = Array.from({ length: 24 }, (_, i) => ({
   youFlashed: i === 5 || i === 7, // Você mandou Flash pra alguns
 }))
 
-const MOCK_CAMAROTES: Array<{
-  id: string
-  type: CamaroteType
-  name: string
-  participants: { id: string; username: string; avatar: string }[]
-  maxParticipants: number
-  isActive: boolean
-}> = [
-  { id: 'c1', type: 'papo', name: 'Café & Conversa', participants: MOCK_PISTA_PARTICIPANTS.slice(0, 2), maxParticipants: 4, isActive: true },
-  { id: 'c2', type: 'esquenta', name: 'Truco Digital', participants: MOCK_PISTA_PARTICIPANTS.slice(2, 5), maxParticipants: 6, isActive: true },
-  { id: 'c3', type: 'duo', name: 'Encontro', participants: MOCK_PISTA_PARTICIPANTS.slice(5, 6), maxParticipants: 2, isActive: false },
-  { id: 'c4', type: 'dark', name: 'Quarto Escuro', participants: [], maxParticipants: 2, isActive: false },
-  { id: 'c5', type: 'karaoke', name: 'Karaokê Brasil', participants: MOCK_PISTA_PARTICIPANTS.slice(8, 12), maxParticipants: 8, isActive: true },
-  { id: 'c6', type: 'palco', name: 'Stand-up Night', participants: MOCK_PISTA_PARTICIPANTS.slice(12, 15), maxParticipants: 20, isActive: true },
+// Matches recentes do jogo (criados pela Roleta)
+const MOCK_RECENT_MATCHES = [
+  { id: 'm1', type: 'duo' as CamaroteType, users: ['Ana_SP', 'Bruno_RJ'], timestamp: Date.now() - 120000 },
+  { id: 'm2', type: 'papo' as CamaroteType, users: ['Carla_MG', 'Diego_PR', 'Eva_BA'], timestamp: Date.now() - 300000 },
+  { id: 'm3', type: 'esquenta' as CamaroteType, users: ['Felipe_RS', 'Gabi_SP', 'Hugo_RJ', 'Iris_MG'], timestamp: Date.now() - 480000 },
 ]
 
 const CAMAROTE_MODES = [
@@ -222,75 +213,68 @@ export const RoletaPage = () => {
           </div>
         )}
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Roleta Wheel - Center */}
-          <div className="lg:col-span-2 flex flex-col items-center justify-center py-8">
-            <RoletaWheel
-              participants={MOCK_PISTA_PARTICIPANTS}
-              isSpinning={isSpinning}
-              selectedIds={selectedIds}
-              onSpinComplete={handleSpinComplete}
-              countdown={countdown}
-            />
+        {/* Main Content */}
+        <div className="flex flex-col items-center justify-center py-8">
+          <RoletaWheel
+            participants={MOCK_PISTA_PARTICIPANTS}
+            isSpinning={isSpinning}
+            selectedIds={selectedIds}
+            onSpinComplete={handleSpinComplete}
+            countdown={countdown}
+          />
 
-            {/* Manual spin button (for testing) */}
-            <button
-              onClick={handleSpin}
-              disabled={isSpinning || isInLounge}
-              className="mt-8 px-8 py-3 rounded-xl bg-gradient-to-r from-balada-500 to-energia-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-balada-500/30 transition-all"
-            >
-              {isSpinning ? '🎰 Girando...' : isInLounge ? '🍹 No Lounge' : '🎰 Girar Agora!'}
-            </button>
+          {/* Manual spin button (for testing) */}
+          <button
+            onClick={handleSpin}
+            disabled={isSpinning || isInLounge}
+            className="mt-8 px-8 py-3 rounded-xl bg-gradient-to-r from-balada-500 to-energia-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-balada-500/30 transition-all"
+          >
+            {isSpinning ? '🎰 Girando...' : isInLounge ? '🍹 No Lounge' : '🎰 Girar Agora!'}
+          </button>
 
-            {/* Flash someone in the wheel */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-dark-500 mb-3">⚡ Mande um Flash para aumentar chances de match</p>
-              <div className="flex flex-wrap gap-2 justify-center max-w-md">
-                {MOCK_PISTA_PARTICIPANTS.slice(0, 6).map(p => (
-                  <FlashButton
-                    key={p.id}
-                    targetUsername={p.username}
-                    onFlash={() => handleFlash(p.id)}
-                    alreadyFlashed={flashedUsers.includes(p.id)}
-                    theyFlashed={p.hasFlashed}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Camarotes Sidebar */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              🛋️ Camarotes Ativos
-              <span className="text-xs font-normal text-dark-500">({MOCK_CAMAROTES.filter(c => c.isActive).length})</span>
-            </h2>
-
-            <div className="space-y-3">
-              {MOCK_CAMAROTES.filter(c => c.isActive).map(camarote => (
-                <CamaroteCard
-                  key={camarote.id}
-                  type={camarote.type}
-                  name={camarote.name}
-                  participants={camarote.participants}
-                  maxParticipants={camarote.maxParticipants}
-                  isActive={camarote.isActive}
-                  onClick={() => navigate(`/camarote/${camarote.id}`)}
+          {/* Flash someone in the wheel */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-dark-500 mb-3">⚡ Mande um Flash para aumentar chances de match</p>
+            <div className="flex flex-wrap gap-2 justify-center max-w-md">
+              {MOCK_PISTA_PARTICIPANTS.slice(0, 6).map(p => (
+                <FlashButton
+                  key={p.id}
+                  targetUsername={p.username}
+                  onFlash={() => handleFlash(p.id)}
+                  alreadyFlashed={flashedUsers.includes(p.id)}
+                  theyFlashed={p.hasFlashed}
                 />
               ))}
             </div>
-
-            {/* Create Camarote CTA */}
-            <div className="p-4 rounded-2xl border border-dashed border-elite-500/30 bg-elite-500/5 text-center">
-              <div className="text-2xl mb-2">✨</div>
-              <h3 className="text-sm font-bold text-elite-400 mb-1">Criar Camarote VIP</h3>
-              <p className="text-xs text-dark-500 mb-3">Sua sala privada por 20💎</p>
-              <button className="px-4 py-2 rounded-xl bg-elite-500/20 text-elite-400 text-xs font-bold border border-elite-500/30 hover:bg-elite-500/30 transition-all">
-                Criar Camarote
-              </button>
-            </div>
           </div>
+
+          {/* Matches Recentes do Jogo */}
+          {MOCK_RECENT_MATCHES.length > 0 && (
+            <div className="mt-10 w-full max-w-lg">
+              <h3 className="text-sm font-bold text-dark-400 mb-3 text-center">
+                🎯 Matches Recentes (criados pela Roleta)
+              </h3>
+              <div className="space-y-2">
+                {MOCK_RECENT_MATCHES.map(match => (
+                  <button
+                    key={match.id}
+                    onClick={() => navigate(`/camarote/${match.id}`)}
+                    className="w-full p-3 rounded-xl bg-noite-900/50 border border-white/5 hover:border-balada-500/30 transition-all flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">
+                        {match.type === 'duo' ? '💕' : match.type === 'papo' ? '💬' : '🎲'}
+                      </span>
+                      <span className="text-sm text-white">{match.users.join(', ')}</span>
+                    </div>
+                    <span className="text-xs text-dark-500">
+                      {Math.floor((Date.now() - match.timestamp) / 60000)}min atrás
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

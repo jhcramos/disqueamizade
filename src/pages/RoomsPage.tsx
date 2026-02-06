@@ -1,10 +1,18 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, Users, Zap } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, Plus, Users, Zap, Crown, Sparkles } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { RoomCard } from '@/components/rooms/RoomCard'
 import { CreateRoomModal } from '@/components/rooms/CreateRoomModal'
 import { mockRooms, roomCategories } from '@/data/mockRooms'
+
+// Camarotes VIP - salas criadas por usuários (20💎)
+const mockCamarotesVIP = [
+  { id: 'vip1', name: 'Lounge do Carlos', owner: 'Carlos_RJ', ownerAvatar: 'https://i.pravatar.cc/150?img=3', participants: 3, maxParticipants: 6, isElite: true },
+  { id: 'vip2', name: 'Cantinho da Mari', owner: 'Marina_SP', ownerAvatar: 'https://i.pravatar.cc/150?img=9', participants: 2, maxParticipants: 4, isElite: false },
+  { id: 'vip3', name: 'Gamers BR', owner: 'Pedro_CWB', ownerAvatar: 'https://i.pravatar.cc/150?img=7', participants: 5, maxParticipants: 8, isElite: false },
+]
 
 export const RoomsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -104,6 +112,66 @@ export const RoomsPage = () => {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Camarotes VIP Section - salas criadas por usuários */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-elite-400" />
+              <h2 className="text-lg font-bold text-white">Camarotes VIP</h2>
+              <span className="badge bg-elite-500/20 text-elite-400 border-elite-500/30">{mockCamarotesVIP.length}</span>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-elite-500/10 text-elite-400 text-sm font-semibold border border-elite-500/30 hover:bg-elite-500/20 transition-all">
+              <Sparkles className="w-4 h-4" />
+              Criar Camarote (20💎)
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockCamarotesVIP.map((camarote) => (
+              <Link
+                key={camarote.id}
+                to={`/camarote/${camarote.id}`}
+                className="card p-4 hover:border-elite-500/30 transition-all group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <img 
+                        src={camarote.ownerAvatar} 
+                        alt={camarote.owner}
+                        className={`w-10 h-10 rounded-full border-2 ${camarote.isElite ? 'border-elite-400' : 'border-white/20'}`}
+                      />
+                      {camarote.isElite && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-elite-500 flex items-center justify-center">
+                          <Crown className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-sm group-hover:text-elite-400 transition-colors">{camarote.name}</h3>
+                      <p className="text-xs text-dark-500">por {camarote.owner}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs text-dark-400">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{camarote.participants}/{camarote.maxParticipants}</span>
+                  </div>
+                  <div className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    camarote.participants < camarote.maxParticipants 
+                      ? 'bg-conquista-500/20 text-conquista-400' 
+                      : 'bg-energia-500/20 text-energia-400'
+                  }`}>
+                    {camarote.participants < camarote.maxParticipants ? 'Aberto' : 'Lotado'}
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
 
