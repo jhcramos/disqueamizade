@@ -63,7 +63,7 @@ export const RoomPage = () => {
     id: string
     name: string
     participants: { id: string; username: string; avatar: string; videoEnabled: boolean }[]
-  } | null>(null) // null = nenhum camarote minimizado
+  } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
