@@ -20,6 +20,9 @@ interface PistaUser {
   isVideoOff: boolean
   flashedMe: boolean
   iFlashed: boolean
+  inCamarote: boolean
+  camaroteName?: string
+  camaroteId?: string
 }
 
 const generateMockUsers = (count: number): PistaUser[] => {
@@ -34,17 +37,31 @@ const generateMockUsers = (count: number): PistaUser[] => {
   
   const tiers: Array<'free' | 'vip' | 'elite'> = ['free', 'free', 'free', 'free', 'vip', 'vip', 'elite']
   
-  return names.slice(0, count).map((name, i) => ({
-    id: `user-${i}`,
-    name,
-    tier: tiers[Math.floor(Math.random() * tiers.length)],
-    level: Math.floor(Math.random() * 15) + 1,
-    isOnline: true,
-    isMuted: Math.random() > 0.8,
-    isVideoOff: Math.random() > 0.85,
-    flashedMe: Math.random() > 0.7,
-    iFlashed: false,
-  }))
+  const camarotes = [
+    { id: 'cam1', name: 'Papo de Carros 🚗' },
+    { id: 'cam2', name: 'Só +30 🍷' },
+    { id: 'cam3', name: 'Gamers 🎮' },
+  ]
+  
+  return names.slice(0, count).map((name, i) => {
+    const inCamarote = Math.random() > 0.85 // ~15% em camarotes
+    const camarote = inCamarote ? camarotes[Math.floor(Math.random() * camarotes.length)] : null
+    
+    return {
+      id: `user-${i}`,
+      name,
+      tier: tiers[Math.floor(Math.random() * tiers.length)],
+      level: Math.floor(Math.random() * 15) + 1,
+      isOnline: true,
+      isMuted: Math.random() > 0.8,
+      isVideoOff: Math.random() > 0.85,
+      flashedMe: Math.random() > 0.7,
+      iFlashed: false,
+      inCamarote,
+      camaroteName: camarote?.name,
+      camaroteId: camarote?.id,
+    }
+  })
 }
 
 export default function PistaPage() {
@@ -206,7 +223,14 @@ export default function PistaPage() {
                 isVideoOff={user.isVideoOff}
                 hasFlash={user.flashedMe && !myFlashes.has(user.id)}
                 isActive={myFlashes.has(user.id) && user.flashedMe}
+                inCamarote={user.inCamarote}
+                camaroteName={user.camaroteName}
+                camaroteId={user.camaroteId}
                 onFlashClick={() => handleFlash(user.id)}
+                onCamaroteClick={(camaroteId) => {
+                  console.log('Entrar no camarote:', camaroteId)
+                  // TODO: navigate to camarote
+                }}
               >
                 {/* Placeholder video - would be real video in production */}
                 <div className="absolute inset-0 bg-gradient-to-br from-noite-800 to-noite-900">

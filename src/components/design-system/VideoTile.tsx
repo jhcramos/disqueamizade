@@ -24,8 +24,16 @@ interface VideoTileProps extends HTMLAttributes<HTMLDivElement> {
   isMuted?: boolean
   /** Is video off */
   isVideoOff?: boolean
+  /** Is user in a Camarote? */
+  inCamarote?: boolean
+  /** Camarote name (if in one) */
+  camaroteName?: string
+  /** Camarote ID (for joining) */
+  camaroteId?: string
   /** Click handler for the tile */
   onFlashClick?: () => void
+  /** Click handler for Camarote badge */
+  onCamaroteClick?: (camaroteId: string) => void
 }
 
 export const VideoTile = ({
@@ -38,7 +46,11 @@ export const VideoTile = ({
   level,
   isMuted = false,
   isVideoOff = false,
+  inCamarote = false,
+  camaroteName,
+  camaroteId,
   onFlashClick,
+  onCamaroteClick,
   className,
   ...props
 }: VideoTileProps) => {
@@ -108,6 +120,28 @@ export const VideoTile = ({
           </div>
         )}
       </div>
+
+      {/* Center: Camarote VIP badge (when user is in a camarote) */}
+      {inCamarote && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (onCamaroteClick && camaroteId) {
+              onCamaroteClick(camaroteId)
+            }
+          }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                     px-3 py-1.5 rounded-full 
+                     bg-gradient-to-r from-balada-500 to-energia-500
+                     text-white text-xs font-bold
+                     shadow-lg shadow-balada-500/30
+                     hover:scale-105 transition-transform
+                     cursor-pointer"
+          title={camaroteName ? `Entrar: ${camaroteName}` : 'Entrar no Camarote VIP'}
+        >
+          🛋️ Camarote VIP
+        </button>
+      )}
 
       {/* Bottom: Name and flash button */}
       <div className="absolute inset-x-0 bottom-0 p-2 flex items-end justify-between">
