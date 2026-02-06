@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Crown, Lock, Smile, Volume2,
   Share2, X, Gamepad2, Info, Shield, AlertTriangle,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
-import { MarriageGame } from '@/components/games/MarriageGame'
+// MarriageGame removido - substituído por Pista/Roleta
 import { useToastStore } from '@/components/common/ToastContainer'
 import { useCamera } from '@/hooks/useCamera'
 
@@ -48,11 +48,11 @@ const mockChatMessages: MockMessage[] = [
 
 export const RoomPage = () => {
   const { roomId } = useParams()
+  const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<MockMessage[]>(mockChatMessages)
   const [showChat, setShowChat] = useState(true)
   const [showParticipants, setShowParticipants] = useState(false)
-  const [showGameModal, setShowGameModal] = useState(false)
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -161,7 +161,7 @@ export const RoomPage = () => {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs text-emerald-400 font-semibold">{onlineParticipants.length} online</span>
             </div>
-            <button onClick={() => setShowGameModal(true)} className="p-2 rounded-xl text-pink-400 hover:bg-pink-500/10 transition-all" title="Casamento Atrás da Porta">
+            <button onClick={() => navigate('/pista')} className="p-2 rounded-xl text-balada-400 hover:bg-balada-500/10 transition-all" title="Pista & Roleta">
               <Gamepad2 className="w-5 h-5" />
             </button>
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
@@ -394,7 +394,7 @@ export const RoomPage = () => {
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
-              <button onClick={() => setShowGameModal(true)} className="p-3 rounded-2xl bg-pink-500/10 text-pink-400 border border-pink-500/20 hover:bg-pink-500/20 transition-all" title="Casamento Atrás da Porta">
+              <button onClick={() => navigate('/pista')} className="p-3 rounded-2xl bg-balada-500/10 text-balada-400 border border-balada-500/20 hover:bg-balada-500/20 transition-all" title="Pista & Roleta">
                 <Gamepad2 className="w-5 h-5" />
               </button>
               <Link to="/rooms">
@@ -500,8 +500,7 @@ export const RoomPage = () => {
         )
       })()}
 
-      {/* Marriage Game Modal */}
-      <MarriageGame isOpen={showGameModal} onClose={() => setShowGameModal(false)} roomId={roomId || ''} />
+      {/* Jogo Pista/Roleta agora acessado via /pista */}
     </div>
   )
 }
