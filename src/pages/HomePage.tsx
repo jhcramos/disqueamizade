@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle, ShoppingBag, Users, ArrowRight, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { MessageCircle, ShoppingBag, Users, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { FeaturedCarousel } from '../components/featured/FeaturedCarousel'
@@ -65,45 +65,54 @@ export const HomePage = () => {
 
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary-600/[0.07] via-transparent to-transparent" />
+        {/* Hero Image Background */}
+        <div className="absolute inset-0">
+          <img 
+            src="/hero-80s.png" 
+            alt="Pessoas se divertindo" 
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-dark-950/60 via-dark-950/80 to-dark-950" />
+        </div>
         <div className="absolute top-32 left-1/3 w-[500px] h-[500px] bg-primary-600/[0.06] rounded-full blur-[120px]" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-pink-500/[0.04] rounded-full blur-[100px]" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36 text-center">
           {/* Nostalgia badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08] mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] border border-white/[0.12] mb-8 animate-fade-in backdrop-blur-sm">
             <Phone className="w-3.5 h-3.5 text-primary-400" />
-            <span className="text-sm text-dark-400">O clássico 145 reinventado · V2 com Roleta e Fichas</span>
+            <span className="text-sm text-dark-300">O clássico 145 reinventado · Agora com vídeo!</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 animate-slide-up">
-            <span className="text-white">Conecte-se com</span>
+            <span className="text-white">A maior comunidade</span>
             <br />
             <span className="bg-gradient-to-r from-primary-400 via-pink-400 to-primary-600 bg-clip-text text-transparent">
-              o futuro da conversa
+              de vídeo chat do Brasil
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-dark-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Salas de vídeo, roleta 1:1, presentes ao vivo, speed dating e uma economia de fichas. 
-            A plataforma brasileira de vídeo chat mais completa.
+          <p className="text-lg md:text-xl text-dark-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Conheça pessoas de verdade em salas com até 30 câmeras, crie seu próprio Camarote VIP, 
+            ou tente a sorte no chat 1:1. Tudo grátis pra começar!
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
-            <Link to="/roulette" className="btn-primary btn-lg flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 border-0">
-              <Shuffle className="w-4 h-4" />
-              Roleta 1:1
-            </Link>
-            <Link to="/rooms" className="btn-secondary btn-lg flex items-center gap-2">
+          {/* CTAs - Equilibrados */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+            <Link to="/rooms" className="btn-primary btn-lg flex items-center gap-2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 border-0 min-w-[180px] justify-center">
+              <Users className="w-4 h-4" />
               Entrar nas Salas
-              <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link to="/pricing" className="btn-ghost btn-lg text-amber-400 hover:text-amber-300 flex items-center gap-2">
-              <Coins className="w-4 h-4" />
-              Fichas & Planos
+            <Link to="/roulette" className="btn-primary btn-lg flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 border-0 min-w-[180px] justify-center">
+              <Shuffle className="w-4 h-4" />
+              Chat 1:1 Aleatório
             </Link>
           </div>
+          
+          <Link to="/pricing" className="text-amber-400 hover:text-amber-300 text-sm font-medium flex items-center gap-2 justify-center">
+            <Coins className="w-4 h-4" />
+            Ver Fichas & Planos Premium
+          </Link>
 
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 md:gap-14">
@@ -232,33 +241,33 @@ export const HomePage = () => {
 
       <div className="divider" />
 
-      {/* ═══ 🎰 ROULETTE CTA ═══ */}
+      {/* ═══ 🛋️ CAMAROTES VIP CTA ═══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
         <div className="card p-8 md:p-12 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/[0.08] via-purple-600/[0.05] to-transparent" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/[0.06] rounded-full blur-[80px]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-purple-600/[0.05] to-transparent" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.06] rounded-full blur-[80px]" />
           <div className="relative flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 mb-4">
-                <Shuffle className="w-3.5 h-3.5 text-pink-400" />
-                <span className="text-xs text-pink-400 font-semibold">Novidade V2</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs text-amber-400 font-semibold">Premium</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                Roleta 1:1 — Conheça Alguém Agora!
+                Crie seu Camarote VIP
               </h2>
               <p className="text-dark-400 text-sm mb-6 leading-relaxed max-w-lg">
-                Encontre pessoas aleatoriamente para conversas de vídeo. Use filtros por idade, cidade e hobby. 
-                Não curtiu? Clique "Próximo" e conheça outra pessoa em segundos.
+                Usuários pagantes podem criar sub-salas exclusivas dentro das salas de chat.
+                Convide quem você quiser e tenha conversas mais íntimas com até 6 pessoas.
               </p>
-              <Link to="/roulette" className="btn-primary btn-lg inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 border-0">
-                <Shuffle className="w-5 h-5" />
-                Experimentar Agora
+              <Link to="/rooms" className="btn-primary btn-lg inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 border-0">
+                <Users className="w-5 h-5" />
+                Explorar Salas
               </Link>
             </div>
             <div className="flex-shrink-0 text-center">
-              <div className="text-8xl mb-2">🎰</div>
-              <div className="text-4xl font-bold text-pink-400">1:1</div>
-              <p className="text-xs text-dark-500 mt-1">Matching instantâneo</p>
+              <div className="text-8xl mb-2">🛋️</div>
+              <div className="text-2xl font-bold text-amber-400">Camarote VIP</div>
+              <p className="text-xs text-dark-500 mt-1">Até 6 pessoas</p>
             </div>
           </div>
         </div>
