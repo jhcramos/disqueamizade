@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
-import HomePageV3 from './pages/HomePageV3'
 import { RoomsPage } from './pages/RoomsPage'
 import { MarketplacePage } from './pages/MarketplacePage'
 import { PricingPage } from './pages/PricingPage'
@@ -13,11 +12,7 @@ import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
-import PistaPage from './pages/PistaPage'
-import DarkRoomPage from './pages/DarkRoomPage'
 import DesignSystemPage from './pages/DesignSystemPage'
-import { RoletaPage } from './pages/RoletaPage'
-import { CamarotePage } from './pages/CamarotePage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -37,17 +32,10 @@ function App() {
   return (
     <div className="min-h-screen bg-noite-900 text-white">
       <Routes>
-        {/* V3 Balada Digital - Nova Home! */}
-        <Route path="/" element={<HomePageV3 />} />
+        {/* Home principal - design original */}
+        <Route path="/" element={<HomePage />} />
         
-        {/* Experiência principal */}
-        <Route path="/pista" element={<PistaPage />} />
-        <Route path="/roleta" element={<RoletaPage />} />
-        <Route path="/camarote/:camaroteId" element={<CamarotePage />} />
-        <Route path="/darkroom" element={<DarkRoomPage />} />
-        
-        {/* Legacy routes (mantendo para não quebrar) */}
-        <Route path="/v1" element={<HomePage />} />
+        {/* Salas com 30 câmeras + chat + camarotes VIP */}
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/room/:roomId" element={<RoomPage />} />
         <Route path="/roulette" element={<RoulettePage />} />

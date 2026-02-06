@@ -2,18 +2,18 @@ import { Link, useLocation } from 'react-router-dom'
 
 const mobileNavItems = [
   { to: '/', label: 'Início', emoji: '🏠' },
-  { to: '/pista', label: 'Pista', emoji: '🎪' },
-  { to: '/roleta', label: 'Roleta', emoji: '🎰' },
-  { to: '/camarote/lobby', label: 'Camarotes', emoji: '🛋️' },
+  { to: '/rooms', label: 'Salas', emoji: '📹' },
+  { to: '/marketplace', label: 'Creators', emoji: '⭐' },
+  { to: '/roulette', label: '1-on-1', emoji: '🎲' },
   { to: '/profile/me', label: 'Perfil', emoji: '👤' },
 ]
 
 export const MobileNav = () => {
   const location = useLocation()
 
-  // Hide on full-screen experiences
-  const hideOnPaths = ['/room/', '/camarote/', '/pista', '/roleta']
-  if (hideOnPaths.some(path => location.pathname.startsWith(path) && location.pathname !== '/camarote/lobby')) {
+  // Hide on full-screen experiences (inside a room/camarote)
+  const hideOnPaths = ['/room/', '/camarote/']
+  if (hideOnPaths.some(path => location.pathname.startsWith(path))) {
     return null
   }
 
@@ -22,7 +22,7 @@ export const MobileNav = () => {
       <div className="flex items-center justify-around px-2 py-2">
         {mobileNavItems.map(({ to, label, emoji }) => {
           const isActive = location.pathname === to || 
-            (to === '/pista' && location.pathname === '/pista') ||
+            (to === '/rooms' && location.pathname.startsWith('/room')) ||
             (to === '/profile/me' && location.pathname.startsWith('/profile'))
           
           return (
