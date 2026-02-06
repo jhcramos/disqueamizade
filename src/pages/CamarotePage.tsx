@@ -447,21 +447,37 @@ export const CamarotePage = () => {
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowLeaveConfirm(false)}>
           <div className="card w-full max-w-xs p-5 text-center animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="text-4xl mb-3">🚪</div>
-            <h3 className="text-lg font-bold text-white mb-2">Sair do Camarote?</h3>
-            <p className="text-sm text-dark-400 mb-5">Você pode voltar a qualquer momento</p>
-            <div className="flex gap-3">
+            <div className="text-4xl mb-3">🛋️</div>
+            <h3 className="text-lg font-bold text-white mb-2">O que deseja fazer?</h3>
+            <p className="text-sm text-dark-400 mb-5">Você está no camarote "{config.title}"</p>
+            
+            <div className="space-y-2">
+              {/* Minimizar */}
+              <button 
+                onClick={() => {
+                  setShowLeaveConfirm(false)
+                  addToast({ type: 'info', title: '🛋️ Camarote minimizado', message: 'Clique no ícone para voltar' })
+                  navigate(-1) // Volta mas mantém sessão (em produção seria WebSocket)
+                }}
+                className="w-full px-4 py-3 rounded-xl bg-elite-500/10 text-elite-400 font-semibold border border-elite-500/20 hover:bg-elite-500/20 transition-all flex items-center justify-center gap-2"
+              >
+                <span>📌</span> Minimizar
+              </button>
+              
+              {/* Ficar */}
               <button 
                 onClick={() => setShowLeaveConfirm(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 text-white font-semibold hover:bg-white/10 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 text-white font-semibold hover:bg-white/10 transition-all"
               >
-                Ficar
+                Continuar aqui
               </button>
+              
+              {/* Sair */}
               <button 
                 onClick={confirmLeave}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-red-500/10 text-red-400 font-semibold border border-red-500/20 hover:bg-red-500/20 transition-all"
               >
-                Sair
+                🚪 Sair do Camarote
               </button>
             </div>
           </div>
