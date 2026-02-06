@@ -68,7 +68,7 @@ export const HomePage = () => {
         {/* Hero Image Background */}
         <div className="absolute inset-0">
           <img 
-            src="/hero-80s.png" 
+            src={import.meta.env.BASE_URL + "hero-80s.png"} 
             alt="Pessoas se divertindo" 
             className="w-full h-full object-cover opacity-30"
           />
