@@ -15,9 +15,11 @@ import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { StoriesPage } from './pages/StoriesPage'
 import { ExclusivePage } from './pages/ExclusivePage'
 import DesignSystemPage from './pages/DesignSystemPage'
+import PistaPage from './pages/PistaPage'
+import HomePageV3 from './pages/HomePageV3'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
-import { GrainOverlay } from './components/design-system'
+// import { GrainOverlay } from './components/design-system'
 import { useAuthStore } from './store/authStore'
 
 function App() {
@@ -29,8 +31,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-noite-900 text-white pattern-90s">
-      {/* Grain overlay for 90s TV static effect */}
-      <GrainOverlay opacity={0.025} />
+      {/* Grain overlay disabled - Juliano não curtiu o flickering */}
+      {/* <GrainOverlay opacity={0.015} /> */}
       
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -47,6 +49,9 @@ function App() {
         <Route path="/creator" element={<InfluencerDashboardPage />} />
         <Route path="/stories" element={<StoriesPage />} />
         <Route path="/exclusive" element={<ExclusivePage />} />
+        {/* V3 Balada Digital */}
+        <Route path="/v3" element={<HomePageV3 />} />
+        <Route path="/pista" element={<PistaPage />} />
         {/* Design System showcase */}
         <Route path="/design" element={<DesignSystemPage />} />
         {/* Catch all */}
