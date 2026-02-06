@@ -58,7 +58,18 @@ const testimonials = [
   },
 ]
 
+// Alternância semanal de hero image
+const getWeeklyHeroImage = () => {
+  const now = new Date()
+  const startOfYear = new Date(now.getFullYear(), 0, 1)
+  const weekNumber = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)
+  // Semana par = foto 2 (casal dançando), Semana ímpar = foto 3 (4 amigos + DJ)
+  return weekNumber % 2 === 0 ? 'hero-week-even.png' : 'hero-week-odd.png'
+}
+
 export const HomePage = () => {
+  const heroImage = getWeeklyHeroImage()
+  
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
@@ -68,7 +79,7 @@ export const HomePage = () => {
         {/* Hero Image Background */}
         <div className="absolute inset-0">
           <img 
-            src={import.meta.env.BASE_URL + "hero-80s.png"} 
+            src={import.meta.env.BASE_URL + heroImage} 
             alt="Pessoas se divertindo" 
             className="w-full h-full object-cover opacity-30"
           />
