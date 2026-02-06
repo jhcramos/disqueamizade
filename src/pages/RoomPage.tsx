@@ -521,11 +521,10 @@ export const RoomPage = () => {
         onConfirm={(data) => {
           addToast({ 
             type: 'success', 
-            title: 'Camarote criado!', 
-            message: `"${data.name}" está pronto. Convide seus amigos!` 
+            title: '🛋️ Camarote criado!', 
+            message: `"${data.name}" está pronto. Até 6 pessoas!` 
           })
-          // TODO: Navigate to the new camarote
-          navigate(`/camarote/new-${Date.now()}`)
+          navigate(`/camarote/vip-${Date.now()}`)
         }}
       />
     </div>
