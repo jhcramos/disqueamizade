@@ -375,6 +375,102 @@ export default function HomePageV3() {
         </div>
       </section>
 
+      {/* Camarotes VIP Section - LIVE */}
+      <section className="py-24 px-6 bg-gradient-to-b from-transparent via-elite/5 to-transparent">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-elite/20 text-elite-light border-elite/30">🛋️ Ao Vivo</Badge>
+            <h2 className="font-display font-bold text-4xl text-white mb-4">
+              Camarotes VIP abertos agora
+            </h2>
+            <p className="text-lg text-noite-400 max-w-xl mx-auto">
+              Conversas rolando neste momento. Entra num que combina com você!
+            </p>
+          </div>
+
+          {/* Camarotes Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+            {[
+              { name: 'Cantinho da Ana', participants: 3, max: 6, avatars: [5, 9, 1], topic: '🎬 Filmes', active: true },
+              { name: 'Gamers BR', participants: 5, max: 6, avatars: [3, 7, 12, 20, 25], topic: '🎮 Games', active: true },
+              { name: 'Papo de Madrugada', participants: 4, max: 6, avatars: [8, 15, 22, 31], topic: '☕ Café', active: true },
+              { name: 'Só os Cria', participants: 6, max: 6, avatars: [2, 6, 11, 18, 24, 30], topic: '🔥 Esquenta', full: true },
+              { name: 'Tech Talk', participants: 2, max: 6, avatars: [4, 13], topic: '💻 Tech', active: true },
+              { name: 'Novos Amigos', participants: 3, max: 6, avatars: [10, 17, 28], topic: '🍿 Pipoca', active: true },
+              { name: 'Carnaval 24h', participants: 5, max: 6, avatars: [14, 19, 23, 27, 33], topic: '🎉 Festa', active: true },
+              { name: 'Duo Romântico', participants: 2, max: 2, avatars: [16, 21], topic: '💕 Duo', private: true },
+            ].map((camarote, i) => (
+              <button
+                key={i}
+                onClick={() => !camarote.full && navigate(`/camarote/vip-${i + 1}`)}
+                disabled={camarote.full}
+                className={`p-4 rounded-2xl border text-left transition-all ${
+                  camarote.full 
+                    ? 'bg-noite-800/50 border-white/5 opacity-60 cursor-not-allowed'
+                    : camarote.private
+                    ? 'bg-energia-500/10 border-energia-500/30 hover:border-energia-500/50 hover:-translate-y-1'
+                    : 'bg-elite/5 border-elite/20 hover:border-elite/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-elite/10'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-elite-light">{camarote.topic}</span>
+                  <span className={`text-[10px] ${camarote.full ? 'text-red-400' : 'text-noite-400'}`}>
+                    {camarote.participants}/{camarote.max}
+                  </span>
+                </div>
+                <h4 className="font-semibold text-white text-sm mb-2 truncate">{camarote.name}</h4>
+                <div className="flex items-center justify-between">
+                  <div className="flex -space-x-2">
+                    {camarote.avatars.slice(0, 4).map((img, j) => (
+                      <img 
+                        key={j}
+                        src={`https://i.pravatar.cc/150?img=${img}`} 
+                        alt="" 
+                        className="w-6 h-6 rounded-full border-2 border-noite-900" 
+                      />
+                    ))}
+                    {camarote.avatars.length > 4 && (
+                      <div className="w-6 h-6 rounded-full border-2 border-noite-900 bg-noite-700 flex items-center justify-center text-[10px] text-noite-300">
+                        +{camarote.avatars.length - 4}
+                      </div>
+                    )}
+                  </div>
+                  {camarote.full ? (
+                    <span className="text-[10px] text-red-400">Lotado</span>
+                  ) : camarote.private ? (
+                    <span className="text-[10px] text-energia-400">🔒 Privado</span>
+                  ) : (
+                    <span className="text-[10px] text-conquista-400">Entrar →</span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Create Camarote CTA */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button 
+              variant="secondary" 
+              size="lg"
+              onClick={() => navigate('/rooms')}
+              className="border-elite/30 hover:border-elite/50"
+            >
+              🛋️ Ver todos os Camarotes
+            </Button>
+            <Button 
+              onClick={() => navigate('/pista?create=true')}
+              className="bg-gradient-to-r from-elite-dark via-elite to-elite-light text-noite-900 font-bold hover:shadow-glow-elite"
+            >
+              ✨ Criar meu Camarote (20💎)
+            </Button>
+          </div>
+
+          <p className="text-center text-sm text-noite-500 mt-6">
+            💡 Assinantes <span className="text-elite-light font-semibold">Elite</span> criam Camarotes de graça!
+          </p>
+        </div>
+      </section>
+
       {/* Dark Room Teaser */}
       <section className="py-24 px-6 relative overflow-hidden">
         {/* Background */}
