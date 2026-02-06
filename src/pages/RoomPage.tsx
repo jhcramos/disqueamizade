@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Crown, Lock, Smile, Volume2,
-  Share2, X, Gamepad2, Info, Shield, AlertTriangle,
+  Share2, X, Gamepad2, Info, Shield, AlertTriangle, Sparkles,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
 // MarriageGame removido - substituído por Pista/Roleta
@@ -396,6 +396,14 @@ export const RoomPage = () => {
               </button>
               <button onClick={() => navigate('/pista')} className="p-3 rounded-2xl bg-balada-500/10 text-balada-400 border border-balada-500/20 hover:bg-balada-500/20 transition-all" title="Pista & Roleta">
                 <Gamepad2 className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => addToast({ type: 'info', title: 'Criar Camarote VIP', message: 'Custa 20💎 para criar um camarote privado nesta sala' })}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold" 
+                title="Criar Camarote VIP (20💎)"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden md:inline">Camarote</span>
               </button>
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
