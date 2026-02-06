@@ -8,6 +8,7 @@ import {
 import { mockRooms } from '@/data/mockRooms'
 // MarriageGame removido - substituído por Pista/Roleta
 import { useToastStore } from '@/components/common/ToastContainer'
+import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 
 // ─── Mock Data ───
@@ -55,6 +56,8 @@ export const RoomPage = () => {
   const [showParticipants, setShowParticipants] = useState(false)
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
+  const [showCreateCamarote, setShowCreateCamarote] = useState(false)
+  const [userFichas] = useState(85) // Mock: fichas do usuário
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
@@ -398,7 +401,7 @@ export const RoomPage = () => {
                 <Gamepad2 className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => addToast({ type: 'info', title: 'Criar Camarote VIP', message: 'Custa 20💎 para criar um camarote privado nesta sala' })}
+                onClick={() => setShowCreateCamarote(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold" 
                 title="Criar Camarote VIP (20💎)"
               >
@@ -509,6 +512,22 @@ export const RoomPage = () => {
       })()}
 
       {/* Jogo Pista/Roleta agora acessado via /pista */}
+
+      {/* Create Camarote Modal */}
+      <CreateCamaroteModal
+        isOpen={showCreateCamarote}
+        onClose={() => setShowCreateCamarote(false)}
+        userFichas={userFichas}
+        onConfirm={(data) => {
+          addToast({ 
+            type: 'success', 
+            title: 'Camarote criado!', 
+            message: `"${data.name}" está pronto. Convide seus amigos!` 
+          })
+          // TODO: Navigate to the new camarote
+          navigate(`/camarote/new-${Date.now()}`)
+        }}
+      />
     </div>
   )
 }
