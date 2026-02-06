@@ -15,6 +15,8 @@ import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import PistaPage from './pages/PistaPage'
 import HomePageV3 from './pages/HomePageV3'
 import DesignSystemPage from './pages/DesignSystemPage'
+import { RoletaPage } from './pages/RoletaPage'
+import { CamarotePage } from './pages/CamarotePage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { useAuthStore } from './store/authStore'
@@ -41,6 +43,8 @@ function App() {
         
         {/* V3 Balada Digital (novo jogo dentro das salas) */}
         <Route path="/pista" element={<PistaPage />} />
+        <Route path="/roleta" element={<RoletaPage />} />
+        <Route path="/camarote/:camaroteId" element={<CamarotePage />} />
         <Route path="/v3" element={<HomePageV3 />} />
         
         {/* Creators & Marketplace */}
