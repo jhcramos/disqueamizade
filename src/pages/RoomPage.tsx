@@ -63,16 +63,7 @@ export const RoomPage = () => {
     id: string
     name: string
     participants: { id: string; username: string; avatar: string; videoEnabled: boolean }[]
-  } | null>({
-    // Mock: simula um camarote minimizado
-    id: 'vip-demo',
-    name: 'Cantinho da Ana',
-    participants: [
-      { id: 'u1', username: 'Ana', avatar: 'https://i.pravatar.cc/150?img=9', videoEnabled: true },
-      { id: 'u2', username: 'Carlos', avatar: 'https://i.pravatar.cc/150?img=3', videoEnabled: true },
-      { id: 'u3', username: 'Julia', avatar: 'https://i.pravatar.cc/150?img=5', videoEnabled: false },
-    ]
-  })
+  } | null>(null) // null = nenhum camarote minimizado
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
