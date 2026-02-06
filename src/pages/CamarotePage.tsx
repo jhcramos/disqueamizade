@@ -103,6 +103,7 @@ export const CamarotePage = () => {
   const [showChat, setShowChat] = useState(true)
   const [currentPhase] = useState(0)
   const [timeInRoom, setTimeInRoom] = useState(0)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
 
@@ -166,9 +167,13 @@ export const CamarotePage = () => {
   }
 
   const handleLeave = () => {
+    setShowLeaveConfirm(true)
+  }
+
+  const confirmLeave = () => {
     stopCamera()
-    addToast({ type: 'info', title: 'Saiu do Camarote', message: 'Voltando para a Pista...' })
-    navigate('/roleta')
+    addToast({ type: 'info', title: 'Saiu do Camarote', message: 'Voltando para a sala...' })
+    navigate(-1) // Volta para página anterior (sala de onde veio)
   }
 
   const formatTime = (seconds: number) => {
@@ -437,6 +442,31 @@ export const CamarotePage = () => {
           </div>
         </aside>
       </div>
+
+      {/* Modal de confirmação para sair */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowLeaveConfirm(false)}>
+          <div className="card w-full max-w-xs p-5 text-center animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="text-4xl mb-3">🚪</div>
+            <h3 className="text-lg font-bold text-white mb-2">Sair do Camarote?</h3>
+            <p className="text-sm text-dark-400 mb-5">Você pode voltar a qualquer momento</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 text-white font-semibold hover:bg-white/10 transition-all"
+              >
+                Ficar
+              </button>
+              <button 
+                onClick={confirmLeave}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
