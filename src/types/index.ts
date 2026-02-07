@@ -108,7 +108,7 @@ export type MockCreator = {
   satisfactionRate: number
   city: string
   tags: string[]
-  gallery: string[]
+  gallery?: string[]
   schedule: string[]
   totalEarnings: number
   weeklyEarnings: number

@@ -144,20 +144,6 @@ export const CreatorProfilePage = () => {
               </div>
             </div>
 
-            {/* Galeria */}
-            {creator.gallery.length > 0 && (
-              <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
-                <h2 className="text-lg font-bold text-white mb-4">Galeria</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {creator.gallery.map((img, i) => (
-                    <div key={i} className="aspect-video rounded-xl overflow-hidden border border-white/5">
-                      <img src={img} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Avaliações */}
             <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-6">
               <h2 className="text-lg font-bold text-white mb-4">Avaliações ({creator.reviewCount})</h2>
