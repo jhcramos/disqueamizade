@@ -12,6 +12,7 @@ import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
+import { CreatorProfilePage } from './pages/CreatorProfilePage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
@@ -44,6 +45,7 @@ function App() {
         
         {/* Creators & Marketplace */}
         <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/creator/:id" element={<CreatorProfilePage />} />
         <Route path="/creator" element={<InfluencerDashboardPage />} />
         
         {/* User */}

@@ -1,235 +1,315 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// useVideoFilter Hook — MediaPipe Face Mesh Integration (CDN-loaded)
+// useVideoFilter — Face tracking with emoji overlay
+// Strategy: Try native FaceDetector → fallback face-api.js (throttled)
+// Detection runs async, never blocks UI. Emoji via HTML overlay.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import type { VideoFilterHookResult, FilterState, DetectionResult, MaskRenderer } from '../types/filters'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-// Import mask renderers
-import { neonWireframeMask } from '../components/video/masks/NeonWireframe'
-import { pixelFaceMask } from '../components/video/masks/PixelFace'
-import { emojiTrackerMask } from '../components/video/masks/EmojiTracker'
-import { animalMorphMask } from '../components/video/masks/AnimalMorph'
-import { animeStyleMask } from '../components/video/masks/AnimeStyle'
-// 🔥 80s Legends Collection 🔥
-import { heManMask } from '../components/video/masks/HeMan'
-import { optimusPrimeMask } from '../components/video/masks/OptimusPrime'
-import { freddieMercuryMask } from '../components/video/masks/FreddieMercury'
-import { knightRiderMask } from '../components/video/masks/KnightRider'
-import { jaspionMask } from '../components/video/masks/Jaspion'
-import { sheRaMask } from '../components/video/masks/SheRa'
-import { jemMask } from '../components/video/masks/Jem'
-import { wonderWomanMask } from '../components/video/masks/WonderWoman'
-import { madonnaMask } from '../components/video/masks/Madonna'
-import { cheetaraMask } from '../components/video/masks/Cheetara'
-
-const MASK_RENDERERS: Record<string, MaskRenderer> = {
-  neon_wireframe: neonWireframeMask,
-  pixel_face: pixelFaceMask,
-  emoji_tracker: emojiTrackerMask,
-  cat_morph: animalMorphMask,
-  anime_style: animeStyleMask,
-  he_man: heManMask,
-  optimus_prime: optimusPrimeMask,
-  freddie_mercury: freddieMercuryMask,
-  knight_rider: knightRiderMask,
-  jaspion: jaspionMask,
-  she_ra: sheRaMask,
-  jem: jemMask,
-  wonder_woman: wonderWomanMask,
-  madonna: madonnaMask,
-  cheetara: cheetaraMask
+export type MaskItem = {
+  id: string
+  name: string
+  emoji?: string       // emoji character (covers full face)
+  image?: string       // PNG image path (positioned on face)
+  imageType?: 'face' | 'eyes'  // face = covers face, eyes = sits on eye line
+  blendMode?: string   // CSS mix-blend-mode ('screen' for black bg images)
+  category: 'emoji' | 'glasses' | 'carnival'
 }
 
-// ── CDN Script Loader ──
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
-    const s = document.createElement('script')
-    s.src = src
-    s.crossOrigin = 'anonymous'
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error(`Failed to load ${src}`))
-    document.head.appendChild(s)
-  })
+export const EMOJI_MASKS: MaskItem[] = [
+  // ─── Emojis (cobrem o rosto) ───
+  // Animais
+  { id: 'cat', name: 'Gatinho', emoji: '😺', category: 'emoji' },
+  { id: 'dog', name: 'Cachorro', emoji: '🐶', category: 'emoji' },
+  { id: 'monkey', name: 'Macaco', emoji: '🐵', category: 'emoji' },
+  { id: 'pig', name: 'Porquinho', emoji: '🐷', category: 'emoji' },
+  { id: 'bear', name: 'Urso', emoji: '🐻', category: 'emoji' },
+  { id: 'panda', name: 'Panda', emoji: '🐼', category: 'emoji' },
+  { id: 'fox', name: 'Raposa', emoji: '🦊', category: 'emoji' },
+  { id: 'lion', name: 'Leão', emoji: '🦁', category: 'emoji' },
+  { id: 'tiger', name: 'Tigre', emoji: '🐯', category: 'emoji' },
+  { id: 'cow', name: 'Vaquinha', emoji: '🐮', category: 'emoji' },
+  { id: 'rabbit', name: 'Coelho', emoji: '🐰', category: 'emoji' },
+  { id: 'frog', name: 'Sapo', emoji: '🐸', category: 'emoji' },
+  { id: 'chicken', name: 'Galinha', emoji: '🐔', category: 'emoji' },
+  { id: 'unicorn', name: 'Unicórnio', emoji: '🦄', category: 'emoji' },
+  { id: 'koala', name: 'Coala', emoji: '🐨', category: 'emoji' },
+  { id: 'mouse', name: 'Ratinho', emoji: '🐭', category: 'emoji' },
+  { id: 'hamster', name: 'Hamster', emoji: '🐹', category: 'emoji' },
+  { id: 'wolf', name: 'Lobo', emoji: '🐺', category: 'emoji' },
+  // Caras engraçadas
+  { id: 'clown', name: 'Palhaço', emoji: '🤡', category: 'emoji' },
+  { id: 'alien', name: 'Alien', emoji: '👽', category: 'emoji' },
+  { id: 'robot', name: 'Robô', emoji: '🤖', category: 'emoji' },
+  { id: 'skull', name: 'Caveira', emoji: '💀', category: 'emoji' },
+  { id: 'devil', name: 'Diabinho', emoji: '😈', category: 'emoji' },
+  { id: 'ghost', name: 'Fantasma', emoji: '👻', category: 'emoji' },
+  { id: 'sunglasses', name: 'Estiloso', emoji: '😎', category: 'emoji' },
+  { id: 'heart_eyes', name: 'Apaixonado', emoji: '😍', category: 'emoji' },
+  { id: 'star_eyes', name: 'Deslumbrado', emoji: '🤩', category: 'emoji' },
+  { id: 'money', name: 'Ricaço', emoji: '🤑', category: 'emoji' },
+  { id: 'nerd', name: 'Nerd', emoji: '🤓', category: 'emoji' },
+  { id: 'monocle', name: 'Distinto', emoji: '🧐', category: 'emoji' },
+  { id: 'zany', name: 'Maluco', emoji: '🤪', category: 'emoji' },
+  { id: 'wink', name: 'Piscadela', emoji: '😜', category: 'emoji' },
+  { id: 'crying', name: 'Chorando', emoji: '😭', category: 'emoji' },
+  { id: 'laughing', name: 'Morrendo', emoji: '🤣', category: 'emoji' },
+  { id: 'angry', name: 'Bravo', emoji: '🤬', category: 'emoji' },
+  { id: 'scream', name: 'Grito', emoji: '😱', category: 'emoji' },
+  { id: 'vomit', name: 'Enjoado', emoji: '🤮', category: 'emoji' },
+  { id: 'cowboy', name: 'Cowboy', emoji: '🤠', category: 'emoji' },
+  { id: 'party', name: 'Festa', emoji: '🥳', category: 'emoji' },
+  { id: 'disguise', name: 'Disfarce', emoji: '🥸', category: 'emoji' },
+  { id: 'shush', name: 'Silêncio', emoji: '🤫', category: 'emoji' },
+  { id: 'think', name: 'Pensando', emoji: '🤔', category: 'emoji' },
+  { id: 'hot', name: 'Quente', emoji: '🥵', category: 'emoji' },
+  { id: 'cold', name: 'Frio', emoji: '🥶', category: 'emoji' },
+  { id: 'dizzy', name: 'Tonto', emoji: '😵‍💫', category: 'emoji' },
+  { id: 'explode', name: 'Explodindo', emoji: '🤯', category: 'emoji' },
+  { id: 'sleeping', name: 'Dormindo', emoji: '😴', category: 'emoji' },
+  { id: 'drool', name: 'Babando', emoji: '🤤', category: 'emoji' },
+  // Objetos e fantasia
+  { id: 'pumpkin', name: 'Abóbora', emoji: '🎃', category: 'emoji' },
+  { id: 'santa', name: 'Papai Noel', emoji: '🎅', category: 'emoji' },
+  { id: 'baby', name: 'Bebê', emoji: '👶', category: 'emoji' },
+  { id: 'old_man', name: 'Vovô', emoji: '👴', category: 'emoji' },
+  { id: 'princess', name: 'Princesa', emoji: '👸', category: 'emoji' },
+  { id: 'superhero', name: 'Herói', emoji: '🦸', category: 'emoji' },
+  { id: 'villain', name: 'Vilão', emoji: '🦹', category: 'emoji' },
+  { id: 'zombie', name: 'Zumbi', emoji: '🧟', category: 'emoji' },
+  { id: 'vampire', name: 'Vampiro', emoji: '🧛', category: 'emoji' },
+  { id: 'mage', name: 'Mago', emoji: '🧙', category: 'emoji' },
+  { id: 'fairy', name: 'Fada', emoji: '🧚', category: 'emoji' },
+  { id: 'ogre', name: 'Ogro', emoji: '👹', category: 'emoji' },
+  { id: 'goblin', name: 'Goblin', emoji: '👺', category: 'emoji' },
+  // Óculos (posicionados nos olhos)
+  { id: 'aviator', name: 'Aviador', image: '/masks/aviator-glasses.png', imageType: 'eyes', blendMode: 'lighten', category: 'glasses' },
+  { id: 'party_glasses', name: 'Festa', image: '/masks/party-glasses.png', imageType: 'eyes', blendMode: 'lighten', category: 'glasses' },
+  // Máscaras de carnaval (cobrem metade superior do rosto)
+  { id: 'carnival_venice', name: 'Veneziana', image: '/masks/carnival-mask.png', imageType: 'eyes', blendMode: 'lighten', category: 'carnival' },
+  { id: 'carnival_brazil', name: 'Carnaval BR', image: '/masks/carnival-brazil.png', imageType: 'eyes', blendMode: 'lighten', category: 'carnival' },
+]
+
+export interface FaceBox {
+  x: number; y: number; w: number; h: number  // percentages 0-100
 }
 
-async function loadMediaPipe(): Promise<{ FaceMesh: any; Camera: any }> {
-  await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js')
-  await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
-  const w = window as any
-  if (!w.FaceMesh) throw new Error('FaceMesh not found on window after CDN load')
-  if (!w.Camera) throw new Error('Camera not found on window after CDN load')
-  return { FaceMesh: w.FaceMesh, Camera: w.Camera }
+export interface VideoFilterHookResult {
+  activeMask: MaskItem | null
+  activeMaskEmoji: string | null
+  faceBox: FaceBox | null
+  enableFilter: (maskId: string) => void
+  disableFilter: () => void
+  currentFilter: string | null
+  trackingStatus: 'idle' | 'loading' | 'tracking' | 'no-face' | 'fallback'
 }
+
+// ─── Detection backends ───
+
+async function tryNativeFaceDetector(): Promise<any | null> {
+  if (typeof globalThis === 'undefined' || !('FaceDetector' in globalThis)) return null
+  try {
+    // @ts-ignore
+    const fd = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+    // Test it works
+    const canvas = document.createElement('canvas')
+    canvas.width = 10; canvas.height = 10
+    await fd.detect(canvas)
+    return fd
+  } catch {
+    return null
+  }
+}
+
+let faceApiLoaded = false
+let faceApiLoading = false
+
+async function loadFaceApi() {
+  if (faceApiLoaded) return true
+  if (faceApiLoading) {
+    // Wait for existing load
+    while (faceApiLoading) await new Promise(r => setTimeout(r, 100))
+    return faceApiLoaded
+  }
+  faceApiLoading = true
+  try {
+    const faceapi = await import('face-api.js')
+    await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+    faceApiLoaded = true
+    return true
+  } catch (e) {
+    console.warn('face-api.js failed to load:', e)
+    return false
+  } finally {
+    faceApiLoading = false
+  }
+}
+
+async function detectWithFaceApi(video: HTMLVideoElement): Promise<{ x: number; y: number; width: number; height: number } | null> {
+  try {
+    const faceapi = await import('face-api.js')
+    const result = await faceapi.detectSingleFace(
+      video,
+      new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.3 })
+    )
+    if (result) {
+      return { x: result.box.x, y: result.box.y, width: result.box.width, height: result.box.height }
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
+// ─── Hook ───
 
 export const useVideoFilter = (
-  videoStream: MediaStream | null,
-  initialFilter: string | null = null
+  videoRef: React.RefObject<HTMLVideoElement>,
+  stream: MediaStream | null,
 ): VideoFilterHookResult => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const faceMeshRef = useRef<any>(null)
-  const cameraRef = useRef<any>(null)
-  // ★ Use a ref to always have the latest filterState in the onResults callback
-  const filterStateRef = useRef<FilterState>({
-    enabled: false,
-    currentMask: initialFilter,
-    intensity: 1.0,
-    settings: {}
-  })
+  const [currentFilter, setCurrentFilter] = useState<string | null>(null)
+  const [faceBox, setFaceBox] = useState<FaceBox | null>(null)
+  const [trackingStatus, setTrackingStatus] = useState<VideoFilterHookResult['trackingStatus']>('idle')
 
-  const [filterState, setFilterState] = useState<FilterState>(() => {
-    try {
-      const saved = localStorage.getItem('disque-video-filter')
-      const parsed = saved ? JSON.parse(saved) : {
-        enabled: false,
-        currentMask: initialFilter,
-        intensity: 1.0,
-        settings: {}
+  const activeRef = useRef<string | null>(null)
+  const nativeDetectorRef = useRef<any>(null)
+  const smoothBox = useRef<FaceBox | null>(null)
+  const runningRef = useRef(false)
+  const timeoutRef = useRef<number>(0)
+
+  // ─── Detection loop (recursive setTimeout, never overlaps) ───
+  const runDetection = useCallback(async () => {
+    if (!runningRef.current || !activeRef.current) return
+
+    const video = videoRef.current
+    if (!video || video.readyState < 2) {
+      timeoutRef.current = window.setTimeout(runDetection, 200)
+      return
+    }
+
+    const vw = video.videoWidth
+    const vh = video.videoHeight
+    if (!vw || !vh) {
+      timeoutRef.current = window.setTimeout(runDetection, 200)
+      return
+    }
+
+    let box: { x: number; y: number; width: number; height: number } | null = null
+
+    // Try native first
+    if (nativeDetectorRef.current) {
+      try {
+        const faces = await nativeDetectorRef.current.detect(video)
+        if (faces.length > 0) box = faces[0].boundingBox
+      } catch { /* fall through */ }
+    }
+
+    // Fallback to face-api.js
+    if (!box && faceApiLoaded) {
+      box = await detectWithFaceApi(video)
+    }
+
+    if (box && runningRef.current) {
+      setTrackingStatus('tracking')
+      const raw: FaceBox = {
+        x: (box.x / vw) * 100,
+        y: ((box.y + box.height * 0.08) / vh) * 100, // slight down shift
+        w: (box.width / vw) * 100,
+        h: (box.height / vh) * 100,
       }
-      filterStateRef.current = parsed
-      return parsed
-    } catch {
-      return { enabled: false, currentMask: initialFilter, intensity: 1.0, settings: {} }
-    }
-  })
-
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [filteredStream, setFilteredStream] = useState<MediaStream | null>(null)
-  const [detectionResults, setDetectionResults] = useState<DetectionResult | null>(null)
-  const [mediaPipeReady, setMediaPipeReady] = useState(false)
-  const [mediaPipeError, setMediaPipeError] = useState<string | null>(null)
-
-  // ★ Keep the ref in sync with state
-  useEffect(() => {
-    filterStateRef.current = filterState
-    try { localStorage.setItem('disque-video-filter', JSON.stringify(filterState)) } catch {}
-  }, [filterState])
-
-  // Load MediaPipe from CDN (once)
-  useEffect(() => {
-    let cancelled = false
-    loadMediaPipe()
-      .then(({ FaceMesh }) => {
-        if (cancelled) return
-        const faceMesh = new FaceMesh({
-          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-        })
-        faceMesh.setOptions({
-          maxNumFaces: 1,
-          refineLandmarks: true,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
-        })
-        faceMesh.onResults((results: any) => {
-          if (!canvasRef.current || !results.multiFaceLandmarks?.[0]) {
-            setDetectionResults(null)
-            return
-          }
-          const landmarks = results.multiFaceLandmarks[0]
-          const canvas = canvasRef.current
-          const ctx = canvas.getContext('2d')!
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
-
-          // ★ Read from ref (always current) instead of stale closure
-          const fs = filterStateRef.current
-          if (fs.enabled && fs.currentMask) {
-            const renderer = MASK_RENDERERS[fs.currentMask]
-            if (renderer) {
-              try { renderer.render(ctx, landmarks, canvas.width, canvas.height, fs.settings) }
-              catch (e) { console.warn('Filter render error:', e) }
-            }
-          }
-
-          setDetectionResults({
-            landmarks,
-            confidence: 0.9,
-            boundingBox: calcBBox(landmarks, canvas.width, canvas.height)
-          })
-        })
-        faceMeshRef.current = faceMesh
-        setMediaPipeReady(true)
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.warn('MediaPipe load failed:', err)
-          setMediaPipeError(String(err))
+      const prev = smoothBox.current
+      if (prev) {
+        smoothBox.current = {
+          x: prev.x * 0.55 + raw.x * 0.45,
+          y: prev.y * 0.55 + raw.y * 0.45,
+          w: prev.w * 0.55 + raw.w * 0.45,
+          h: prev.h * 0.55 + raw.h * 0.45,
         }
-      })
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Start camera processing when stream + MediaPipe are ready
-  useEffect(() => {
-    if (!videoStream || !faceMeshRef.current || !canvasRef.current || !mediaPipeReady) return
-
-    const w = window as any
-    const CameraClass = w.Camera
-    if (!CameraClass) { console.warn('Camera class not available'); return }
-
-    const video = document.createElement('video')
-    video.playsInline = true; video.muted = true; video.autoplay = true
-    video.width = 640; video.height = 480
-
-    const canvas = canvasRef.current
-    canvas.width = 640; canvas.height = 480
-
-    video.srcObject = videoStream
-    videoRef.current = video
-
-    video.onloadedmetadata = () => {
-      video.play()
-      setIsProcessing(true)
-      const camera = new CameraClass(video, {
-        onFrame: async () => {
-          if (faceMeshRef.current) await faceMeshRef.current.send({ image: video })
-        },
-        width: 640, height: 480
-      })
-      camera.start()
-      cameraRef.current = camera
-      const stream = canvas.captureStream(30)
-      setFilteredStream(stream)
+      } else {
+        smoothBox.current = raw
+      }
+      setFaceBox({ ...smoothBox.current })
+    } else if (runningRef.current) {
+      setTrackingStatus('no-face')
+      // Fallback: center of frame
+      if (!smoothBox.current) {
+        smoothBox.current = { x: 25, y: 12, w: 50, h: 55 }
+        setFaceBox({ ...smoothBox.current })
+      }
     }
+
+    // Schedule next detection: 150ms = ~6.6fps detection
+    if (runningRef.current) {
+      timeoutRef.current = window.setTimeout(runDetection, 150)
+    }
+  }, [videoRef])
+
+  // ─── Start/stop detection when filter changes ───
+  useEffect(() => {
+    if (!currentFilter || !stream) {
+      runningRef.current = false
+      clearTimeout(timeoutRef.current)
+      setTrackingStatus('idle')
+      return
+    }
+
+    let cancelled = false
+
+    const startTracking = async () => {
+      setTrackingStatus('loading')
+
+      // Try native FaceDetector
+      if (!nativeDetectorRef.current) {
+        nativeDetectorRef.current = await tryNativeFaceDetector()
+      }
+
+      // If no native, load face-api.js
+      if (!nativeDetectorRef.current && !faceApiLoaded) {
+        await loadFaceApi()
+      }
+
+      if (cancelled) return
+
+      if (!nativeDetectorRef.current && !faceApiLoaded) {
+        setTrackingStatus('fallback')
+        smoothBox.current = { x: 25, y: 12, w: 50, h: 55 }
+        setFaceBox({ ...smoothBox.current })
+        return
+      }
+
+      runningRef.current = true
+      runDetection()
+    }
+
+    startTracking()
 
     return () => {
-      if (cameraRef.current) cameraRef.current.stop()
-      video.pause(); video.srcObject = null
-      setIsProcessing(false); setFilteredStream(null)
+      cancelled = true
+      runningRef.current = false
+      clearTimeout(timeoutRef.current)
     }
-  }, [videoStream, mediaPipeReady])
-
-  const calcBBox = (landmarks: any[], w: number, h: number) => {
-    const xs = landmarks.map((l: any) => l.x * w)
-    const ys = landmarks.map((l: any) => l.y * h)
-    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
-  }
+  }, [currentFilter, stream, runDetection])
 
   const enableFilter = useCallback((maskId: string) => {
-    if (MASK_RENDERERS[maskId]) setFilterState(prev => ({ ...prev, enabled: true, currentMask: maskId }))
+    activeRef.current = maskId
+    setCurrentFilter(maskId)
+    smoothBox.current = null
   }, [])
 
   const disableFilter = useCallback(() => {
-    setFilterState(prev => ({ ...prev, enabled: false }))
+    activeRef.current = null
+    setCurrentFilter(null)
+    setFaceBox(null)
+    smoothBox.current = null
   }, [])
 
-  const switchFilter = useCallback((maskId: string) => {
-    if (MASK_RENDERERS[maskId]) setFilterState(prev => ({ ...prev, enabled: true, currentMask: maskId }))
-  }, [])
+  const mask = currentFilter ? EMOJI_MASKS.find(m => m.id === currentFilter) ?? null : null
 
   return {
-    canvasRef,
-    filteredStream,
-    isProcessing,
+    activeMask: mask,
+    activeMaskEmoji: mask?.emoji ?? null,
+    faceBox,
     enableFilter,
     disableFilter,
-    switchFilter,
-    currentFilter: filterState.currentMask,
-    detectionResults,
-    mediaPipeReady,
-    mediaPipeError
+    currentFilter,
+    trackingStatus,
   }
 }

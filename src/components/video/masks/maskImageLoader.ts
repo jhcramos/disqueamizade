@@ -5,19 +5,31 @@
 const imageCache = new Map<string, HTMLImageElement>()
 
 /**
+ * Resolve an asset path relative to the app's base URL (handles GitHub Pages subpath).
+ */
+export function resolveAssetPath(path: string): string {
+  const base = import.meta.env.BASE_URL || '/'
+  // Avoid double slashes
+  if (path.startsWith('/')) path = path.slice(1)
+  return base.endsWith('/') ? `${base}${path}` : `${base}/${path}`
+}
+
+/**
  * Load a mask PNG image with caching.
  * Returns the image if loaded and ready, null if still loading.
  * Safe to call every frame — cached after first load.
+ * Automatically resolves paths relative to BASE_URL.
  */
 export function loadMaskImage(src: string): HTMLImageElement | null {
-  if (imageCache.has(src)) {
-    const img = imageCache.get(src)!
+  const resolvedSrc = resolveAssetPath(src)
+  if (imageCache.has(resolvedSrc)) {
+    const img = imageCache.get(resolvedSrc)!
     return img.complete && img.naturalWidth > 0 ? img : null
   }
   const img = new Image()
   img.crossOrigin = 'anonymous'
-  img.src = src
-  imageCache.set(src, img)
+  img.src = resolvedSrc
+  imageCache.set(resolvedSrc, img)
   return null // not ready yet, will be ready next frame
 }
 

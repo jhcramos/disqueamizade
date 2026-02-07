@@ -4,7 +4,7 @@ const mobileNavItems = [
   { to: '/', label: 'Início', emoji: '🏠' },
   { to: '/rooms', label: 'Salas', emoji: '📹' },
   { to: '/marketplace', label: 'Creators', emoji: '⭐' },
-  { to: '/roulette', label: '1-on-1', emoji: '🎲' },
+  { to: '/hobbies', label: 'Hobbies', emoji: '🎯' },
   { to: '/profile/me', label: 'Perfil', emoji: '👤' },
 ]
 

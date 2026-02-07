@@ -1,16 +1,17 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
-  Send, Flag, Crown, Lock, Smile, Volume2,
-  Share2, X, Gamepad2, Info, Shield, AlertTriangle, Sparkles,
+  Send, Flag, Crown, Lock, Smile, Volume2, Coins,
+  Share2, X, Info, Shield, AlertTriangle, Sparkles, Maximize, Minimize,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
-// MarriageGame removido - substituído por Pista/Roleta
 import { useToastStore } from '@/components/common/ToastContainer'
 import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { CamaroteMinimizado } from '@/components/rooms/CamaroteMinimizado'
 import { useCamera } from '@/hooks/useCamera'
+import { useVideoFilter } from '@/hooks/useVideoFilter'
+import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 
 // ─── Mock Data ───
 const mockParticipants = [
@@ -22,6 +23,14 @@ const mockParticipants = [
   { id: 'u6', username: 'lucia_r', avatar: 'https://i.pravatar.cc/150?img=20', isOnline: true, videoEnabled: false, audioEnabled: true, role: 'participant' as const, tier: 'premium' as const },
   { id: 'u7', username: 'fernanda_m', avatar: 'https://i.pravatar.cc/150?img=25', isOnline: true, videoEnabled: true, audioEnabled: true, role: 'participant' as const, tier: 'free' as const },
   { id: 'u8', username: 'rafa_coach', avatar: 'https://i.pravatar.cc/150?img=12', isOnline: false, videoEnabled: false, audioEnabled: false, role: 'participant' as const, tier: 'basic' as const },
+]
+
+const ghostNames = ['lucas_bh', 'thais_rj', 'bruno_sp', 'camila_df', 'rodrigo_pr', 'juliana_ba', 'gustavo_rs', 'amanda_ce']
+const autoMessages = [
+  'Que legal essa sala! 😄', 'Boa noite pessoal! 🌙', 'Alguém mais de SP aqui?', 'Adoro esse tema!',
+  'Kkkkkk muito bom', 'Voltei! Tava jantando 🍕', 'Primeira vez aqui, gostei!', 'Quem quer jogar depois?',
+  'Saudades daqui ❤️', 'Tô adorando a vibe', 'Salve salve! 👋', 'Essa sala é top demais',
+  'Bom demais conversar com vcs', 'Alguém conhece alguma sala de música?', 'Que conversa boa!',
 ]
 
 type MockMessage = {
@@ -58,14 +67,34 @@ export const RoomPage = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
-  const [isPremiumUser] = useState(true) // Mock: true = pagante, false = free
+  const [isPremiumUser] = useState(true)
   const [minimizedCamarote, setMinimizedCamarote] = useState<{
     id: string
     name: string
     participants: { id: string; username: string; avatar: string; videoEnabled: boolean }[]
   } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const cameraTileRef = useRef<HTMLDivElement>(null)
+  const [tileSize, setTileSize] = useState({ w: 320, h: 240 })
+  const videoModalRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
+
+  // ─── Interactive state for video modal ───
+  const [showPrivateChat, setShowPrivateChat] = useState(false)
+  const [privateChatMessages, setPrivateChatMessages] = useState<{ text: string; fromMe: boolean }[]>([])
+  const [privateChatInput, setPrivateChatInput] = useState('')
+  const [showGiftPicker, setShowGiftPicker] = useState(false)
+  const [showFichasPicker, setShowFichasPicker] = useState(false)
+  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set())
+  const [showDenunciarConfirm, setShowDenunciarConfirm] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('normal')
+  const [activeMask, setActiveMask] = useState<string | null>(null)
+  const [beautySmooth, setBeautySmooth] = useState(false)
+  const [beautyBrighten, setBeautyBrighten] = useState(false)
+  const filterStyle = FILTER_CSS[activeFilter] || 'none'
+  const [typingUser, setTypingUser] = useState<string | null>(null)
+  const [onlineJitter] = useState(() => Math.floor(Math.random() * 5) - 2)
 
   // ─── REAL CAMERA ───
   const {
@@ -81,18 +110,113 @@ export const RoomPage = () => {
     toggleMic,
   } = useCamera()
 
+  // ─── VIDEO FILTER (emoji overlay with face tracking) ───
+  const {
+    activeMask: activeMaskData,
+    activeMaskEmoji,
+    faceBox,
+    enableFilter: enableMask,
+    disableFilter: disableMask,
+    trackingStatus,
+  } = useVideoFilter(videoRef, stream)
+
+  // Sync activeMask with video filter
+  useEffect(() => {
+    if (activeMask) enableMask(activeMask)
+    else disableMask()
+  }, [activeMask, enableMask, disableMask])
+
   const room = mockRooms.find((r) => r.id === roomId)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Cleanup camera on unmount / leaving room
   useEffect(() => {
-    return () => {
-      stopCamera()
-    }
+    return () => { stopCamera() }
   }, [stopCamera])
+
+  // Track camera tile pixel size for emoji scaling
+  useEffect(() => {
+    const el = cameraTileRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setTileSize({ w: entry.contentRect.width, h: entry.contentRect.height })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Reset modal sub-states when modal closes
+  useEffect(() => {
+    if (!showVideoModal) {
+      setShowPrivateChat(false)
+      setPrivateChatMessages([])
+      setPrivateChatInput('')
+      setShowGiftPicker(false)
+      setShowFichasPicker(false)
+      setShowDenunciarConfirm(false)
+    }
+  }, [showVideoModal])
+
+  // ─── AUTO-GENERATED CHAT MESSAGES (every 30s) ───
+  const addSystemMessage = useCallback((content: string) => {
+    setMessages(prev => [...prev, {
+      id: `sys-${Date.now()}`,
+      userId: 'system',
+      username: 'Sistema',
+      avatar: '',
+      content,
+      timestamp: new Date(),
+      type: 'system',
+    }])
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const allUsers = [...mockParticipants.filter(p => p.isOnline), ...ghostNames.map(n => ({ username: n, avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`, id: n, isOnline: true, videoEnabled: false, audioEnabled: true, role: 'participant' as const, tier: 'free' as const }))]
+      const user = allUsers[Math.floor(Math.random() * allUsers.length)]
+      const content = autoMessages[Math.floor(Math.random() * autoMessages.length)]
+      setMessages(prev => [...prev, {
+        id: `auto-${Date.now()}`,
+        userId: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        content,
+        timestamp: new Date(),
+        type: 'text',
+      }])
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // ─── SIMULATED USER JOINS (every 45s) ───
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const name = ghostNames[Math.floor(Math.random() * ghostNames.length)]
+      addSystemMessage(`${name} entrou na sala 👋`)
+    }, 45000)
+    return () => clearInterval(interval)
+  }, [addSystemMessage])
+
+  // ─── TYPING INDICATOR (random) ───
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.5) {
+        const user = mockParticipants.filter(p => p.isOnline)[Math.floor(Math.random() * mockParticipants.filter(p => p.isOnline).length)]
+        setTypingUser(user.username)
+        setTimeout(() => setTypingUser(null), 3000)
+      }
+    }, 20000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // ─── FULLSCREEN CHANGE LISTENER ───
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,6 +255,70 @@ export const RoomPage = () => {
     }
   }
 
+  // ─── VIDEO MODAL ACTIONS ───
+  const handleSendGift = (emoji: string, username: string) => {
+    addToast({ type: 'success', title: '🎁 Presente enviado!', message: `Você enviou ${emoji} para ${username}!` })
+    addSystemMessage(`🎁 você enviou ${emoji} para ${username}!`)
+    setShowGiftPicker(false)
+  }
+
+  const handleSendFichas = (amount: number, username: string) => {
+    addToast({ type: 'success', title: '💰 Fichas enviadas!', message: `Você enviou ${amount} fichas para ${username}!` })
+    setShowFichasPicker(false)
+  }
+
+  const handleToggleFollow = (userId: string, username: string) => {
+    setFollowedUsers(prev => {
+      const next = new Set(prev)
+      if (next.has(userId)) {
+        next.delete(userId)
+        addToast({ type: 'info', title: 'Deixou de seguir', message: `Você deixou de seguir ${username}` })
+      } else {
+        next.add(userId)
+        addToast({ type: 'success', title: '✅ Seguindo!', message: `Você está seguindo ${username}` })
+      }
+      return next
+    })
+  }
+
+  const handleDenunciar = (username: string) => {
+    addToast({ type: 'warning', title: '🚩 Denúncia enviada', message: `Denúncia contra ${username} foi registrada. Obrigado.` })
+    setShowDenunciarConfirm(false)
+    setShowVideoModal(null)
+  }
+
+  const handleToggleFullscreen = () => {
+    if (!videoModalRef.current) return
+    if (!document.fullscreenElement) {
+      videoModalRef.current.requestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
+    }
+  }
+
+  const handleSendPrivateChat = (_username: string) => {
+    if (!privateChatInput.trim()) return
+    setPrivateChatMessages(prev => [...prev, { text: privateChatInput, fromMe: true }])
+    setPrivateChatInput('')
+    // Simulate reply after 2s
+    setTimeout(() => {
+      const replies = ['Oi! 😊', 'Tudo bem?', 'Que legal!', 'Hahaha', 'Valeu! ❤️', 'Bora conversar!']
+      setPrivateChatMessages(prev => [...prev, { text: replies[Math.floor(Math.random() * replies.length)], fromMe: false }])
+    }, 2000)
+  }
+
+  const handleParticipantClick = (p: typeof mockParticipants[0]) => {
+    if (p.videoEnabled) {
+      setShowVideoModal(p.id)
+    } else {
+      addToast({ type: 'info', title: '📷 Sem câmera', message: `${p.username} está sem câmera` })
+    }
+  }
+
+  const handleGoToProfile = (p: typeof mockParticipants[0]) => {
+    navigate(`/profile/${p.id}`)
+  }
+
   if (!room) {
     return (
       <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
@@ -147,6 +335,7 @@ export const RoomPage = () => {
   const onlineParticipants = mockParticipants.filter((p) => p.isOnline)
   const videoParticipants = mockParticipants.filter((p) => p.videoEnabled)
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
+  const displayOnline = Math.max(1, onlineParticipants.length + onlineJitter)
 
   return (
     <div className="h-screen bg-dark-950 text-white flex flex-col overflow-hidden">
@@ -168,11 +357,8 @@ export const RoomPage = () => {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-semibold">{onlineParticipants.length} online</span>
+              <span className="text-xs text-emerald-400 font-semibold">{displayOnline} online</span>
             </div>
-            <button onClick={() => navigate('/pista')} className="p-2 rounded-xl text-balada-400 hover:bg-balada-500/10 transition-all" title="Pista & Roleta">
-              <Gamepad2 className="w-5 h-5" />
-            </button>
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
             </button>
@@ -207,30 +393,46 @@ export const RoomPage = () => {
             </h3>
             <div className="space-y-1">
               {mockParticipants.map((p) => (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => p.videoEnabled ? setShowVideoModal(p.id) : undefined}
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-colors text-left ${
-                    p.videoEnabled ? 'hover:bg-white/[0.06] cursor-pointer' : 'hover:bg-white/[0.03]'
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-colors ${
+                    p.videoEnabled ? 'hover:bg-white/[0.06]' : 'hover:bg-white/[0.03]'
                   }`}
                 >
-                  <div className="relative flex-shrink-0">
-                    <img src={p.avatar} alt={p.username} className="w-9 h-9 rounded-full object-cover border border-white/10" />
+                  {/* Avatar + Name → navigate to profile */}
+                  <button
+                    onClick={() => handleGoToProfile(p)}
+                    className="relative flex-shrink-0 group"
+                    title={`Ver perfil de ${p.username}`}
+                  >
+                    <img src={p.avatar} alt={p.username} className="w-9 h-9 rounded-full object-cover border border-white/10 group-hover:border-primary-500/50 transition-colors" />
                     <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-dark-950 ${p.isOnline ? 'bg-emerald-400' : 'bg-dark-600'}`} />
-                  </div>
+                  </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-white truncate">{p.username}</span>
+                      <button
+                        onClick={() => handleGoToProfile(p)}
+                        className="text-sm font-medium text-white truncate hover:text-primary-400 transition-colors"
+                        title={`Ver perfil de ${p.username}`}
+                      >
+                        {p.username}
+                      </button>
                       {p.role === 'owner' && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
                       {p.role === 'moderator' && <Shield className="w-3 h-3 text-primary-400 flex-shrink-0" />}
                       {p.tier === 'premium' && <span className="text-[10px] text-amber-400">👑</span>}
                     </div>
                     <div className="flex gap-2 mt-0.5">
-                      {p.videoEnabled ? <Video className="w-3 h-3 text-primary-400" /> : <VideoOff className="w-3 h-3 text-dark-600" />}
+                      {p.videoEnabled ? (
+                        <button onClick={() => handleParticipantClick(p)} title="Abrir câmera">
+                          <Video className="w-3 h-3 text-primary-400 hover:text-primary-300 cursor-pointer" />
+                        </button>
+                      ) : (
+                        <VideoOff className="w-3 h-3 text-dark-600" />
+                      )}
                       {p.audioEnabled ? <Volume2 className="w-3 h-3 text-primary-400" /> : <MicOff className="w-3 h-3 text-dark-600" />}
                     </div>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
 
@@ -262,7 +464,10 @@ export const RoomPage = () => {
                   <button onClick={handleShareRoom} className="flex-1 px-3 py-2 rounded-xl border border-white/5 text-xs text-dark-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5 justify-center">
                     <Share2 className="w-3.5 h-3.5" /> Compartilhar
                   </button>
-                  <button className="px-3 py-2 rounded-xl border border-red-500/20 text-xs text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1.5">
+                  <button
+                    onClick={() => addToast({ type: 'warning', title: '🚩 Denúncia', message: 'Denúncia da sala registrada. Obrigado.' })}
+                    className="px-3 py-2 rounded-xl border border-red-500/20 text-xs text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1.5"
+                  >
                     <Flag className="w-3.5 h-3.5" /> Denunciar
                   </button>
                 </div>
@@ -284,9 +489,7 @@ export const RoomPage = () => {
                 </button>
               </div>
               
-              {/* Lista de camarotes ativos (mock) */}
               <div className="space-y-2">
-                {/* Camarote exemplo 1 */}
                 <button 
                   onClick={() => navigate('/camarote/vip-1')}
                   className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
@@ -302,7 +505,6 @@ export const RoomPage = () => {
                   </div>
                 </button>
 
-                {/* Camarote exemplo 2 */}
                 <button 
                   onClick={() => navigate('/camarote/vip-2')}
                   className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
@@ -319,11 +521,6 @@ export const RoomPage = () => {
                     <img src="https://i.pravatar.cc/150?img=25" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
                   </div>
                 </button>
-
-                {/* Vazio */}
-                {false && (
-                  <p className="text-xs text-dark-600 text-center py-2">Nenhum camarote ativo</p>
-                )}
               </div>
             </div>
           </div>
@@ -340,18 +537,75 @@ export const RoomPage = () => {
             }`}>
 
               {/* ═══ YOUR REAL CAMERA TILE ═══ */}
-              <div className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[120px] sm:min-h-[160px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+              <div ref={cameraTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[120px] sm:min-h-[160px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
                 {isCameraOn && stream ? (
-                  /* Real camera feed */
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover absolute inset-0"
-                  />
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        filter: [
+                          filterStyle !== 'none' ? filterStyle : '',
+                          beautySmooth ? 'blur(0.5px) contrast(1.05)' : '',
+                          beautyBrighten ? 'brightness(1.15) saturate(1.05)' : '',
+                        ].filter(Boolean).join(' ') || 'none',
+                      }}
+                    />
+                    {activeMaskData && (
+                      <>
+                        {/* Tracking status */}
+                        <div className="absolute top-2 left-2 z-20 pointer-events-none">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium backdrop-blur-sm ${
+                            trackingStatus === 'tracking' ? 'bg-green-500/30 text-green-300' :
+                            trackingStatus === 'loading' ? 'bg-yellow-500/30 text-yellow-300' :
+                            trackingStatus === 'no-face' ? 'bg-red-500/30 text-red-300' :
+                            'bg-white/20 text-white/60'
+                          }`}>
+                            {trackingStatus === 'tracking' ? '🎯 Tracking' :
+                             trackingStatus === 'loading' ? '⏳ Carregando...' :
+                             trackingStatus === 'no-face' ? '👤 Sem rosto' :
+                             trackingStatus === 'fallback' ? '📍 Fixo' : ''}
+                          </span>
+                        </div>
+                        {/* Mask overlay */}
+                        {faceBox && activeMaskData.emoji && (
+                          <span
+                            className="absolute pointer-events-none z-10 select-none leading-none"
+                            style={{
+                              left: `${faceBox.x + faceBox.w / 2}%`,
+                              top: `${faceBox.y + faceBox.h * 0.35}%`,
+                              transform: 'translate(-50%, -50%)',
+                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 1.15)}px`,
+                              transition: 'left 130ms ease-out, top 130ms ease-out, font-size 200ms ease-out',
+                            }}
+                          >
+                            {activeMaskData.emoji}
+                          </span>
+                        )}
+                        {faceBox && activeMaskData.image && (
+                          <img
+                            src={activeMaskData.image}
+                            alt={activeMaskData.name}
+                            className="absolute pointer-events-none z-10 select-none object-contain"
+                            style={{
+                              mixBlendMode: (activeMaskData.blendMode || 'normal') as any,
+                              left: `${faceBox.x + faceBox.w / 2}%`,
+                              top: activeMaskData.imageType === 'eyes'
+                                ? `${faceBox.y}%`
+                                : `${faceBox.y + faceBox.h / 2}%`,
+                              transform: 'translate(-50%, -50%)',
+                              width: `${faceBox.w * (activeMaskData.imageType === 'eyes' ? 1.8 : 1.4)}%`,
+                              transition: 'left 130ms ease-out, top 130ms ease-out, width 200ms ease-out',
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
+                  </>
                 ) : (
-                  /* Placeholder */
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="text-center">
                       <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${
@@ -380,24 +634,22 @@ export const RoomPage = () => {
                   </div>
                 )}
 
-                {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                {/* "Você" badge */}
+                {/* Mask active indicator */}
+
                 <div className="absolute bottom-2 left-2">
                   <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
                     Você
                   </span>
                 </div>
 
-                {/* Live indicator */}
                 {isCameraOn && (
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-red-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
                     LIVE
                   </div>
                 )}
 
-                {/* Mic/Camera status */}
                 <div className="absolute top-2 left-2 flex gap-1">
                   {isCameraOn && !isMicOn && (
                     <span className="p-1 rounded-lg bg-red-500/20 backdrop-blur-sm"><MicOff className="w-3 h-3 text-red-400" /></span>
@@ -405,7 +657,7 @@ export const RoomPage = () => {
                 </div>
               </div>
 
-              {/* ═══ OTHER PARTICIPANTS (mock with connecting animation) ═══ */}
+              {/* ═══ OTHER PARTICIPANTS ═══ */}
               {videoParticipants.map((p) => (
                 <button
                   key={p.id}
@@ -415,7 +667,6 @@ export const RoomPage = () => {
                   <img src={p.avatar} alt={p.username} className="w-full h-full object-cover opacity-60 group-hover:opacity-70 transition-opacity" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-                  {/* Connecting overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="absolute w-10 h-10 rounded-full border border-primary/20 animate-ping opacity-15" />
                   </div>
@@ -461,9 +712,7 @@ export const RoomPage = () => {
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
-              <button onClick={() => navigate('/pista')} className="p-3 rounded-2xl bg-balada-500/10 text-balada-400 border border-balada-500/20 hover:bg-balada-500/20 transition-all" title="Pista & Roleta">
-                <Gamepad2 className="w-5 h-5" />
-              </button>
+              <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
               <button 
                 onClick={() => setShowCreateCamarote(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold" 
@@ -480,7 +729,10 @@ export const RoomPage = () => {
               <button onClick={handleShareRoom} className="hidden sm:block p-3 rounded-2xl bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1] transition-all">
                 <Share2 className="w-5 h-5" />
               </button>
-              <button className="hidden sm:block p-3 rounded-2xl bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1] transition-all">
+              <button
+                onClick={() => addToast({ type: 'warning', title: '🚩 Denúncia', message: 'Denúncia da sala registrada.' })}
+                className="hidden sm:block p-3 rounded-2xl bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1] transition-all"
+              >
                 <Flag className="w-5 h-5" />
               </button>
             </div>
@@ -530,6 +782,13 @@ export const RoomPage = () => {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Typing indicator */}
+          {typingUser && (
+            <div className="flex-shrink-0 px-4 pb-1">
+              <span className="text-xs text-dark-500 italic">{typingUser} está digitando<span className="animate-pulse">...</span></span>
+            </div>
+          )}
+
           <div className="flex-shrink-0 border-t border-white/5 p-3">
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <button type="button" className="p-2.5 rounded-xl text-dark-400 hover:text-white hover:bg-white/5 transition-all flex-shrink-0">
@@ -554,30 +813,198 @@ export const RoomPage = () => {
       {showVideoModal && (() => {
         const user = mockParticipants.find(p => p.id === showVideoModal)
         if (!user) return null
+        const isFollowing = followedUsers.has(user.id)
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowVideoModal(null)}>
-            <div className="card w-full max-w-xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div ref={videoModalRef} className="card w-full max-w-2xl animate-slide-up bg-dark-950 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Video expandido */}
               <div className="aspect-video bg-dark-900 rounded-t-2xl overflow-hidden relative">
-                <img src={user.avatar} alt={user.username} className="w-full h-full object-cover opacity-80" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-red-500/80 text-[11px] font-bold text-white animate-pulse">LIVE</div>
+                <img src={user.avatar} alt={user.username} className="w-full h-full object-cover opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute top-3 right-3 flex items-center gap-2">
+                  <button
+                    onClick={handleToggleFullscreen}
+                    className="p-1.5 rounded-lg bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-all"
+                    title={isFullscreen ? 'Sair do fullscreen' : 'Tela cheia'}
+                  >
+                    {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                  </button>
+                  <span className="px-2 py-0.5 rounded bg-red-500/80 text-[11px] font-bold text-white animate-pulse">LIVE</span>
+                </div>
                 <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                  <img src={user.avatar} alt="" className="w-8 h-8 rounded-full border border-white/20" />
-                  <span className="text-sm font-semibold text-white">{user.username}</span>
+                  <img src={user.avatar} alt="" className="w-10 h-10 rounded-full border-2 border-white/30" />
+                  <div>
+                    <span className="text-sm font-bold text-white block">{user.username}</span>
+                    <span className="text-[10px] text-white/70">{user.role === 'owner' ? '👑 Dono da sala' : user.tier === 'premium' ? '⭐ Premium' : 'Participante'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="p-4 flex items-center justify-between">
-                <p className="text-sm text-dark-400">Visualizando vídeo de {user.username}</p>
-                <button onClick={() => setShowVideoModal(null)} className="btn-ghost btn-sm">Fechar</button>
+
+              {/* Ações interativas */}
+              <div className="p-4 space-y-3">
+                {/* Barra de ações rápidas */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => { setShowPrivateChat(!showPrivateChat); setShowGiftPicker(false); setShowFichasPicker(false); setShowDenunciarConfirm(false) }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${showPrivateChat ? 'bg-primary-500/30 border border-primary-500/50 text-primary-300' : 'bg-primary-500/15 border border-primary-500/25 text-primary-400 hover:bg-primary-500/25'}`}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Chat Privado
+                  </button>
+                  <button
+                    onClick={() => { setShowGiftPicker(!showGiftPicker); setShowPrivateChat(false); setShowFichasPicker(false); setShowDenunciarConfirm(false) }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${showGiftPicker ? 'bg-pink-500/30 border border-pink-500/50 text-pink-300' : 'bg-pink-500/15 border border-pink-500/25 text-pink-400 hover:bg-pink-500/25'}`}
+                  >
+                    🎁 Enviar Presente
+                  </button>
+                  <button
+                    onClick={() => { setShowFichasPicker(!showFichasPicker); setShowPrivateChat(false); setShowGiftPicker(false); setShowDenunciarConfirm(false) }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${showFichasPicker ? 'bg-amber-500/30 border border-amber-500/50 text-amber-300' : 'bg-amber-500/15 border border-amber-500/25 text-amber-400 hover:bg-amber-500/25'}`}
+                  >
+                    <Coins className="w-4 h-4" />
+                    Enviar Fichas
+                  </button>
+                  <button
+                    onClick={() => handleToggleFollow(user.id, user.username)}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${isFollowing ? 'bg-emerald-500/30 border border-emerald-500/50 text-emerald-300' : 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25'}`}
+                  >
+                    <Users className="w-4 h-4" />
+                    {isFollowing ? 'Seguindo ✓' : 'Seguir'}
+                  </button>
+                </div>
+
+                {/* ─── Private Chat Panel ─── */}
+                {showPrivateChat && (
+                  <div className="rounded-xl bg-white/[0.02] border border-primary-500/20 p-3 space-y-2 animate-fade-in">
+                    <p className="text-xs text-dark-400 font-semibold">💬 Chat privado com {user.username}</p>
+                    <div className="max-h-32 overflow-y-auto space-y-1.5">
+                      {privateChatMessages.length === 0 && (
+                        <p className="text-xs text-dark-600 text-center py-2">Envie a primeira mensagem!</p>
+                      )}
+                      {privateChatMessages.map((m, i) => (
+                        <div key={i} className={`flex ${m.fromMe ? 'justify-end' : 'justify-start'}`}>
+                          <span className={`inline-block px-3 py-1.5 rounded-xl text-xs max-w-[80%] ${m.fromMe ? 'bg-primary-500/20 text-primary-200' : 'bg-white/[0.06] text-dark-200'}`}>
+                            {m.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <form onSubmit={(e) => { e.preventDefault(); handleSendPrivateChat(user.username) }} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={privateChatInput}
+                        onChange={(e) => setPrivateChatInput(e.target.value)}
+                        placeholder={`Mensagem para ${user.username}...`}
+                        className="flex-1 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-xs focus:outline-none focus:border-primary-500/40 transition-all"
+                      />
+                      <button type="submit" disabled={!privateChatInput.trim()} className="p-2 rounded-lg bg-primary-500 text-white text-xs disabled:opacity-30">
+                        <Send className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* ─── Gift Picker ─── */}
+                {showGiftPicker && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-pink-500/5 border border-pink-500/20 animate-fade-in">
+                    <span className="text-xs text-pink-400 font-semibold">Escolha:</span>
+                    <div className="flex gap-2 flex-wrap">
+                      {['🌹', '💎', '🍾', '🎵', '🔥', '❤️', '⭐', '🎉'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleSendGift(emoji, user.username)}
+                          className="w-9 h-9 rounded-lg bg-white/[0.04] hover:bg-pink-500/20 hover:scale-110 transition-all flex items-center justify-center text-lg"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── Fichas Picker ─── */}
+                {showFichasPicker && (
+                  <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 animate-fade-in">
+                    <p className="text-xs text-amber-400 font-semibold mb-2">💰 Enviar fichas para {user.username}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {[5, 10, 25, 50].map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => handleSendFichas(amount, user.username)}
+                          className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-semibold hover:bg-amber-500/20 transition-all"
+                        >
+                          {amount} 💰
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── Denunciar Confirm ─── */}
+                {showDenunciarConfirm && (
+                  <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20 animate-fade-in">
+                    <p className="text-xs text-red-400 mb-2">⚠️ Tem certeza que deseja denunciar <strong>{user.username}</strong>?</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDenunciar(user.username)}
+                        className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/30 transition-all"
+                      >
+                        Confirmar Denúncia
+                      </button>
+                      <button
+                        onClick={() => setShowDenunciarConfirm(false)}
+                        className="px-4 py-2 rounded-lg bg-white/[0.06] text-dark-400 text-xs hover:text-white transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Presentes rápidos (always visible) */}
+                {!showGiftPicker && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-xs text-dark-400">Presentes:</span>
+                    <div className="flex gap-2">
+                      {['🌹', '💎', '🍾', '🎵', '🔥', '❤️', '⭐', '🎉'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleSendGift(emoji, user.username)}
+                          className="w-9 h-9 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] hover:scale-110 transition-all flex items-center justify-center text-lg"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => { setShowDenunciarConfirm(true); setShowPrivateChat(false); setShowGiftPicker(false); setShowFichasPicker(false) }}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
+                  >
+                    <Flag className="w-3 h-3" /> Denunciar
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/profile/${user.id}`}
+                      className="px-4 py-2 rounded-xl bg-primary-500/15 border border-primary-500/25 text-sm text-primary-400 hover:bg-primary-500/25 transition-all flex items-center gap-1.5"
+                    >
+                      <Users className="w-3.5 h-3.5" /> Ver Perfil
+                    </Link>
+                    <button onClick={() => setShowVideoModal(null)} className="px-4 py-2 rounded-xl bg-white/[0.06] text-sm text-dark-300 hover:text-white hover:bg-white/[0.1] transition-all">
+                      Fechar
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )
       })()}
 
-      {/* Jogo Pista/Roleta agora acessado via /pista */}
-
-      {/* Create Camarote Modal */}
       {/* Camarote Minimizado (PiP) */}
       {minimizedCamarote && (
         <CamaroteMinimizado

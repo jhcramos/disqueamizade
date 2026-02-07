@@ -9,9 +9,7 @@ import { OstentacaoBadge } from '@/components/fichas/OstentacaoBadge'
 const navLinks = [
   { to: '/', label: 'Início' },
   { to: '/rooms', label: 'Salas' },
-  { to: '/roulette', label: 'Roleta' },
-  { to: '/stories', label: 'Stories' },
-  { to: '/exclusive', label: 'Exclusivo' },
+  { to: '/roulette', label: 'Roleta 1:1' },
   { to: '/marketplace', label: 'Marketplace' },
   { to: '/hobbies', label: 'Hobbies' },
   { to: '/pricing', label: 'Planos' },
@@ -68,9 +66,8 @@ export const Header = () => {
                   location.pathname === link.to
                     ? 'text-white bg-primary-500/15 shadow-glow-primary'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
-                } ${link.to === '/roulette' ? 'text-pink-400 hover:text-pink-300' : ''}`}
+                }`}
               >
-                {link.to === '/roulette' && <span className="mr-1">🎰</span>}
                 {link.label}
               </Link>
             ))}
@@ -222,7 +219,7 @@ export const Header = () => {
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                {link.to === '/roulette' && '🎰 '}{link.label}
+                {link.label}
               </Link>
             ))}
             {!isLoggedIn && (

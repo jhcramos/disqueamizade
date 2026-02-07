@@ -66,7 +66,7 @@ export const VideoFiltersPage = () => {
     disableFilter,
     currentFilter,
     detectionResults
-  } = useVideoFilter(cameraStream)
+  } = useVideoFilter({ stream: cameraStream, videoRef })
 
   const filteredFilters = selectedCategory === 'Todos'
     ? filters

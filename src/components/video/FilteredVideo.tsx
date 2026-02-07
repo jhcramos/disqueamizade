@@ -31,6 +31,8 @@ export const FilteredVideo: React.FC<FilteredVideoProps> = ({
   autoPlay = true,
   playsInline = true
 }) => {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
   // Video filter hook
   const {
     canvasRef,
@@ -41,12 +43,11 @@ export const FilteredVideo: React.FC<FilteredVideoProps> = ({
     switchFilter: _switchFilter,
     currentFilter,
     detectionResults
-  } = useVideoFilter(videoStream)
+  } = useVideoFilter({ stream: videoStream, videoRef })
 
   // Local state
   const [showSelector, setShowSelector] = useState(false)
   const [isFilterEnabled, setIsFilterEnabled] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
 
   // Set up video stream
   useEffect(() => {

@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom'
 import { MessageCircle, ShoppingBag, Users, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
-import { FeaturedCarousel } from '../components/featured/FeaturedCarousel'
 import { mockRooms } from '../data/mockRooms'
-import { spotlightProfiles, getLiveCreators } from '../data/mockCreators'
+import { getLiveCreators } from '../data/mockCreators'
 import { getPopularHobbies } from '../data/mockHobbies'
 
-const popularRooms = mockRooms.filter((r) => r.online_count > 10).slice(0, 6)
+const popularRooms = mockRooms.filter((r) => r.online_count > 10 && r.category !== 'adulta').slice(0, 6)
+const adultRooms = mockRooms.filter((r) => r.category === 'adulta')
 const popularHobbies = getPopularHobbies()
 const liveCreators = getLiveCreators()
 
@@ -15,22 +15,34 @@ const features = [
   {
     icon: MessageCircle,
     title: 'Salas de Chat',
-    description: 'Salas temáticas por cidade, idade, hobby ou idioma. Até 30 pessoas com vídeo.',
+    description: 'Salas temáticas com vídeo e máscaras virtuais para chat anônimo. Converse por cidade, idade, hobby ou idioma com até 30 pessoas.',
+    image: 'features/chat-rooms.png',
+    accentColor: '#6366f1',
+    link: '/rooms',
   },
   {
     icon: Shuffle,
     title: 'Roleta 1:1',
-    description: 'Conheça alguém aleatório! Filtros por idade, cidade e hobby. "Próximo" sempre disponível.',
+    description: 'Conheça alguém aleatório com filtros de vídeo e máscaras! Use óculos virtuais, emojis ou máscaras de carnaval. "Próximo" sempre disponível.',
+    image: 'features/roulette.png',
+    accentColor: '#ec4899',
+    link: '/roulette',
   },
   {
     icon: ShoppingBag,
     title: 'Marketplace',
     description: 'Ofereça ou contrate: aulas, coaching, terapia, entretenimento e muito mais com fichas.',
+    image: 'features/marketplace.png',
+    accentColor: '#10b981',
+    link: '/marketplace',
   },
   {
     icon: Crown,
     title: 'Ostentação',
     description: 'Com 300+ fichas, ganhe o badge dourado, efeitos especiais e prioridade em tudo!',
+    image: 'features/ostentacao.png',
+    accentColor: '#f59e0b',
+    link: '/pricing',
   },
 ]
 
@@ -63,276 +75,367 @@ const getWeeklyHeroImage = () => {
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const weekNumber = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)
-  // Semana par = foto 2 (casal dançando), Semana ímpar = foto 3 (4 amigos + DJ)
   return weekNumber % 2 === 0 ? 'hero-week-even.png' : 'hero-week-odd.png'
+}
+
+/* ── CSS-only keyframes injected once ── */
+const styleTag = document.createElement('style')
+styleTag.textContent = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(2deg); }
+  }
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-3deg); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+  @keyframes border-spin {
+    0% { --angle: 0deg; }
+    100% { --angle: 360deg; }
+  }
+  @keyframes slide-up-fade {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes disco-ball {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes live-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-float-delayed { animation: float-delayed 8s ease-in-out infinite; }
+  .animate-shimmer {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+  .animate-pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
+  .animate-slide-up-fade { animation: slide-up-fade 0.8s ease-out both; }
+  .animate-slide-up-fade-d1 { animation: slide-up-fade 0.8s ease-out 0.15s both; }
+  .animate-slide-up-fade-d2 { animation: slide-up-fade 0.8s ease-out 0.3s both; }
+  .animate-slide-up-fade-d3 { animation: slide-up-fade 0.8s ease-out 0.45s both; }
+  .animate-disco { animation: disco-ball 20s linear infinite; }
+  .animate-live-dot { animation: live-dot 1.5s ease-in-out infinite; }
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .glass-strong {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .gradient-border {
+    position: relative;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #6366f1, #ec4899, #6366f1);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  .text-gradient-hero {
+    background: linear-gradient(135deg, #818cf8, #f472b6, #c084fc, #818cf8);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s ease infinite;
+  }
+  .text-gradient-section {
+    background: linear-gradient(90deg, #e0e7ff, #f9a8d4, #e0e7ff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+`
+if (!document.querySelector('#disque-home-styles')) {
+  styleTag.id = 'disque-home-styles'
+  document.head.appendChild(styleTag)
 }
 
 export const HomePage = () => {
   const heroImage = getWeeklyHeroImage()
-  
+
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
 
-      {/* ═══ HERO ═══ */}
-      <section className="relative overflow-hidden">
-        {/* Hero Image Background */}
+      {/* ═══════════════════ HERO ═══════════════════ */}
+      <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+        {/* Background Image */}
         <div className="absolute inset-0">
-          <img 
-            src={import.meta.env.BASE_URL + heroImage} 
-            alt="Pessoas se divertindo" 
-            className="w-full h-full object-cover opacity-30"
+          <img
+            src={import.meta.env.BASE_URL + heroImage}
+            alt="Pessoas se divertindo"
+            className="w-full h-full object-cover opacity-25 scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-dark-950/60 via-dark-950/80 to-dark-950" />
+          {/* Multi-layer gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-dark-950 via-dark-950/70 to-dark-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-900/20 via-transparent to-pink-900/20" />
         </div>
-        <div className="absolute top-32 left-1/3 w-[500px] h-[500px] bg-primary-600/[0.06] rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-pink-500/[0.04] rounded-full blur-[100px]" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 lg:py-36 text-center">
+        {/* Floating neon orbs */}
+        <div className="absolute top-20 left-[15%] w-[600px] h-[600px] bg-primary-500/[0.07] rounded-full blur-[150px] animate-pulse-glow" />
+        <div className="absolute bottom-10 right-[10%] w-[500px] h-[500px] bg-pink-500/[0.06] rounded-full blur-[130px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-violet-500/[0.04] rounded-full blur-[100px] animate-float" />
+
+        {/* Decorative floating elements */}
+        <div className="absolute top-32 right-[20%] w-3 h-3 bg-primary-400/60 rounded-full animate-float" />
+        <div className="absolute top-48 left-[12%] w-2 h-2 bg-pink-400/50 rounded-full animate-float-delayed" />
+        <div className="absolute bottom-40 right-[30%] w-2.5 h-2.5 bg-violet-400/40 rounded-full animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-60 right-[8%] w-1.5 h-1.5 bg-amber-400/50 rounded-full animate-float-delayed" style={{ animationDelay: '3s' }} />
+        <div className="absolute bottom-60 left-[25%] w-2 h-2 bg-primary-300/30 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+
+        {/* Disco grid lines (subtle) */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '60px 60px'
+        }} />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-24 md:py-32 lg:py-40 text-center w-full">
           {/* Nostalgia badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] border border-white/[0.12] mb-8 animate-fade-in backdrop-blur-sm">
-            <Phone className="w-3.5 h-3.5 text-primary-400" />
-            <span className="text-sm text-dark-300">O clássico 145 reinventado · Agora com vídeo!</span>
+          <div className="animate-slide-up-fade inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full glass mb-10">
+            <div className="relative">
+              <Phone className="w-4 h-4 text-primary-400" />
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-live-dot" />
+            </div>
+            <span className="text-sm text-dark-200 font-medium">O clássico 145 reinventado · Agora com vídeo!</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 animate-slide-up">
-            <span className="text-white">A maior comunidade</span>
+          <h1 className="animate-slide-up-fade-d1 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[0.95]">
+            <span className="text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]">Ligou, conectou.</span>
             <br />
-            <span className="bg-gradient-to-r from-primary-400 via-pink-400 to-primary-600 bg-clip-text text-transparent">
-              de vídeo chat do Brasil
+            <span className="text-gradient-hero">
+              Amizade de verdade.
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-dark-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Conheça pessoas de verdade em salas com até 30 câmeras, crie seu próprio Camarote VIP, 
-            ou tente a sorte no chat 1:1. Tudo grátis pra começar!
+          <p className="animate-slide-up-fade-d2 text-lg md:text-xl lg:text-2xl text-dark-300 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
+            Salas de vídeo com até 30 pessoas, chat 1:1 aleatório e máscaras virtuais
+            para quem quer conversar de forma anônima — tudo ao vivo.
           </p>
 
-          {/* CTAs - Equilibrados */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
-            <Link to="/rooms" className="btn-primary btn-lg flex items-center gap-2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 border-0 min-w-[180px] justify-center">
-              <Users className="w-4 h-4" />
-              Entrar nas Salas
+          {/* CTAs */}
+          <div className="animate-slide-up-fade-d3 flex flex-col sm:flex-row items-center justify-center gap-5 mb-16">
+            <Link
+              to="/rooms"
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                minWidth: '230px',
+                boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 10px 40px rgba(99,102,241,0.2)'
+              }}
+              className="flex items-center gap-3 justify-center text-white font-bold text-lg py-5 px-10 rounded-2xl hover:scale-105 transition-all duration-300 no-underline relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+              <Users className="w-5 h-5 relative z-10" />
+              <span className="relative z-10">Entrar nas Salas</span>
             </Link>
-            <Link to="/roulette" className="btn-primary btn-lg flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 border-0 min-w-[180px] justify-center">
-              <Shuffle className="w-4 h-4" />
-              Chat 1:1 Aleatório
+            <Link
+              to="/roulette"
+              style={{
+                background: 'linear-gradient(135deg, #ec4899, #d946ef)',
+                minWidth: '230px',
+                boxShadow: '0 0 30px rgba(236,72,153,0.3), 0 10px 40px rgba(236,72,153,0.2)'
+              }}
+              className="flex items-center gap-3 justify-center text-white font-bold text-lg py-5 px-10 rounded-2xl hover:scale-105 transition-all duration-300 no-underline relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+              <Shuffle className="w-5 h-5 relative z-10" />
+              <span className="relative z-10">Roleta 1 on 1</span>
             </Link>
           </div>
-          
-          <Link to="/pricing" className="text-amber-400 hover:text-amber-300 text-sm font-medium flex items-center gap-2 justify-center">
+
+          <Link to="/pricing" className="text-amber-400 hover:text-amber-300 text-sm font-medium flex items-center gap-2 justify-center mb-16 transition-colors">
             <Coins className="w-4 h-4" />
             Ver Fichas & Planos Premium
           </Link>
 
-          {/* Stats */}
-          <div className="flex items-center justify-center gap-8 md:gap-14">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white">{mockRooms.length}+</div>
-              <div className="text-xs text-dark-500 mt-1">Salas Ativas</div>
-            </div>
-            <div className="w-px h-10 bg-white/[0.08]" />
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white">
-                {mockRooms.reduce((a, r) => a + r.online_count, 0).toLocaleString()}+
+          {/* Stats bar */}
+          <div className="glass-strong rounded-2xl py-6 px-8 max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-8 md:gap-14">
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-black text-white">{mockRooms.length}+</div>
+                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Salas Ativas</div>
               </div>
-              <div className="text-xs text-dark-500 mt-1">Online Agora</div>
-            </div>
-            <div className="w-px h-10 bg-white/[0.08]" />
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-amber-400">20+</div>
-              <div className="text-xs text-dark-500 mt-1">Creators</div>
-            </div>
-            <div className="w-px h-10 bg-white/[0.08]" />
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-pink-400">{liveCreators.length}</div>
-              <div className="text-xs text-dark-500 mt-1">Ao Vivo</div>
+              <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-black text-white">
+                  {mockRooms.reduce((a, r) => a + r.online_count, 0).toLocaleString()}+
+                </div>
+                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Online Agora</div>
+              </div>
+              <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-black text-amber-400">20+</div>
+                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Creators</div>
+              </div>
+              <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-black text-pink-400">{liveCreators.length}</div>
+                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Ao Vivo</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="divider" />
-
-      {/* ═══ 🔴 LIVE NOW — Creators ao Vivo ═══ */}
-      {liveCreators.length > 0 && (
-        <>
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 w-full">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                  <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white">Ao Vivo Agora</h2>
-                  <p className="text-dark-500 text-xs mt-0.5">{liveCreators.length} creators transmitindo</p>
-                </div>
-              </div>
-              <Link to="/marketplace" className="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1">
-                Ver todos <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {liveCreators.map(creator => (
-                <Link key={creator.id} to={`/profile/${creator.id}`} className="flex-shrink-0 w-48">
-                  <div className="card-interactive overflow-hidden group">
-                    <div className="relative aspect-square bg-surface overflow-hidden">
-                      <img src={creator.avatar} alt={creator.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
-                      <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/90 backdrop-blur-sm">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        <span className="text-[10px] text-white font-bold">LIVE</span>
-                      </div>
-                      <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-dark-950/70 backdrop-blur-sm">
-                        <Users className="w-3 h-3 text-white" />
-                        <span className="text-[10px] text-white font-semibold">{creator.liveViewers}</span>
-                      </div>
-                      <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-dark-950/70 backdrop-blur-sm">
-                        <span className="text-xs text-white font-medium">{creator.serviceEmoji} {creator.service}</span>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-white text-sm group-hover:text-primary-400 transition-colors truncate">{creator.name}</h3>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="text-xs text-amber-400">{creator.rating}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-          <div className="divider" />
-        </>
-      )}
-
-      {/* ═══ ⭐ PERFIS EM DESTAQUE — Paid Spotlight Carousel ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <span className="text-lg">⭐</span>
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white">Perfis em Destaque</h2>
-              <p className="text-dark-500 text-sm mt-0.5">Profissionais promovidos · <Link to="/pricing" className="text-primary-400 hover:underline">Destacar meu perfil</Link></p>
-            </div>
-          </div>
-        </div>
-
-        <FeaturedCarousel profiles={spotlightProfiles} perSlide={4} intervalMs={5000} />
-      </section>
-
-      <div className="divider" />
-
-      {/* ═══ FEATURES ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Tudo que Você Precisa</h2>
-          <p className="text-dark-500 max-w-lg mx-auto text-sm leading-relaxed">
-            Uma plataforma completa para conectar pessoas, criar comunidades e monetizar talentos.
+      {/* ═══════════════════ FEATURES ═══════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-black text-gradient-section mb-4">Tudo que Você Precisa</h2>
+          <p className="text-dark-400 max-w-lg mx-auto text-base leading-relaxed">
+            Chat com vídeo, máscaras virtuais para anonimato, filtros de câmera e uma comunidade que respeita sua privacidade.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {features.map((feature) => {
             const Icon = feature.icon
             return (
-              <div key={feature.title} className="card p-6 hover:border-primary-500/20 transition-all">
-                <div className="w-11 h-11 rounded-xl bg-primary-500/10 flex items-center justify-center mb-4">
-                  <Icon className="w-5 h-5 text-primary-400" />
+              <Link key={feature.title} to={feature.link} className="group block">
+                <div
+                  className="relative rounded-3xl overflow-hidden h-72 md:h-80 transition-all duration-500 hover:scale-[1.02]"
+                  style={{
+                    boxShadow: `0 0 0px ${feature.accentColor}00`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 0 60px ${feature.accentColor}30, 0 20px 60px rgba(0,0,0,0.5)`
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = `0 0 0px ${feature.accentColor}00`
+                  }}
+                >
+                  {/* Full-bleed image */}
+                  <img
+                    src={import.meta.env.BASE_URL + feature.image}
+                    alt={feature.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/60 to-transparent" />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: `linear-gradient(135deg, ${feature.accentColor}15, transparent)` }}
+                  />
+
+                  {/* Glassmorphism content at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                    <div className="glass-strong rounded-2xl p-5 md:p-6 group-hover:bg-white/[0.08] transition-colors duration-300">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                          style={{ background: `${feature.accentColor}20` }}
+                        >
+                          <Icon className="w-6 h-6" style={{ color: feature.accentColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-xl font-bold text-white mb-1">{feature.title}</h3>
+                          <p className="text-sm text-dark-300 leading-relaxed">{feature.description}</p>
+                          <div className="mt-3 flex items-center gap-1.5 text-sm font-bold group-hover:gap-3 transition-all duration-300" style={{ color: feature.accentColor }}>
+                            Explorar <ChevronRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-base font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-dark-500 leading-relaxed">{feature.description}</p>
-              </div>
+              </Link>
             )
           })}
         </div>
       </section>
 
-      <div className="divider" />
-
-      {/* ═══ 🛋️ CAMAROTES VIP CTA ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="card p-8 md:p-12 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-purple-600/[0.05] to-transparent" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/[0.06] rounded-full blur-[80px]" />
-          <div className="relative flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-xs text-amber-400 font-semibold">Premium</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                Crie seu Camarote VIP
-              </h2>
-              <p className="text-dark-400 text-sm mb-6 leading-relaxed max-w-lg">
-                Usuários pagantes podem criar sub-salas exclusivas dentro das salas de chat.
-                Convide quem você quiser e tenha conversas mais íntimas com até 6 pessoas.
-              </p>
-              <Link to="/rooms" className="btn-primary btn-lg inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 border-0">
-                <Users className="w-5 h-5" />
-                Explorar Salas
-              </Link>
-            </div>
-            <div className="flex-shrink-0 text-center">
-              <div className="text-8xl mb-2">🛋️</div>
-              <div className="text-2xl font-bold text-amber-400">Camarote VIP</div>
-              <p className="text-xs text-dark-500 mt-1">Até 6 pessoas</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="divider" />
-
-      {/* ═══ POPULAR ROOMS ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="flex items-center justify-between mb-8">
+      {/* ═══════════════════ POPULAR ROOMS ═══════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
+        <div className="flex items-end justify-between mb-12">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">Salas Populares Agora</h2>
-            <p className="text-dark-500 text-sm mt-1.5">As salas mais movimentadas neste momento</p>
+            <h2 className="text-3xl md:text-5xl font-black text-gradient-section mb-3">Salas Populares Agora</h2>
+            <p className="text-dark-400 text-base">As salas mais movimentadas neste momento</p>
           </div>
-          <Link to="/rooms" className="hidden sm:flex items-center gap-1 text-primary-400 hover:text-primary-300 transition-colors text-sm font-medium">
+          <Link to="/rooms" className="hidden sm:flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors text-sm font-semibold glass px-4 py-2 rounded-full hover:bg-white/[0.06]">
             Todas as Salas <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {popularRooms.map((room) => {
             const percentage = (room.participants / room.max_users) * 100
             const isFull = room.participants >= room.max_users
             const isVIP = room.room_type === 'vip'
             return (
-              <Link key={room.id} to={`/room/${room.id}`}>
-                <div className="card-interactive p-4 group">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm text-white group-hover:text-primary-400 transition-colors">{room.name}</h3>
-                      {isVIP && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/25 text-[10px] font-bold text-amber-400">
-                          VIP
-                        </span>
-                      )}
+              <Link key={room.id} to={`/room/${room.id}`} className="group block">
+                <div className="glass rounded-2xl p-5 hover:bg-white/[0.06] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+                  {/* Room header with avatars */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {/* Stacked mini-avatars */}
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map((n) => (
+                          <div key={n} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 border-2 border-dark-950 flex items-center justify-center">
+                            <span className="text-[10px] font-bold">👤</span>
+                          </div>
+                        ))}
+                        {room.participants > 3 && (
+                          <div className="w-8 h-8 rounded-full bg-dark-800 border-2 border-dark-950 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-dark-300">+{room.participants - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Live indicator */}
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-live-dot" />
+                        <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">Ao vivo</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-dark-500" />
-                      <span className={`text-xs font-semibold ${isFull ? 'text-danger' : 'text-dark-300'}`}>
-                        {room.participants}/{room.max_users}
+                    {isVIP && (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                        <Crown className="w-3 h-3" /> VIP
                       </span>
-                    </div>
+                    )}
                   </div>
-                  <p className="text-xs text-dark-500 mb-3">{room.description}</p>
+
+                  <h3 className="font-bold text-base text-white group-hover:text-primary-400 transition-colors mb-1.5">{room.name}</h3>
+                  <p className="text-xs text-dark-400 mb-4 line-clamp-2">{room.description}</p>
+
                   {room.entry_cost_fichas && room.entry_cost_fichas > 0 && (
-                    <div className="flex items-center gap-1 mb-2 text-amber-400 text-[11px] font-semibold">
-                      <Coins className="w-3 h-3" /> {room.entry_cost_fichas} fichas para entrar
+                    <div className="flex items-center gap-1.5 mb-3 text-amber-400 text-xs font-semibold">
+                      <Coins className="w-3.5 h-3.5" /> {room.entry_cost_fichas} fichas
                     </div>
                   )}
-                  <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${isFull ? 'bg-danger' : percentage > 80 ? 'bg-amber-500' : 'bg-primary-500'}`}
-                      style={{ width: `${percentage}%` }}
-                    />
+
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${isFull ? 'bg-red-500' : percentage > 80 ? 'bg-amber-500' : 'bg-primary-500'}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-bold tabular-nums ${isFull ? 'text-red-400' : 'text-dark-300'}`}>
+                      {room.participants}/{room.max_users}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -341,40 +444,43 @@ export const HomePage = () => {
         </div>
       </section>
 
-      <div className="divider" />
+      {/* ═══════════════════ OSTENTAÇÃO PROMO ═══════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 w-full">
+        <div className="relative rounded-3xl overflow-hidden p-10 md:p-14" style={{
+          background: 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.02) 50%, rgba(251,191,36,0.05) 100%)'
+        }}>
+          {/* Animated glow */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-amber-400/[0.08] rounded-full blur-[80px] animate-pulse-glow" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/[0.05] rounded-full blur-[60px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
-      {/* ═══ 🏆 OSTENTAÇÃO PROMO ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="card p-8 relative overflow-hidden bg-gradient-to-br from-amber-500/[0.05] via-transparent to-transparent border-amber-500/10">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/[0.06] rounded-full blur-[60px]" />
-          <div className="relative flex flex-col md:flex-row items-center gap-8">
+          <div className="relative flex flex-col md:flex-row items-center gap-10">
             <div className="flex-shrink-0 text-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.3)]">
-                <Crown className="w-12 h-12 text-dark-950" />
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_50px_rgba(251,191,36,0.4)] animate-float">
+                <Crown className="w-14 h-14 text-dark-950" />
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl font-bold text-amber-300 mb-2">Status Ostentação 🏆</h2>
-              <p className="text-dark-300 text-sm mb-4 leading-relaxed">
-                Tenha <span className="text-amber-400 font-bold">300+ fichas</span> e ganhe o badge dourado exclusivo, 
+              <h2 className="text-3xl md:text-4xl font-black text-amber-300 mb-3">Status Ostentação 🏆</h2>
+              <p className="text-dark-300 text-base mb-6 leading-relaxed max-w-xl">
+                Tenha <span className="text-amber-400 font-bold">300+ fichas</span> e ganhe o badge dourado exclusivo,
                 nome brilhante no chat, prioridade em filas e efeitos visuais especiais!
               </p>
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-1.5 text-xs text-dark-300">
-                  <span className="text-amber-400">✦</span> Badge dourado
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-dark-300">
-                  <span className="text-amber-400">✦</span> Nome destacado
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-dark-300">
-                  <span className="text-amber-400">✦</span> Prioridade
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-dark-300">
-                  <span className="text-amber-400">✦</span> Efeitos especiais
-                </div>
+              <div className="flex flex-wrap gap-4 mb-6">
+                {['Badge dourado', 'Nome destacado', 'Prioridade', 'Efeitos especiais'].map((perk) => (
+                  <div key={perk} className="flex items-center gap-2 text-sm text-dark-200 glass px-3 py-1.5 rounded-full">
+                    <span className="text-amber-400">✦</span> {perk}
+                  </div>
+                ))}
               </div>
-              <Link to="/pricing" className="btn-amber mt-4 inline-flex items-center gap-2">
-                <Coins className="w-4 h-4" />
+              <Link
+                to="/pricing"
+                style={{
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  boxShadow: '0 0 30px rgba(245,158,11,0.3)'
+                }}
+                className="inline-flex items-center gap-2 text-dark-950 font-bold text-base py-4 px-8 rounded-2xl hover:scale-105 transition-transform duration-300 no-underline"
+              >
+                <Coins className="w-5 h-5" />
                 Comprar Fichas
               </Link>
             </div>
@@ -382,55 +488,146 @@ export const HomePage = () => {
         </div>
       </section>
 
-      <div className="divider" />
-
-      {/* ═══ HOBBIES ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white">Explore por Hobbies</h2>
-            <p className="text-dark-500 text-sm mt-1.5">Encontre pessoas com os mesmos interesses</p>
+      {/* ═══════════════════ 🔞 SALAS ADULTAS ═══════════════════ */}
+      <section className="relative w-full overflow-hidden">
+        {/* Banner background */}
+        <div className="absolute inset-0">
+          <img 
+            src={import.meta.env.BASE_URL + 'features/adult-banner.png'} 
+            alt="" 
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-dark-950 via-dark-950/90 to-dark-950" />
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-24">
+          {/* 18+ Badge */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm mb-6">
+              <span className="text-3xl">🔞</span>
+              <span className="text-red-400 font-bold text-lg">Área Adulta · Apenas +18</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              Salas para{' '}
+              <span className="bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                Maiores de 18
+              </span>
+            </h2>
+            <p className="text-dark-400 max-w-lg mx-auto text-sm">
+              Paquera, encontros, conversas maduras e muito mais. Respeito é obrigatório.
+            </p>
           </div>
-          <Link to="/hobbies" className="hidden sm:flex items-center gap-1 text-primary-400 hover:text-primary-300 transition-colors text-sm font-medium">
+
+          {/* Adult rooms grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {adultRooms.map((room) => {
+              const percentage = (room.participants / room.max_users) * 100
+              return (
+                <Link key={room.id} to={`/room/${room.id}`}>
+                  <div className="group rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-4 hover:border-pink-500/30 hover:bg-pink-500/[0.05] transition-all duration-300 hover:-translate-y-1">
+                    <div className="text-2xl mb-2">{room.name.split(' ')[0]}</div>
+                    <h3 className="font-bold text-white text-sm group-hover:text-pink-400 transition-colors mb-1">
+                      {room.name.split(' ').slice(1).join(' ')}
+                    </h3>
+                    <p className="text-[11px] text-dark-500 mb-3 line-clamp-2">{room.description}</p>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1 text-dark-400">
+                        <Users className="w-3 h-3" />
+                        <span>{room.participants}/{room.max_users}</span>
+                      </div>
+                      {room.entry_cost_fichas ? (
+                        <div className="flex items-center gap-1 text-amber-400">
+                          <Coins className="w-3 h-3" />
+                          <span>{room.entry_cost_fichas}</span>
+                        </div>
+                      ) : (
+                        <span className="text-green-400">Grátis</span>
+                      )}
+                    </div>
+                    <div className="mt-2 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${percentage > 80 ? 'bg-red-500' : 'bg-pink-500'}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link to="/rooms?category=adulta" className="inline-flex items-center gap-2 text-pink-400 hover:text-pink-300 font-medium text-sm">
+              Ver todas as salas adultas <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════ HOBBIES ═══════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
+        <div className="flex items-end justify-between mb-12">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-black text-gradient-section mb-3">Explore por Hobbies</h2>
+            <p className="text-dark-400 text-base">Encontre pessoas com os mesmos interesses</p>
+          </div>
+          <Link to="/hobbies" className="hidden sm:flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors text-sm font-semibold glass px-4 py-2 rounded-full hover:bg-white/[0.06]">
             Ver Todos <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
-          {popularHobbies.map((hobby) => (
-            <Link key={hobby.id} to="/hobbies" className="flex-shrink-0">
-              <div className="card-interactive px-5 py-4 min-w-[150px] text-center">
-                <div className="text-3xl mb-2">{hobby.emoji}</div>
-                <h3 className="font-semibold text-white text-sm">{hobby.name}</h3>
-                <p className="text-[11px] text-dark-500 mt-1">{hobby.activeRooms} salas ativas</p>
-              </div>
-            </Link>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {popularHobbies.map((hobby, i) => {
+            const gradients = [
+              'from-primary-600/20 to-violet-600/10',
+              'from-pink-600/20 to-rose-600/10',
+              'from-emerald-600/20 to-teal-600/10',
+              'from-amber-600/20 to-orange-600/10',
+              'from-cyan-600/20 to-blue-600/10',
+              'from-fuchsia-600/20 to-purple-600/10',
+            ]
+            return (
+              <Link key={hobby.id} to="/hobbies" className="group block">
+                <div className={`glass rounded-2xl p-5 text-center hover:scale-105 transition-all duration-300 bg-gradient-to-br ${gradients[i % gradients.length]} hover:bg-white/[0.06]`}>
+                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{hobby.emoji}</div>
+                  <h3 className="font-bold text-white text-sm mb-1">{hobby.name}</h3>
+                  <p className="text-[11px] text-dark-400 font-medium">{hobby.activeRooms} salas</p>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
-      <div className="divider" />
-
-      {/* ═══ TESTIMONIALS ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 w-full">
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-white mb-10">
+      {/* ═══════════════════ TESTIMONIALS ═══════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
+        <h2 className="text-3xl md:text-5xl font-black text-center text-gradient-section mb-14">
           O que Dizem Nossos Usuários
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonials.map((t, i) => (
-            <div key={i} className="card p-6">
-              <div className="flex items-center gap-0.5 mb-4">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-sm text-dark-300 mb-4 leading-relaxed">"{t.text}"</p>
-              <div className="flex items-center gap-3">
-                <img src={t.avatar} alt={t.name} className="w-9 h-9 rounded-full ring-1 ring-white/10" />
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-[11px] text-dark-500">{t.city}</p>
+            <div key={i} className="gradient-border rounded-2xl">
+              <div className="glass-strong rounded-2xl p-7 h-full hover:bg-white/[0.06] transition-colors duration-300">
+                <div className="flex items-center gap-1 mb-5">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star
+                      key={j}
+                      className={`w-5 h-5 ${j < t.rating ? 'text-amber-400 fill-amber-400' : 'text-dark-700'}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-base text-dark-200 mb-6 leading-relaxed italic">"{t.text}"</p>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full ring-2 ring-primary-500/30"
+                  />
+                  <div>
+                    <p className="text-base font-bold text-white">{t.name}</p>
+                    <p className="text-xs text-dark-400 mt-0.5">{t.city}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -438,25 +635,47 @@ export const HomePage = () => {
         </div>
       </section>
 
-      <div className="divider" />
+      {/* ═══════════════════ FINAL CTA ═══════════════════ */}
+      <section className="px-4 sm:px-6 py-24 w-full relative overflow-hidden">
+        {/* Full-width gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 via-dark-950 to-pink-900/20" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[300px] bg-primary-500/[0.06] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-pink-500/[0.05] rounded-full blur-[100px]" />
 
-      {/* ═══ CTA ═══ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20 w-full">
-        <div className="card p-10 md:p-16 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-600/[0.06] to-pink-500/[0.03]" />
-          <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Pronto para começar?
-            </h2>
-            <p className="text-dark-400 mb-8 max-w-md mx-auto leading-relaxed">
-              Crie sua conta gratuita e comece a conhecer pessoas incríveis agora mesmo.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/auth" className="btn-primary btn-lg">Criar Conta Grátis</Link>
-              <Link to="/roulette" className="btn-secondary btn-lg flex items-center gap-2">
-                <Shuffle className="w-4 h-4" /> Testar a Roleta
-              </Link>
-              <Link to="/pricing" className="btn-ghost btn-lg text-amber-400">Ver Planos</Link>
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="gradient-border rounded-3xl">
+            <div className="glass-strong rounded-3xl p-12 md:p-20">
+              <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+                Pronto para
+                <span className="text-gradient-hero block">começar?</span>
+              </h2>
+              <p className="text-dark-300 text-lg mb-10 max-w-md mx-auto leading-relaxed">
+                Crie sua conta gratuita e comece a conhecer pessoas incríveis agora mesmo.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  to="/auth"
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+                    boxShadow: '0 0 40px rgba(99,102,241,0.3)'
+                  }}
+                  className="text-white font-bold text-lg py-5 px-10 rounded-2xl hover:scale-105 transition-all duration-300 no-underline"
+                >
+                  Criar Conta Grátis
+                </Link>
+                <Link
+                  to="/roulette"
+                  className="glass-strong text-white font-bold text-base py-4 px-8 rounded-2xl hover:bg-white/[0.1] transition-all duration-300 no-underline flex items-center gap-2"
+                >
+                  <Shuffle className="w-5 h-5" /> Testar a Roleta
+                </Link>
+                <Link
+                  to="/pricing"
+                  className="text-amber-400 hover:text-amber-300 font-bold text-base py-4 px-6 transition-colors no-underline"
+                >
+                  Ver Planos →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -113,6 +113,20 @@ export type MockCreator = {
   totalEarnings: number
   weeklyEarnings: number
   isVerified: boolean
+  // Camarote fields
+  camaroteId?: string
+  camaroteCapacity: number
+  camaroteTheme?: string
+  camaroteDescription?: string
+  camaroteIsOpen: boolean
+  camaroteViewers: number
+  canInvite: boolean
+  nextEvent?: {
+    title: string
+    date: string
+    price: number
+    type: 'palestra' | 'curso' | 'show' | 'consulta' | 'show_erotico' | 'live'
+  }
 }
 
 export type MockHobby = {

@@ -9,7 +9,7 @@ interface CreatorCardProps {
 
 export const CreatorCard = ({ creator, compact = false }: CreatorCardProps) => {
   return (
-    <Link to={`/profile/${creator.id}`}>
+    <Link to={`/creator/${creator.id}`}>
       <div className="card rounded-2xl transition-all duration-300 hover:border-primary/20 hover:shadow-card-hover group overflow-hidden h-full flex flex-col">
         {/* Avatar section */}
         <div className="relative">

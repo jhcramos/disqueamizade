@@ -35,7 +35,7 @@ export const RoomsPage = () => {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">Salas de Chat</h1>
             <p className="text-dark-500 mt-1.5 text-sm">
-              Escolha uma sala e comece a conversar! Ligue o 145 da amizade 📞
+              Escolha uma sala e converse com vídeo — use máscaras virtuais para ficar anônimo 🎭
             </p>
           </div>
           <button

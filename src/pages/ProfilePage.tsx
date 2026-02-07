@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   MapPin, Clock, Award, Users, Shield, ArrowLeft, Calendar,
   Lock, Edit3, Bell, Globe, Trash2, Download, MessageCircle,
@@ -40,6 +40,7 @@ type Tab = 'profile' | 'stats' | 'settings'
 
 export const ProfilePage = () => {
   const { userId } = useParams()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
   const [isEditing, setIsEditing] = useState(false)
   const profile = MOCK_PROFILE
@@ -85,15 +86,26 @@ export const ProfilePage = () => {
                 )}
               </div>
 
-              {isOwnProfile && (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="btn-secondary btn-sm"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  {isEditing ? 'Salvar' : 'Editar'}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {!isOwnProfile && (
+                  <button
+                    onClick={() => navigate('/roulette')}
+                    className="btn-sm bg-primary-500/15 text-primary-400 border border-primary-500/25 hover:bg-primary-500/25 transition-all flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    Abrir Câmera
+                  </button>
+                )}
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="btn-secondary btn-sm"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    {isEditing ? 'Salvar' : 'Editar'}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Info */}

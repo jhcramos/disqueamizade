@@ -9,9 +9,9 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     
     <!-- Primary Meta Tags -->
-    <title>Disque Amizade - A Balada que Nunca Fecha 🎪</title>
+    <title>Disque Amizade - Chat com Vídeo e Máscaras Virtuais | Converse Anônimo 🎭</title>
     <meta name="title" content="Disque Amizade - A Balada que Nunca Fecha 🎪" />
-    <meta name="description" content="Conheça gente nova ao vivo. Entre na Pista com 30 pessoas, deixe a Roleta decidir seu destino, e faça amigos reais nos Camarotes. A evolução do clássico Disque Amizade." />
+    <meta name="description" content="Chat com vídeo e máscaras virtuais para conversar anônimo. Salas temáticas com até 30 pessoas, roleta 1:1, filtros de câmera, óculos e máscaras de carnaval. Disque Amizade — a evolução do chat online brasileiro." />
     <meta name="keywords" content="disque amizade, video chat, conhecer pessoas, chat ao vivo, roleta de chat, fazer amigos online, brasil, balada digital" />
     <meta name="author" content="Disque Amizade" />
     <meta name="theme-color" content="#1A1A2E" />
@@ -20,7 +20,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://disqueamizade.com.br/" />
     <meta property="og:title" content="Disque Amizade - A Balada que Nunca Fecha 🎪" />
-    <meta property="og:description" content="Conheça gente nova ao vivo. Entre na Pista com 30 pessoas, deixe a Roleta decidir seu destino, e faça amigos reais nos Camarotes." />
+    <meta property="og:description" content="Chat com vídeo e máscaras virtuais para conversar anônimo. Salas temáticas, roleta 1:1, filtros de câmera e máscaras de carnaval. Disque Amizade ao vivo!" />
     <meta property="og:image" content="https://disqueamizade.com.br/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -31,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://disqueamizade.com.br/" />
     <meta name="twitter:title" content="Disque Amizade - A Balada que Nunca Fecha 🎪" />
-    <meta name="twitter:description" content="Conheça gente nova ao vivo. Entre na Pista com 30 pessoas, deixe a Roleta decidir seu destino, e faça amigos reais nos Camarotes." />
+    <meta name="twitter:description" content="Chat com vídeo e máscaras virtuais para conversar anônimo. Salas temáticas, roleta 1:1, filtros de câmera e máscaras de carnaval." />
     <meta name="twitter:image" content="https://disqueamizade.com.br/og-image.png" />
     
     <!-- Additional SEO -->
@@ -53,6 +53,19 @@
     <meta name="apple-mobile-web-app-title" content="Disque Amizade" />
   </head>
   <body>
+    <!-- SPA redirect handler for GitHub Pages (works with 404.html) -->
+    <script>
+      (function(l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
