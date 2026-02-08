@@ -14,6 +14,7 @@ import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { CreatorProfilePage } from './pages/CreatorProfilePage'
 import DesignSystemPage from './pages/DesignSystemPage'
+import { AdminPage } from './pages/AdminPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -58,6 +59,9 @@ function App() {
         
         {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />
+        
+        {/* Admin */}
+        <Route path="/admin" element={<AdminPage />} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

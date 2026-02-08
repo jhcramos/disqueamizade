@@ -9,6 +9,67 @@ const isSupabaseConfigured = () => {
 }
 
 /**
+ * Fetch cold-start settings from admin_settings table.
+ * Caches in localStorage with 5-min TTL.
+ */
+type ColdStartConfig = {
+  bots_presence: boolean
+  inflated_counters: boolean
+  auto_chat: boolean
+  lobby_mode: boolean
+}
+
+const COLD_START_CACHE_KEY = 'disque_cold_start_settings'
+const COLD_START_TTL = 5 * 60 * 1000 // 5 min
+
+function getCachedColdStart(): ColdStartConfig | null {
+  try {
+    const raw = localStorage.getItem(COLD_START_CACHE_KEY)
+    if (!raw) return null
+    const { data, ts } = JSON.parse(raw)
+    if (Date.now() - ts > COLD_START_TTL) return null
+    return data
+  } catch { return null }
+}
+
+export function useColdStartSettings() {
+  const [settings, setSettings] = useState<ColdStartConfig>({
+    bots_presence: true, inflated_counters: true, auto_chat: true, lobby_mode: true,
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const cached = getCachedColdStart()
+    if (cached) {
+      setSettings(cached)
+      setLoading(false)
+      return
+    }
+
+    if (!isSupabaseConfigured()) { setLoading(false); return }
+
+    const fetchColdStart = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('value')
+          .eq('key', 'cold_start')
+          .single()
+        if (data?.value) {
+          const val = data.value as ColdStartConfig
+          setSettings(val)
+          localStorage.setItem(COLD_START_CACHE_KEY, JSON.stringify({ data: val, ts: Date.now() }))
+        }
+      } catch { /* ignore */ }
+      setLoading(false)
+    }
+    fetchColdStart()
+  }, [])
+
+  return { settings, loading }
+}
+
+/**
  * Simulated presence for cold-start phase.
  * Generates a deterministic but time-varying "base" participant count per room.
  * Uses room slug as seed + current hour to create natural-looking fluctuation.
