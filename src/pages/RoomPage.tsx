@@ -178,7 +178,7 @@ export const RoomPage = () => {
 
   // Join realtime room chat + presence
   useEffect(() => {
-    if (!roomSlug || !user || isGuest) return
+    if (!roomSlug || !user) return
 
     const username = profile?.username || profile?.display_name || user.user_metadata?.username || 'Anônimo'
 
@@ -195,7 +195,7 @@ export const RoomPage = () => {
     )
 
     return () => { roomChat.leave() }
-  }, [roomSlug, user, isGuest, profile])
+  }, [roomSlug, user, profile])
 
   // Join WebRTC room when camera stream is available (use composite stream with effects)
   const webrtcStream = compositeStream || stream
@@ -345,6 +345,8 @@ export const RoomPage = () => {
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs text-emerald-400 font-semibold">{onlineUsers.length || (botCount + 1)} online</span>
+              {/* Debug - remove later */}
+              <span className="text-[9px] text-dark-600 ml-1">ch:{roomSlug?.slice(0,8)} {isGuest ? 'G' : 'U'}</span>
             </div>
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
