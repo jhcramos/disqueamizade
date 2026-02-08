@@ -76,7 +76,7 @@ export function useCompositeStream(
       if (maskEmoji && faceBox) {
         const cx = (faceBox.x + faceBox.w / 2) / 100 * canvas.width
         const cy = (faceBox.y + faceBox.h / 2) / 100 * canvas.height
-        const size = Math.max(faceBox.w, faceBox.h) / 100 * Math.max(canvas.width, canvas.height) * 1.5
+        const size = Math.max(faceBox.w, faceBox.h) / 100 * Math.max(canvas.width, canvas.height) * 0.6
 
         ctx.font = `${Math.round(size)}px serif`
         ctx.textAlign = 'center'
