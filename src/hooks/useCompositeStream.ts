@@ -108,5 +108,5 @@ export function useCompositeStream(
   // Update composite when filter/mask changes (no need to recreate stream)
   // The render loop already reads the latest values via closure
 
-  return compositeStream
+  return { compositeStream, canvasRef }
 }

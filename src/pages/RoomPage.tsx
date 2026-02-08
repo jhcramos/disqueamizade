@@ -75,7 +75,7 @@ export const RoomPage = () => {
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [tileSize, setTileSize] = useState({ w: 320, h: 240 })
+  const [, setTileSize] = useState({ w: 320, h: 240 })
   const { addToast } = useToastStore()
 
   const [activeFilter, setActiveFilter] = useState('normal')
@@ -116,7 +116,15 @@ export const RoomPage = () => {
   } = useVideoFilter(videoRef, stream)
 
   // Composite stream with effects for WebRTC
-  const compositeStream = useCompositeStream(videoRef, stream, filterStyle, activeMaskData?.emoji || null, faceBox, beautySmooth, beautyBrighten)
+  const { compositeStream, canvasRef: _compositeCanvasRef } = useCompositeStream(videoRef, stream, filterStyle, activeMaskData?.emoji || null, faceBox, beautySmooth, beautyBrighten)
+  const pipVideoRef = useRef<HTMLVideoElement>(null)
+
+  // Show composite stream in local camera tile so preview matches what remote sees
+  useEffect(() => {
+    if (pipVideoRef.current && compositeStream) {
+      pipVideoRef.current.srcObject = compositeStream
+    }
+  }, [compositeStream])
 
   useEffect(() => {
     if (activeMask) enableMask(activeMask)
@@ -461,67 +469,30 @@ export const RoomPage = () => {
 
                 {isCameraOn && stream ? (
                   <>
+                    {/* Hidden raw video for face tracking + canvas source */}
+                    <video ref={videoRef} autoPlay playsInline muted className="hidden" />
+                    {/* Show composite stream = exactly what remote user sees */}
                     <video
-                      ref={videoRef}
+                      ref={pipVideoRef}
                       autoPlay
                       playsInline
                       muted
                       className={`absolute inset-0 w-full h-full object-cover ${bgImage && bgImage !== 'blur' ? 'z-10 mix-blend-normal' : ''}`}
-                      style={{
-                        filter: [
-                          filterStyle !== 'none' ? filterStyle : '',
-                          beautySmooth ? 'blur(0.5px) contrast(1.05)' : '',
-                          beautyBrighten ? 'brightness(1.15) saturate(1.05)' : '',
-                        ].filter(Boolean).join(' ') || 'none',
-                      }}
                     />
-                    {activeMaskData && (
-                      <>
-                        <div className="absolute top-2 left-2 z-20 pointer-events-none">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium backdrop-blur-sm ${
-                            trackingStatus === 'tracking' ? 'bg-green-500/30 text-green-300' :
-                            trackingStatus === 'loading' ? 'bg-yellow-500/30 text-yellow-300' :
-                            trackingStatus === 'no-face' ? 'bg-red-500/30 text-red-300' :
-                            'bg-white/20 text-white/60'
-                          }`}>
-                            {trackingStatus === 'tracking' ? '🎯 Tracking' :
-                             trackingStatus === 'loading' ? '⏳ Carregando...' :
-                             trackingStatus === 'no-face' ? '👤 Sem rosto' :
-                             trackingStatus === 'fallback' ? '📍 Fixo' : ''}
-                          </span>
-                        </div>
-                        {faceBox && activeMaskData.emoji && (
-                          <span
-                            className="absolute pointer-events-none z-10 select-none leading-none"
-                            style={{
-                              left: `${faceBox.x + faceBox.w / 2}%`,
-                              top: `${faceBox.y + faceBox.h * 0.5}%`,
-                              transform: 'translate(-50%, -50%)',
-                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 0.4)}px`,
-                              transition: 'left 80ms ease-out, top 80ms ease-out, font-size 150ms ease-out',
-                            }}
-                          >
-                            {activeMaskData.emoji}
-                          </span>
-                        )}
-                        {faceBox && activeMaskData.image && (
-                          <img
-                            src={activeMaskData.image}
-                            alt={activeMaskData.name}
-                            className="absolute pointer-events-none z-10 select-none object-contain"
-                            style={{
-                              mixBlendMode: (activeMaskData.blendMode || 'normal') as any,
-                              left: `${faceBox.x + faceBox.w / 2}%`,
-                              top: activeMaskData.imageType === 'eyes'
-                                ? `${faceBox.y}%`
-                                : `${faceBox.y + faceBox.h / 2}%`,
-                              transform: 'translate(-50%, -50%)',
-                              width: `${faceBox.w * (activeMaskData.imageType === 'eyes' ? 1.8 : 1.4)}%`,
-                              transition: 'left 130ms ease-out, top 130ms ease-out, width 200ms ease-out',
-                            }}
-                          />
-                        )}
-                      </>
+                    {activeMaskData && trackingStatus && (
+                      <div className="absolute top-2 left-2 z-20 pointer-events-none">
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium backdrop-blur-sm ${
+                          trackingStatus === 'tracking' ? 'bg-green-500/30 text-green-300' :
+                          trackingStatus === 'loading' ? 'bg-yellow-500/30 text-yellow-300' :
+                          trackingStatus === 'no-face' ? 'bg-red-500/30 text-red-300' :
+                          'bg-white/20 text-white/60'
+                        }`}>
+                          {trackingStatus === 'tracking' ? '🎯 Tracking' :
+                           trackingStatus === 'loading' ? '⏳ Carregando...' :
+                           trackingStatus === 'no-face' ? '👤 Sem rosto' :
+                           trackingStatus === 'fallback' ? '📍 Fixo' : ''}
+                        </span>
+                      </div>
                     )}
                   </>
                 ) : (
