@@ -84,6 +84,7 @@ export const ProfilePage = () => {
   const [editCity, setEditCity] = useState('')
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [savingInterests, setSavingInterests] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const user = useAuthStore((s) => s.user)
   const authProfile = useAuthStore((s) => s.profile)
@@ -133,6 +134,63 @@ export const ProfilePage = () => {
       setIsEditing(false)
     } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Não foi possível salvar' })
+    }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      addToast({ type: 'error', title: 'Imagem muito grande', message: 'Máximo 2MB. Tente uma imagem menor.' })
+      return
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      addToast({ type: 'error', title: 'Formato inválido', message: 'Use JPG, PNG, WebP ou GIF.' })
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const reader = new FileReader()
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      if (!token) throw new Error('Faça login novamente')
+
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ image: base64, contentType: file.type }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Falha no upload')
+      }
+
+      const { avatar_url } = await res.json()
+
+      // Update local state
+      await supabase.auth.refreshSession()
+      const { data } = await supabase.auth.getUser()
+      if (data.user) useAuthStore.getState().setUser(data.user)
+
+      // Update profile in store
+      useAuthStore.getState().setProfile({ ...authProfile!, avatar_url } as any)
+
+      addToast({ type: 'success', title: '📸 Foto atualizada!', message: 'Sua nova foto de perfil está linda!' })
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Erro no upload', message: err.message || 'Tente novamente' })
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = '' // reset input
     }
   }
 
@@ -213,9 +271,20 @@ export const ProfilePage = () => {
                 )}
                 <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[3px] border-dark-950 ${profile.is_online ? 'bg-emerald-400' : 'bg-dark-600'}`} />
                 {isOwnProfile && (
-                  <button className="absolute -bottom-1 -left-1 p-1.5 rounded-full bg-dark-800/90 border border-white/10 text-dark-400 hover:text-white transition-colors">
-                    <Camera className="w-3 h-3" />
-                  </button>
+                  <label className="absolute -bottom-1 -left-1 p-1.5 rounded-full bg-dark-800/90 border border-white/10 text-dark-400 hover:text-white transition-colors cursor-pointer">
+                    {uploadingAvatar ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="w-3 h-3" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={uploadingAvatar}
+                    />
+                  </label>
                 )}
               </div>
 
