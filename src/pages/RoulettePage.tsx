@@ -6,6 +6,7 @@ import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useAuthStore } from '@/store/authStore'
 import { matchmaking } from '@/services/supabase/matchmaking'
+import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import type { RouletteStatus, RouletteFilters } from '@/types'
@@ -95,15 +96,16 @@ export const RoulettePage = () => {
   }, [status])
 
   useEffect(() => {
-    return () => { stopCamera(); matchmaking.leaveQueue(); webrtcRoom.leave() }
+    return () => { stopCamera(); matchmaking.leaveQueue(); webrtcRoom.leave(); roomChat.leave() }
   }, [stopCamera])
 
   const [matchedPeer, setMatchedPeer] = useState<string | null>(null)
-  const [_matchedRoom, setMatchedRoom] = useState<string | null>(null)
+  const [, setMatchedRoomId] = useState<string | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const user = useAuthStore((s) => s.user)
+  const profile = useAuthStore((s) => s.profile)
 
   // Keep streamRef in sync
   useEffect(() => { streamRef.current = stream ?? null }, [stream])
@@ -122,7 +124,7 @@ export const RoulettePage = () => {
     setNoMatchMessage('')
     setChatMessages([])
     setMatchedPeer(null)
-    setMatchedRoom(null)
+    setMatchedRoomId(null)
     setRemoteStream(null)
 
     const userId = user?.id
@@ -136,7 +138,7 @@ export const RoulettePage = () => {
       userId,
       (peerId, roomId) => {
         setMatchedPeer(peerId)
-        setMatchedRoom(roomId)
+        setMatchedRoomId(roomId)
         setChatMessages(prev => [...prev, {
           id: Date.now().toString(),
           username: 'Sistema',
@@ -144,6 +146,16 @@ export const RoulettePage = () => {
           type: 'system' as const,
           timestamp: new Date(),
         }])
+
+        // Join chat room for real-time messaging
+        const myUsername = useAuthStore.getState().profile?.username || useAuthStore.getState().user?.user_metadata?.username || 'Anônimo'
+        roomChat.join(
+          `roulette-${roomId}`,
+          userId,
+          myUsername,
+          (msg) => { setChatMessages(prev => [...prev, { ...msg, type: msg.type === 'emoji' ? 'text' : msg.type } as ChatMessage]) },
+          () => {},
+        )
 
         // Start WebRTC video connection (use ref to get latest stream)
         const currentStream = streamRef.current
@@ -185,11 +197,12 @@ export const RoulettePage = () => {
   const endSession = useCallback(() => {
     matchmaking.leaveQueue()
     webrtcRoom.leave()
+    roomChat.leave()
     setStatus('idle')
     setSearchTime(0)
     setNoMatchMessage('')
     setMatchedPeer(null)
-    setMatchedRoom(null)
+    setMatchedRoomId(null)
     setRemoteStream(null)
     stopCamera()
   }, [stopCamera])
@@ -213,10 +226,19 @@ export const RoulettePage = () => {
   const sendChatMessage = (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatInput.trim()) return
+
+    const myUsername = profile?.username || user?.user_metadata?.username || 'Anônimo'
+    const userId = user?.id || 'guest'
+
+    // Send via realtime to the other person
+    roomChat.sendMessage(userId, myUsername, chatInput.trim())
+
+    // Add locally (broadcast doesn't echo back)
     setChatMessages(prev => [...prev, {
       id: `me-${Date.now()}`,
-      username: 'Você',
-      content: chatInput,
+      userId,
+      username: myUsername,
+      content: chatInput.trim(),
       type: 'text',
       timestamp: new Date(),
     }])
