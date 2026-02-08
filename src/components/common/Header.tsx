@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, Coins, User, LogIn, Bell, Crown } from 'lucide-react'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useFichaStore } from '@/store/fichaStore'
@@ -26,7 +26,8 @@ export const Header = () => {
 
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore()
   const { balance, isOstentacao } = useFichaStore()
-  const { user, profile, isGuest } = useAuthStore()
+  const { user, profile, isGuest, signOut } = useAuthStore()
+  const navigate = useNavigate()
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -166,9 +167,10 @@ export const Header = () => {
 
             {/* Auth buttons */}
             {isLoggedIn ? (
+              <div className="hidden sm:flex items-center gap-1">
               <Link
                 to={`/profile/${profile?.id || 'me'}`}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 transition-all"
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                   isOstentacao
@@ -185,6 +187,18 @@ export const Header = () => {
                   {profile?.username || 'Convidado'}
                 </span>
               </Link>
+              <button
+                onClick={async () => {
+                  await signOut()
+                  navigate('/auth')
+                }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all text-sm"
+                title="Sair"
+              >
+                <LogIn className="w-4 h-4 rotate-180" />
+                <span className="hidden lg:inline">Sair</span>
+              </button>
+              </div>
             ) : (
               <Link
                 to="/auth"

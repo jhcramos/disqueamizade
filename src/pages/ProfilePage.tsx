@@ -401,6 +401,18 @@ export const ProfilePage = () => {
                 </button>
               </div>
             </div>
+
+            {/* Logout */}
+            <button
+              onClick={async () => {
+                const { signOut } = useAuthStore.getState()
+                await signOut()
+                navigate('/')
+              }}
+              className="w-full card p-4 flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10 transition-all font-semibold"
+            >
+              🚪 Sair da Conta
+            </button>
           </div>
         )}
       </main>
