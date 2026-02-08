@@ -8,26 +8,39 @@ export const authService = {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          username,
+          display_name: username,
+          is_creator: options?.is_creator ?? false,
+        },
+      },
     })
 
     if (authError) throw authError
     if (!authData.user) throw new Error('No user returned from signup')
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
-        username,
-        display_name: username,
-        is_creator: options?.is_creator ?? false,
-        is_vip: false,
-        is_elite: false,
-        saldo_fichas: 50,
-        total_earned: 0,
-      })
+    // Try to create profile (may fail if email not confirmed yet — trigger handles it)
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: authData.user.id,
+          username,
+          display_name: username,
+          is_creator: options?.is_creator ?? false,
+          is_vip: false,
+          is_elite: false,
+          saldo_fichas: 50,
+          total_earned: 0,
+        }, { onConflict: 'id' })
 
-    if (profileError) throw profileError
+      if (profileError) {
+        console.warn('Profile creation deferred (will be created on first login):', profileError.message)
+      }
+    } catch (e) {
+      console.warn('Profile creation deferred:', e)
+    }
 
     return authData
   },

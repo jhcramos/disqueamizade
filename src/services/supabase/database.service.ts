@@ -43,6 +43,17 @@ export const databaseService = {
     return mapProfile(data as DBProfile)
   },
 
+  async upsertProfile(userId: string, data: Partial<DBProfile>) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .upsert({ id: userId, ...data }, { onConflict: 'id' })
+      .select()
+      .single()
+
+    if (error) throw error
+    return mapProfile(profile as DBProfile)
+  },
+
   async updateProfile(userId: string, updates: Partial<DBProfile>) {
     const { data, error } = await supabase
       .from('profiles')

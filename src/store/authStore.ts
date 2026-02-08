@@ -41,7 +41,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user } = await authService.signIn(email, password)
 
       if (user) {
-        const profile = await databaseService.getProfile(user.id)
+        let profile: Profile | null = null
+        try {
+          profile = await databaseService.getProfile(user.id)
+        } catch {
+          // Profile doesn't exist yet — create from user metadata
+          const meta = user.user_metadata || {}
+          profile = await databaseService.upsertProfile(user.id, {
+            username: meta.username || meta.display_name || user.email?.split('@')[0] || 'Usuário',
+            display_name: meta.display_name || meta.username || user.email?.split('@')[0] || 'Usuário',
+            is_creator: meta.is_creator ?? false,
+            is_vip: false,
+            is_elite: false,
+            saldo_fichas: 50,
+            total_earned: 0,
+          })
+        }
         set({ user, profile })
 
         // Set online status
@@ -188,7 +203,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const session = await authService.getSession()
 
       if (session?.user) {
-        const profile = await databaseService.getProfile(session.user.id)
+        let profile: Profile | null = null
+        try {
+          profile = await databaseService.getProfile(session.user.id)
+        } catch {
+          const meta = session.user.user_metadata || {}
+          profile = await databaseService.upsertProfile(session.user.id, {
+            username: meta.username || meta.display_name || session.user.email?.split('@')[0] || 'Usuário',
+            display_name: meta.display_name || meta.username || session.user.email?.split('@')[0] || 'Usuário',
+            is_creator: meta.is_creator ?? false,
+            is_vip: false,
+            is_elite: false,
+            saldo_fichas: 50,
+            total_earned: 0,
+          })
+        }
         set({ user: session.user, profile })
 
         // Set online status
@@ -198,7 +227,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Listen to auth state changes
       authService.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          const profile = await databaseService.getProfile(session.user.id)
+          let profile: Profile | null = null
+          try {
+            profile = await databaseService.getProfile(session.user.id)
+          } catch {
+            const meta = session.user.user_metadata || {}
+            profile = await databaseService.upsertProfile(session.user.id, {
+              username: meta.username || meta.display_name || session.user.email?.split('@')[0] || 'Usuário',
+              display_name: meta.display_name || meta.username || session.user.email?.split('@')[0] || 'Usuário',
+              is_creator: meta.is_creator ?? false,
+              is_vip: false,
+              is_elite: false,
+              saldo_fichas: 50,
+              total_earned: 0,
+            })
+          }
           set({ user: session.user, profile })
           await presenceService.setOnlineStatus(session.user.id, true)
         } else if (event === 'SIGNED_OUT') {
