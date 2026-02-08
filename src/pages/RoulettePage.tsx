@@ -4,6 +4,7 @@ import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
+import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { useAuthStore } from '@/store/authStore'
 import { matchmaking } from '@/services/supabase/matchmaking'
 import { roomChat } from '@/services/supabase/roomChat'
@@ -69,6 +70,9 @@ export const RoulettePage = () => {
     disableFilter: disableMask,
   } = useVideoFilter(videoRef, stream)
 
+  // Composite stream = video + filters + masks (this is what gets sent via WebRTC)
+  const compositeStream = useCompositeStream(videoRef, stream, filterStyle, activeMaskEmoji, faceBox, beautySmooth, beautyBrighten)
+
   useEffect(() => {
     if (activeMask) enableMask(activeMask)
     else disableMask()
@@ -107,8 +111,8 @@ export const RoulettePage = () => {
   const user = useAuthStore((s) => s.user)
   const profile = useAuthStore((s) => s.profile)
 
-  // Keep streamRef in sync
-  useEffect(() => { streamRef.current = stream ?? null }, [stream])
+  // Keep streamRef in sync — use composite stream (with effects) for WebRTC
+  useEffect(() => { streamRef.current = compositeStream ?? stream ?? null }, [compositeStream, stream])
 
   // Attach remote stream to video element
   useEffect(() => {

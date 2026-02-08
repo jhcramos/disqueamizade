@@ -10,6 +10,7 @@ import { useToastStore } from '@/components/common/ToastContainer'
 import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
+import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
@@ -114,6 +115,9 @@ export const RoomPage = () => {
     trackingStatus,
   } = useVideoFilter(videoRef, stream)
 
+  // Composite stream with effects for WebRTC
+  const compositeStream = useCompositeStream(videoRef, stream, filterStyle, activeMaskData?.emoji || null, faceBox, beautySmooth, beautyBrighten)
+
   useEffect(() => {
     if (activeMask) enableMask(activeMask)
     else disableMask()
@@ -181,11 +185,12 @@ export const RoomPage = () => {
     return () => { roomChat.leave() }
   }, [roomId, user, isGuest, profile])
 
-  // Join WebRTC room when camera stream is available
+  // Join WebRTC room when camera stream is available (use composite stream with effects)
+  const webrtcStream = compositeStream || stream
   useEffect(() => {
-    if (!roomId || !user || isGuest || !stream) return
+    if (!roomId || !user || isGuest || !webrtcStream) return
 
-    webrtcRoom.join(roomId, user.id, stream, {
+    webrtcRoom.join(roomId, user.id, webrtcStream, {
       onRemoteStream: (peerId, remoteStream) => {
         setRemoteStreams(prev => new Map(prev).set(peerId, remoteStream))
       },
@@ -200,12 +205,12 @@ export const RoomPage = () => {
     })
 
     return () => { webrtcRoom.leave() }
-  }, [roomId, user, isGuest, stream])
+  }, [roomId, user, isGuest, webrtcStream])
 
-  // Update WebRTC when stream changes (camera toggle)
+  // Update WebRTC when composite stream changes (filter/mask toggled)
   useEffect(() => {
-    if (stream) webrtcRoom.updateStream(stream)
-  }, [stream])
+    if (webrtcStream) webrtcRoom.updateStream(webrtcStream)
+  }, [webrtcStream])
 
   // Attach remote streams to video elements
   useEffect(() => {
