@@ -137,14 +137,30 @@ export const ProfilePage = () => {
     }
   }
 
+  const compressImage = (file: File, maxWidth = 800, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    if (file.size > 2 * 1024 * 1024) {
-      addToast({ type: 'error', title: 'Imagem muito grande', message: 'Máximo 2MB. Tente uma imagem menor.' })
-      return
-    }
 
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
       addToast({ type: 'error', title: 'Formato inválido', message: 'Use JPG, PNG, WebP ou GIF.' })
@@ -153,12 +169,8 @@ export const ProfilePage = () => {
 
     setUploadingAvatar(true)
     try {
-      const reader = new FileReader()
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
+      // Compress to max 800px wide JPEG to handle large mobile photos
+      const base64 = await compressImage(file)
 
       const session = await supabase.auth.getSession()
       const token = session.data.session?.access_token
@@ -167,7 +179,7 @@ export const ProfilePage = () => {
       const res = await fetch('/api/upload-avatar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ image: base64, contentType: file.type }),
+        body: JSON.stringify({ image: base64, contentType: 'image/jpeg' }),
       })
 
       if (!res.ok) {
