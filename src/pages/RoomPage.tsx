@@ -497,7 +497,7 @@ export const RoomPage = () => {
                               left: `${faceBox.x + faceBox.w / 2}%`,
                               top: `${faceBox.y + faceBox.h * 0.5}%`,
                               transform: 'translate(-50%, -50%)',
-                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 0.8)}px`,
+                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 0.4)}px`,
                               transition: 'left 80ms ease-out, top 80ms ease-out, font-size 150ms ease-out',
                             }}
                           >
