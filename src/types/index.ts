@@ -10,13 +10,35 @@ export type OstentacaoStatus = {
   badgeLevel: 'none' | 'bronze' | 'silver' | 'gold' | 'diamond'
 }
 
+// DB profile (matches Supabase schema)
+export type DBProfile = {
+  id: string
+  username: string
+  display_name?: string
+  avatar_url?: string
+  cidade?: string
+  estado?: string
+  bio?: string
+  is_creator: boolean
+  is_vip: boolean
+  is_elite: boolean
+  saldo_fichas: number
+  total_earned: number
+  created_at: string
+  updated_at: string
+}
+
+// Extended profile for UI (backwards compat)
 export type Profile = {
   id: string
   username: string
+  display_name?: string
   avatar_url?: string
   bio?: string
   age?: number
   city?: string
+  cidade?: string
+  estado?: string
   languages?: string[]
   hobbies?: string[]
   subscription_tier: SubscriptionTier
@@ -26,11 +48,15 @@ export type Profile = {
   is_featured: boolean
   featured_until?: string
   fichas_balance: number
+  saldo_fichas: number
   is_ostentacao: boolean
   is_creator: boolean
+  is_vip: boolean
+  is_elite: boolean
   creator_verified: boolean
   is_service_provider: boolean
   total_earnings_fichas: number
+  total_earned: number
   total_spent_fichas: number
   rating_average?: number
   total_services_completed: number

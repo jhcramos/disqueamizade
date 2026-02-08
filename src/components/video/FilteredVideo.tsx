@@ -35,15 +35,19 @@ export const FilteredVideo: React.FC<FilteredVideoProps> = ({
 
   // Video filter hook
   const {
-    canvasRef,
-    filteredStream,
-    isProcessing,
     enableFilter,
     disableFilter,
-    switchFilter: _switchFilter,
     currentFilter,
-    detectionResults
-  } = useVideoFilter({ stream: videoStream, videoRef })
+    activeMask: _activeMask,
+    faceBox,
+    trackingStatus,
+  } = useVideoFilter(videoRef, videoStream)
+
+  // Compat aliases
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const filteredStream = null
+  const isProcessing = trackingStatus === 'tracking'
+  const detectionResults = faceBox
 
   // Local state
   const [showSelector, setShowSelector] = useState(false)

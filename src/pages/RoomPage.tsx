@@ -113,7 +113,7 @@ export const RoomPage = () => {
   // ─── VIDEO FILTER (emoji overlay with face tracking) ───
   const {
     activeMask: activeMaskData,
-    activeMaskEmoji,
+    activeMaskEmoji: _activeMaskEmoji,
     faceBox,
     enableFilter: enableMask,
     disableFilter: disableMask,
@@ -316,7 +316,7 @@ export const RoomPage = () => {
   }
 
   const handleGoToProfile = (p: typeof mockParticipants[0]) => {
-    navigate(`/profile/${p.id}`)
+    navigate(`/profile/${p.id}`, { state: { fromRoom: roomId, participantData: p } })
   }
 
   if (!room) {
@@ -764,7 +764,17 @@ export const RoomPage = () => {
               const isMe = msg.userId === 'me'
               return (
                 <div key={msg.id} className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}>
-                  <img src={msg.avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10 flex-shrink-0 mt-0.5" />
+                  <button
+                    onClick={() => {
+                      if (!isMe) {
+                        const participant = mockParticipants.find(p => p.id === msg.userId)
+                        if (participant) navigate(`/profile/${participant.id}`, { state: { fromRoom: roomId, participantData: participant } })
+                      }
+                    }}
+                    className={`flex-shrink-0 mt-0.5 ${!isMe ? 'cursor-pointer group/avatar' : ''}`}
+                  >
+                    <img src={msg.avatar} alt="" className={`w-7 h-7 rounded-full object-cover border border-white/10 ${!isMe ? 'group-hover/avatar:border-primary-500/50 transition-colors' : ''}`} />
+                  </button>
                   <div className={`flex-1 min-w-0 ${isMe ? 'text-right' : ''}`}>
                     <div className={`flex items-baseline gap-2 mb-0.5 ${isMe ? 'flex-row-reverse' : ''}`}>
                       <span className={`text-xs font-semibold ${isMe ? 'text-primary-400' : 'text-dark-300'}`}>{msg.username}</span>
@@ -988,12 +998,12 @@ export const RoomPage = () => {
                     <Flag className="w-3 h-3" /> Denunciar
                   </button>
                   <div className="flex items-center gap-2">
-                    <Link
-                      to={`/profile/${user.id}`}
+                    <button
+                      onClick={() => navigate(`/profile/${user.id}`, { state: { fromRoom: roomId, participantData: user } })}
                       className="px-4 py-2 rounded-xl bg-primary-500/15 border border-primary-500/25 text-sm text-primary-400 hover:bg-primary-500/25 transition-all flex items-center gap-1.5"
                     >
                       <Users className="w-3.5 h-3.5" /> Ver Perfil
-                    </Link>
+                    </button>
                     <button onClick={() => setShowVideoModal(null)} className="px-4 py-2 rounded-xl bg-white/[0.06] text-sm text-dark-300 hover:text-white hover:bg-white/[0.1] transition-all">
                       Fechar
                     </button>

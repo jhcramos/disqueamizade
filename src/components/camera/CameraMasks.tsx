@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useToastStore } from '@/components/common/ToastContainer'
-import { EMOJI_MASKS, type MaskItem } from '@/hooks/useVideoFilter'
+import { EMOJI_MASKS } from '@/hooks/useVideoFilter'
 
 // CSS filter strings for each filter ID
 export const FILTER_CSS: Record<string, string> = {

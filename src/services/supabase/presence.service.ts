@@ -117,15 +117,8 @@ export const presenceService = {
   /**
    * Update user online status in database
    */
-  async setOnlineStatus(userId: string, isOnline: boolean) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        is_online: isOnline,
-        last_seen_at: new Date().toISOString(),
-      })
-      .eq('id', userId)
-
-    if (error) throw error
+  async setOnlineStatus(_userId: string, _isOnline: boolean) {
+    // Online status tracked via Supabase Presence channels, not DB columns
+    // No-op for now
   },
 }

@@ -1,30 +1,64 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, Plus, Users, Zap } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { RoomCard } from '@/components/rooms/RoomCard'
 import { CreateRoomModal } from '@/components/rooms/CreateRoomModal'
 import { mockRooms, roomCategories } from '@/data/mockRooms'
+import { databaseService } from '@/services/supabase/database.service'
 
 export const RoomsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [dbRooms, setDbRooms] = useState<any[] | null>(null)
+
+  // Fetch rooms from Supabase, fall back to mock
+  useEffect(() => {
+    databaseService.getRooms()
+      .then((rooms) => {
+        if (rooms && rooms.length > 0) {
+          // Map DB rooms to MockRoom shape for RoomCard compat
+          const mapped = rooms.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description || '',
+            category: r.category || 'cidade',
+            theme: r.theme || '',
+            participants: 0,
+            max_users: r.max_users || 30,
+            is_private: r.is_private || false,
+            owner: { username: 'Sistema', avatar: '' },
+            has_video: true,
+            online_count: Math.floor(Math.random() * 15),
+            badge_color: 'primary',
+            is_official: r.is_fixed || true,
+            room_type: r.room_type || 'official',
+            entry_cost_fichas: r.entry_cost_fichas || 0,
+            is_fixed: r.is_fixed || false,
+          }))
+          setDbRooms(mapped)
+        }
+      })
+      .catch(() => { /* use mock data */ })
+  }, [])
+
+  const rooms = dbRooms || mockRooms
 
   const filteredRooms = useMemo(() => {
-    return mockRooms.filter((room) => {
+    return rooms.filter((room: any) => {
       const matchesCategory = selectedCategory === 'all' || room.category === selectedCategory
       const matchesSearch =
         searchQuery === '' ||
         room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (room.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       return matchesCategory && matchesSearch
     })
-  }, [selectedCategory, searchQuery])
+  }, [selectedCategory, searchQuery, rooms])
 
-  const officialRooms = filteredRooms.filter(r => r.is_official)
-  const communityRooms = filteredRooms.filter(r => !r.is_official)
-  const totalOnline = mockRooms.reduce((acc, r) => acc + r.online_count, 0)
+  const officialRooms = filteredRooms.filter((r: any) => r.is_official)
+  const communityRooms = filteredRooms.filter((r: any) => !r.is_official)
+  const totalOnline = rooms.reduce((acc: number, r: any) => acc + (r.online_count || 0), 0)
 
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
@@ -50,7 +84,7 @@ export const RoomsPage = () => {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="card p-4 text-center">
-            <div className="text-xl md:text-2xl font-bold text-white">{mockRooms.length}</div>
+            <div className="text-xl md:text-2xl font-bold text-white">{rooms.length}</div>
             <div className="text-[11px] text-dark-500 mt-0.5">Salas Ativas</div>
           </div>
           <div className="card p-4 text-center">

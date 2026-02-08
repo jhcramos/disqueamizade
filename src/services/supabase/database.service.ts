@@ -1,5 +1,31 @@
 import { supabase } from './client'
-import type { Profile, Room, UserService, PaidSession } from '@/types'
+import type { Profile, DBProfile, Room, UserService, PaidSession } from '@/types'
+
+/** Convert DB profile row to UI Profile type */
+function mapProfile(db: DBProfile): Profile {
+  const tier = db.is_elite ? 'premium' : db.is_vip ? 'basic' : 'free'
+  return {
+    ...db,
+    city: db.cidade,
+    subscription_tier: tier as any,
+    is_online: false,
+    is_featured: false,
+    fichas_balance: db.saldo_fichas ?? 0,
+    is_ostentacao: (db.saldo_fichas ?? 0) >= 1000,
+    creator_verified: false,
+    is_service_provider: false,
+    total_earnings_fichas: db.total_earned ?? 0,
+    total_spent_fichas: 0,
+    total_services_completed: 0,
+    rooms_visited: 0,
+    messages_sent: 0,
+    games_played: 0,
+    time_online_minutes: 0,
+    badges: [],
+    stars_balance: db.saldo_fichas ?? 0,
+    total_earnings_stars: db.total_earned ?? 0,
+  } as Profile
+}
 
 export const databaseService = {
   // ============================================================================
@@ -14,10 +40,10 @@ export const databaseService = {
       .single()
 
     if (error) throw error
-    return data as Profile
+    return mapProfile(data as DBProfile)
   },
 
-  async updateProfile(userId: string, updates: Partial<Profile>) {
+  async updateProfile(userId: string, updates: Partial<DBProfile>) {
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
@@ -26,18 +52,18 @@ export const databaseService = {
       .single()
 
     if (error) throw error
-    return data as Profile
+    return mapProfile(data as DBProfile)
   },
 
-  async getOnlineUsers() {
+  async getOnlineProfiles() {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('is_online', true)
-      .order('last_seen_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(50)
 
     if (error) throw error
-    return data as Profile[]
+    return (data as DBProfile[]).map(mapProfile)
   },
 
   // ============================================================================
@@ -47,7 +73,7 @@ export const databaseService = {
   async getRooms(filters?: { theme?: string; sub_theme?: string }) {
     let query = supabase
       .from('rooms')
-      .select('*, owner:profiles(username, avatar_url)')
+      .select('*')
       .eq('is_active', true)
 
     if (filters?.theme) {
@@ -67,7 +93,7 @@ export const databaseService = {
   async getRoom(roomId: string) {
     const { data, error } = await supabase
       .from('rooms')
-      .select('*, owner:profiles(username, avatar_url)')
+      .select('*')
       .eq('id', roomId)
       .single()
 
@@ -119,6 +145,21 @@ export const databaseService = {
       .eq('user_id', userId)
 
     if (error) throw error
+  },
+
+  // ============================================================================
+  // FICHA PACKAGES
+  // ============================================================================
+
+  async getFichaPackages() {
+    const { data, error } = await supabase
+      .from('ficha_packages')
+      .select('*')
+      .eq('active', true)
+      .order('amount', { ascending: true })
+
+    if (error) throw error
+    return data
   },
 
   // ============================================================================
@@ -180,7 +221,7 @@ export const databaseService = {
     }
 
     if (filters?.maxPrice) {
-      query = query.lte('price_stars', filters.maxPrice)
+      query = query.lte('price_fichas', filters.maxPrice)
     }
 
     const { data, error } = await query.order('created_at', { ascending: false })

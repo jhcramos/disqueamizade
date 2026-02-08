@@ -19,7 +19,11 @@ export const authService = {
       .insert({
         id: authData.user.id,
         username,
-        subscription_tier: 'free',
+        display_name: username,
+        is_vip: false,
+        is_elite: false,
+        saldo_fichas: 50,
+        total_earned: 0,
       })
 
     if (profileError) throw profileError

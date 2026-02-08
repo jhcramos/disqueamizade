@@ -60,13 +60,17 @@ export const VideoFiltersPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const {
-    canvasRef,
-    isProcessing,
     enableFilter,
     disableFilter,
     currentFilter,
-    detectionResults
-  } = useVideoFilter({ stream: cameraStream, videoRef })
+    faceBox,
+    trackingStatus,
+  } = useVideoFilter(videoRef, cameraStream)
+
+  // Compat aliases  
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isProcessing = trackingStatus === 'tracking'
+  const detectionResults = faceBox
 
   const filteredFilters = selectedCategory === 'Todos'
     ? filters
