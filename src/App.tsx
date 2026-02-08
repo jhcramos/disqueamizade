@@ -8,6 +8,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
+import { CamarotePage } from './pages/CamarotePage'
 import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
@@ -40,6 +41,7 @@ function App() {
         {/* Salas com 30 câmeras + chat + camarotes VIP */}
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/room/:roomId" element={<RoomPage />} />
+        <Route path="/camarote/:camaroteId" element={<CamarotePage />} />
         <Route path="/roulette" element={<RoulettePage />} />
         <Route path="/cabines" element={<SecretCabinsPage />} />
         <Route path="/hobbies" element={<HobbiesPage />} />

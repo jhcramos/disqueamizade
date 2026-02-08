@@ -3,10 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Crown, Lock, Smile, Volume2, Coins,
-  Share2, X, Info, Shield, AlertTriangle, Maximize, Minimize,
+  Share2, X, Info, Shield, AlertTriangle, Sparkles, Maximize, Minimize,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
 import { useToastStore } from '@/components/common/ToastContainer'
+import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
@@ -64,6 +65,7 @@ export const RoomPage = () => {
   const [showParticipants, setShowParticipants] = useState(false)
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
+  const [showCreateCamarote, setShowCreateCamarote] = useState(false)
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [tileSize, setTileSize] = useState({ w: 320, h: 240 })
@@ -689,6 +691,14 @@ export const RoomPage = () => {
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
+              <button 
+                onClick={() => setShowCreateCamarote(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold" 
+                title="Criar Camarote VIP"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden md:inline">Camarote</span>
+              </button>
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
                   <Phone className="w-5 h-5 rotate-[135deg]" />
@@ -983,6 +993,19 @@ export const RoomPage = () => {
         )
       })()}
 
+      <CreateCamaroteModal
+        isOpen={showCreateCamarote}
+        onClose={() => setShowCreateCamarote(false)}
+        isPremium={true}
+        onConfirm={(data) => {
+          addToast({ 
+            type: 'success', 
+            title: '🛋️ Camarote criado!', 
+            message: `"${data.name}" está pronto. Até 6 pessoas!` 
+          })
+          setShowCreateCamarote(false)
+        }}
+      />
     </div>
   )
 }
