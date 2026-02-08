@@ -319,11 +319,86 @@ export const RoulettePage = () => {
         )}
 
         {/* Main Layout: Video + Chat */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="lg:flex-1">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* YOUR REAL CAMERA */}
-              <div ref={cameraTileRef} className="relative aspect-video rounded-2xl overflow-hidden bg-dark-900 border-2 border-primary-500/30 shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+        <div className="flex flex-col lg:flex-row gap-4 mb-6" style={{ height: 'calc(100vh - 280px)', minHeight: '400px' }}>
+          {/* Video Area */}
+          <div className="flex-1 relative rounded-2xl overflow-hidden bg-dark-900 border border-white/10">
+            {/* ═══ MAIN VIEW: Remote video (large) or status screens ═══ */}
+            {status === 'idle' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center max-w-xs">
+                  <div className="text-6xl mb-4">🎰</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Pronto para conhecer alguém?</h3>
+                  <p className="text-sm text-dark-400 mb-6">Clique no botão abaixo para iniciar</p>
+                  <button onClick={startSearch} className="btn-primary btn-lg flex items-center gap-2 mx-auto">
+                    <Shuffle className="w-5 h-5" />
+                    Buscar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {status === 'searching' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="relative w-24 h-24 mx-auto mb-4">
+                    <div className="absolute inset-0 rounded-full border-2 border-primary-500/30 border-t-primary-400 animate-spin" />
+                    <div className="absolute inset-2 rounded-full border-2 border-purple-500/20 border-b-purple-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                    <div className="absolute inset-0 flex items-center justify-center text-3xl">🔍</div>
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-1">Procurando...</h3>
+                  <p className="text-base text-dark-400">{formatTime(searchTime)}</p>
+                  <p className="text-xs text-dark-500 mt-2">Buscando alguém disponível</p>
+                </div>
+              </div>
+            )}
+
+            {status === 'matched' && matchedPeer && !remoteStream && (
+              <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
+                <div className="text-center">
+                  <div className="text-5xl mb-3 animate-bounce">🎉</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Match encontrado!</h3>
+                  <p className="text-sm text-dark-400 animate-pulse">Conectando vídeo...</p>
+                </div>
+              </div>
+            )}
+
+            {status === 'matched' && remoteStream && (
+              <>
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
+                  LIVE
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
+                    Parceiro
+                  </span>
+                </div>
+              </>
+            )}
+
+            {status === 'no-match' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center max-w-xs px-4">
+                  <div className="text-5xl mb-3">😔</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Ninguém encontrado</h3>
+                  <p className="text-sm text-dark-400 mb-4">{noMatchMessage}</p>
+                  <button onClick={startSearch} className="btn-primary flex items-center gap-2 mx-auto">
+                    <Shuffle className="w-5 h-5" />
+                    Tentar Novamente
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ═══ PIP: Your camera (small overlay, bottom-right) ═══ */}
+            {(status === 'searching' || status === 'matched') && (
+              <div ref={cameraTileRef} className="absolute bottom-3 right-3 w-32 h-24 sm:w-44 sm:h-32 rounded-xl overflow-hidden border-2 border-primary-500/50 shadow-xl z-20 cursor-pointer hover:scale-105 transition-transform bg-dark-800">
                 {isCameraOn && stream ? (
                   <>
                     <video
@@ -331,7 +406,7 @@ export const RoulettePage = () => {
                       autoPlay
                       playsInline
                       muted
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="w-full h-full object-cover"
                       style={{
                         filter: [
                           filterStyle !== 'none' ? filterStyle : '',
@@ -348,7 +423,6 @@ export const RoulettePage = () => {
                           top: `${faceBox.y + faceBox.h / 2}%`,
                           transform: 'translate(-50%, -50%)',
                           fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 2.0)}px`,
-                          transition: 'left 80ms ease-out, top 80ms ease-out, font-size 150ms ease-out',
                         }}
                       >
                         {activeMaskEmoji}
@@ -356,124 +430,22 @@ export const RoulettePage = () => {
                     )}
                   </>
                 ) : (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary-600/10 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {status === 'idle' ? (
-                        <div className="text-center">
-                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500/20 to-primary-700/20 border border-primary-500/30 flex items-center justify-center mb-3 mx-auto">
-                            <Video className="w-8 h-8 text-primary-400" />
-                          </div>
-                          <p className="text-sm text-dark-400">Sua câmera aparecerá aqui</p>
-                          <p className="text-xs text-dark-500 mt-1">Clique em "Buscar" para começar</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <div className="w-16 h-16 rounded-full bg-dark-800 border border-white/10 flex items-center justify-center mb-2 mx-auto">
-                            <VideoOff className="w-7 h-7 text-dark-500" />
-                          </div>
-                          <p className="text-sm text-dark-500">Câmera desligada</p>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-primary-500/20 backdrop-blur-sm border border-primary-500/30 text-xs text-primary-400 font-semibold">Você</div>
-                {isCameraOn && stream && (
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-red-500/80 text-[10px] font-bold text-white animate-pulse">LIVE</div>
-                )}
-                {isCameraOn && !isMicOn && (
-                  <div className="absolute top-3 left-3">
-                    <span className="p-1.5 rounded-lg bg-red-500/20 backdrop-blur-sm"><MicOff className="w-3.5 h-3.5 text-red-400" /></span>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <VideoOff className="w-5 h-5 text-dark-500" />
                   </div>
                 )}
+                <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-primary-500/30 backdrop-blur-sm text-[9px] text-primary-300 font-semibold">Você</div>
               </div>
-
-              {/* PARTNER SIDE */}
-              <div className="relative aspect-video rounded-2xl overflow-hidden bg-dark-900 border border-white/10">
-                {status === 'idle' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center max-w-xs">
-                      <div className="text-5xl mb-4">🎰</div>
-                      <h3 className="text-lg font-bold text-white mb-2">Pronto para conhecer alguém?</h3>
-                      <p className="text-sm text-dark-400 mb-6">Clique no botão abaixo para iniciar</p>
-                      <button onClick={startSearch} className="btn-primary btn-lg flex items-center gap-2 mx-auto">
-                        <Shuffle className="w-5 h-5" />
-                        Buscar
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {status === 'searching' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4">
-                        <div className="absolute inset-0 rounded-full border-2 border-primary-500/30 border-t-primary-400 animate-spin" />
-                        <div className="absolute inset-2 rounded-full border-2 border-purple-500/20 border-b-purple-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                        <div className="absolute inset-0 flex items-center justify-center text-2xl">🔍</div>
-                      </div>
-                      <h3 className="text-base font-bold text-white mb-1">Procurando...</h3>
-                      <p className="text-sm text-dark-400">{formatTime(searchTime)}</p>
-                      <p className="text-xs text-dark-500 mt-2">Buscando alguém disponível</p>
-                    </div>
-                  </div>
-                )}
-
-                {status === 'matched' && matchedPeer && !remoteStream && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
-                    <div className="text-center max-w-xs px-4">
-                      <div className="text-4xl mb-3 animate-bounce">🎉</div>
-                      <h3 className="text-base font-bold text-white mb-2">Match encontrado!</h3>
-                      <p className="text-sm text-dark-400 animate-pulse">Conectando vídeo...</p>
-                    </div>
-                  </div>
-                )}
-
-                {status === 'matched' && remoteStream && (
-                  <div className="absolute inset-0">
-                    <video
-                      ref={remoteVideoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
-                      LIVE
-                    </div>
-                    <div className="absolute bottom-2 left-2">
-                      <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
-                        Parceiro
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {status === 'no-match' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center max-w-xs px-4">
-                      <div className="text-4xl mb-3">😔</div>
-                      <h3 className="text-base font-bold text-white mb-2">Ninguém encontrado</h3>
-                      <p className="text-sm text-dark-400 mb-4">{noMatchMessage}</p>
-                      <button onClick={startSearch} className="btn-primary flex items-center gap-2 mx-auto">
-                        <Shuffle className="w-4 h-4" />
-                        Tentar Novamente
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Chat sidebar - always visible for future real matches */}
+          {/* Chat sidebar */}
           {(status === 'searching' || status === 'no-match' || status === 'matched') && (
-            <div className="lg:w-80 flex flex-col rounded-2xl bg-dark-900/50 border border-white/5 overflow-hidden" style={{ maxHeight: '480px' }}>
+            <div className="lg:w-80 flex flex-col rounded-2xl bg-dark-900/50 border border-white/5 overflow-hidden">
               <div className="p-3 border-b border-white/5 flex items-center gap-2">
                 <Send className="w-4 h-4 text-primary-400" />
                 <span className="text-sm font-bold text-white">Chat</span>
+                {status === 'matched' && <span className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />}
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {chatMessages.length === 0 && (
@@ -491,7 +463,8 @@ export const RoulettePage = () => {
                       </div>
                     )
                   }
-                  const isMe = msg.username === 'Você'
+                  const myId = user?.id
+                  const isMe = (msg as any).userId === myId || msg.username === profile?.username
                   return (
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
@@ -510,11 +483,11 @@ export const RoulettePage = () => {
                   type="text"
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
-                  placeholder="Digite algo..."
-                  disabled
+                  placeholder={status === 'matched' ? 'Digite uma mensagem...' : 'Aguardando match...'}
+                  disabled={status !== 'matched'}
                   className="flex-1 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-sm focus:outline-none focus:border-primary-500/40 transition-all disabled:opacity-50"
                 />
-                <button type="submit" disabled className="p-2 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all disabled:opacity-30">
+                <button type="submit" disabled={status !== 'matched'} className="p-2 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all disabled:opacity-30">
                   <Send className="w-4 h-4" />
                 </button>
               </form>
