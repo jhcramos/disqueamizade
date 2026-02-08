@@ -192,9 +192,7 @@ export const CameraMasksButton = ({
                   </button>
                 )}
 
-                <p className="text-[10px] text-dark-600 text-center mt-2">
-                  Face tracking em tempo real 🎯
-                </p>
+                {/* removed tracking label */}
               </>
             )}
 
