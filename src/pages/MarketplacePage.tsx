@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Search, Star, MapPin, X, Calendar, ChevronLeft, ChevronRight, Eye, Users, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
+import { AgeGate } from '@/components/common/AgeGate'
 import { mockCreators } from '@/data/mockCreators'
 
 const VISUAL_CATEGORIES = [
@@ -200,6 +201,7 @@ export const MarketplacePage = () => {
 
         {/* ═══ Adult Section (18+) ═══ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 mb-12">
+          <AgeGate>
           <div className="relative rounded-2xl overflow-hidden border border-pink-500/20 bg-gradient-to-r from-pink-950/40 via-dark-950 to-red-950/40">
             {/* 18+ Banner */}
             <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-pink-600/20 to-red-600/20 border-b border-pink-500/20">
@@ -251,6 +253,7 @@ export const MarketplacePage = () => {
               </div>
             </div>
           </div>
+          </AgeGate>
         </section>
 
         {/* ═══ Categories Grid ═══ */}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Chrome } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Chrome, Calendar } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/components/common/ToastContainer'
 
@@ -9,6 +9,9 @@ export const AuthPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
+  const [isCreator, setIsCreator] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -30,7 +33,27 @@ export const AuthPage = () => {
           setLoading(false)
           return
         }
-        await signUp(email, password, username)
+        if (!birthDate) {
+          addToast({ type: 'error', title: 'Erro', message: 'Data de nascimento é obrigatória' })
+          setLoading(false)
+          return
+        }
+        const birth = new Date(birthDate)
+        const today = new Date()
+        let age = today.getFullYear() - birth.getFullYear()
+        const monthDiff = today.getMonth() - birth.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
+        if (age < 18) {
+          addToast({ type: 'error', title: 'Erro', message: 'Você precisa ter 18 anos ou mais para se cadastrar' })
+          setLoading(false)
+          return
+        }
+        if (!ageConfirmed) {
+          addToast({ type: 'error', title: 'Erro', message: 'Você precisa confirmar que tem 18 anos ou mais' })
+          setLoading(false)
+          return
+        }
+        await signUp(email, password, username, { is_creator: isCreator })
         addToast({ type: 'success', title: 'Conta criada!', message: 'Verifique seu email para confirmar' })
       }
       navigate('/')
@@ -104,6 +127,7 @@ export const AuthPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
+              <>
               <div>
                 <label className="text-sm text-dark-300 mb-1.5 block">Nome de Usuário</label>
                 <div className="relative">
@@ -118,6 +142,46 @@ export const AuthPage = () => {
                   />
                 </div>
               </div>
+
+              {/* Date of birth */}
+              <div>
+                <label className="text-sm text-dark-300 mb-1.5 block">Data de Nascimento</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="input pl-10"
+                    required
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              </div>
+
+              {/* Age confirmation */}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={(e) => setAgeConfirmed(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-dark-600 bg-dark-800 text-primary-500 focus:ring-primary-500"
+                  required
+                />
+                <span className="text-sm text-dark-300">Confirmo que tenho 18 anos ou mais</span>
+              </label>
+
+              {/* Creator option */}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isCreator}
+                  onChange={(e) => setIsCreator(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-dark-600 bg-dark-800 text-primary-500 focus:ring-primary-500"
+                />
+                <span className="text-sm text-dark-300">Quero ser Creator/Influencer</span>
+              </label>
+              </>
             )}
 
             <div>

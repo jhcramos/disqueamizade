@@ -8,6 +8,7 @@ import {
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { useAuthStore } from '@/store/authStore'
+import { useToastStore } from '@/components/common/ToastContainer'
 
 const MOCK_PROFILE = {
   id: 'me',
@@ -22,6 +23,7 @@ const MOCK_PROFILE = {
   stars_balance: 150,
   is_online: true,
   is_featured: false,
+  is_creator: false,
   joined_at: '2024-06-15',
   stats: {
     rooms_visited: 47,
@@ -50,6 +52,8 @@ export const ProfilePage = () => {
   const [privateChatMessages, setPrivateChatMessages] = useState<{ text: string; fromMe: boolean }[]>([])
   const [privateChatInput, setPrivateChatInput] = useState('')
   const authProfile = useAuthStore((s) => s.profile)
+  const updateProfile = useAuthStore((s) => s.updateProfile)
+  const { addToast } = useToastStore()
   const isOwnProfile = userId === 'me' || userId === authProfile?.id
   
   // Use real profile if logged in and viewing own profile, else mock
@@ -237,6 +241,34 @@ export const ProfilePage = () => {
                 ))}
               </div>
             </div>
+
+            {/* Become Creator CTA */}
+            {isOwnProfile && !profile.is_creator && (
+              <div className="card p-6 border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-transparent">
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">🎬</div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white mb-1">Quero ser Creator</h3>
+                    <p className="text-xs text-dark-400 mb-3">
+                      Torne-se um Creator/Influencer e ofereça serviços, lives e conteúdo exclusivo!
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await updateProfile({ is_creator: true } as any)
+                          addToast({ type: 'success', title: 'Parabéns!', message: 'Agora você é um Creator!' })
+                        } catch {
+                          addToast({ type: 'error', title: 'Erro', message: 'Não foi possível atualizar seu perfil' })
+                        }
+                      }}
+                      className="btn-sm bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/25 transition-all font-bold"
+                    >
+                      Tornar-se Creator
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Featured Profile CTA */}
             {isOwnProfile && !profile.is_featured && (

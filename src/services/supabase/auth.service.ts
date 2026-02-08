@@ -4,7 +4,7 @@ export const authService = {
   /**
    * Sign up with email and password
    */
-  async signUp(email: string, password: string, username: string) {
+  async signUp(email: string, password: string, username: string, options?: { is_creator?: boolean }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -20,6 +20,7 @@ export const authService = {
         id: authData.user.id,
         username,
         display_name: username,
+        is_creator: options?.is_creator ?? false,
         is_vip: false,
         is_elite: false,
         saldo_fichas: 50,
