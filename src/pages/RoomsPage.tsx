@@ -13,15 +13,15 @@ import { useRooms } from '@/hooks/useSupabaseData'
 
 const CATEGORIES = [
   { id: 'all', label: 'Todas', emoji: '🌐', icon: Globe, color: 'primary' },
-  { id: 'hot', label: '🔥 Em Alta', emoji: '🔥', icon: Flame, color: 'orange' },
-  { id: 'adult', label: '🔞 Adulto', emoji: '🔞', icon: Heart, color: 'pink' },
-  { id: 'drinks', label: '🍺 Bebida & Papo', emoji: '🍺', icon: Beer, color: 'amber' },
-  { id: 'cities', label: '🏙️ Cidades', emoji: '🏙️', icon: Globe, color: 'blue' },
-  { id: 'languages', label: '🌍 Idiomas', emoji: '🌍', icon: Languages, color: 'green' },
-  { id: 'interests', label: '🎯 Interesses', emoji: '🎯', icon: Gamepad2, color: 'purple' },
-  { id: 'age', label: '👥 Faixa Etária', emoji: '👥', icon: Calendar, color: 'cyan' },
-  { id: 'vip', label: '👑 VIP', emoji: '👑', icon: Crown, color: 'amber' },
-  { id: 'general', label: '💬 Geral', emoji: '💬', icon: MessageCircle, color: 'gray' },
+  { id: 'hot', label: 'Em Alta', emoji: '🔥', icon: Flame, color: 'orange' },
+  { id: 'general', label: 'Geral', emoji: '💬', icon: MessageCircle, color: 'gray' },
+  { id: 'cities', label: 'Cidades', emoji: '🏙️', icon: Globe, color: 'blue' },
+  { id: 'drinks', label: 'Bebida & Papo', emoji: '🍺', icon: Beer, color: 'amber' },
+  { id: 'languages', label: 'Idiomas', emoji: '🌍', icon: Languages, color: 'green' },
+  { id: 'interests', label: 'Interesses', emoji: '🎯', icon: Gamepad2, color: 'purple' },
+  { id: 'age', label: 'Faixa Etária', emoji: '👥', icon: Calendar, color: 'cyan' },
+  { id: 'vip', label: 'VIP', emoji: '👑', icon: Crown, color: 'amber' },
+  { id: 'adult', label: '+18', emoji: '🔞', icon: Heart, color: 'pink' },
 ]
 
 // Slugs for drink rooms
@@ -189,20 +189,25 @@ export const RoomsPage = () => {
               className="w-full max-w-md input pl-10" />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map(cat => {
               const count = categoryCounts[cat.id] || 0
               const isActive = selectedCategory === cat.id
+              const isAdult = cat.id === 'adult'
               return (
                 <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1 ${
                     isActive
-                      ? 'bg-primary-500/15 text-primary-400 border border-primary-500/25 shadow-sm shadow-primary-500/10'
-                      : 'text-dark-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                      ? isAdult
+                        ? 'bg-pink-500/15 text-pink-400 border border-pink-500/25'
+                        : 'bg-primary-500/15 text-primary-400 border border-primary-500/25'
+                      : isAdult
+                        ? 'text-dark-500 hover:text-pink-400 hover:bg-pink-500/[0.05] border border-transparent'
+                        : 'text-dark-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
                   }`}>
-                  {cat.emoji}
-                  <span>{cat.label.replace(/^[^\s]+\s/, '')}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-primary-500/20 text-primary-300' : 'bg-white/[0.04] text-dark-600'}`}>
+                  <span>{cat.emoji}</span>
+                  <span>{cat.label}</span>
+                  <span className={`text-[10px] px-1 py-0 rounded-full ${isActive ? 'bg-primary-500/20 text-primary-300' : 'bg-white/[0.03] text-dark-600'}`}>
                     {count}
                   </span>
                 </button>
