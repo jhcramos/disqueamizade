@@ -207,16 +207,33 @@ export const ProfilePage = () => {
   const handleSaveInterests = async () => {
     setSavingInterests(true)
     try {
+      const isGuest = useAuthStore.getState().isGuest
+      if (isGuest) {
+        addToast({ type: 'warning', title: 'Conta de convidado', message: 'Crie uma conta para salvar seus interesses!' })
+        setSavingInterests(false)
+        return
+      }
+
       const session = await supabase.auth.getSession()
       const token = session.data.session?.access_token
-      if (!token) throw new Error('No session')
+
+      if (!token) {
+        addToast({ type: 'error', title: 'Sessão expirada', message: 'Faça login novamente para salvar.' })
+        setSavingInterests(false)
+        return
+      }
 
       const res = await fetch('/api/update-interests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ hobbies: selectedInterests }),
       })
-      if (!res.ok) throw new Error('Failed to save')
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        console.error('Save interests error:', res.status, errBody)
+        throw new Error(errBody.error || `HTTP ${res.status}`)
+      }
 
       // Refresh user metadata locally
       await supabase.auth.refreshSession()
@@ -225,8 +242,9 @@ export const ProfilePage = () => {
 
       addToast({ type: 'success', title: '✨ Interesses salvos!', message: `${selectedInterests.length} interesses selecionados` })
       setShowInterestsModal(false)
-    } catch {
-      addToast({ type: 'error', title: 'Erro', message: 'Não foi possível salvar interesses' })
+    } catch (err: any) {
+      console.error('Save interests failed:', err)
+      addToast({ type: 'error', title: 'Erro', message: err.message || 'Não foi possível salvar interesses' })
     } finally {
       setSavingInterests(false)
     }
