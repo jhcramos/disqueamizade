@@ -9,6 +9,7 @@ import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
 import { CamarotePage } from './pages/CamarotePage'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { SecretCabinsPage } from './pages/SecretCabinsPage'
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
@@ -38,21 +39,21 @@ function App() {
         {/* Home principal - design original */}
         <Route path="/" element={<HomePage />} />
         
-        {/* Salas com 30 câmeras + chat + camarotes VIP */}
-        <Route path="/rooms" element={<RoomsPage />} />
-        <Route path="/room/:roomId" element={<RoomPage />} />
-        <Route path="/camarote/:camaroteId" element={<CamarotePage />} />
-        <Route path="/roulette" element={<RoulettePage />} />
-        <Route path="/cabines" element={<SecretCabinsPage />} />
-        <Route path="/hobbies" element={<HobbiesPage />} />
+        {/* Salas - requer login */}
+        <Route path="/rooms" element={<ProtectedRoute><RoomsPage /></ProtectedRoute>} />
+        <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
+        <Route path="/camarote/:camaroteId" element={<ProtectedRoute><CamarotePage /></ProtectedRoute>} />
+        <Route path="/roulette" element={<ProtectedRoute><RoulettePage /></ProtectedRoute>} />
+        <Route path="/cabines" element={<ProtectedRoute><SecretCabinsPage /></ProtectedRoute>} />
+        <Route path="/hobbies" element={<ProtectedRoute><HobbiesPage /></ProtectedRoute>} />
         
-        {/* Creators & Marketplace */}
-        <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/creator/:id" element={<CreatorProfilePage />} />
-        <Route path="/creator" element={<InfluencerDashboardPage />} />
+        {/* Creators & Marketplace - requer login */}
+        <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+        <Route path="/creator/:id" element={<ProtectedRoute><CreatorProfilePage /></ProtectedRoute>} />
+        <Route path="/creator" element={<ProtectedRoute><InfluencerDashboardPage /></ProtectedRoute>} />
         
-        {/* User */}
-        <Route path="/profile/:userId" element={<ProfilePage />} />
+        {/* User - requer login */}
+        <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         

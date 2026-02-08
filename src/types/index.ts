@@ -308,7 +308,7 @@ export type Notification = {
 // Roulette Types — V2
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type RouletteStatus = 'idle' | 'searching' | 'connecting' | 'connected' | 'ended'
+export type RouletteStatus = 'idle' | 'searching' | 'connecting' | 'connected' | 'ended' | 'no-match'
 
 export interface RouletteFilters {
   ageRange?: [number, number]

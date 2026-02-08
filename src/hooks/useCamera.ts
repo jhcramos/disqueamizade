@@ -68,19 +68,33 @@ export const useCamera = (): UseCameraResult => {
         return
       }
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user',
-        },
-        audio: true,
-      })
+      // Try video+audio first, fallback to video-only (some mobile browsers block combined)
+      let mediaStream: MediaStream
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: 'user',
+          },
+          audio: true,
+        })
+      } catch {
+        // Fallback: try video only
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: 'user',
+          },
+          audio: false,
+        })
+      }
 
       streamRef.current = mediaStream
       setStream(mediaStream)
       setIsCameraOn(true)
-      setIsMicOn(true)
+      setIsMicOn(mediaStream.getAudioTracks().length > 0)
       setPermissionState('granted')
 
       // Attach to video ref if available
