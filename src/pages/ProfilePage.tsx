@@ -172,8 +172,11 @@ export const ProfilePage = () => {
       // Compress to max 800px wide JPEG to handle large mobile photos
       const base64 = await compressImage(file)
 
-      const session = await supabase.auth.getSession()
-      const token = session.data.session?.access_token
+      let token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) {
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        token = refreshed.session?.access_token
+      }
       if (!token) throw new Error('Faça login novamente')
 
       const res = await fetch('/api/upload-avatar', {
@@ -226,8 +229,13 @@ export const ProfilePage = () => {
         return
       }
 
-      const session = await supabase.auth.getSession()
-      const token = session.data.session?.access_token
+      // Try multiple ways to get token
+      let token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) {
+        // Try refreshing first
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        token = refreshed.session?.access_token
+      }
 
       if (!token) {
         addToast({ type: 'error', title: 'Sessão expirada', message: 'Faça login novamente para salvar.' })

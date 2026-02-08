@@ -81,19 +81,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       sessionStorage.removeItem('guest_session')
       set({ isGuest: false })
 
-      const { user } = await authService.signUp(email, password, username, options)
+      const result = await authService.signUp(email, password, username, options)
+      const user = result?.user
 
       if (user) {
-        // After signup, profile might not be readable yet (RLS / email not confirmed)
-        // Don't fail signup if profile fetch fails
+        // signUp now auto-confirms + auto-signs-in, so session should be active
+        let profile: Profile | null = null
         try {
-          const profile = await databaseService.getProfile(user.id)
-          set({ user, profile })
-          await presenceService.setOnlineStatus(user.id, true)
+          profile = await databaseService.getProfile(user.id)
         } catch {
-          // Profile will be loaded on first login after email confirmation
-          set({ user })
+          // Profile might not exist yet — create it
+          try {
+            const meta = user.user_metadata || {}
+            profile = await databaseService.upsertProfile(user.id, {
+              username: meta.username || username,
+              display_name: meta.display_name || username,
+              is_creator: options?.is_creator ?? false,
+              is_vip: false,
+              is_elite: false,
+              saldo_fichas: 50,
+              total_earned: 0,
+            })
+          } catch {
+            // Will load on next page visit
+          }
         }
+        set({ user, profile, isGuest: false })
+        await presenceService.setOnlineStatus(user.id, true)
       }
     } catch (error) {
       console.error('Sign up error:', error)
