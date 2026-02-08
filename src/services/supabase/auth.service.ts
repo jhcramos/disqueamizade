@@ -21,6 +21,28 @@ export const authService = {
     if (authError) throw authError
     if (!authData.user) throw new Error('No user returned from signup')
 
+    // Auto-confirm email via server-side admin API
+    try {
+      await fetch('/api/confirm-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: authData.user.id }),
+      })
+    } catch (e) {
+      console.warn('Auto-confirm failed:', e)
+    }
+
+    // Now sign in immediately (email is confirmed)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      console.warn('Auto sign-in after signup failed:', signInError.message)
+      // Still continue — user can login manually
+    }
+
     // Try to create profile — use API route to bypass RLS
     const profileData = {
       username,
@@ -32,6 +54,8 @@ export const authService = {
       total_earned: 0,
     }
 
+    const activeSession = signInData?.session || (await supabase.auth.getSession()).data.session
+
     try {
       // First try direct upsert
       const { error: profileError } = await supabase
@@ -40,9 +64,7 @@ export const authService = {
 
       if (profileError) {
         console.warn('Direct upsert failed, trying API route:', profileError.message)
-        // Fallback: API route with service role
-        const session = await supabase.auth.getSession()
-        const token = session.data.session?.access_token
+        const token = activeSession?.access_token
         if (token) {
           await fetch('/api/update-profile', {
             method: 'POST',
@@ -55,7 +77,7 @@ export const authService = {
       console.warn('Profile creation deferred:', e)
     }
 
-    return authData
+    return signInData || authData
   },
 
   /**
