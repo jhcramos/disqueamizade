@@ -4,7 +4,8 @@ import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
-// import { useToastStore } from '@/components/common/ToastContainer'
+import { useAuthStore } from '@/store/authStore'
+import { matchmaking } from '@/services/supabase/matchmaking'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import type { RouletteStatus, RouletteFilters } from '@/types'
 
@@ -45,7 +46,6 @@ export const RoulettePage = () => {
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const [tileSize, setTileSize] = useState({ w: 320, h: 240 })
   const [noMatchMessage, setNoMatchMessage] = useState('')
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const {
     stream,
@@ -94,8 +94,12 @@ export const RoulettePage = () => {
   }, [status])
 
   useEffect(() => {
-    return () => { stopCamera() }
+    return () => { stopCamera(); matchmaking.leaveQueue() }
   }, [stopCamera])
+
+  const [matchedPeer, setMatchedPeer] = useState<string | null>(null)
+  const [matchedRoom, setMatchedRoom] = useState<string | null>(null)
+  const user = useAuthStore((s) => s.user)
 
   const startSearch = useCallback(async () => {
     if (!stream) await startCamera()
@@ -103,20 +107,46 @@ export const RoulettePage = () => {
     setSearchTime(0)
     setNoMatchMessage('')
     setChatMessages([])
+    setMatchedPeer(null)
+    setMatchedRoom(null)
 
-    // After 10-15 seconds, show no-match message
-    const delay = 10000 + Math.random() * 5000
-    searchTimerRef.current = setTimeout(() => {
+    const userId = user?.id
+    if (!userId) {
       setStatus('no-match')
-      setNoMatchMessage('Nenhum usuário disponível no momento. Tente novamente em breve!')
-    }, delay)
-  }, [stream, startCamera])
+      setNoMatchMessage('Faça login para usar o chat aleatório!')
+      return
+    }
+
+    matchmaking.joinQueue(
+      userId,
+      (peerId, roomId) => {
+        setMatchedPeer(peerId)
+        setMatchedRoom(roomId)
+        setChatMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          username: 'Sistema',
+          content: '🎉 Match encontrado! Vocês estão conectados.',
+          type: 'system' as const,
+          timestamp: new Date(),
+        }])
+      },
+      (newStatus) => {
+        setStatus(newStatus)
+        if (newStatus === 'no-match') {
+          setNoMatchMessage('Nenhum usuário disponível no momento. Tente novamente!')
+        }
+      },
+      30000,
+    )
+  }, [stream, startCamera, user])
 
   const endSession = useCallback(() => {
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    matchmaking.leaveQueue()
     setStatus('idle')
     setSearchTime(0)
     setNoMatchMessage('')
+    setMatchedPeer(null)
+    setMatchedRoom(null)
     stopCamera()
   }, [stopCamera])
 
@@ -325,6 +355,17 @@ export const RoulettePage = () => {
                   </div>
                 )}
 
+                {status === 'matched' && matchedPeer && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
+                    <div className="text-center max-w-xs px-4">
+                      <div className="text-4xl mb-3">🎉</div>
+                      <h3 className="text-base font-bold text-white mb-2">Match encontrado!</h3>
+                      <p className="text-sm text-dark-400 mb-2">Sala: {matchedRoom?.slice(0, 8)}...</p>
+                      <p className="text-xs text-dark-500">Chat de texto disponível na lateral</p>
+                    </div>
+                  </div>
+                )}
+
                 {status === 'no-match' && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center max-w-xs px-4">
@@ -343,7 +384,7 @@ export const RoulettePage = () => {
           </div>
 
           {/* Chat sidebar - always visible for future real matches */}
-          {(status === 'searching' || status === 'no-match') && (
+          {(status === 'searching' || status === 'no-match' || status === 'matched') && (
             <div className="lg:w-80 flex flex-col rounded-2xl bg-dark-900/50 border border-white/5 overflow-hidden" style={{ maxHeight: '480px' }}>
               <div className="p-3 border-b border-white/5 flex items-center gap-2">
                 <Send className="w-4 h-4 text-primary-400" />
@@ -436,7 +477,7 @@ export const RoulettePage = () => {
             </button>
           )}
 
-          {(status === 'searching' || status === 'no-match') && (
+          {(status === 'searching' || status === 'no-match' || status === 'matched') && (
             <button
               onClick={endSession}
               className="p-3 rounded-xl bg-dark-800 border border-white/10 text-dark-400 hover:text-white hover:bg-dark-700 transition-all"
