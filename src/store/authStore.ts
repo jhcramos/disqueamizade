@@ -38,6 +38,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email: string, password: string) => {
     set({ loading: true })
     try {
+      // Clear any guest session first
+      sessionStorage.removeItem('guest_session')
+      set({ isGuest: false })
+
       const { user } = await authService.signIn(email, password)
 
       if (user) {
@@ -73,6 +77,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) => {
     set({ loading: true })
     try {
+      // Clear any guest session first
+      sessionStorage.removeItem('guest_session')
+      set({ isGuest: false })
+
       const { user } = await authService.signUp(email, password, username, options)
 
       if (user) {
@@ -192,7 +200,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (isPlaceholder) {
         console.warn('⚠️ Supabase not configured. Running in demo mode.')
-        // Restore guest session if it exists
         const guestData = sessionStorage.getItem('guest_session')
         if (guestData) {
           try {
@@ -205,9 +212,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return
       }
 
+      // Check for real Supabase session first — always takes priority over guest
       const session = await authService.getSession()
 
       if (session?.user) {
+        // Real user logged in — clear any stale guest session
+        sessionStorage.removeItem('guest_session')
         let profile: Profile | null = null
         try {
           profile = await databaseService.getProfile(session.user.id)
@@ -223,15 +233,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             total_earned: 0,
           })
         }
-        set({ user: session.user, profile })
+        set({ user: session.user, profile, isGuest: false })
 
         // Set online status
         await presenceService.setOnlineStatus(session.user.id, true)
+      } else {
+        // No real session — restore guest if exists
+        const guestData = sessionStorage.getItem('guest_session')
+        if (guestData) {
+          try {
+            const { user: gu, profile: gp } = JSON.parse(guestData)
+            set({ user: gu, profile: gp, isGuest: true })
+          } catch { /* ignore */ }
+        }
       }
 
       // Listen to auth state changes
       authService.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
+          // Real auth — clear guest
+          sessionStorage.removeItem('guest_session')
+          set({ isGuest: false })
           let profile: Profile | null = null
           try {
             profile = await databaseService.getProfile(session.user.id)
