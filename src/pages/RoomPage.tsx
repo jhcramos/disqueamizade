@@ -3,12 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Crown, Lock, Smile, Volume2, Coins,
-  Share2, X, Info, Shield, AlertTriangle, Sparkles, Maximize, Minimize,
+  Share2, X, Info, Shield, AlertTriangle, Maximize, Minimize,
 } from 'lucide-react'
 import { mockRooms } from '@/data/mockRooms'
 import { useToastStore } from '@/components/common/ToastContainer'
-import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
-import { CamaroteMinimizado } from '@/components/rooms/CamaroteMinimizado'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
@@ -66,15 +64,8 @@ export const RoomPage = () => {
   const [showParticipants, setShowParticipants] = useState(false)
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState<string | null>(null)
-  const [showCreateCamarote, setShowCreateCamarote] = useState(false)
-  const [isPremiumUser] = useState(true)
-  const [minimizedCamarote, setMinimizedCamarote] = useState<{
-    id: string
-    name: string
-    participants: { id: string; username: string; avatar: string; videoEnabled: boolean }[]
-  } | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const cameraTileRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [tileSize, setTileSize] = useState({ w: 320, h: 240 })
   const videoModalRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToastStore()
@@ -508,55 +499,6 @@ export const RoomPage = () => {
               </div>
             )}
 
-            {/* ─── Camarotes VIP nesta sala ─── */}
-            <div className="mt-6 pt-4 border-t border-white/5">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-bold text-elite-400 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Camarotes VIP
-                </h4>
-                <button 
-                  onClick={() => setShowCreateCamarote(true)}
-                  className="text-[10px] text-elite-400 hover:text-elite-300"
-                >
-                  + Criar
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                <button 
-                  onClick={() => navigate('/camarote/vip-1')}
-                  className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-white truncate">Cantinho da Ana</span>
-                    <span className="text-[10px] text-dark-500">3/6</span>
-                  </div>
-                  <div className="flex -space-x-1.5">
-                    <img src="https://i.pravatar.cc/150?img=9" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=1" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=5" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => navigate('/camarote/vip-2')}
-                  className="w-full p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/20 hover:bg-elite-500/10 transition-all text-left"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-white truncate">Gamers BR</span>
-                    <span className="text-[10px] text-dark-500">5/6</span>
-                  </div>
-                  <div className="flex -space-x-1.5">
-                    <img src="https://i.pravatar.cc/150?img=3" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=7" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=12" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=20" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                    <img src="https://i.pravatar.cc/150?img=25" alt="" className="w-5 h-5 rounded-full border border-dark-950" />
-                  </div>
-                </button>
-              </div>
-            </div>
           </div>
         </aside>
 
@@ -747,14 +689,6 @@ export const RoomPage = () => {
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
-              <button 
-                onClick={() => setShowCreateCamarote(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold" 
-                title="Criar Camarote VIP (20💎)"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden md:inline">Camarote</span>
-              </button>
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
                   <Phone className="w-5 h-5 rotate-[135deg]" />
@@ -1049,33 +983,6 @@ export const RoomPage = () => {
         )
       })()}
 
-      {/* Camarote Minimizado (PiP) */}
-      {minimizedCamarote && (
-        <CamaroteMinimizado
-          camaroteId={minimizedCamarote.id}
-          camaroteName={minimizedCamarote.name}
-          participants={minimizedCamarote.participants}
-          onClose={() => {
-            setMinimizedCamarote(null)
-            addToast({ type: 'info', title: 'Saiu do camarote', message: 'Você saiu do camarote' })
-          }}
-          onMaximize={() => setMinimizedCamarote(null)}
-        />
-      )}
-
-      <CreateCamaroteModal
-        isOpen={showCreateCamarote}
-        onClose={() => setShowCreateCamarote(false)}
-        isPremium={isPremiumUser}
-        onConfirm={(data) => {
-          addToast({ 
-            type: 'success', 
-            title: '🛋️ Camarote criado!', 
-            message: `"${data.name}" está pronto. Até 6 pessoas!` 
-          })
-          navigate(`/camarote/vip-${Date.now()}`)
-        }}
-      />
     </div>
   )
 }
