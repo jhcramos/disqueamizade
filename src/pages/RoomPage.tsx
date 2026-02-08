@@ -203,9 +203,17 @@ export const RoomPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomReady, roomSlug, user?.id])
 
-  // Join WebRTC room when camera is on (use raw stream to establish, composite updates later)
+  // Join WebRTC room ONCE when camera is first available
+  const webrtcJoinedRef = useRef(false)
+  const webrtcRoomSlugRef = useRef('')
+
   useEffect(() => {
     if (!roomReady || !roomSlug || !user || isGuest || !stream) return
+    // Only join once per room
+    if (webrtcJoinedRef.current && webrtcRoomSlugRef.current === roomSlug) return
+
+    webrtcJoinedRef.current = true
+    webrtcRoomSlugRef.current = roomSlug
 
     const sendStream = compositeStream || stream
     webrtcRoom.join(roomSlug, user.id, sendStream, {
@@ -221,15 +229,21 @@ export const RoomPage = () => {
         remoteVideoRefs.current.delete(peerId)
       },
     })
-
-    return () => { webrtcRoom.leave() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomReady, roomSlug, user?.id, isGuest, stream])
+
+  // Cleanup on unmount only
+  useEffect(() => {
+    return () => {
+      webrtcRoom.leave()
+      webrtcJoinedRef.current = false
+    }
+  }, [])
 
   // Update WebRTC tracks when composite stream changes (filter/mask toggled)
   useEffect(() => {
     const s = compositeStream || stream
-    if (s) webrtcRoom.updateStream(s)
+    if (s && webrtcJoinedRef.current) webrtcRoom.updateStream(s)
   }, [compositeStream, stream])
 
   // Attach remote streams to video elements
