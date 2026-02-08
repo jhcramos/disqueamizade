@@ -119,6 +119,9 @@ export function useRooms() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [trigger, setTrigger] = useState(0)
+
+  const refetch = () => setTrigger(t => t + 1)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -127,10 +130,10 @@ export function useRooms() {
       return
     }
 
+    setLoading(true)
     databaseService.getRooms()
       .then((data) => {
         if (data && data.length > 0) {
-          // Add simulated presence for cold-start phase
           const enriched = data.map((room: any) => ({
             ...room,
             current_participants: (room.current_participants || 0) + 
@@ -143,9 +146,9 @@ export function useRooms() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [trigger])
 
-  return { rooms, loading, error }
+  return { rooms, loading, error, refetch }
 }
 
 /** Fetch ficha packages from Supabase */

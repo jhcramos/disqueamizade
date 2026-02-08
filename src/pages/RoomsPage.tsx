@@ -22,6 +22,7 @@ const CATEGORIES = [
   { id: 'age', label: 'Faixa Etária', emoji: '👥', icon: Calendar, color: 'cyan' },
   { id: 'vip', label: 'VIP', emoji: '👑', icon: Crown, color: 'amber' },
   { id: 'adult', label: '+18', emoji: '🔞', icon: Heart, color: 'pink' },
+  { id: 'community', label: 'Comunidade', emoji: '🫂', icon: MessageCircle, color: 'teal' },
 ]
 
 // Slugs for drink rooms
@@ -46,7 +47,8 @@ const AGE_SLUGS = new Set(['18-25-anos','26-35-anos','36-45-anos','46-plus'])
 const VIP_SLUGS = new Set(['lounge-vip','diamond-club'])
 const GENERAL_SLUGS = new Set(['geral-brasil','papo-livre'])
 
-function classifyRoom(slug: string): string {
+function classifyRoom(slug: string, ownerId?: string | null): string {
+  if (slug.startsWith('community-')) return 'community'
   if (slug.startsWith('adult-')) return 'adult'
   if (DRINK_SLUGS.has(slug)) return 'drinks'
   if (LANGUAGE_SLUGS.has(slug) || slug.startsWith('idioma-')) return 'languages'
@@ -54,6 +56,8 @@ function classifyRoom(slug: string): string {
   if (AGE_SLUGS.has(slug)) return 'age'
   if (VIP_SLUGS.has(slug)) return 'vip'
   if (GENERAL_SLUGS.has(slug)) return 'general'
+  // If it has an owner and doesn't match any official pattern, it's community
+  if (ownerId) return 'community'
   return 'cities'
 }
 
@@ -68,7 +72,7 @@ function getHotRoomIds(rooms: any[]): Set<string> {
 
 /** Map DB room to MockRoom shape for RoomCard compatibility */
 function mapDbRoom(r: any, hotIds: Set<string>): MockRoom {
-  const cat = classifyRoom(r.slug)
+  const cat = classifyRoom(r.slug, r.owner_id)
   const isHot = hotIds.has(r.id)
 
   // Simulate participants for cold start
@@ -110,7 +114,7 @@ export const RoomsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const { rooms: dbRooms, loading } = useRooms()
+  const { rooms: dbRooms, loading, refetch } = useRooms()
 
   // Generate hot room ids once per page load
   const hotIds = useMemo(() => getHotRoomIds(dbRooms || []), [dbRooms])
@@ -242,6 +246,7 @@ export const RoomsPage = () => {
                  selectedCategory === 'interests' ? '🎯 Interesses — Encontre Sua Tribo' :
                  selectedCategory === 'age' ? '👥 Faixa Etária — Galera da Sua Idade' :
                  selectedCategory === 'vip' ? '👑 VIP — Experiência Premium' :
+                 selectedCategory === 'community' ? '🫂 Salas da Comunidade — Criadas por Vocês' :
                  '💬 Papo Geral'}
               </h2>
               <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.04] text-dark-400">{filteredRooms.length}</span>
@@ -256,6 +261,9 @@ export const RoomsPage = () => {
             )}
             {selectedCategory === 'drinks' && (
               <p className="text-xs text-amber-400/60 mb-4 -mt-2">Pegue sua bebida e venha bater papo. Sem julgamento 🍻</p>
+            )}
+            {selectedCategory === 'community' && (
+              <p className="text-xs text-teal-400/60 mb-4 -mt-2">Salas criadas pela comunidade. Crie a sua também! 🙌</p>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -277,7 +285,7 @@ export const RoomsPage = () => {
       </main>
       <Footer />
 
-      <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} userTier="basic" />
+      <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} userTier="basic" onCreated={refetch} />
     </div>
   )
 }
