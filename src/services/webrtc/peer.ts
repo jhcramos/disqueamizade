@@ -4,7 +4,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
 ]
 
 type PeerCallback = {
@@ -15,78 +14,75 @@ type PeerCallback = {
 class WebRTCRoom {
   private channel: RealtimeChannel | null = null
   private peers: Map<string, RTCPeerConnection> = new Map()
-  private remoteStreams: Map<string, MediaStream> = new Map()
   private localStream: MediaStream | null = null
   private userId: string = ''
   private callbacks: PeerCallback | null = null
-  private makingOffer: Map<string, boolean> = new Map()
 
-  /**
-   * Join a room with video/audio
-   */
   async join(
     roomId: string,
     userId: string,
     localStream: MediaStream,
     callbacks: PeerCallback,
   ) {
+    this.leave()
     this.userId = userId
     this.localStream = localStream
     this.callbacks = callbacks
 
-    // Clean up any previous session
-    this.leave()
+    console.log('[WebRTC] Joining room:', roomId, 'as:', userId.slice(0, 8))
 
     this.channel = supabase.channel(`webrtc:${roomId}`, {
       config: { presence: { key: userId } },
     })
 
-    // Handle signaling messages
     this.channel
       .on('broadcast', { event: 'signal' }, ({ payload }) => {
         if (payload.to !== this.userId) return
         this.handleSignal(payload.from, payload.data)
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
-        // New user joined — if we have lower ID, we initiate the call
         for (const p of newPresences as any[]) {
-          const peerId = p.user_id || Object.keys(this.channel!.presenceState()).find(k => k !== this.userId)
+          const peerId = p.user_id
           if (peerId && peerId !== this.userId && !this.peers.has(peerId)) {
-            // Lower ID initiates to avoid both sides offering simultaneously
-            if (this.userId < peerId) {
-              this.createPeerConnection(peerId, true)
-            }
+            console.log('[WebRTC] Peer joined:', peerId.slice(0, 8))
+            this.createPeer(peerId)
           }
         }
       })
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
         for (const p of leftPresences as any[]) {
-          const peerId = p.user_id
-          if (peerId) this.removePeer(peerId)
+          if (p.user_id) this.removePeer(p.user_id)
         }
       })
       .on('presence', { event: 'sync' }, () => {
-        // On initial sync, connect to all existing users
         const state = this.channel!.presenceState()
-        for (const peerId of Object.keys(state)) {
+        for (const [key, presences] of Object.entries(state)) {
+          // key is the presence key (userId)
+          const peerId = (presences as any[])[0]?.user_id || key
           if (peerId !== this.userId && !this.peers.has(peerId)) {
-            if (this.userId < peerId) {
-              this.createPeerConnection(peerId, true)
-            }
+            console.log('[WebRTC] Sync found peer:', peerId.slice(0, 8))
+            this.createPeer(peerId)
           }
         }
       })
       .subscribe(async (status) => {
+        console.log('[WebRTC] Channel status:', status)
         if (status === 'SUBSCRIBED') {
           await this.channel!.track({ user_id: this.userId, joined_at: Date.now() })
         }
       })
   }
 
-  private async createPeerConnection(peerId: string, initiator: boolean) {
+  private createPeer(peerId: string) {
+    if (this.peers.has(peerId)) return
+
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
     this.peers.set(peerId, pc)
-    this.makingOffer.set(peerId, false)
+
+    // Polite peer = higher ID (yields on collision)
+    const polite = this.userId > peerId
+    let makingOffer = false
+    let ignoreOffer = false
 
     // Add local tracks
     if (this.localStream) {
@@ -95,41 +91,37 @@ class WebRTCRoom {
       }
     }
 
-    // Handle remote tracks
+    // Remote tracks
     pc.ontrack = (event) => {
-      const [remoteStream] = event.streams
-      if (remoteStream) {
-        this.remoteStreams.set(peerId, remoteStream)
-        this.callbacks?.onRemoteStream(peerId, remoteStream)
-      }
+      console.log('[WebRTC] Got remote track from:', peerId.slice(0, 8))
+      const [stream] = event.streams
+      if (stream) this.callbacks?.onRemoteStream(peerId, stream)
     }
 
     // ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        this.sendSignal(peerId, { type: 'candidate', candidate: event.candidate })
+        this.send(peerId, { type: 'candidate', candidate: event.candidate.toJSON() })
       }
     }
 
-    // Negotiation needed (for initiator)
+    // Negotiation needed — impolite peer (lower ID) always offers
     pc.onnegotiationneeded = async () => {
-      if (!initiator) return
       try {
-        this.makingOffer.set(peerId, true)
-        const offer = await pc.createOffer()
-        if (pc.signalingState !== 'stable') return
-        await pc.setLocalDescription(offer)
-        this.sendSignal(peerId, { type: 'offer', sdp: pc.localDescription })
+        makingOffer = true
+        await pc.setLocalDescription()
+        this.send(peerId, { type: 'offer', sdp: pc.localDescription!.toJSON() })
       } catch (err) {
-        console.error('Negotiation error:', err)
+        console.error('[WebRTC] Offer error:', err)
       } finally {
-        this.makingOffer.set(peerId, false)
+        makingOffer = false
       }
     }
 
-    // Connection state changes
+    // Connection state
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+      console.log('[WebRTC] Connection state:', peerId.slice(0, 8), pc.connectionState)
+      if (pc.connectionState === 'failed') {
         this.removePeer(peerId)
       }
     }
@@ -139,46 +131,48 @@ class WebRTCRoom {
         pc.restartIce()
       }
     }
-  }
 
-  private async handleSignal(from: string, data: any) {
-    let pc = this.peers.get(from)
-
-    if (data.type === 'offer') {
-      // Received an offer — create PC if needed (we're the receiver)
-      if (!pc) {
-        await this.createPeerConnection(from, false)
-        pc = this.peers.get(from)!
-      }
-
-      const offerCollision = this.makingOffer.get(from) || pc.signalingState !== 'stable'
-      const polite = this.userId > from // Higher ID is polite
-
-      if (offerCollision && !polite) {
-        // Impolite peer ignores incoming offer during collision
-        return
-      }
-
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
-      const answer = await pc.createAnswer()
-      await pc.setLocalDescription(answer)
-      this.sendSignal(from, { type: 'answer', sdp: pc.localDescription })
-
-    } else if (data.type === 'answer') {
-      if (!pc) return
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
-
-    } else if (data.type === 'candidate') {
-      if (!pc) return
+    // Store handler for incoming signals
+    ;(pc as any)._handleSignal = async (data: any) => {
       try {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+        if (data.type === 'offer') {
+          const offerCollision = makingOffer || pc.signalingState !== 'stable'
+          ignoreOffer = !polite && offerCollision
+          if (ignoreOffer) return
+
+          await pc.setRemoteDescription(data.sdp)
+          await pc.setLocalDescription()
+          this.send(peerId, { type: 'answer', sdp: pc.localDescription!.toJSON() })
+
+        } else if (data.type === 'answer') {
+          await pc.setRemoteDescription(data.sdp)
+
+        } else if (data.type === 'candidate') {
+          try {
+            await pc.addIceCandidate(data.candidate)
+          } catch (err) {
+            if (!ignoreOffer) console.warn('[WebRTC] ICE error:', err)
+          }
+        }
       } catch (err) {
-        console.warn('ICE candidate error:', err)
+        console.error('[WebRTC] Signal handling error:', err)
       }
     }
   }
 
-  private sendSignal(to: string, data: any) {
+  private handleSignal(from: string, data: any) {
+    // Create peer if we don't have one yet (they offered first)
+    if (!this.peers.has(from)) {
+      console.log('[WebRTC] Creating peer on signal from:', from.slice(0, 8))
+      this.createPeer(from)
+    }
+    const pc = this.peers.get(from)
+    if (pc && (pc as any)._handleSignal) {
+      (pc as any)._handleSignal(data)
+    }
+  }
+
+  private send(to: string, data: any) {
     this.channel?.send({
       type: 'broadcast',
       event: 'signal',
@@ -192,14 +186,9 @@ class WebRTCRoom {
       pc.close()
       this.peers.delete(peerId)
     }
-    this.remoteStreams.delete(peerId)
-    this.makingOffer.delete(peerId)
     this.callbacks?.onPeerDisconnect(peerId)
   }
 
-  /**
-   * Update local stream (e.g., camera toggled)
-   */
   updateStream(stream: MediaStream) {
     this.localStream = stream
     for (const [, pc] of this.peers) {
@@ -215,16 +204,11 @@ class WebRTCRoom {
     }
   }
 
-  /**
-   * Leave the room and clean up all connections
-   */
   leave() {
     for (const [peerId] of this.peers) {
       this.removePeer(peerId)
     }
     this.peers.clear()
-    this.remoteStreams.clear()
-    this.makingOffer.clear()
     if (this.channel) {
       this.channel.untrack()
       supabase.removeChannel(this.channel)
@@ -232,14 +216,7 @@ class WebRTCRoom {
     }
   }
 
-  getPeerCount() {
-    return this.peers.size
-  }
-
-  getRemoteStreams() {
-    return new Map(this.remoteStreams)
-  }
+  getPeerCount() { return this.peers.size }
 }
 
-// Singleton
 export const webrtcRoom = new WebRTCRoom()
