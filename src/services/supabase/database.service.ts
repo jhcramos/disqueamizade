@@ -55,6 +55,7 @@ export const databaseService = {
   },
 
   async updateProfile(userId: string, updates: Partial<DBProfile>) {
+    // Try direct update first
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
@@ -62,8 +63,29 @@ export const databaseService = {
       .select()
       .single()
 
-    if (error) throw error
-    return mapProfile(data as DBProfile)
+    if (!error) return mapProfile(data as DBProfile)
+
+    // Fallback: use API route with service role (bypasses RLS)
+    const session = await supabase.auth.getSession()
+    const token = session.data.session?.access_token
+    if (!token) throw error
+
+    const res = await fetch('/api/update-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    })
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.error || 'Failed to update profile')
+    }
+
+    const profile = await res.json()
+    return mapProfile(profile as DBProfile)
   },
 
   async getOnlineProfiles() {
