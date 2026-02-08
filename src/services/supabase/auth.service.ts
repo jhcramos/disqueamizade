@@ -21,23 +21,35 @@ export const authService = {
     if (authError) throw authError
     if (!authData.user) throw new Error('No user returned from signup')
 
-    // Try to create profile (may fail if email not confirmed yet — trigger handles it)
+    // Try to create profile — use API route to bypass RLS
+    const profileData = {
+      username,
+      display_name: username,
+      is_creator: options?.is_creator ?? false,
+      is_vip: false,
+      is_elite: false,
+      saldo_fichas: 50,
+      total_earned: 0,
+    }
+
     try {
+      // First try direct upsert
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          username,
-          display_name: username,
-          is_creator: options?.is_creator ?? false,
-          is_vip: false,
-          is_elite: false,
-          saldo_fichas: 50,
-          total_earned: 0,
-        }, { onConflict: 'id' })
+        .upsert({ id: authData.user.id, ...profileData }, { onConflict: 'id' })
 
       if (profileError) {
-        console.warn('Profile creation deferred (will be created on first login):', profileError.message)
+        console.warn('Direct upsert failed, trying API route:', profileError.message)
+        // Fallback: API route with service role
+        const session = await supabase.auth.getSession()
+        const token = session.data.session?.access_token
+        if (token) {
+          await fetch('/api/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ ...profileData, _mode: 'upsert' }),
+          })
+        }
       }
     } catch (e) {
       console.warn('Profile creation deferred:', e)

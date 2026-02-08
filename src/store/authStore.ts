@@ -76,11 +76,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user } = await authService.signUp(email, password, username, options)
 
       if (user) {
-        const profile = await databaseService.getProfile(user.id)
-        set({ user, profile })
-
-        // Set online status
-        await presenceService.setOnlineStatus(user.id, true)
+        // After signup, profile might not be readable yet (RLS / email not confirmed)
+        // Don't fail signup if profile fetch fails
+        try {
+          const profile = await databaseService.getProfile(user.id)
+          set({ user, profile })
+          await presenceService.setOnlineStatus(user.id, true)
+        } catch {
+          // Profile will be loaded on first login after email confirmation
+          set({ user })
+        }
       }
     } catch (error) {
       console.error('Sign up error:', error)

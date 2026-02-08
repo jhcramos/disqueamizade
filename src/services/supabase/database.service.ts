@@ -37,21 +37,48 @@ export const databaseService = {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (error) throw error
+    if (!data) throw new Error('Profile not found')
     return mapProfile(data as DBProfile)
   },
 
   async upsertProfile(userId: string, data: Partial<DBProfile>) {
-    const { data: profile, error } = await supabase
+    // Try upsert without expecting a return (RLS may block SELECT after INSERT)
+    const { error: upsertError } = await supabase
       .from('profiles')
       .upsert({ id: userId, ...data }, { onConflict: 'id' })
-      .select()
-      .single()
 
-    if (error) throw error
-    return mapProfile(profile as DBProfile)
+    if (upsertError) {
+      console.warn('Upsert failed, trying API route:', upsertError.message)
+      // Fallback: use API route with service role
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      if (token) {
+        const res = await fetch('/api/update-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        })
+        if (res.ok) {
+          const profile = await res.json()
+          return mapProfile(profile as DBProfile)
+        }
+      }
+      throw upsertError
+    }
+
+    // Now fetch the profile separately
+    try {
+      return await this.getProfile(userId)
+    } catch {
+      // Return a constructed profile if we can't read it back
+      return mapProfile({ id: userId, ...data } as DBProfile)
+    }
   },
 
   async updateProfile(userId: string, updates: Partial<DBProfile>) {
