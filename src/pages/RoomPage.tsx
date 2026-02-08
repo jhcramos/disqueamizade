@@ -126,7 +126,41 @@ export const RoomPage = () => {
     else disableMask()
   }, [activeMask, enableMask, disableMask])
 
-  const room = mockRooms.find((r) => r.id === roomId)
+  // Try Supabase first, fall back to mock
+  const [supaRoom, setSupaRoom] = useState<any>(null)
+  const [, setRoomLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchRoom = async () => {
+      try {
+        const { supabase: sb } = await import('@/services/supabase/client')
+        // Try by UUID first, then by slug
+        let { data } = await sb.from('rooms').select('*').eq('id', roomId).single()
+        if (!data) {
+          const res = await sb.from('rooms').select('*').eq('slug', roomId).single()
+          data = res.data
+        }
+        if (data) {
+          setSupaRoom({
+            id: data.id,
+            name: data.name,
+            description: data.description || '',
+            category: data.category || 'cidade',
+            theme: data.name,
+            participants: data.current_participants || 0,
+            max_users: data.max_participants || 30,
+            is_private: false,
+            tags: [],
+            owner: { username: 'disque_amizade', avatar: '' },
+          })
+        }
+      } catch { /* ignore */ }
+      setRoomLoading(false)
+    }
+    fetchRoom()
+  }, [roomId])
+
+  const room = supaRoom || mockRooms.find((r) => r.id === roomId)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
