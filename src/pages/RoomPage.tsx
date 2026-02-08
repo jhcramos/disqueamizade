@@ -291,13 +291,23 @@ export const RoomPage = () => {
                 </div>
               </div>
 
-              {/* Simulated bot count */}
-              <div className="px-3 py-2 mt-2">
-                <p className="text-xs text-dark-500 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400/60" />
-                  +{botCount} participantes na sala
-                </p>
-              </div>
+              {/* Simulated participants (bots from chat) */}
+              {BOT_NAMES.slice(0, botCount).map((name) => (
+                <div key={name} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 ${
+                    ['bg-gradient-to-br from-pink-500 to-rose-600', 'bg-gradient-to-br from-blue-500 to-cyan-600', 'bg-gradient-to-br from-emerald-500 to-teal-600', 'bg-gradient-to-br from-amber-500 to-orange-600', 'bg-gradient-to-br from-violet-500 to-purple-600', 'bg-gradient-to-br from-red-500 to-pink-600', 'bg-gradient-to-br from-sky-500 to-indigo-600', 'bg-gradient-to-br from-lime-500 to-green-600'][BOT_NAMES.indexOf(name) % 8]
+                  }`}>
+                    {name[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-white truncate block">{name}</span>
+                    <div className="flex gap-2 mt-0.5">
+                      <VideoOff className="w-3 h-3 text-dark-600" />
+                      <Mic className="w-3 h-3 text-emerald-400/60" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Room Info Panel */}
@@ -381,10 +391,10 @@ export const RoomPage = () => {
                             className="absolute pointer-events-none z-10 select-none leading-none"
                             style={{
                               left: `${faceBox.x + faceBox.w / 2}%`,
-                              top: `${faceBox.y + faceBox.h * 0.35}%`,
+                              top: `${faceBox.y + faceBox.h * 0.5}%`,
                               transform: 'translate(-50%, -50%)',
-                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 1.15)}px`,
-                              transition: 'left 130ms ease-out, top 130ms ease-out, font-size 200ms ease-out',
+                              fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 2.0)}px`,
+                              transition: 'left 80ms ease-out, top 80ms ease-out, font-size 150ms ease-out',
                             }}
                           >
                             {activeMaskData.emoji}

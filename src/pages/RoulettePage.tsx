@@ -251,8 +251,8 @@ export const RoulettePage = () => {
                           left: `${faceBox.x + faceBox.w / 2}%`,
                           top: `${faceBox.y + faceBox.h / 2}%`,
                           transform: 'translate(-50%, -50%)',
-                          fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 1.15)}px`,
-                          transition: 'left 120ms ease-out, top 120ms ease-out, font-size 200ms ease-out',
+                          fontSize: `${Math.round(Math.max(tileSize.w * faceBox.w, tileSize.h * faceBox.h) / 100 * 2.0)}px`,
+                          transition: 'left 80ms ease-out, top 80ms ease-out, font-size 150ms ease-out',
                         }}
                       >
                         {activeMaskEmoji}
