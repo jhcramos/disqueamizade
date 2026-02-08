@@ -133,6 +133,7 @@ export const RoomPage = () => {
 
   // Try Supabase first, fall back to mock
   const [supaRoom, setSupaRoom] = useState<any>(null)
+  const [roomSlug, setRoomSlug] = useState<string>(roomId || '')
   const [, setRoomLoading] = useState(true)
 
   useEffect(() => {
@@ -145,8 +146,11 @@ export const RoomPage = () => {
           data = res.data
         }
         if (data) {
+          // Always use slug as the canonical channel identifier
+          setRoomSlug(data.slug || data.id)
           setSupaRoom({
             id: data.id,
+            slug: data.slug,
             name: data.name,
             description: data.description || '',
             category: data.category || 'cidade',
@@ -174,12 +178,12 @@ export const RoomPage = () => {
 
   // Join realtime room chat + presence
   useEffect(() => {
-    if (!roomId || !user || isGuest) return
+    if (!roomSlug || !user || isGuest) return
 
     const username = profile?.username || profile?.display_name || user.user_metadata?.username || 'Anônimo'
 
     roomChat.join(
-      roomId,
+      roomSlug,
       user.id,
       username,
       (msg) => {
@@ -191,14 +195,14 @@ export const RoomPage = () => {
     )
 
     return () => { roomChat.leave() }
-  }, [roomId, user, isGuest, profile])
+  }, [roomSlug, user, isGuest, profile])
 
   // Join WebRTC room when camera stream is available (use composite stream with effects)
   const webrtcStream = compositeStream || stream
   useEffect(() => {
-    if (!roomId || !user || isGuest || !webrtcStream) return
+    if (!roomSlug || !user || isGuest || !webrtcStream) return
 
-    webrtcRoom.join(roomId, user.id, webrtcStream, {
+    webrtcRoom.join(roomSlug, user.id, webrtcStream, {
       onRemoteStream: (peerId, remoteStream) => {
         setRemoteStreams(prev => new Map(prev).set(peerId, remoteStream))
       },
@@ -213,7 +217,7 @@ export const RoomPage = () => {
     })
 
     return () => { webrtcRoom.leave() }
-  }, [roomId, user, isGuest, webrtcStream])
+  }, [roomSlug, user, isGuest, webrtcStream])
 
   // Update WebRTC when composite stream changes (filter/mask toggled)
   useEffect(() => {

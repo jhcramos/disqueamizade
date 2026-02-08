@@ -11,7 +11,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
   const isFull = room.participants >= room.max_users
 
   return (
-    <Link to={`/room/${room.id}`}>
+    <Link to={`/room/${(room as any).slug || room.id}`}>
       <div className="card-interactive p-5 group">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
