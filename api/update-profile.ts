@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
   // Only allow safe fields
   const allowedFields = [
     'bio', 'cidade', 'estado', 'avatar_url', 'username', 'display_name',
-    'is_creator', 'is_vip', 'is_elite', 'saldo_fichas', 'total_earned'
+    'is_creator', 'is_vip', 'is_elite', 'saldo_fichas', 'total_earned', 'hobbies'
   ]
   const safeUpdates: Record<string, any> = {}
   for (const key of allowedFields) {
