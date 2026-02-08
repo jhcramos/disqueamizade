@@ -120,7 +120,7 @@ export const RoulettePage = () => {
   const profile = useAuthStore((s) => s.profile)
 
   // Keep streamRef in sync — use composite stream (with effects) for WebRTC
-  useEffect(() => { streamRef.current = compositeStream ?? stream ?? null }, [compositeStream, stream])
+  useEffect(() => { streamRef.current = stream ?? null }, [stream])
 
   // Attach remote stream to video element
   useEffect(() => {
@@ -413,15 +413,19 @@ export const RoulettePage = () => {
               <div ref={cameraTileRef} className="absolute bottom-3 right-3 w-32 h-24 sm:w-44 sm:h-32 rounded-xl overflow-hidden border-2 border-primary-500/50 shadow-xl z-20 cursor-pointer hover:scale-105 transition-transform bg-dark-800">
                 {isCameraOn && stream ? (
                   <>
-                    {/* Hidden raw video (needed for face tracking + canvas source) */}
-                    <video ref={videoRef} autoPlay playsInline muted className="hidden" />
-                    {/* PiP shows composite stream = exactly what remote user sees */}
                     <video
-                      ref={pipVideoRef}
+                      ref={videoRef}
                       autoPlay
                       playsInline
                       muted
                       className="w-full h-full object-cover"
+                      style={{
+                        filter: [
+                          filterStyle !== 'none' ? filterStyle : '',
+                          beautySmooth ? 'blur(0.5px) contrast(1.05)' : '',
+                          beautyBrighten ? 'brightness(1.15) saturate(1.05)' : '',
+                        ].filter(Boolean).join(' ') || 'none',
+                      }}
                     />
                   </>
                 ) : (

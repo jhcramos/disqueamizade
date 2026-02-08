@@ -215,8 +215,7 @@ export const RoomPage = () => {
     webrtcJoinedRef.current = true
     webrtcRoomSlugRef.current = roomSlug
 
-    const sendStream = compositeStream || stream
-    webrtcRoom.join(roomSlug, user.id, sendStream, {
+    webrtcRoom.join(roomSlug, user.id, stream, {
       onRemoteStream: (peerId, remoteStream) => {
         setRemoteStreams(prev => new Map(prev).set(peerId, remoteStream))
       },
@@ -240,11 +239,10 @@ export const RoomPage = () => {
     }
   }, [])
 
-  // Update WebRTC tracks when composite stream changes (filter/mask toggled)
+  // Update WebRTC tracks when stream changes
   useEffect(() => {
-    const s = compositeStream || stream
-    if (s && webrtcJoinedRef.current) webrtcRoom.updateStream(s)
-  }, [compositeStream, stream])
+    if (stream && webrtcJoinedRef.current) webrtcRoom.updateStream(stream)
+  }, [stream])
 
   // Attach remote streams to video elements
   useEffect(() => {
@@ -497,15 +495,19 @@ export const RoomPage = () => {
 
                 {isCameraOn && stream ? (
                   <>
-                    {/* Hidden raw video for face tracking + canvas source */}
-                    <video ref={videoRef} autoPlay playsInline muted className="hidden" />
-                    {/* Show composite stream = exactly what remote user sees */}
                     <video
-                      ref={pipVideoRef}
+                      ref={videoRef}
                       autoPlay
                       playsInline
                       muted
                       className={`absolute inset-0 w-full h-full object-cover ${bgImage && bgImage !== 'blur' ? 'z-10 mix-blend-normal' : ''}`}
+                      style={{
+                        filter: [
+                          filterStyle !== 'none' ? filterStyle : '',
+                          beautySmooth ? 'blur(0.5px) contrast(1.05)' : '',
+                          beautyBrighten ? 'brightness(1.15) saturate(1.05)' : '',
+                        ].filter(Boolean).join(' ') || 'none',
+                      }}
                     />
                     {activeMaskData && trackingStatus && (
                       <div className="absolute top-2 left-2 z-20 pointer-events-none">
