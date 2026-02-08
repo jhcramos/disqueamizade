@@ -57,11 +57,18 @@ export const AuthPage = () => {
         addToast({ type: 'success', title: 'Conta criada!', message: 'Verifique seu email para confirmar' })
       }
       navigate('/')
-    } catch (err) {
-      // In demo mode, fall back to guest
-      signInAsGuest()
-      addToast({ type: 'info', title: 'Modo Demo', message: 'Entrando como convidado (Supabase não configurado)' })
-      navigate('/')
+    } catch (err: any) {
+      const msg = err?.message || 'Erro desconhecido'
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        addToast({ type: 'error', title: 'Email já cadastrado', message: 'Este email já possui uma conta. Tente fazer login.' })
+      } else if (msg.includes('Invalid login')) {
+        addToast({ type: 'error', title: 'Credenciais inválidas', message: 'Email ou senha incorretos.' })
+      } else if (msg.includes('Email not confirmed')) {
+        addToast({ type: 'warning', title: 'Confirme seu email', message: 'Verifique sua caixa de entrada e confirme o email antes de entrar.' })
+      } else {
+        addToast({ type: 'error', title: 'Erro', message: msg })
+      }
+      console.error('Auth error:', err)
     } finally {
       setLoading(false)
     }
@@ -77,8 +84,7 @@ export const AuthPage = () => {
     try {
       await signInWithGoogle()
     } catch {
-      signInAsGuest()
-      addToast({ type: 'info', title: 'Modo Demo', message: 'Google OAuth não configurado. Entrando como convidado.' })
+      addToast({ type: 'warning', title: 'Google OAuth', message: 'Login com Google não está configurado ainda.' })
       navigate('/')
     }
   }
