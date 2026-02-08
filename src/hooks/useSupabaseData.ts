@@ -8,6 +8,51 @@ const isSupabaseConfigured = () => {
   return url.startsWith('https://') && !url.includes('placeholder')
 }
 
+/**
+ * Simulated presence for cold-start phase.
+ * Generates a deterministic but time-varying "base" participant count per room.
+ * Uses room slug as seed + current hour to create natural-looking fluctuation.
+ * Popular rooms (Geral, SP, Rio) get higher base counts.
+ * Gradually decrease as real users join (pass realCount to reduce offset).
+ */
+function getSimulatedPresence(roomSlug: string, roomName: string, realCount: number): number {
+  // Hash the slug to get a stable seed
+  let hash = 0
+  for (let i = 0; i < roomSlug.length; i++) {
+    hash = ((hash << 5) - hash) + roomSlug.charCodeAt(i)
+    hash |= 0
+  }
+  
+  // Time-based variation (changes every 10 min for natural feel)
+  const now = new Date()
+  const timeSeed = Math.floor(now.getTime() / 600000) // 10-min blocks
+  const hourBR = (now.getUTCHours() - 3 + 24) % 24 // Brazil time (UTC-3)
+  
+  // Time-of-day multiplier (peak: 19-23h BR, low: 3-8h BR)
+  let timeMultiplier = 0.4
+  if (hourBR >= 19 && hourBR <= 23) timeMultiplier = 1.0
+  else if (hourBR >= 14 && hourBR < 19) timeMultiplier = 0.7
+  else if (hourBR >= 9 && hourBR < 14) timeMultiplier = 0.5
+  else if (hourBR >= 0 && hourBR < 3) timeMultiplier = 0.8
+  
+  // Room popularity tiers
+  const name = roomName.toLowerCase()
+  let basePop = 5
+  if (name.includes('geral') || name.includes('são paulo') || name.includes('rio de janeiro')) basePop = 18
+  else if (name.includes('belo horizonte') || name.includes('salvador') || name.includes('brasília') || name.includes('curitiba') || name.includes('fortaleza')) basePop = 12
+  else if (name.includes('game') || name.includes('music') || name.includes('música')) basePop = 10
+  else if (name.includes('20') || name.includes('30')) basePop = 8
+  
+  // Pseudo-random variation using hash + timeSeed
+  const variation = Math.abs((hash * 2654435761 + timeSeed * 40503) % 100) / 100 // 0-1
+  const simulated = Math.round(basePop * timeMultiplier * (0.6 + variation * 0.8))
+  
+  // Reduce simulated count as real users join (fade out bots)
+  const fadeOut = Math.max(0, simulated - realCount * 3)
+  
+  return Math.max(1, fadeOut) // Always show at least 1
+}
+
 /** Fetch rooms from Supabase with participant counts */
 export function useRooms() {
   const [rooms, setRooms] = useState<any[]>([])
@@ -24,7 +69,13 @@ export function useRooms() {
     databaseService.getRooms()
       .then((data) => {
         if (data && data.length > 0) {
-          setRooms(data)
+          // Add simulated presence for cold-start phase
+          const enriched = data.map((room: any) => ({
+            ...room,
+            current_participants: (room.current_participants || 0) + 
+              getSimulatedPresence(room.slug || room.id, room.name || '', room.current_participants || 0)
+          }))
+          setRooms(enriched)
         } else {
           setError('empty')
         }
@@ -108,11 +159,23 @@ export function useStats() {
           supabase.from('room_participants').select('id', { count: 'exact', head: true }),
           supabase.from('creator_profiles').select('id', { count: 'exact', head: true }),
         ])
+        const realOnline = participantsRes.count || 0
+        // Simulated total online = sum of base presence across rooms
+        const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
+        let simOnline = 85 // base
+        if (hourBR >= 19 && hourBR <= 23) simOnline = 180
+        else if (hourBR >= 14 && hourBR < 19) simOnline = 120
+        else if (hourBR >= 0 && hourBR < 3) simOnline = 140
+        else if (hourBR >= 9 && hourBR < 14) simOnline = 95
+
+        // Add time variation
+        const variation = Math.abs(Math.sin(Date.now() / 600000)) * 30
+        
         setStats({
           totalRooms: roomsRes.count || 0,
-          totalOnline: participantsRes.count || 0,
-          totalCreators: creatorsRes.count || 0,
-          totalLive: 0,
+          totalOnline: realOnline + Math.round(simOnline + variation),
+          totalCreators: (creatorsRes.count || 0) + 3, // show at least a few
+          totalLive: Math.round(2 + variation / 10),
         })
       } catch { /* ignore */ }
     }
