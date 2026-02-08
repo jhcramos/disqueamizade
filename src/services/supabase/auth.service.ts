@@ -18,7 +18,24 @@ export const authService = {
       },
     })
 
-    if (authError) throw authError
+    // Rate limit on email sending is non-fatal — user may still be created
+    if (authError) {
+      const isRateLimit = authError.message?.toLowerCase().includes('rate limit') 
+        || authError.status === 429
+        || authError.message?.toLowerCase().includes('email rate')
+      
+      if (!isRateLimit) throw authError
+      
+      // Rate limited but user might exist — try to sign in directly
+      console.warn('Email rate limited, attempting direct sign-in...')
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (signInError) throw new Error('Cadastro com rate limit. Tente fazer login com suas credenciais.')
+      return signInData
+    }
+
     if (!authData.user) throw new Error('No user returned from signup')
 
     // Auto-confirm email via server-side admin API
@@ -40,7 +57,6 @@ export const authService = {
 
     if (signInError) {
       console.warn('Auto sign-in after signup failed:', signInError.message)
-      // Still continue — user can login manually
     }
 
     // Try to create profile — use API route to bypass RLS
