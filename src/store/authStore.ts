@@ -16,7 +16,7 @@ interface AuthState {
   setUser: (user: User | null) => void
   setProfile: (profile: Profile | null) => void
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, username: string, options?: { is_creator?: boolean }) => Promise<void>
+  signUp: (email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInAsGuest: () => void
   signOut: () => Promise<void>
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signUp: async (email: string, password: string, username: string, options?: { is_creator?: boolean }) => {
+  signUp: async (email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) => {
     set({ loading: true })
     try {
       const { user } = await authService.signUp(email, password, username, options)

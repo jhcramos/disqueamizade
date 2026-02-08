@@ -4,7 +4,7 @@ export const authService = {
   /**
    * Sign up with email and password
    */
-  async signUp(email: string, password: string, username: string, options?: { is_creator?: boolean }) {
+  async signUp(email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -13,6 +13,7 @@ export const authService = {
           username,
           display_name: username,
           is_creator: options?.is_creator ?? false,
+          birth_date: options?.birth_date || null,
         },
       },
     })

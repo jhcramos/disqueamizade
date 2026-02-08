@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   MapPin, Clock, Award, Users, Shield, ArrowLeft, Calendar,
-  Lock, Edit3, Bell, Globe, Trash2, Download, MessageCircle,
+  Lock, Edit3, Bell, Trash2, Download, MessageCircle,
   Gamepad2, Eye, Crown, Settings, ChevronRight, Camera, Video, Send,
 } from 'lucide-react'
 import { Header } from '@/components/common/Header'
@@ -10,36 +10,18 @@ import { Footer } from '@/components/common/Footer'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/components/common/ToastContainer'
 
-const MOCK_PROFILE = {
-  id: 'me',
-  username: 'disque_user',
-  avatar: 'https://i.pravatar.cc/150?img=68',
-  bio: 'Adoro conhecer pessoas novas e conversar sobre tecnologia, viagens e música! 🎵✈️💻',
-  age: 28,
-  city: 'São Paulo',
-  languages: ['Português', 'Inglês', 'Espanhol'],
-  hobbies: ['Tecnologia', 'Viagens', 'Música', 'Fotografia', 'Games'],
-  subscription_tier: 'basic' as string,
-  stars_balance: 150,
-  is_online: true,
-  is_featured: false,
-  is_creator: false,
-  joined_at: '2024-06-15',
-  stats: {
-    rooms_visited: 47,
-    messages_sent: 1234,
-    time_online_hours: 89,
-    games_played: 15,
-  },
-  badges: [
-    { id: 'early', name: 'Early Adopter', emoji: '🏆', description: 'Um dos primeiros usuários' },
-    { id: 'social', name: 'Social Butterfly', emoji: '🦋', description: 'Visitou 25+ salas' },
-    { id: 'chatter', name: 'Tagarela', emoji: '💬', description: 'Enviou 1000+ mensagens' },
-    { id: 'gamer', name: 'Jogador', emoji: '🎮', description: 'Participou de 10+ jogos' },
-  ],
-}
-
 type Tab = 'profile' | 'stats' | 'settings'
+
+/** Calculate age from birth date string */
+function calcAge(birthDate?: string | null): number | null {
+  if (!birthDate) return null
+  const birth = new Date(birthDate)
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age
+}
 
 export const ProfilePage = () => {
   const { userId } = useParams()
@@ -51,36 +33,47 @@ export const ProfilePage = () => {
   const [showPrivateChat, setShowPrivateChat] = useState(false)
   const [privateChatMessages, setPrivateChatMessages] = useState<{ text: string; fromMe: boolean }[]>([])
   const [privateChatInput, setPrivateChatInput] = useState('')
+
+  // Editable fields
+  const [editBio, setEditBio] = useState('')
+  const [editCity, setEditCity] = useState('')
+
+  const user = useAuthStore((s) => s.user)
   const authProfile = useAuthStore((s) => s.profile)
   const updateProfile = useAuthStore((s) => s.updateProfile)
   const { addToast } = useToastStore()
   const isOwnProfile = userId === 'me' || userId === authProfile?.id
-  
-  // Use real profile if logged in and viewing own profile, else minimal placeholder
-  const profile = (isOwnProfile && authProfile) ? {
-    ...MOCK_PROFILE,
-    id: authProfile.id,
-    username: authProfile.username || authProfile.display_name || 'Usuário',
-    bio: authProfile.bio || 'Olá! Sou novo(a) no Disque Amizade 👋',
-    city: authProfile.cidade || authProfile.city || '',
-    avatar: authProfile.avatar_url || '',
-    stars_balance: authProfile.saldo_fichas || 0,
-    subscription_tier: authProfile.subscription_tier || 'free',
-    is_creator: authProfile.is_creator || false,
+
+  // Build profile from real data
+  const birthDate = user?.user_metadata?.birth_date || null
+  const age = calcAge(birthDate)
+
+  const profile = {
+    id: authProfile?.id || '',
+    username: authProfile?.username || authProfile?.display_name || 'Usuário',
+    avatar: authProfile?.avatar_url || '',
+    bio: authProfile?.bio || '',
+    city: authProfile?.cidade || authProfile?.city || '',
+    age,
+    subscription_tier: authProfile?.subscription_tier || 'free',
+    stars_balance: authProfile?.saldo_fichas || 0,
+    is_online: true,
+    is_featured: false,
+    is_creator: authProfile?.is_creator || false,
+    joined_at: authProfile?.created_at || new Date().toISOString(),
     stats: {
-      rooms_visited: authProfile.rooms_visited || 0,
-      messages_sent: authProfile.messages_sent || 0,
-      time_online_hours: authProfile.time_online_minutes ? Math.floor(authProfile.time_online_minutes / 60) : 0,
-      games_played: authProfile.games_played || 0,
+      rooms_visited: authProfile?.rooms_visited || 0,
+      messages_sent: authProfile?.messages_sent || 0,
+      time_online_hours: authProfile?.time_online_minutes ? Math.floor(authProfile.time_online_minutes / 60) : 0,
+      games_played: authProfile?.games_played || 0,
     },
-  } : MOCK_PROFILE
+  }
 
   // Room context passed via navigation state
   const roomState = (location.state as { fromRoom?: string; participantData?: any }) || {}
   const fromRoom = roomState.fromRoom
   const participantData = roomState.participantData
 
-  // Use participant data from room if available, otherwise use mock profile
   const displayName = participantData?.username || profile.username
   const displayAvatar = participantData?.avatar || profile.avatar
   const hasVideo = participantData?.videoEnabled ?? false
@@ -93,6 +86,22 @@ export const ProfilePage = () => {
       const replies = ['Oi! 😊', 'Tudo bem?', 'Que legal!', 'Hahaha', 'Valeu! ❤️', 'Bora conversar!']
       setPrivateChatMessages(prev => [...prev, { text: replies[Math.floor(Math.random() * replies.length)], fromMe: false }])
     }, 2000)
+  }
+
+  const handleStartEditing = () => {
+    setEditBio(profile.bio)
+    setEditCity(profile.city)
+    setIsEditing(true)
+  }
+
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile({ bio: editBio, cidade: editCity } as any)
+      addToast({ type: 'success', title: 'Salvo!', message: 'Perfil atualizado com sucesso' })
+      setIsEditing(false)
+    } catch {
+      addToast({ type: 'error', title: 'Erro', message: 'Não foi possível atualizar o perfil' })
+    }
   }
 
   return (
@@ -161,7 +170,7 @@ export const ProfilePage = () => {
                 )}
                 {isOwnProfile && (
                   <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={isEditing ? handleSaveProfile : handleStartEditing}
                     className="btn-secondary btn-sm"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -189,7 +198,34 @@ export const ProfilePage = () => {
               </div>
             </div>
 
-            <p className="text-dark-400 text-sm mb-4 max-w-xl">{profile.bio}</p>
+            {isEditing ? (
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-xs text-dark-500 mb-1 block">Bio</label>
+                  <textarea
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    placeholder="Conte um pouco sobre você..."
+                    className="input w-full h-20 resize-none text-sm"
+                    maxLength={200}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-dark-500 mb-1 block">Cidade</label>
+                  <input
+                    type="text"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    placeholder="Ex: São Paulo, SP"
+                    className="input w-full text-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-dark-400 text-sm mb-4 max-w-xl">
+                {profile.bio || (isOwnProfile ? 'Clique em Editar para adicionar uma bio 👋' : 'Sem bio ainda.')}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-3 text-xs text-dark-400">
               {profile.city && (
@@ -198,18 +234,20 @@ export const ProfilePage = () => {
               {profile.age && (
                 <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{profile.age} anos</span>
               )}
-              <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{profile.languages.join(', ')}</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Desde {new Date(profile.joined_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Desde {new Date(profile.joined_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
+              </span>
             </div>
 
-            {/* Hobbies */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              {profile.hobbies.map((h) => (
-                <span key={h} className="px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/15 text-xs text-primary-400 font-medium">
-                  {h}
+            {/* Fichas balance */}
+            {isOwnProfile && (
+              <div className="mt-4 flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-semibold">
+                  💰 {profile.stars_balance} fichas
                 </span>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -238,22 +276,6 @@ export const ProfilePage = () => {
         {/* ═══ PROFILE TAB ═══ */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            {/* Badges */}
-            <div className="card p-6">
-              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-400" /> Conquistas
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {profile.badges.map((badge) => (
-                  <div key={badge.id} className="card p-3 text-center hover:border-amber-500/20 transition-all">
-                    <div className="text-3xl mb-2">{badge.emoji}</div>
-                    <p className="text-sm font-semibold text-white">{badge.name}</p>
-                    <p className="text-[10px] text-dark-500 mt-1">{badge.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Become Creator CTA */}
             {isOwnProfile && !profile.is_creator && (
               <div className="card p-6 border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-transparent">
@@ -282,23 +304,21 @@ export const ProfilePage = () => {
               </div>
             )}
 
-            {/* Featured Profile CTA */}
-            {isOwnProfile && !profile.is_featured && (
-              <div className="card p-6 border border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent">
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">⭐</div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-white mb-1">Perfil em Destaque</h3>
-                    <p className="text-xs text-dark-400 mb-3">
-                      Apareça no carrossel da página inicial! Mais visibilidade = mais conexões.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all">1 dia — R$ 9,90</button>
-                      <button className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all">7 dias — R$ 49,90</button>
-                      <button className="btn-sm bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-all font-bold">30 dias — R$ 149,90</button>
-                    </div>
-                  </div>
-                </div>
+            {/* Empty state for new profiles */}
+            {isOwnProfile && !profile.bio && (
+              <div className="card p-8 text-center">
+                <div className="text-5xl mb-3">👋</div>
+                <h3 className="font-bold text-white mb-2">Complete seu perfil!</h3>
+                <p className="text-sm text-dark-400 mb-4">
+                  Adicione uma bio e sua cidade para que outros usuários possam te conhecer melhor.
+                </p>
+                <button
+                  onClick={handleStartEditing}
+                  className="btn-primary px-6 py-2"
+                >
+                  <Edit3 className="w-4 h-4 mr-2 inline" />
+                  Editar Perfil
+                </button>
               </div>
             )}
           </div>
@@ -308,7 +328,7 @@ export const ProfilePage = () => {
         {activeTab === 'stats' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card p-5 text-center">
-              <MessageCircle className="w-8 h-8 text-primary-400 mx-auto mb-2" />
+              <Users className="w-8 h-8 text-primary-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">{profile.stats.rooms_visited}</div>
               <div className="text-xs text-dark-500 mt-1">Salas Visitadas</div>
             </div>
@@ -386,11 +406,10 @@ export const ProfilePage = () => {
       </main>
       <Footer />
 
-      {/* ─── Camera Modal (from chat room, not roulette) ─── */}
+      {/* ─── Camera Modal ─── */}
       {showCameraModal && !isOwnProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowCameraModal(false)}>
           <div className="card w-full max-w-2xl animate-slide-up bg-dark-950 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            {/* Video area */}
             <div className="aspect-video bg-dark-900 rounded-t-2xl overflow-hidden relative">
               {hasVideo ? (
                 <>
@@ -403,18 +422,21 @@ export const ProfilePage = () => {
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
-                    <img src={displayAvatar} alt={displayName} className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-white/20" />
+                    <div className="w-20 h-20 rounded-full mx-auto mb-3 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-white">{displayName[0]?.toUpperCase()}</span>
+                    </div>
                     <p className="text-sm text-dark-400">📷 {displayName} está sem câmera no momento</p>
                   </div>
                 </div>
               )}
               <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                <img src={displayAvatar} alt="" className="w-10 h-10 rounded-full border-2 border-white/30" />
+                <div className="w-10 h-10 rounded-full border-2 border-white/30 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{displayName[0]?.toUpperCase()}</span>
+                </div>
                 <span className="text-sm font-bold text-white">{displayName}</span>
               </div>
             </div>
 
-            {/* Actions */}
             <div className="p-4 space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <button
@@ -434,7 +456,6 @@ export const ProfilePage = () => {
                   </button>
                 )}
               </div>
-
               <div className="flex justify-end">
                 <button onClick={() => setShowCameraModal(false)} className="px-4 py-2 rounded-xl bg-white/[0.06] text-sm text-dark-300 hover:text-white hover:bg-white/[0.1] transition-all">
                   Fechar
@@ -449,9 +470,10 @@ export const ProfilePage = () => {
       {showPrivateChat && !isOwnProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowPrivateChat(false)}>
           <div className="card w-full max-w-md animate-slide-up bg-dark-950 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b border-white/5">
-              <img src={displayAvatar} alt="" className="w-10 h-10 rounded-full border border-white/10" />
+              <div className="w-10 h-10 rounded-full border border-white/10 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                <span className="text-sm font-bold text-white">{displayName[0]?.toUpperCase()}</span>
+              </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-white">{displayName}</p>
                 <p className="text-[10px] text-emerald-400">Online</p>
@@ -468,7 +490,6 @@ export const ProfilePage = () => {
               </button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-[200px]">
               {privateChatMessages.length === 0 && (
                 <p className="text-xs text-dark-600 text-center py-8">Envie a primeira mensagem para {displayName}! 💬</p>
@@ -482,7 +503,6 @@ export const ProfilePage = () => {
               ))}
             </div>
 
-            {/* Input */}
             <div className="border-t border-white/5 p-3">
               <form onSubmit={(e) => { e.preventDefault(); handleSendPrivateChat() }} className="flex gap-2">
                 <input

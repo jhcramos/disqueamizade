@@ -53,7 +53,7 @@ export const AuthPage = () => {
           setLoading(false)
           return
         }
-        await signUp(email, password, username, { is_creator: isCreator })
+        await signUp(email, password, username, { is_creator: isCreator, birth_date: birthDate })
         addToast({ type: 'success', title: 'Conta criada!', message: 'Verifique seu email para confirmar' })
       }
       navigate('/')
