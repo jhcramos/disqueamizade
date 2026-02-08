@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Star, MapPin, X, Calendar, ChevronLeft, ChevronRight, Eye, Users, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Search, Star, MapPin, ChevronLeft, ChevronRight, Eye, Users, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { AgeGate } from '@/components/common/AgeGate'
-import { mockCreators } from '@/data/mockCreators'
+import { useCreators } from '@/hooks/useSupabaseData'
 
 const VISUAL_CATEGORIES = [
   { value: 'all', label: 'Todos', emoji: '🌟', color: 'from-purple-500/20 to-pink-500/20' },
@@ -27,36 +27,14 @@ export const MarketplacePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'rating' | 'price' | 'reviews'>('rating')
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [showBookingModal, setShowBookingModal] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
+  const { creators: dbCreators } = useCreators()
 
-  const featuredCreators = useMemo(() => mockCreators.filter(c => c.isFeatured || c.isLive), [])
-  const liveCreators = useMemo(() => mockCreators.filter(c => c.isLive), [])
-  const adultCreators = useMemo(() => mockCreators.filter(c => c.serviceCategory === 'adulto'), [])
-
-  const filteredCreators = useMemo(() => {
-    let results = [...mockCreators]
-    if (selectedCategory !== 'all') {
-      results = results.filter(c => c.serviceCategory === selectedCategory)
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      results = results.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.service.toLowerCase().includes(q) ||
-        c.tags.some(t => t.toLowerCase().includes(q))
-      )
-    }
-    results.sort((a, b) => {
-      if (sortBy === 'rating') return b.rating - a.rating
-      if (sortBy === 'price') return a.priceInFichas - b.priceInFichas
-      return b.reviewCount - a.reviewCount
-    })
-    return results
-  }, [selectedCategory, searchQuery, sortBy])
-
-  const provider = selectedProvider ? mockCreators.find(c => c.id === selectedProvider) : null
+  const featuredCreators: any[] = []
+  const liveCreators: any[] = []
+  const adultCreators: any[] = []
+  const filteredCreators: any[] = dbCreators
 
   const scrollCarousel = (dir: 'left' | 'right') => {
     if (carouselRef.current) {
@@ -88,10 +66,10 @@ export const MarketplacePage = () => {
             {/* Stats */}
             <div className="flex justify-center gap-8 md:gap-16">
               {[
-                { label: 'Creators', value: '200+', icon: Users },
-                { label: 'Sessões', value: '50k+', icon: TrendingUp },
-                { label: 'Satisfação', value: '97%', icon: Star },
-                { label: 'Ao Vivo Agora', value: String(liveCreators.length), icon: Eye },
+                { label: 'Creators', value: String(dbCreators.length), icon: Users },
+                { label: 'Sessões', value: '0', icon: TrendingUp },
+                { label: 'Satisfação', value: '-', icon: Star },
+                { label: 'Ao Vivo Agora', value: '0', icon: Eye },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <s.icon className="w-5 h-5 mx-auto mb-1 text-purple-400" />
@@ -242,7 +220,7 @@ export const MarketplacePage = () => {
                           <span className="text-sm font-bold text-amber-400 ml-auto">{c.priceInFichas} ⭐</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {c.tags.slice(0, 3).map(tag => (
+                          {c.tags.slice(0, 3).map((tag: string) => (
                             <span key={tag} className="px-2 py-0.5 rounded-full bg-pink-500/10 text-[10px] text-pink-400/60">{tag}</span>
                           ))}
                         </div>
@@ -349,7 +327,7 @@ export const MarketplacePage = () => {
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
                     <div className="flex flex-wrap gap-1">
-                      {c.tags.slice(0, 3).map(tag => (
+                      {c.tags.slice(0, 3).map((tag: string) => (
                         <span key={tag} className="px-2 py-0.5 rounded-full bg-white/[0.04] text-[10px] text-dark-400">{tag}</span>
                       ))}
                     </div>
@@ -373,97 +351,19 @@ export const MarketplacePage = () => {
 
           {filteredCreators.length === 0 && (
             <div className="text-center py-16">
-              <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-xl font-bold text-white mb-2">Nenhum creator encontrado</h3>
-              <p className="text-dark-500 text-sm">Tente outra categoria ou busca.</p>
+              <div className="text-5xl mb-4">🎬</div>
+              <h3 className="text-xl font-bold text-white mb-2">Seja o primeiro Creator!</h3>
+              <p className="text-dark-500 text-sm mb-6">
+                Nenhum creator cadastrado ainda. Crie seu perfil de creator e comece a oferecer serviços.
+              </p>
+              <Link to="/profile/me" className="btn-primary inline-flex items-center gap-2 py-3 px-6">
+                <Zap className="w-4 h-4" /> Tornar-se Creator
+              </Link>
             </div>
           )}
         </section>
       </main>
       <Footer />
-
-      {/* Provider Detail Modal */}
-      {provider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedProvider(null)}>
-          <div className="bg-dark-950 border border-white/10 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <img src={provider.avatar} alt="" className="w-16 h-16 rounded-xl object-cover border border-white/10" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-bold text-white">{provider.name}</h2>
-                      {provider.isVerified && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
-                    </div>
-                    <p className="text-sm text-dark-400">{provider.serviceEmoji} {provider.service}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-amber-400 flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-amber-400" /> {provider.rating}</span>
-                      <span className="text-xs text-dark-500">({provider.reviewCount} avaliações)</span>
-                    </div>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedProvider(null)} className="p-2 rounded-xl text-dark-400 hover:text-white hover:bg-white/5 transition-all">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <p className="text-sm text-dark-300 mb-6">{provider.bio}</p>
-
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 text-center">
-                  <div className="text-lg font-bold text-white">{provider.sessionsCompleted}</div>
-                  <div className="text-[10px] text-dark-500">Sessões</div>
-                </div>
-                <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 text-center">
-                  <div className="text-lg font-bold text-emerald-400">{provider.satisfactionRate}%</div>
-                  <div className="text-[10px] text-dark-500">Satisfação</div>
-                </div>
-                <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 text-center">
-                  <div className="text-lg font-bold text-amber-400">{provider.priceInFichas}⭐</div>
-                  <div className="text-[10px] text-dark-500">Por sessão</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {provider.tags.map(tag => (
-                  <span key={tag} className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/15 text-xs text-purple-400">{tag}</span>
-                ))}
-              </div>
-
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-purple-400" /> Disponibilidade
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {provider.schedule.map(slot => (
-                    <span key={slot} className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/5 text-xs text-dark-300">{slot}</span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Link to={`/creator/${provider.id}`} className="btn-primary flex-1 py-3 text-center">
-                  Ver Perfil Completo
-                </Link>
-                <button
-                  onClick={() => {
-                    setShowBookingModal(true)
-                    setSelectedProvider(null)
-                  }}
-                  className="btn-amber flex-1 py-3"
-                >
-                  Agendar — {provider.priceInFichas}⭐
-                </button>
-              </div>
-              {provider.camaroteIsOpen && (
-                <button className="w-full mt-3 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-300 text-sm font-medium hover:bg-emerald-500/25 transition-all flex items-center justify-center gap-2">
-                  <Users className="w-4 h-4" /> Visitar Camarote ({provider.camaroteViewers}/{provider.camaroteCapacity})
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Booking Confirmation Modal */}
       {showBookingModal && (

@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Check, X, Coins, ChevronDown, ChevronUp, Crown, Zap, Gift, Star, Eye, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { spotlightPricing } from '../data/mockCreators'
 import { OSTENTACAO_THRESHOLD } from '../config/plans.config'
+import { useFichaPackages } from '../hooks/useSupabaseData'
+import { checkoutService } from '../services/stripe/checkout.service'
+import { useAuthStore } from '../store/authStore'
 
 const plans = [
   {
@@ -69,14 +72,12 @@ const plans = [
   },
 ]
 
-const fichaPackages = [
-  { id: 'f1', amount: 50, price: 'R$9,90', perFicha: 'R$0,20' },
-  { id: 'f2', amount: 150, price: 'R$24,90', perFicha: 'R$0,17' },
-  { id: 'f3', amount: 500, price: 'R$69,90', perFicha: 'R$0,14', popular: true, bonus: '+50 bônus' },
-  { id: 'f4', amount: 1500, price: 'R$179,90', perFicha: 'R$0,12', bonus: '+200 bônus' },
-  { id: 'f5', amount: 3000, price: 'R$349,90', perFicha: 'R$0,12', bonus: '+500 bônus' },
-  { id: 'f6', amount: 5000, price: 'R$499,90', perFicha: 'R$0,10', bonus: '+1000 bônus' },
-  { id: 'f7', amount: 10000, price: 'R$899,90', perFicha: 'R$0,09', bonus: '+2500 bônus' },
+// Fallback packages (used if Supabase not available)
+const fallbackFichaPackages = [
+  { id: 'f1', amount: 100, price: 'R$9,90', perFicha: 'R$0,10', stripe_price_id: '' },
+  { id: 'f2', amount: 350, price: 'R$29,90', perFicha: 'R$0,09', stripe_price_id: '' },
+  { id: 'f3', amount: 650, price: 'R$49,90', perFicha: 'R$0,08', popular: true, stripe_price_id: '' },
+  { id: 'f4', amount: 1500, price: 'R$99,90', perFicha: 'R$0,07', stripe_price_id: '' },
 ]
 
 const faqs = [
@@ -116,6 +117,32 @@ const faqs = [
 
 export const PricingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const { packages: dbPackages } = useFichaPackages()
+  const user = useAuthStore((s) => s.user)
+
+  // Map DB packages to display format, or use fallback
+  const fichaPackages = useMemo(() => {
+    if (dbPackages.length > 0) {
+      return dbPackages.map((pkg: any, i: number) => ({
+        id: pkg.id,
+        amount: pkg.fichas,
+        price: `R$${pkg.price_brl.toFixed(2).replace('.', ',')}`,
+        perFicha: `R$${(pkg.price_brl / pkg.fichas).toFixed(2).replace('.', ',')}`,
+        stripe_price_id: pkg.stripe_price_id,
+        popular: i === 2, // 3rd package is popular
+      }))
+    }
+    return fallbackFichaPackages
+  }, [dbPackages])
+
+  const handleBuyFichas = async (pkg: any) => {
+    if (!pkg.stripe_price_id) return
+    try {
+      await checkoutService.createCheckout(pkg.stripe_price_id, user?.id)
+    } catch (err) {
+      console.error('Checkout failed:', err)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
@@ -294,10 +321,10 @@ export const PricingPage = () => {
                   </div>
                 </div>
 
-                {pkg.bonus && (
+                {(pkg as any).bonus && (
                   <div className="flex items-center gap-1 mb-3 px-2 py-1 rounded-md bg-success/10 border border-success/15 w-fit">
                     <Gift className="w-3 h-3 text-success" />
-                    <span className="text-[11px] text-success font-semibold">{pkg.bonus}</span>
+                    <span className="text-[11px] text-success font-semibold">{(pkg as any).bonus}</span>
                   </div>
                 )}
 
@@ -306,7 +333,10 @@ export const PricingPage = () => {
                     <div className="text-lg font-bold text-white">{pkg.price}</div>
                     <div className="text-[11px] text-dark-500">{pkg.perFicha}/ficha</div>
                   </div>
-                  <button className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-dark-950 rounded-lg font-semibold text-xs transition-all">
+                  <button
+                    onClick={() => handleBuyFichas(pkg)}
+                    className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-dark-950 rounded-lg font-semibold text-xs transition-all"
+                  >
                     Comprar
                   </button>
                 </div>

@@ -56,17 +56,23 @@ export const ProfilePage = () => {
   const { addToast } = useToastStore()
   const isOwnProfile = userId === 'me' || userId === authProfile?.id
   
-  // Use real profile if logged in and viewing own profile, else mock
+  // Use real profile if logged in and viewing own profile, else minimal placeholder
   const profile = (isOwnProfile && authProfile) ? {
     ...MOCK_PROFILE,
     id: authProfile.id,
-    username: authProfile.username || authProfile.display_name || MOCK_PROFILE.username,
-    bio: authProfile.bio || MOCK_PROFILE.bio,
-    city: authProfile.cidade || authProfile.city || MOCK_PROFILE.city,
-    avatar: authProfile.avatar_url || MOCK_PROFILE.avatar,
+    username: authProfile.username || authProfile.display_name || 'Usuário',
+    bio: authProfile.bio || 'Olá! Sou novo(a) no Disque Amizade 👋',
+    city: authProfile.cidade || authProfile.city || '',
+    avatar: authProfile.avatar_url || '',
     stars_balance: authProfile.saldo_fichas || 0,
     subscription_tier: authProfile.subscription_tier || 'free',
     is_creator: authProfile.is_creator || false,
+    stats: {
+      rooms_visited: authProfile.rooms_visited || 0,
+      messages_sent: authProfile.messages_sent || 0,
+      time_online_hours: authProfile.time_online_minutes ? Math.floor(authProfile.time_online_minutes / 60) : 0,
+      games_played: authProfile.games_played || 0,
+    },
   } : MOCK_PROFILE
 
   // Room context passed via navigation state
@@ -113,11 +119,17 @@ export const ProfilePage = () => {
             {/* Avatar */}
             <div className="relative -mt-16 mb-4 flex items-end justify-between">
               <div className="relative">
-                <img
-                  src={profile.avatar}
-                  alt={profile.username}
-                  className="w-28 h-28 rounded-2xl object-cover border-4 border-dark-950 shadow-elevated"
-                />
+                {profile.avatar && !profile.avatar.includes('pravatar') ? (
+                  <img
+                    src={profile.avatar}
+                    alt={profile.username}
+                    className="w-28 h-28 rounded-2xl object-cover border-4 border-dark-950 shadow-elevated"
+                  />
+                ) : (
+                  <div className="w-28 h-28 rounded-2xl border-4 border-dark-950 shadow-elevated bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-white">{profile.username[0]?.toUpperCase() || '?'}</span>
+                  </div>
+                )}
                 <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-dark-950 ${
                   profile.is_online ? 'bg-emerald-400' : 'bg-dark-600'
                 }`} />

@@ -65,11 +65,19 @@ export const RoomCard = ({ room }: RoomCardProps) => {
         {/* Footer */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img
-              src={room.owner.avatar}
-              alt={room.owner.username}
-              className="w-5 h-5 rounded-full object-cover border border-white/10"
-            />
+            {room.owner.avatar && !room.owner.avatar.includes('pravatar') ? (
+              <img
+                src={room.owner.avatar}
+                alt={room.owner.username}
+                className="w-5 h-5 rounded-full object-cover border border-white/10"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center border border-white/10">
+                <span className="text-[8px] font-bold text-white">
+                  {room.is_official ? '🎯' : (room.owner.username?.[0] || '?').toUpperCase()}
+                </span>
+              </div>
+            )}
             <span className="text-[11px] text-dark-500">
               {room.is_official ? 'Disque Amizade' : room.owner.username}
             </span>

@@ -1,49 +1,58 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Search, Plus, Users, Zap } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { RoomCard } from '@/components/rooms/RoomCard'
 import { CreateRoomModal } from '@/components/rooms/CreateRoomModal'
+import type { MockRoom } from '@/types'
 import { mockRooms, roomCategories } from '@/data/mockRooms'
-import { databaseService } from '@/services/supabase/database.service'
+import { useRooms } from '@/hooks/useSupabaseData'
+
+type RoomCategory = MockRoom['category']
+
+/** Map DB room to MockRoom shape for RoomCard compatibility */
+function mapDbRoom(r: any): MockRoom {
+  // Determine category from cidade or name
+  let category: RoomCategory = 'hobby'
+  if (r.cidade) category = 'cidade'
+  else if (r.name.match(/\d+-\d+|46\+/)) category = 'idade'
+  else if (r.name.match(/Games|🎮/)) category = 'gamer'
+  else if (r.name.match(/English|Español|Français/)) category = 'idioma'
+  else if (r.name.match(/VIP|Diamond|Karaokê|DJ|Dança|Speed/)) category = 'especial'
+
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description || '',
+    category,
+    theme: r.cidade || '',
+    participants: r.current_participants || 0,
+    max_users: r.max_participants || 30,
+    is_private: false,
+    owner: { username: 'Disque Amizade', avatar: '' },
+    has_video: true,
+    online_count: r.current_participants || 0,
+    badge_color: 'primary',
+    is_official: true,
+    is_fixed: true,
+    room_type: r.ficha_cost > 0 ? 'vip' : 'official',
+    entry_cost_fichas: r.ficha_cost || 0,
+  }
+}
 
 export const RoomsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [dbRooms, setDbRooms] = useState<any[] | null>(null)
+  const { rooms: dbRooms, loading, error: _error } = useRooms()
 
-  // Fetch rooms from Supabase, fall back to mock
-  useEffect(() => {
-    databaseService.getRooms()
-      .then((rooms) => {
-        if (rooms && rooms.length > 0) {
-          // Map DB rooms to MockRoom shape for RoomCard compat
-          const mapped = rooms.map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            description: r.description || '',
-            category: r.category || 'cidade',
-            theme: r.theme || '',
-            participants: 0,
-            max_users: r.max_users || 30,
-            is_private: r.is_private || false,
-            owner: { username: 'Sistema', avatar: '' },
-            has_video: true,
-            online_count: Math.floor(Math.random() * 15),
-            badge_color: 'primary',
-            is_official: r.is_fixed || true,
-            room_type: r.room_type || 'official',
-            entry_cost_fichas: r.entry_cost_fichas || 0,
-            is_fixed: r.is_fixed || false,
-          }))
-          setDbRooms(mapped)
-        }
-      })
-      .catch(() => { /* use mock data */ })
-  }, [])
-
-  const rooms = dbRooms || mockRooms
+  // Use DB rooms if available, fall back to mock
+  const rooms = useMemo(() => {
+    if (dbRooms && dbRooms.length > 0) {
+      return dbRooms.map(mapDbRoom)
+    }
+    return mockRooms
+  }, [dbRooms])
 
   const filteredRooms = useMemo(() => {
     return rooms.filter((room: any) => {
@@ -141,8 +150,16 @@ export const RoomsPage = () => {
           </div>
         </div>
 
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-16">
+            <div className="text-4xl mb-4 animate-pulse">⏳</div>
+            <p className="text-dark-400">Carregando salas...</p>
+          </div>
+        )}
+
         {/* Official Rooms Section */}
-        {officialRooms.length > 0 && (
+        {!loading && officialRooms.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-amber-400" />
@@ -158,7 +175,7 @@ export const RoomsPage = () => {
         )}
 
         {/* Community Rooms Section */}
-        {communityRooms.length > 0 && (
+        {!loading && communityRooms.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-primary-400" />
@@ -174,7 +191,7 @@ export const RoomsPage = () => {
         )}
 
         {/* No rooms found */}
-        {filteredRooms.length === 0 && (
+        {!loading && filteredRooms.length === 0 && (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-bold text-white mb-2">Nenhuma sala encontrada</h3>

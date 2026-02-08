@@ -2,14 +2,10 @@ import { Link } from 'react-router-dom'
 import { MessageCircle, ShoppingBag, Users, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
-import { mockRooms } from '../data/mockRooms'
-import { getLiveCreators } from '../data/mockCreators'
+import { useRooms, useStats } from '../hooks/useSupabaseData'
 import { getPopularHobbies } from '../data/mockHobbies'
 
-const popularRooms = mockRooms.filter((r) => r.online_count > 10 && r.category !== 'adulta').slice(0, 6)
-const adultRooms = mockRooms.filter((r) => r.category === 'adulta')
 const popularHobbies = getPopularHobbies()
-const liveCreators = getLiveCreators()
 
 const features = [
   {
@@ -51,21 +47,21 @@ const testimonials = [
     name: 'Mariana S.',
     city: 'São Paulo, SP',
     text: 'A roleta é incrível! Já fiz amizades de verdade conversando com pessoas aleatórias.',
-    avatar: 'https://i.pravatar.cc/100?img=1',
+    initials: 'MS',
     rating: 5,
   },
   {
     name: 'Carlos R.',
     city: 'Rio de Janeiro, RJ',
     text: 'As aulas de guitarra pelo marketplace são excelentes. Pagar com fichas é muito prático!',
-    avatar: 'https://i.pravatar.cc/100?img=3',
+    initials: 'CR',
     rating: 5,
   },
   {
     name: 'Ana Paula M.',
     city: 'Curitiba, PR',
     text: 'O speed dating é viciante! 3 minutos de conversa e já consegui 3 matches.',
-    avatar: 'https://i.pravatar.cc/100?img=9',
+    initials: 'AP',
     rating: 4,
   },
 ]
@@ -176,6 +172,25 @@ if (!document.querySelector('#disque-home-styles')) {
 
 export const HomePage = () => {
   const heroImage = getWeeklyHeroImage()
+  const { rooms: dbRooms } = useRooms()
+  const stats = useStats()
+
+  // Map DB rooms to display format
+  const allRooms = dbRooms.map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description || '',
+    participants: r.current_participants || 0,
+    max_users: r.max_participants || 30,
+    online_count: r.current_participants || 0,
+    category: r.cidade ? 'cidade' : 'hobby',
+    room_type: r.ficha_cost > 0 ? 'vip' : 'official',
+    entry_cost_fichas: r.ficha_cost || 0,
+    is_official: true,
+  }))
+
+  const popularRooms = allRooms.slice(0, 6)
+  const adultRooms: any[] = [] // No adult rooms in DB yet - show none instead of fake
 
   return (
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
@@ -275,24 +290,24 @@ export const HomePage = () => {
           <div className="glass-strong rounded-2xl py-6 px-8 max-w-3xl mx-auto">
             <div className="flex items-center justify-center gap-8 md:gap-14">
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-white">{mockRooms.length}+</div>
+                <div className="text-3xl md:text-4xl font-black text-white">{stats.totalRooms || allRooms.length}</div>
                 <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Salas Ativas</div>
               </div>
               <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
               <div className="text-center">
                 <div className="text-3xl md:text-4xl font-black text-white">
-                  {mockRooms.reduce((a, r) => a + r.online_count, 0).toLocaleString()}+
+                  {stats.totalOnline}
                 </div>
                 <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Online Agora</div>
               </div>
               <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-amber-400">20+</div>
+                <div className="text-3xl md:text-4xl font-black text-amber-400">{stats.totalCreators}</div>
                 <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Creators</div>
               </div>
               <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
               <div className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-pink-400">{liveCreators.length}</div>
+                <div className="text-3xl md:text-4xl font-black text-pink-400">{stats.totalLive}</div>
                 <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Ao Vivo</div>
               </div>
             </div>
@@ -489,7 +504,7 @@ export const HomePage = () => {
       </section>
 
       {/* ═══════════════════ 🔞 SALAS ADULTAS ═══════════════════ */}
-      <section className="relative w-full overflow-hidden">
+      {adultRooms.length > 0 && <section className="relative w-full overflow-hidden">
         {/* Banner background */}
         <div className="absolute inset-0">
           <img 
@@ -562,7 +577,7 @@ export const HomePage = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ═══════════════════ HOBBIES ═══════════════════ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
@@ -619,11 +634,9 @@ export const HomePage = () => {
                 </div>
                 <p className="text-base text-dark-200 mb-6 leading-relaxed italic">"{t.text}"</p>
                 <div className="flex items-center gap-4">
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="w-12 h-12 rounded-full ring-2 ring-primary-500/30"
-                  />
+                  <div className="w-12 h-12 rounded-full ring-2 ring-primary-500/30 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
+                    {t.initials}
+                  </div>
                   <div>
                     <p className="text-base font-bold text-white">{t.name}</p>
                     <p className="text-xs text-dark-400 mt-0.5">{t.city}</p>
