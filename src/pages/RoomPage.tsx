@@ -11,6 +11,7 @@ import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
+import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
 const BOT_NAMES = ['ana_sp', 'joao_rj', 'maria_bh', 'pedro_cwb', 'carlos_poa', 'lucia_ssa', 'fernanda_rec', 'rafael_bsb']
@@ -77,7 +78,14 @@ export const RoomPage = () => {
   const [activeMask, setActiveMask] = useState<string | null>(null)
   const [beautySmooth, setBeautySmooth] = useState(false)
   const [beautyBrighten, setBeautyBrighten] = useState(false)
+  const [selectedBg, setSelectedBg] = useState<string | null>(null)
+  const [bgImage, setBgImage] = useState<string | null>(null)
   const filterStyle = FILTER_CSS[activeFilter] || 'none'
+
+  const handleBgSelect = (bg: BackgroundOption) => {
+    setSelectedBg(bg.id)
+    setBgImage(bg.src)
+  }
   const [botCount] = useState(() => 3 + Math.floor(Math.random() * 6))
 
   // ─── REAL CAMERA ───
@@ -355,6 +363,14 @@ export const RoomPage = () => {
             <div className="grid gap-3 h-full grid-cols-1 max-w-2xl mx-auto">
               {/* ═══ YOUR REAL CAMERA TILE ═══ */}
               <div ref={cameraTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                {/* Virtual Background Layer */}
+                {bgImage && bgImage !== 'blur' && isCameraOn && (
+                  <img src={bgImage} alt="Background" className="absolute inset-0 w-full h-full object-cover z-0" />
+                )}
+                {bgImage === 'blur' && isCameraOn && (
+                  <div className="absolute inset-0 z-0 backdrop-blur-xl bg-dark-800/50" />
+                )}
+
                 {isCameraOn && stream ? (
                   <>
                     <video
@@ -362,7 +378,7 @@ export const RoomPage = () => {
                       autoPlay
                       playsInline
                       muted
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className={`absolute inset-0 w-full h-full object-cover ${bgImage && bgImage !== 'blur' ? 'z-10 mix-blend-normal' : ''}`}
                       style={{
                         filter: [
                           filterStyle !== 'none' ? filterStyle : '',
@@ -479,6 +495,7 @@ export const RoomPage = () => {
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
               <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
+              <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
               <button
                 onClick={() => setShowCreateCamarote(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold"
