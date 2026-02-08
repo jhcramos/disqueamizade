@@ -41,12 +41,17 @@ export const matchmaking = {
           // Both users will see the match via presence sync
           // The "lower" ID initiates to avoid double-matching
           if (userId < peerId) {
-            // I'm the initiator — broadcast match via channel
+            // I'm the initiator — broadcast match to peer and trigger locally
             channel!.send({
               type: 'broadcast',
               event: 'match',
               payload: { initiator: userId, peer: peerId, roomId },
             })
+            // Trigger match for myself too (broadcasts don't echo back)
+            if (matchTimeout) clearTimeout(matchTimeout)
+            onStatus('matched')
+            onMatch(peerId, roomId)
+            channel!.untrack()
           }
         }
       })

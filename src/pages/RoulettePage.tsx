@@ -102,7 +102,11 @@ export const RoulettePage = () => {
   const [_matchedRoom, setMatchedRoom] = useState<string | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const user = useAuthStore((s) => s.user)
+
+  // Keep streamRef in sync
+  useEffect(() => { streamRef.current = stream ?? null }, [stream])
 
   // Attach remote stream to video element
   useEffect(() => {
@@ -141,9 +145,10 @@ export const RoulettePage = () => {
           timestamp: new Date(),
         }])
 
-        // Start WebRTC video connection
-        if (stream) {
-          webrtcRoom.join(roomId, userId, stream, {
+        // Start WebRTC video connection (use ref to get latest stream)
+        const currentStream = streamRef.current
+        if (currentStream) {
+          webrtcRoom.join(roomId, userId, currentStream, {
             onRemoteStream: (_peerId, peerStream) => {
               setRemoteStream(peerStream)
               setChatMessages(prev => [...prev, {
