@@ -6,6 +6,7 @@ import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useAuthStore } from '@/store/authStore'
 import { matchmaking } from '@/services/supabase/matchmaking'
+import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import type { RouletteStatus, RouletteFilters } from '@/types'
 
@@ -94,12 +95,21 @@ export const RoulettePage = () => {
   }, [status])
 
   useEffect(() => {
-    return () => { stopCamera(); matchmaking.leaveQueue() }
+    return () => { stopCamera(); matchmaking.leaveQueue(); webrtcRoom.leave() }
   }, [stopCamera])
 
   const [matchedPeer, setMatchedPeer] = useState<string | null>(null)
-  const [matchedRoom, setMatchedRoom] = useState<string | null>(null)
+  const [_matchedRoom, setMatchedRoom] = useState<string | null>(null)
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const user = useAuthStore((s) => s.user)
+
+  // Attach remote stream to video element
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream
+    }
+  }, [remoteStream])
 
   const startSearch = useCallback(async () => {
     if (!stream) await startCamera()
@@ -109,6 +119,7 @@ export const RoulettePage = () => {
     setChatMessages([])
     setMatchedPeer(null)
     setMatchedRoom(null)
+    setRemoteStream(null)
 
     const userId = user?.id
     if (!userId) {
@@ -125,10 +136,36 @@ export const RoulettePage = () => {
         setChatMessages(prev => [...prev, {
           id: Date.now().toString(),
           username: 'Sistema',
-          content: '🎉 Match encontrado! Vocês estão conectados.',
+          content: '🎉 Match encontrado! Conectando vídeo...',
           type: 'system' as const,
           timestamp: new Date(),
         }])
+
+        // Start WebRTC video connection
+        if (stream) {
+          webrtcRoom.join(roomId, userId, stream, {
+            onRemoteStream: (_peerId, peerStream) => {
+              setRemoteStream(peerStream)
+              setChatMessages(prev => [...prev, {
+                id: `vid-${Date.now()}`,
+                username: 'Sistema',
+                content: '📹 Vídeo conectado!',
+                type: 'system' as const,
+                timestamp: new Date(),
+              }])
+            },
+            onPeerDisconnect: () => {
+              setRemoteStream(null)
+              setChatMessages(prev => [...prev, {
+                id: `disc-${Date.now()}`,
+                username: 'Sistema',
+                content: '👋 O outro usuário desconectou.',
+                type: 'system' as const,
+                timestamp: new Date(),
+              }])
+            },
+          })
+        }
       },
       (newStatus) => {
         setStatus(newStatus)
@@ -142,11 +179,13 @@ export const RoulettePage = () => {
 
   const endSession = useCallback(() => {
     matchmaking.leaveQueue()
+    webrtcRoom.leave()
     setStatus('idle')
     setSearchTime(0)
     setNoMatchMessage('')
     setMatchedPeer(null)
     setMatchedRoom(null)
+    setRemoteStream(null)
     stopCamera()
   }, [stopCamera])
 
@@ -355,13 +394,32 @@ export const RoulettePage = () => {
                   </div>
                 )}
 
-                {status === 'matched' && matchedPeer && (
+                {status === 'matched' && matchedPeer && !remoteStream && (
                   <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
                     <div className="text-center max-w-xs px-4">
-                      <div className="text-4xl mb-3">🎉</div>
+                      <div className="text-4xl mb-3 animate-bounce">🎉</div>
                       <h3 className="text-base font-bold text-white mb-2">Match encontrado!</h3>
-                      <p className="text-sm text-dark-400 mb-2">Sala: {matchedRoom?.slice(0, 8)}...</p>
-                      <p className="text-xs text-dark-500">Chat de texto disponível na lateral</p>
+                      <p className="text-sm text-dark-400 animate-pulse">Conectando vídeo...</p>
+                    </div>
+                  </div>
+                )}
+
+                {status === 'matched' && remoteStream && (
+                  <div className="absolute inset-0">
+                    <video
+                      ref={remoteVideoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
+                      LIVE
+                    </div>
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
+                        Parceiro
+                      </span>
                     </div>
                   </div>
                 )}

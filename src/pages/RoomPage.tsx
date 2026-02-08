@@ -12,6 +12,7 @@ import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
+import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
 
@@ -156,6 +157,8 @@ export const RoomPage = () => {
   const profile = useAuthStore((s) => s.profile)
   const isGuest = useAuthStore((s) => s.isGuest)
   const [onlineUsers, setOnlineUsers] = useState<{ userId: string; username: string; joinedAt: number }[]>([])
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map())
+  const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
 
   // Join realtime room chat + presence
   useEffect(() => {
@@ -178,12 +181,48 @@ export const RoomPage = () => {
     return () => { roomChat.leave() }
   }, [roomId, user, isGuest, profile])
 
+  // Join WebRTC room when camera stream is available
+  useEffect(() => {
+    if (!roomId || !user || isGuest || !stream) return
+
+    webrtcRoom.join(roomId, user.id, stream, {
+      onRemoteStream: (peerId, remoteStream) => {
+        setRemoteStreams(prev => new Map(prev).set(peerId, remoteStream))
+      },
+      onPeerDisconnect: (peerId) => {
+        setRemoteStreams(prev => {
+          const next = new Map(prev)
+          next.delete(peerId)
+          return next
+        })
+        remoteVideoRefs.current.delete(peerId)
+      },
+    })
+
+    return () => { webrtcRoom.leave() }
+  }, [roomId, user, isGuest, stream])
+
+  // Update WebRTC when stream changes (camera toggle)
+  useEffect(() => {
+    if (stream) webrtcRoom.updateStream(stream)
+  }, [stream])
+
+  // Attach remote streams to video elements
+  useEffect(() => {
+    for (const [peerId, remoteStream] of remoteStreams) {
+      const el = remoteVideoRefs.current.get(peerId)
+      if (el && el.srcObject !== remoteStream) {
+        el.srcObject = remoteStream
+      }
+    }
+  }, [remoteStreams])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   useEffect(() => {
-    return () => { stopCamera(); roomChat.leave() }
+    return () => { stopCamera(); roomChat.leave(); webrtcRoom.leave() }
   }, [stopCamera])
 
   useEffect(() => {
@@ -404,7 +443,7 @@ export const RoomPage = () => {
         {/* ─── Main Area: Video ─── */}
         <main className={`flex-1 flex flex-col min-w-0 ${(showChat || showParticipants) ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
-            <div className="grid gap-3 h-full grid-cols-1 max-w-2xl mx-auto">
+            <div className={`grid gap-3 h-full max-w-4xl mx-auto ${remoteStreams.size > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 max-w-2xl'}`}>
               {/* ═══ YOUR REAL CAMERA TILE ═══ */}
               <div ref={cameraTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
                 {/* Virtual Background Layer */}
@@ -518,6 +557,36 @@ export const RoomPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* ═══ REMOTE VIDEO TILES ═══ */}
+              {Array.from(remoteStreams.entries()).map(([peerId, _remoteStream]) => {
+                const peerUser = onlineUsers.find(u => u.userId === peerId)
+                const peerName = peerUser?.username || 'Usuário'
+                return (
+                  <div key={peerId} className="relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                    <video
+                      ref={(el) => {
+                        if (el) {
+                          remoteVideoRefs.current.set(peerId, el)
+                          if (el.srcObject !== _remoteStream) el.srcObject = _remoteStream
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
+                        {peerName}
+                      </span>
+                    </div>
+                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
+                      LIVE
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
