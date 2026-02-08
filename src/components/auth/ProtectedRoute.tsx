@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 
 interface ProtectedRouteProps {
@@ -14,6 +14,7 @@ export const ProtectedRoute = ({
   requirePremium = false,
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isSubscriber, isPremium, initialized } = useAuth()
+  const location = useLocation()
 
   // Wait for auth to initialize
   if (!initialized) {
@@ -29,9 +30,9 @@ export const ProtectedRoute = ({
     )
   }
 
-  // Not authenticated
+  // Not authenticated — redirect to auth, saving intended destination
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />
   }
 
   // Requires subscription but user is free

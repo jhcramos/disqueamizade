@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Chrome, Calendar } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/components/common/ToastContainer'
@@ -16,6 +16,8 @@ export const AuthPage = () => {
   const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = (location.state as any)?.from || '/'
   const { signIn, signUp, signInAsGuest, signInWithGoogle } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -56,7 +58,7 @@ export const AuthPage = () => {
         await signUp(email, password, username, { is_creator: isCreator, birth_date: birthDate })
         addToast({ type: 'success', title: 'Conta criada!', message: 'Verifique seu email para confirmar' })
       }
-      navigate('/')
+      navigate(redirectTo)
     } catch (err: any) {
       const msg = err?.message || 'Erro desconhecido'
       if (msg.includes('already registered') || msg.includes('already been registered')) {
@@ -77,7 +79,7 @@ export const AuthPage = () => {
   const handleGuestLogin = () => {
     signInAsGuest()
     addToast({ type: 'success', title: 'Bem-vindo!', message: 'Você entrou como convidado' })
-    navigate('/')
+    navigate(redirectTo)
   }
 
   const handleGoogleLogin = async () => {
@@ -85,7 +87,7 @@ export const AuthPage = () => {
       await signInWithGoogle()
     } catch {
       addToast({ type: 'warning', title: 'Google OAuth', message: 'Login com Google não está configurado ainda.' })
-      navigate('/')
+      navigate(redirectTo)
     }
   }
 
