@@ -73,6 +73,12 @@ export const RoomPage = () => {
   const [showParticipants, setShowParticipants] = useState(false)
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
+  const [allMuted, setAllMuted] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<{ userId: string; username: string } | null>(null)
+  const [privateChat, setPrivateChat] = useState<{ userId: string; username: string } | null>(null)
+  const [privateMsgs, setPrivateMsgs] = useState<Map<string, ChatMessage[]>>(new Map())
+  const [privateMsgInput, setPrivateMsgInput] = useState('')
+  const privateChatEndRef = useRef<HTMLDivElement>(null)
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [, setTileSize] = useState({ w: 320, h: 240 })
@@ -314,6 +320,45 @@ export const RoomPage = () => {
     setMessage('')
   }
 
+  // Toggle mute all remote videos
+  const handleMuteAll = () => {
+    setAllMuted(prev => !prev)
+  }
+
+  // Send private message
+  const handleSendPrivateMsg = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!privateMsgInput.trim() || !privateChat) return
+
+    const myUsername = profile?.username || user?.user_metadata?.username || 'Anônimo'
+    const myId = user?.id || 'guest'
+
+    // Send via room broadcast with private flag
+    roomChat.sendMessage(myId, myUsername, `[DM:${privateChat.userId}] ${privateMsgInput.trim()}`)
+
+    const msg: ChatMessage = {
+      id: `pm-${Date.now()}`,
+      userId: myId,
+      username: myUsername,
+      content: privateMsgInput.trim(),
+      timestamp: new Date(),
+      type: 'text',
+    }
+    setPrivateMsgs(prev => {
+      const next = new Map(prev)
+      const existing = next.get(privateChat.userId) || []
+      next.set(privateChat.userId, [...existing, msg])
+      return next
+    })
+    setPrivateMsgInput('')
+  }
+
+  // Handle user click (from chat or participants)
+  const handleUserClick = (userId: string, username: string) => {
+    if (userId === user?.id || userId === 'system' || userId.startsWith('bot-')) return
+    setSelectedUser({ userId, username })
+  }
+
   const handleShareRoom = () => {
     navigator.clipboard?.writeText(window.location.href)
     addToast({ type: 'success', title: 'Link copiado!', message: 'Link da sala copiado para a área de transferência' })
@@ -407,7 +452,7 @@ export const RoomPage = () => {
                       <InitialsAvatar name={u.username} size="md" />
                       <div className="flex-1 min-w-0">
                         <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate block`}>
-                          {isMe ? `${u.username} (você)` : u.username}
+                          {isMe ? `${u.username} (você)` : <span className="cursor-pointer hover:text-primary-400 transition-colors" onClick={() => handleUserClick(u.userId, u.username)}>{u.username}</span>}
                         </span>
                       </div>
                     </div>
@@ -569,16 +614,18 @@ export const RoomPage = () => {
                 const peerUser = onlineUsers.find(u => u.userId === peerId)
                 const peerName = peerUser?.username || 'Usuário'
                 return (
-                  <div key={peerId} className="relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                  <div key={peerId} className="relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer" onClick={() => handleUserClick(peerId, peerName)}>
                     <video
                       ref={(el) => {
                         if (el) {
                           remoteVideoRefs.current.set(peerId, el)
                           if (el.srcObject !== _remoteStream) el.srcObject = _remoteStream
+                          el.muted = allMuted
                         }
                       }}
                       autoPlay
                       playsInline
+                      muted={allMuted}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
@@ -590,6 +637,11 @@ export const RoomPage = () => {
                     <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
                       LIVE
                     </div>
+                    {allMuted && (
+                      <div className="absolute top-2 left-2 p-1 rounded bg-red-500/30 backdrop-blur-sm">
+                        <MicOff className="w-3 h-3 text-red-400" />
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -613,6 +665,15 @@ export const RoomPage = () => {
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
+              {remoteStreams.size > 0 && (
+                <button
+                  onClick={handleMuteAll}
+                  className={`p-3 rounded-2xl transition-all ${allMuted ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                  title={allMuted ? 'Desmutar todos' : 'Mutar todos'}
+                >
+                  {allMuted ? <MicOff className="w-5 h-5" /> : <Users className="w-5 h-5" />}
+                </button>
+              )}
               <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
               <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
               <button
@@ -675,7 +736,7 @@ export const RoomPage = () => {
                   </div>
                   <div className={`flex-1 min-w-0 ${isMe ? 'text-right' : ''}`}>
                     <div className={`flex items-baseline gap-2 mb-0.5 ${isMe ? 'flex-row-reverse' : ''}`}>
-                      <span className={`text-xs font-semibold ${isMe ? 'text-primary-400' : 'text-dark-300'}`}>{msg.username}</span>
+                      <span className={`text-xs font-semibold cursor-pointer hover:underline ${isMe ? 'text-primary-400' : 'text-dark-300 hover:text-white'}`} onClick={() => handleUserClick(msg.userId, msg.username)}>{msg.username}</span>
                       <span className="text-[10px] text-dark-600">{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[85%] ${
@@ -719,6 +780,118 @@ export const RoomPage = () => {
           setShowCreateCamarote(false)
         }}
       />
+
+      {/* ═══ USER PROFILE MODAL ═══ */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
+          <div className="bg-dark-900 border border-white/10 rounded-2xl w-full max-w-sm mx-4 overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
+            {/* Video grande do usuário */}
+            {remoteStreams.has(selectedUser.userId) ? (
+              <div className="relative aspect-video bg-dark-800">
+                <video
+                  ref={(el) => {
+                    if (el) {
+                      const s = remoteStreams.get(selectedUser.userId)
+                      if (s && el.srcObject !== s) el.srcObject = s
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white animate-pulse">LIVE</div>
+              </div>
+            ) : (
+              <div className="aspect-video bg-dark-800 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-white text-2xl mx-auto mb-2">
+                    {selectedUser.username.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="text-sm text-dark-400">Câmera não disponível</p>
+                </div>
+              </div>
+            )}
+
+            {/* Info */}
+            <div className="p-4">
+              <h3 className="text-lg font-bold text-white mb-1">{selectedUser.username}</h3>
+              <p className="text-xs text-dark-500 mb-4">Na sala agora</p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setPrivateChat(selectedUser)
+                    setSelectedUser(null)
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-primary-500/20 text-primary-400 border border-primary-500/30 text-sm font-semibold hover:bg-primary-500/30 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" /> Chat Privado
+                </button>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-dark-300 border border-white/10 text-sm hover:bg-white/[0.1] transition-all"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PRIVATE CHAT OVERLAY (bottom-right) ═══ */}
+      {privateChat && (
+        <div className="fixed bottom-20 right-4 z-40 w-72 sm:w-80 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col" style={{ maxHeight: '350px' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between p-3 border-b border-white/5 bg-dark-800/50">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-white text-[10px]">
+                {privateChat.username.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold text-white">{privateChat.username}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </div>
+            <button onClick={() => setPrivateChat(null)} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
+              <X className="w-4 h-4 text-dark-400" />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[120px]">
+            {!(privateMsgs.get(privateChat.userId)?.length) && (
+              <p className="text-center text-xs text-dark-500 py-4">Envie uma mensagem para {privateChat.username}</p>
+            )}
+            {(privateMsgs.get(privateChat.userId) || []).map(msg => {
+              const isMe = msg.userId === user?.id
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                    isMe ? 'bg-primary-500/20 text-primary-100 rounded-br-sm' : 'bg-white/[0.05] text-dark-200 rounded-bl-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              )
+            })}
+            <div ref={privateChatEndRef} />
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSendPrivateMsg} className="p-2 border-t border-white/5 flex gap-2">
+            <input
+              type="text"
+              value={privateMsgInput}
+              onChange={e => setPrivateMsgInput(e.target.value)}
+              placeholder="Mensagem privada..."
+              className="flex-1 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-xs focus:outline-none focus:border-primary-500/40"
+              autoFocus
+            />
+            <button type="submit" className="p-2 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all">
+              <Send className="w-3 h-3" />
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
