@@ -257,10 +257,21 @@ export const ProfilePage = () => {
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
-        {/* Back */}
-        <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white transition-colors mb-6 text-sm">
-          <ArrowLeft className="w-4 h-4" /> Voltar
-        </Link>
+        {/* Back + Logout */}
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-dark-400 hover:text-white transition-colors text-sm">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </Link>
+          <button
+            onClick={async () => {
+              await useAuthStore.getState().signOut()
+              navigate('/')
+            }}
+            className="inline-flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
+          >
+            <LogOut className="w-4 h-4" /> Sair
+          </button>
+        </div>
 
         {/* ═══════════════════════════════════════════════
             PROFILE HEADER CARD
