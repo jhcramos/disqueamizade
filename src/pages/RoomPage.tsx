@@ -133,7 +133,8 @@ export const RoomPage = () => {
 
   // Try Supabase first, fall back to mock
   const [supaRoom, setSupaRoom] = useState<any>(null)
-  const [roomSlug, setRoomSlug] = useState<string>(roomId || '')
+  const [roomSlug, setRoomSlug] = useState<string>('')
+  const [roomReady, setRoomReady] = useState(false)
   const [, setRoomLoading] = useState(true)
 
   useEffect(() => {
@@ -162,7 +163,11 @@ export const RoomPage = () => {
             owner: { username: 'disque_amizade', avatar: '' },
           })
         }
-      } catch { /* ignore */ }
+      } catch {
+        // Fallback: use roomId from URL as channel name
+        setRoomSlug(roomId || '')
+      }
+      setRoomReady(true)
       setRoomLoading(false)
     }
     fetchRoom()
@@ -176,9 +181,9 @@ export const RoomPage = () => {
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map())
   const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
 
-  // Join realtime room chat + presence
+  // Join realtime room chat + presence — only after room data is fetched
   useEffect(() => {
-    if (!roomSlug || !user) return
+    if (!roomReady || !roomSlug || !user) return
 
     const username = profile?.username || profile?.display_name || user.user_metadata?.username || 'Anônimo'
 
@@ -195,12 +200,13 @@ export const RoomPage = () => {
     )
 
     return () => { roomChat.leave() }
-  }, [roomSlug, user, profile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomReady, roomSlug, user?.id])
 
   // Join WebRTC room when camera stream is available (use composite stream with effects)
   const webrtcStream = compositeStream || stream
   useEffect(() => {
-    if (!roomSlug || !user || isGuest || !webrtcStream) return
+    if (!roomReady || !roomSlug || !user || isGuest || !webrtcStream) return
 
     webrtcRoom.join(roomSlug, user.id, webrtcStream, {
       onRemoteStream: (peerId, remoteStream) => {
@@ -217,7 +223,8 @@ export const RoomPage = () => {
     })
 
     return () => { webrtcRoom.leave() }
-  }, [roomSlug, user, isGuest, webrtcStream])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomReady, roomSlug, user?.id, isGuest, !!webrtcStream])
 
   // Update WebRTC when composite stream changes (filter/mask toggled)
   useEffect(() => {
