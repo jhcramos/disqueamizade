@@ -10,7 +10,7 @@ import { AuthPage } from './pages/AuthPage'
 import { RoomPage } from './pages/RoomPage'
 import { CamarotePage } from './pages/CamarotePage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
-import { SecretCabinsPage } from './pages/SecretCabinsPage'
+// SecretCabinsPage removed — simplifying
 import { VideoFiltersPage } from './pages/VideoFiltersPage'
 import { RoulettePage } from './pages/RoulettePage'
 import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
@@ -46,7 +46,7 @@ function App() {
         <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
         <Route path="/camarote/:camaroteId" element={<ProtectedRoute><CamarotePage /></ProtectedRoute>} />
         <Route path="/roulette" element={<ProtectedRoute><RoulettePage /></ProtectedRoute>} />
-        <Route path="/cabines" element={<ProtectedRoute><SecretCabinsPage /></ProtectedRoute>} />
+        {/* cabines removed — simplifying */}
         <Route path="/hobbies" element={<ProtectedRoute><HobbiesPage /></ProtectedRoute>} />
         
         {/* Creators & Marketplace - requer login */}

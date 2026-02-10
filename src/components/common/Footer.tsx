@@ -34,7 +34,7 @@ export const Footer = () => {
               <li><Link to="/marketplace" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Marketplace</Link></li>
               <li><Link to="/hobbies" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Hobbies</Link></li>
               <li><Link to="/pricing" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Planos & Fichas</Link></li>
-              <li><Link to="/cabines" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Cabines Secretas</Link></li>
+              <li><Link to="/blog" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Blog</Link></li>
               <li><Link to="/filtros" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Filtros de Vídeo</Link></li>
             </ul>
           </div>

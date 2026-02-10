@@ -13,7 +13,6 @@ const navLinks = [
   { to: '/marketplace', label: 'Marketplace' },
   { to: '/hobbies', label: 'Hobbies' },
   { to: '/pricing', label: 'Planos' },
-  { to: '/cabines', label: 'Cabines' },
   { to: '/filtros', label: 'Filtros' },
   { to: '/creator', label: 'Creator' },
 ]
