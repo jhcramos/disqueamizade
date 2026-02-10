@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Calendar, Clock, ArrowRight, Tag } from 'lucide-react'
+import { Header } from '@/components/common/Header'
 
 export interface BlogPost {
   slug: string
@@ -94,6 +95,7 @@ export const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-dark-950">
+      <Header />
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-pink-600/20 via-dark-950 to-purple-600/20 border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">

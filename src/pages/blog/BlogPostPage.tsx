@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Calendar, Clock, Share2, Tag, ChevronRight } from 'lucide-react'
+import { Header } from '@/components/common/Header'
 import type { BlogPost } from './BlogPage'
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -71,6 +72,7 @@ export const BlogPostPage = () => {
 
   return (
     <div className="min-h-screen bg-dark-950">
+      <Header />
       {/* Breadcrumb */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
         <nav className="flex items-center gap-2 text-sm text-dark-500">
