@@ -15,6 +15,7 @@ import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
+import { supabase } from '@/services/supabase/client'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
 const BOT_POOL = [
@@ -174,7 +175,7 @@ export const RoomPage = () => {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        const { supabase: sb } = await import('@/services/supabase/client')
+        const sb = supabase
         // Try slug first, then by UUID id
         let data = null
         const slugRes = await sb.from('rooms').select('*').eq('slug', roomId).maybeSingle()
@@ -243,7 +244,7 @@ export const RoomPage = () => {
   useEffect(() => {
     if (!roomReady || !roomSlug || !user) return
     const setupMuteListener = async () => {
-      const { supabase: sb } = await import('@/services/supabase/client')
+      const sb = supabase
       const channel = sb.channel(`mute-${roomSlug}`)
       channel
         .on('broadcast', { event: 'mute-user' }, (payload: any) => {
@@ -282,7 +283,7 @@ export const RoomPage = () => {
   }, [forceMuted, stream])
 
   const sendMuteCommand = async (targetUserId: string, muted: boolean) => {
-    const { supabase: sb } = await import('@/services/supabase/client')
+    const sb = supabase
     const channel = sb.channel(`mute-${roomSlug}`)
     await channel.subscribe()
     await channel.send({ type: 'broadcast', event: 'mute-user', payload: { targetUserId, muted } })
@@ -290,7 +291,7 @@ export const RoomPage = () => {
   }
 
   const sendMuteAll = async (muted: boolean) => {
-    const { supabase: sb } = await import('@/services/supabase/client')
+    const sb = supabase
     const channel = sb.channel(`mute-${roomSlug}`)
     await channel.subscribe()
     await channel.send({ type: 'broadcast', event: 'mute-all', payload: { muted } })
@@ -298,7 +299,7 @@ export const RoomPage = () => {
   }
 
   const sendBanUser = async (targetUserId: string) => {
-    const { supabase: sb } = await import('@/services/supabase/client')
+    const sb = supabase
     const channel = sb.channel(`mute-${roomSlug}`)
     await channel.subscribe()
     await channel.send({ type: 'broadcast', event: 'ban-user', payload: { targetUserId } })
@@ -478,7 +479,7 @@ export const RoomPage = () => {
     setSelectedUser({ userId, username })
     // Fetch profile with bio
     try {
-      const { supabase: sb } = await import('@/services/supabase/client')
+      const sb = supabase
       const { data } = await sb.from('profiles').select('bio, avatar_url').eq('id', userId).single()
       if (data) {
         setSelectedUser(prev => prev?.userId === userId ? { ...prev, bio: data.bio || undefined, avatar_url: data.avatar_url || undefined } : prev)
