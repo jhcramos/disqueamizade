@@ -913,26 +913,32 @@ export const RoomPage = () => {
                         ].filter(Boolean).join(' ') || 'none',
                       }}
                     />
-                    {/* Emoji mask overlay on face */}
-                    {activeMaskData?.emoji && faceBox && (
-                      <div
-                        className="absolute z-20 pointer-events-none select-none"
-                        style={{
-                          left: `${faceBox.x}%`,
-                          top: `${faceBox.y}%`,
-                          width: `${faceBox.w}%`,
-                          height: `${faceBox.h}%`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: `${Math.max(faceBox.w, faceBox.h) * 0.6}vmin`,
-                          lineHeight: 1,
-                          transition: 'all 80ms ease-out',
-                        }}
-                      >
-                        {activeMaskData.emoji}
-                      </div>
-                    )}
+                    {/* Emoji mask overlay on face — sized relative to camera tile */}
+                    {activeMaskData?.emoji && faceBox && (() => {
+                      const tileEl = cameraTileRef.current
+                      const tileW = tileEl?.clientWidth || 320
+                      const tileH = tileEl?.clientHeight || 240
+                      const emojiPx = Math.min(tileW * faceBox.w / 100, tileH * faceBox.h / 100) * 0.85
+                      return (
+                        <div
+                          className="absolute z-20 pointer-events-none select-none"
+                          style={{
+                            left: `${faceBox.x}%`,
+                            top: `${faceBox.y}%`,
+                            width: `${faceBox.w}%`,
+                            height: `${faceBox.h}%`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: `${emojiPx}px`,
+                            lineHeight: 1,
+                            transition: 'left 180ms linear, top 180ms linear, width 180ms linear, height 180ms linear, font-size 180ms linear',
+                          }}
+                        >
+                          {activeMaskData.emoji}
+                        </div>
+                      )
+                    })()}
                     {activeMaskData && trackingStatus && (
                       <div className="absolute top-2 left-2 z-20 pointer-events-none">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium backdrop-blur-sm ${

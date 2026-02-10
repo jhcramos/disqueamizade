@@ -217,11 +217,12 @@ export const useVideoFilter = (
       }
       const prev = smoothBox.current
       if (prev) {
+        // Heavy smoothing (0.75/0.25) to prevent flickering
         smoothBox.current = {
-          x: prev.x * 0.55 + raw.x * 0.45,
-          y: prev.y * 0.55 + raw.y * 0.45,
-          w: prev.w * 0.55 + raw.w * 0.45,
-          h: prev.h * 0.55 + raw.h * 0.45,
+          x: prev.x * 0.75 + raw.x * 0.25,
+          y: prev.y * 0.75 + raw.y * 0.25,
+          w: prev.w * 0.75 + raw.w * 0.25,
+          h: prev.h * 0.75 + raw.h * 0.25,
         }
       } else {
         smoothBox.current = raw
@@ -236,9 +237,9 @@ export const useVideoFilter = (
       }
     }
 
-    // Schedule next detection: 150ms = ~6.6fps detection
+    // Schedule next detection: 200ms = 5fps (smooth enough, less flicker)
     if (runningRef.current) {
-      timeoutRef.current = window.setTimeout(runDetection, 150)
+      timeoutRef.current = window.setTimeout(runDetection, 200)
     }
   }, [videoRef])
 
