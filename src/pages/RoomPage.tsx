@@ -689,7 +689,6 @@ export const RoomPage = () => {
             <div className="space-y-1">
               {/* Real users + bots (bots shrink as real users join) */}
               {(() => {
-                const realUserIds = new Set(onlineUsers.map(u => u.userId))
                 // Show fewer bots as real users join — always keep minimum of 3 bots
                 const botsToShow = Math.max(3, botCount - onlineUsers.length)
                 const visibleBots = botNames.slice(0, botsToShow)
