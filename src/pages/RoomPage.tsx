@@ -651,7 +651,7 @@ export const RoomPage = () => {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-semibold">{onlineUsers.length || (botCount + 1)} online</span>
+              <span className="text-xs text-emerald-400 font-semibold">{onlineUsers.length + Math.max(3, botCount - onlineUsers.length)} online</span>
               {/* Debug - remove later */}
               <span className="text-[9px] text-dark-600 ml-1">ch:{roomSlug?.slice(0,8)} {isGuest ? 'G' : 'U'}</span>
             </div>
@@ -684,12 +684,18 @@ export const RoomPage = () => {
           <div className="p-4">
             <h3 className="text-sm font-bold text-primary-400 mb-4 flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Participantes ({onlineUsers.length || (botCount + 1)})
+              Participantes ({onlineUsers.length + Math.max(3, botCount - onlineUsers.length)})
             </h3>
             <div className="space-y-1">
-              {/* Real online users from Realtime Presence (sorted: King → Mod → VIP → Regular) */}
-              {onlineUsers.length > 0 ? (
-                [...onlineUsers].sort((a, b) => {
+              {/* Real users + bots (bots shrink as real users join) */}
+              {(() => {
+                const realUserIds = new Set(onlineUsers.map(u => u.userId))
+                // Show fewer bots as real users join — always keep minimum of 3 bots
+                const botsToShow = Math.max(3, botCount - onlineUsers.length)
+                const visibleBots = botNames.slice(0, botsToShow)
+
+                // Sort real users: King → Mod → VIP → Regular
+                const sortedReal = [...onlineUsers].sort((a, b) => {
                   if (a.userId === kingUserId) return -1
                   if (b.userId === kingUserId) return 1
                   if (a.userId === modUserId) return -1
@@ -699,74 +705,83 @@ export const RoomPage = () => {
                   if (aVip && !bVip) return -1
                   if (!aVip && bVip) return 1
                   return a.joinedAt - b.joinedAt
-                }).map((u) => {
-                  const isMe = u.userId === user?.id
-                  const isUserKing = u.userId === kingUserId
-                  const isUserMod = u.userId === modUserId
-                  const isUserVip = isVip(u.userId)
-                  return (
-                    <div key={u.userId} className={`w-full flex items-center gap-3 p-2.5 rounded-xl ${isMe ? 'bg-primary-500/5 border border-primary-500/10' : 'hover:bg-white/[0.03]'} transition-colors`}>
-                      <InitialsAvatar name={u.username} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate flex items-center gap-1.5`}>
-                          {isUserKing && '👑 '}
-                          {isUserMod && !isUserKing && '🛡️ '}
-                          {isMe ? `${u.username} (você)` : <span className="cursor-pointer hover:text-primary-400 transition-colors" onClick={() => handleUserClick(u.userId, u.username)}>{u.username}</span>}
-                          {isUserVip && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">✨ VIP</span>
-                          )}
-                        </span>
-                        {isUserKing && <span className="text-[10px] text-amber-400 font-medium">Rei da Sala</span>}
-                        {isUserMod && !isUserKing && <span className="text-[10px] text-blue-400 font-medium">Moderador</span>}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {isKing && !isMe && (
-                          <button
-                            onClick={() => sendMuteCommand(u.userId, true)}
-                            className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            title={`Mutar ${u.username}`}
-                          >
-                            <MicOff className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        {isMod && !isMe && !isUserKing && !isUserVip && (
-                          <button
-                            onClick={() => sendBanUser(u.userId)}
-                            className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            title={`Banir ${u.username}`}
-                          >
-                            🚫
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
                 })
-              ) : (
-                <>
-                  {/* Fallback: You + bots when no realtime users */}
-                  <div className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-primary-500/5 border border-primary-500/10">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
-                      V
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-primary-400">Você</span>
-                      <div className="flex gap-2 mt-0.5">
-                        {isCameraOn ? <Video className="w-3 h-3 text-primary-400" /> : <VideoOff className="w-3 h-3 text-dark-600" />}
-                        {isMicOn ? <Mic className="w-3 h-3 text-primary-400" /> : <MicOff className="w-3 h-3 text-dark-600" />}
+
+                return (
+                  <>
+                    {/* Real users first */}
+                    {sortedReal.map((u) => {
+                      const isMe = u.userId === user?.id
+                      const isUserKing = u.userId === kingUserId
+                      const isUserMod = u.userId === modUserId
+                      const isUserVip = isVip(u.userId)
+                      return (
+                        <div key={u.userId} className={`w-full flex items-center gap-3 p-2.5 rounded-xl ${isMe ? 'bg-primary-500/5 border border-primary-500/10' : 'hover:bg-white/[0.03]'} transition-colors`}>
+                          <InitialsAvatar name={u.username} size="md" />
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate flex items-center gap-1.5`}>
+                              {isUserKing && '👑 '}
+                              {isUserMod && !isUserKing && '🛡️ '}
+                              {isMe ? `${u.username} (você)` : <span className="cursor-pointer hover:text-primary-400 transition-colors" onClick={() => handleUserClick(u.userId, u.username)}>{u.username}</span>}
+                              {isUserVip && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">✨ VIP</span>
+                              )}
+                            </span>
+                            {isUserKing && <span className="text-[10px] text-amber-400 font-medium">Rei da Sala</span>}
+                            {isUserMod && !isUserKing && <span className="text-[10px] text-blue-400 font-medium">Moderador</span>}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {isKing && !isMe && (
+                              <button
+                                onClick={() => sendMuteCommand(u.userId, true)}
+                                className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                title={`Mutar ${u.username}`}
+                              >
+                                <MicOff className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {isMod && !isMe && !isUserKing && !isUserVip && (
+                              <button
+                                onClick={() => sendBanUser(u.userId)}
+                                className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                title={`Banir ${u.username}`}
+                              >
+                                🚫
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* If no real users, show "Você" card */}
+                    {onlineUsers.length === 0 && (
+                      <div className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-primary-500/5 border border-primary-500/10">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                          V
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-primary-400">Você</span>
+                          <div className="flex gap-2 mt-0.5">
+                            {isCameraOn ? <Video className="w-3 h-3 text-primary-400" /> : <VideoOff className="w-3 h-3 text-dark-600" />}
+                            {isMicOn ? <Mic className="w-3 h-3 text-primary-400" /> : <MicOff className="w-3 h-3 text-dark-600" />}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  {botNames.map((name) => (
-                    <div key={name} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
-                      <InitialsAvatar name={name} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-white truncate block">{name}</span>
+                    )}
+
+                    {/* Bots always visible — shrink as real users join */}
+                    {visibleBots.map((name) => (
+                      <div key={`bot-${name}`} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                        <InitialsAvatar name={name} size="md" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-white truncate block">{name}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </>
-              )}
+                    ))}
+                  </>
+                )
+              })()}
             </div>
 
             {/* King Controls */}
@@ -1223,7 +1238,7 @@ export const RoomPage = () => {
             }`}
           >
             <Users className="w-5 h-5" />
-            <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length || botCount + 1})</span>
+            <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length + Math.max(3, botCount - onlineUsers.length)})</span>
           </button>
           <button
             onClick={() => { setShowChat(true); setShowParticipants(false) }}
