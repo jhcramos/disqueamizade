@@ -630,6 +630,28 @@ export const RoomPage = () => {
 
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
 
+  // DEBUG: find error #310 — which value is an object?
+  console.log('🔍 RoomPage render debug:', {
+    roomName: typeof room.name, roomDesc: typeof room.description,
+    roomCategory: typeof room.category, roomTheme: typeof room.theme,
+    ownerUsername: typeof room.owner?.username,
+    participants: typeof room.participants, maxUsers: typeof room.max_users,
+    capacityPercent: typeof capacityPercent,
+    roomSlug: typeof roomSlug, isGuest: typeof isGuest,
+    cameraError: typeof cameraError, permissionState: typeof permissionState,
+    trackingStatus: typeof trackingStatus,
+    msgCount: messages.length,
+    onlineCount: onlineUsers.length,
+    user: typeof user, profile: typeof profile,
+  })
+
+  // Check messages for object values
+  for (const msg of messages) {
+    if (typeof msg.content !== 'string') console.error('🔴 msg.content is not string:', msg.id, msg.content)
+    if (typeof msg.username !== 'string') console.error('🔴 msg.username is not string:', msg.id, msg.username)
+    if (!(msg.timestamp instanceof Date)) console.error('🔴 msg.timestamp is not Date:', msg.id, msg.timestamp)
+  }
+
   return (
     <div className="h-screen bg-dark-950 text-white flex flex-col overflow-hidden">
       {/* ─── Top Bar ─── */}
