@@ -17,12 +17,18 @@ type PresenceState = {
 }
 
 let channel: RealtimeChannel | null = null
+let currentRoomSlug: string | null = null
+
+// Rate limiting: max 5 messages per 3 seconds
+const messageTimestamps: number[] = []
+const RATE_LIMIT_COUNT = 5
+const RATE_LIMIT_WINDOW_MS = 3000
 
 export const roomChat = {
   /**
    * Join a room's realtime channel for chat + presence
    */
-  join(
+  async join(
     roomSlug: string,
     userId: string,
     username: string,
@@ -30,6 +36,33 @@ export const roomChat = {
     onPresenceChange: (users: PresenceState[]) => void,
   ) {
     this.leave()
+    currentRoomSlug = roomSlug
+
+    // Load persisted messages (last 50)
+    try {
+      const { data: rows } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', roomSlug)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (rows && rows.length > 0) {
+        // Deliver oldest first
+        for (const row of rows.reverse()) {
+          onMessage({
+            id: row.id,
+            userId: row.user_id,
+            username: row.username,
+            content: row.content,
+            timestamp: new Date(row.created_at),
+            type: (row.type as ChatMessage['type']) || 'text',
+          })
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load chat history:', e)
+    }
 
     channel = supabase.channel(`room:${roomSlug}`, {
       config: { presence: { key: userId } },
@@ -98,20 +131,46 @@ export const roomChat = {
   /**
    * Send a chat message to the room
    */
-  sendMessage(userId: string, username: string, content: string, type: 'text' | 'emoji' = 'text') {
-    if (!channel) return
+  sendMessage(userId: string, username: string, content: string, type: 'text' | 'emoji' = 'text'): boolean {
+    if (!channel) return false
+
+    // Rate limiting
+    const now = Date.now()
+    // Remove timestamps outside the window
+    while (messageTimestamps.length > 0 && messageTimestamps[0] <= now - RATE_LIMIT_WINDOW_MS) {
+      messageTimestamps.shift()
+    }
+    if (messageTimestamps.length >= RATE_LIMIT_COUNT) {
+      return false // silently drop
+    }
+    messageTimestamps.push(now)
+
+    const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    const timestamp = new Date().toISOString()
+
+    // Broadcast for real-time delivery
     channel.send({
       type: 'broadcast',
       event: 'chat',
-      payload: {
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        userId,
+      payload: { id: msgId, userId, username, content, timestamp, type },
+    })
+
+    // Persist to DB (fire and forget)
+    if (currentRoomSlug) {
+      supabase.from('chat_messages').insert({
+        id: msgId,
+        room_id: currentRoomSlug,
+        user_id: userId,
         username,
         content,
-        timestamp: new Date().toISOString(),
         type,
-      },
-    })
+        created_at: timestamp,
+      }).then(({ error }) => {
+        if (error) console.warn('Failed to persist chat message:', error)
+      })
+    }
+
+    return true
   },
 
   leave() {
@@ -120,5 +179,7 @@ export const roomChat = {
       supabase.removeChannel(channel)
       channel = null
     }
+    currentRoomSlug = null
+    messageTimestamps.length = 0
   },
 }

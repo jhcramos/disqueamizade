@@ -136,7 +136,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       id: guestId,
       email: 'guest@disqueamizade.com',
       app_metadata: {},
-      user_metadata: { username: 'Convidado' },
+      user_metadata: { username: 'Convidado', can_chat: false, can_video: false },
       aud: 'authenticated',
       created_at: new Date().toISOString(),
     } as unknown as User

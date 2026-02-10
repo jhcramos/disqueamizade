@@ -5,7 +5,6 @@ import {
   Send, Flag, Lock, Smile,
   Share2, X, Info, AlertTriangle, Sparkles,
 } from 'lucide-react'
-import { mockRooms } from '@/data/mockRooms'
 import { useToastStore } from '@/components/common/ToastContainer'
 import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
@@ -178,7 +177,7 @@ export const RoomPage = () => {
     fetchRoom()
   }, [roomId])
 
-  const room = supaRoom || mockRooms.find((r) => r.id === roomId)
+  const room = supaRoom
   const user = useAuthStore((s) => s.user)
   const profile = useAuthStore((s) => s.profile)
   const isGuest = useAuthStore((s) => s.isGuest)
@@ -433,6 +432,13 @@ export const RoomPage = () => {
         </div>
       </header>
 
+      {isGuest && (
+        <div className="flex-shrink-0 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <p className="text-xs text-amber-400">Crie uma conta para participar do chat e vídeo</p>
+        </div>
+      )}
+
       {permissionState === 'denied' && (
         <div className="flex-shrink-0 bg-red-500/10 border-b border-red-500/20 px-4 py-2 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -660,15 +666,17 @@ export const RoomPage = () => {
             <div className="flex items-center justify-center gap-2 sm:gap-3">
               <button
                 onClick={handleToggleMic}
-                className={`p-3 rounded-2xl transition-all ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
-                title={isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
+                disabled={isGuest}
+                className={`p-3 rounded-2xl transition-all ${isGuest ? 'opacity-40 cursor-not-allowed' : ''} ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                title={isGuest ? 'Crie uma conta para usar o microfone' : isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
               >
                 {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
               <button
                 onClick={handleToggleVideo}
-                className={`p-3 rounded-2xl transition-all ${!isCameraOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
-                title={isCameraOn ? 'Desligar câmera' : 'Ligar câmera'}
+                disabled={isGuest}
+                className={`p-3 rounded-2xl transition-all ${isGuest ? 'opacity-40 cursor-not-allowed' : ''} ${!isCameraOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                title={isGuest ? 'Crie uma conta para usar a câmera' : isCameraOn ? 'Desligar câmera' : 'Ligar câmera'}
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
@@ -767,10 +775,11 @@ export const RoomPage = () => {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Digite sua mensagem..."
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-sm focus:outline-none focus:border-primary-500/40 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                placeholder={isGuest ? "Crie uma conta para enviar mensagens" : "Digite sua mensagem..."}
+                disabled={isGuest}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-sm focus:outline-none focus:border-primary-500/40 focus:ring-1 focus:ring-primary-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <button type="submit" disabled={!message.trim()} className="p-2.5 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
+              <button type="submit" disabled={!message.trim() || isGuest} className="p-2.5 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed">
                 <Send className="w-5 h-5" />
               </button>
             </form>
