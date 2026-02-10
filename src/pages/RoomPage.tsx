@@ -862,10 +862,26 @@ export const RoomPage = () => {
               </div>
             )}
 
-            {/* Info */}
+            {/* Info + Profile Tabs */}
             <div className="p-4">
               <h3 className="text-lg font-bold text-white mb-1">{selectedUser.username}</h3>
-              <p className="text-xs text-dark-500 mb-4">Na sala agora</p>
+              <p className="text-xs text-dark-500 mb-3">Na sala agora</p>
+
+              {/* Profile Details */}
+              <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-dark-500">👤</span>
+                  <span className="text-dark-300">{selectedUser.username}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-dark-500">🟢</span>
+                  <span className="text-dark-400">Online agora</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-dark-500">🎯</span>
+                  <span className="text-dark-400">Interesses: <span className="text-dark-300">Conversa, Amizade</span></span>
+                </div>
+              </div>
 
               <div className="flex gap-2">
                 <button
@@ -878,12 +894,21 @@ export const RoomPage = () => {
                   <MessageCircle className="w-4 h-4" /> Chat Privado
                 </button>
                 <button
-                  onClick={() => setSelectedUser(null)}
-                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-dark-300 border border-white/10 text-sm hover:bg-white/[0.1] transition-all"
+                  onClick={() => {
+                    addToast({ type: 'info', title: '👤 Perfil', message: `Você está vendo o perfil de ${selectedUser.username}` })
+                    setSelectedUser(null)
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-500/30 transition-all"
                 >
-                  Fechar
+                  Ver Perfil
                 </button>
               </div>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="w-full mt-2 px-4 py-2 rounded-xl bg-white/[0.04] text-dark-500 text-xs hover:bg-white/[0.08] transition-all"
+              >
+                Fechar
+              </button>
             </div>
           </div>
         </div>
