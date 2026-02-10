@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
   Send, Flag, Lock, Smile,
@@ -78,6 +78,7 @@ const InitialsAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md
 
 export const RoomPage = () => {
   const { roomId } = useParams()
+  const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 'sys-0', userId: 'system', username: 'Sistema', content: 'Bem-vindo à sala! 🎉', timestamp: new Date(), type: 'system' },
@@ -219,6 +220,22 @@ export const RoomPage = () => {
     : null
   const isKing = kingUserId === user?.id
 
+  // ─── Moderador (2nd longest in room) ───
+  const modUserId = onlineUsers.length > 1
+    ? onlineUsers.filter(u => u.userId !== kingUserId).reduce((oldest, u) => u.joinedAt < oldest.joinedAt ? u : oldest).userId
+    : null
+  const isMod = modUserId === user?.id
+
+  // ─── VIP / Paid User System ───
+  const VIP_USER_IDS = new Set<string>([]) // Hardcoded VIP list (add user IDs here)
+  const isVip = (userId: string) => {
+    if (VIP_USER_IDS.has(userId)) return true
+    // Check if user is the room creator or has is_creator metadata
+    const u = onlineUsers.find(ou => ou.userId === userId)
+    if (u && (u as any).is_creator) return true
+    return false
+  }
+
   // Listen for mute commands via broadcast
   useEffect(() => {
     if (!roomReady || !roomSlug || !user) return
@@ -229,6 +246,12 @@ export const RoomPage = () => {
         .on('broadcast', { event: 'mute-user' }, (payload: any) => {
           if (payload.payload?.targetUserId === user.id) {
             setForceMuted(payload.payload?.muted ?? true)
+          }
+        })
+        .on('broadcast', { event: 'ban-user' }, (payload: any) => {
+          if (payload.payload?.targetUserId === user.id) {
+            addToast({ type: 'error', title: '🚫 Banido', message: 'Você foi removido da sala pelo moderador' })
+            navigate('/rooms')
           }
         })
         .on('broadcast', { event: 'mute-all' }, (payload: any) => {
@@ -269,6 +292,15 @@ export const RoomPage = () => {
     await channel.subscribe()
     await channel.send({ type: 'broadcast', event: 'mute-all', payload: { muted } })
     channel.unsubscribe()
+  }
+
+  const sendBanUser = async (targetUserId: string) => {
+    const { supabase: sb } = await import('@/services/supabase/client')
+    const channel = sb.channel(`mute-${roomSlug}`)
+    await channel.subscribe()
+    await channel.send({ type: 'broadcast', event: 'ban-user', payload: { targetUserId } })
+    channel.unsubscribe()
+    addToast({ type: 'success', title: '🚫 Usuário banido', message: 'O usuário foi removido da sala' })
   }
 
   // Join realtime room chat + presence — only after room data is fetched
@@ -650,30 +682,58 @@ export const RoomPage = () => {
               Participantes ({onlineUsers.length || (botCount + 1)})
             </h3>
             <div className="space-y-1">
-              {/* Real online users from Realtime Presence */}
+              {/* Real online users from Realtime Presence (sorted: King → Mod → VIP → Regular) */}
               {onlineUsers.length > 0 ? (
-                onlineUsers.map((u) => {
+                [...onlineUsers].sort((a, b) => {
+                  if (a.userId === kingUserId) return -1
+                  if (b.userId === kingUserId) return 1
+                  if (a.userId === modUserId) return -1
+                  if (b.userId === modUserId) return 1
+                  const aVip = isVip(a.userId)
+                  const bVip = isVip(b.userId)
+                  if (aVip && !bVip) return -1
+                  if (!aVip && bVip) return 1
+                  return a.joinedAt - b.joinedAt
+                }).map((u) => {
                   const isMe = u.userId === user?.id
                   const isUserKing = u.userId === kingUserId
+                  const isUserMod = u.userId === modUserId
+                  const isUserVip = isVip(u.userId)
                   return (
                     <div key={u.userId} className={`w-full flex items-center gap-3 p-2.5 rounded-xl ${isMe ? 'bg-primary-500/5 border border-primary-500/10' : 'hover:bg-white/[0.03]'} transition-colors`}>
                       <InitialsAvatar name={u.username} size="md" />
                       <div className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate block`}>
+                        <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate flex items-center gap-1.5`}>
                           {isUserKing && '👑 '}
+                          {isUserMod && !isUserKing && '🛡️ '}
                           {isMe ? `${u.username} (você)` : <span className="cursor-pointer hover:text-primary-400 transition-colors" onClick={() => handleUserClick(u.userId, u.username)}>{u.username}</span>}
+                          {isUserVip && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">✨ VIP</span>
+                          )}
                         </span>
                         {isUserKing && <span className="text-[10px] text-amber-400 font-medium">Rei da Sala</span>}
+                        {isUserMod && !isUserKing && <span className="text-[10px] text-blue-400 font-medium">Moderador</span>}
                       </div>
-                      {isKing && !isMe && (
-                        <button
-                          onClick={() => sendMuteCommand(u.userId, true)}
-                          className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                          title={`Mutar ${u.username}`}
-                        >
-                          <MicOff className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {isKing && !isMe && (
+                          <button
+                            onClick={() => sendMuteCommand(u.userId, true)}
+                            className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title={`Mutar ${u.username}`}
+                          >
+                            <MicOff className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {isMod && !isMe && !isUserKing && !isUserVip && (
+                          <button
+                            onClick={() => sendBanUser(u.userId)}
+                            className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title={`Banir ${u.username}`}
+                          >
+                            🚫
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )
                 })
@@ -785,9 +845,9 @@ export const RoomPage = () => {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><InitialsAvatar name="Você" size="lg" /></div>
                     )}
-                    <div className="absolute bottom-2 left-2">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1">
                       <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
-                        {kingUserId === user?.id && '👑 '}Você
+                        {kingUserId === user?.id && '👑 '}{modUserId === user?.id && kingUserId !== user?.id && '🛡️ '}Você
                       </span>
                     </div>
                   </div>
@@ -798,10 +858,13 @@ export const RoomPage = () => {
                       autoPlay playsInline muted={allMuted}
                       className="w-full h-full object-contain"
                     />
-                    <div className="absolute bottom-2 left-2">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1">
                       <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
-                        {featuredPeer === kingUserId && '👑 '}{onlineUsers.find(u => u.userId === featuredPeer)?.username || 'Usuário'}
+                        {featuredPeer === kingUserId && '👑 '}{featuredPeer === modUserId && featuredPeer !== kingUserId && '🛡️ '}{onlineUsers.find(u => u.userId === featuredPeer)?.username || 'Usuário'}
                       </span>
+                      {isVip(featuredPeer!) && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm">✨ VIP</span>
+                      )}
                     </div>
                   </div>
                 ) : null}
@@ -901,10 +964,13 @@ export const RoomPage = () => {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                <div className="absolute bottom-2 left-2">
+                <div className="absolute bottom-2 left-2 flex items-center gap-1">
                   <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
-                    {isKing && '👑 '}Você
+                    {isKing && '👑 '}{isMod && !isKing && '🛡️ '}Você
                   </span>
+                  {isVip(user?.id || '') && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm">✨ VIP</span>
+                  )}
                 </div>
 
                 {isCameraOn && (
@@ -949,6 +1015,8 @@ export const RoomPage = () => {
                 const peerUser = onlineUsers.find(u => u.userId === peerId)
                 const peerName = peerUser?.username || 'Usuário'
                 const isPeerKing = peerId === kingUserId
+                const isPeerMod = peerId === modUserId
+                const isPeerVip = isVip(peerId)
                 return (
                   <div key={peerId} className={`relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === peerId ? null : peerId)}>
                     <video
@@ -965,10 +1033,13 @@ export const RoomPage = () => {
                       className="absolute inset-0 w-full h-full object-contain"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-2 left-2">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1">
                       <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
-                        {isPeerKing && '👑 '}{peerName}
+                        {isPeerKing && '👑 '}{isPeerMod && !isPeerKing && '🛡️ '}{peerName}
                       </span>
+                      {isPeerVip && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm">✨ VIP</span>
+                      )}
                     </div>
                     <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
                       LIVE
@@ -1075,7 +1146,14 @@ export const RoomPage = () => {
                   </div>
                   <div className={`flex-1 min-w-0 ${isMe ? 'text-right' : ''}`}>
                     <div className={`flex items-baseline gap-2 mb-0.5 ${isMe ? 'flex-row-reverse' : ''}`}>
-                      <span className={`text-xs font-semibold cursor-pointer hover:underline ${isMe ? 'text-primary-400' : 'text-dark-300 hover:text-white'}`} onClick={() => handleUserClick(msg.userId, msg.username)}>{msg.username}</span>
+                      <span className={`text-xs font-semibold cursor-pointer hover:underline ${isMe ? 'text-primary-400' : 'text-dark-300 hover:text-white'}`} onClick={() => handleUserClick(msg.userId, msg.username)}>
+                        {msg.userId === kingUserId && '👑 '}
+                        {msg.userId === modUserId && msg.userId !== kingUserId && '🛡️ '}
+                        {msg.username}
+                      </span>
+                      {isVip(msg.userId) && (
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">VIP</span>
+                      )}
                       <span className="text-[10px] text-dark-600">{msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-[85%] ${
@@ -1198,8 +1276,17 @@ export const RoomPage = () => {
 
             {/* Info + Profile Tabs */}
             <div className="p-4">
-              <h3 className="text-lg font-bold text-white mb-1">{selectedUser.username}</h3>
-              <p className="text-xs text-dark-500 mb-3">Na sala agora</p>
+              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                {selectedUser.userId === kingUserId && '👑 '}
+                {selectedUser.userId === modUserId && selectedUser.userId !== kingUserId && '🛡️ '}
+                {selectedUser.username}
+                {isVip(selectedUser.userId) && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">✨ VIP</span>
+                )}
+              </h3>
+              <p className="text-xs text-dark-500 mb-3">
+                {selectedUser.userId === kingUserId ? 'Rei da Sala 👑' : selectedUser.userId === modUserId ? 'Moderador 🛡️' : 'Na sala agora'}
+              </p>
 
               {/* Bio */}
               {selectedUser.bio ? (
