@@ -77,7 +77,7 @@ const InitialsAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md
   )
 }
 
-const RoomPageInner = () => {
+export const RoomPage = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
@@ -629,28 +629,6 @@ const RoomPageInner = () => {
   }, [oneOnOneCall, incomingCall, botNames])
 
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
-
-  // DEBUG: find error #310 — which value is an object?
-  console.log('🔍 RoomPage render debug:', {
-    roomName: typeof room.name, roomDesc: typeof room.description,
-    roomCategory: typeof room.category, roomTheme: typeof room.theme,
-    ownerUsername: typeof room.owner?.username,
-    participants: typeof room.participants, maxUsers: typeof room.max_users,
-    capacityPercent: typeof capacityPercent,
-    roomSlug: typeof roomSlug, isGuest: typeof isGuest,
-    cameraError: typeof cameraError, permissionState: typeof permissionState,
-    trackingStatus: typeof trackingStatus,
-    msgCount: messages.length,
-    onlineCount: onlineUsers.length,
-    user: typeof user, profile: typeof profile,
-  })
-
-  // Check messages for object values
-  for (const msg of messages) {
-    if (typeof msg.content !== 'string') console.error('🔴 msg.content is not string:', msg.id, msg.content)
-    if (typeof msg.username !== 'string') console.error('🔴 msg.username is not string:', msg.id, msg.username)
-    if (!(msg.timestamp instanceof Date)) console.error('🔴 msg.timestamp is not Date:', msg.id, msg.timestamp)
-  }
 
   return (
     <div className="h-screen bg-dark-950 text-white flex flex-col overflow-hidden">
@@ -1598,31 +1576,4 @@ const RoomPageInner = () => {
       )}
     </div>
   )
-}
-
-// Wrapper to isolate crash — if this renders, the error is inside RoomPageInner
-export const RoomPage = () => {
-  const { roomId } = useParams()
-  const [showInner, setShowInner] = useState(false)
-  
-  useEffect(() => {
-    console.log('🧪 RoomPage wrapper mounted, roomId:', roomId)
-    const timer = setTimeout(() => {
-      console.log('🧪 About to render RoomPageInner...')
-      setShowInner(true)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [roomId])
-
-  if (!showInner) {
-    return (
-      <div style={{ color: 'white', padding: 40, background: '#0a0a1a', minHeight: '100vh' }}>
-        <h1>🧪 RoomPage Wrapper - Loading...</h1>
-        <p>roomId: {roomId}</p>
-        <p>If you see this, the crash is inside RoomPageInner</p>
-      </div>
-    )
-  }
-
-  return <RoomPageInner />
 }
