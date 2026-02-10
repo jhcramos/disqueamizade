@@ -82,9 +82,16 @@ export const RoomCard = ({ room }: RoomCardProps) => {
               {room.is_official ? 'Disque Amizade' : room.owner.username}
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] text-emerald-400 font-medium">{room.online_count}</span>
+          <div className="flex items-center gap-3">
+            {room.has_video && (
+              <span className="flex items-center gap-1 text-[11px] text-primary-400 font-medium">
+                🎥 {Math.max(1, Math.floor((room.online_count || room.participants) * 0.4))}
+              </span>
+            )}
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[11px] text-emerald-400 font-medium">{room.online_count}</span>
+            </span>
           </div>
         </div>
       </div>

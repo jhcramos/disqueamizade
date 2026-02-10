@@ -422,12 +422,7 @@ export const RoomPage = () => {
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
             </button>
-            <button onClick={() => { setShowParticipants(!showParticipants); if (!showParticipants) setShowChat(false) }} className={`p-2 rounded-xl transition-all md:hidden ${showParticipants ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
-              <Users className="w-5 h-5" />
-            </button>
-            <button onClick={() => { setShowChat(!showChat); if (!showChat) setShowParticipants(false) }} className={`p-2 rounded-xl transition-all md:hidden ${showChat ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
-              <MessageCircle className="w-5 h-5" />
-            </button>
+            {/* Mobile toggle buttons moved to bottom tab bar */}
           </div>
         </div>
       </header>
@@ -715,6 +710,45 @@ export const RoomPage = () => {
               </button>
             </div>
           </div>
+
+          {/* ─── Mobile Bottom Tab Bar ─── */}
+          <nav className="md:hidden flex-shrink-0 border-t border-white/5 bg-dark-950/95 backdrop-blur-lg">
+            <div className="flex">
+              <button
+                onClick={() => { setShowChat(false); setShowParticipants(false) }}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+                  !showChat && !showParticipants
+                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                    : 'text-dark-500'
+                }`}
+              >
+                <Video className="w-5 h-5" />
+                <span className="text-[11px] font-medium">Vídeo</span>
+              </button>
+              <button
+                onClick={() => { setShowParticipants(true); setShowChat(false) }}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+                  showParticipants
+                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                    : 'text-dark-500'
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length || botCount + 1})</span>
+              </button>
+              <button
+                onClick={() => { setShowChat(true); setShowParticipants(false) }}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+                  showChat
+                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                    : 'text-dark-500'
+                }`}
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="text-[11px] font-medium">Chat</span>
+              </button>
+            </div>
+          </nav>
         </main>
 
         {/* ─── Chat Sidebar ─── */}
