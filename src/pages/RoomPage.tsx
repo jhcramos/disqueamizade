@@ -17,11 +17,25 @@ import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
-const BOT_NAMES = ['ana_sp', 'joao_rj', 'maria_bh', 'pedro_cwb', 'carlos_poa', 'lucia_ssa', 'fernanda_rec', 'rafael_bsb']
+const BOT_POOL = [
+  'gabizinha_22', 'thiago.m', 'bruninha💜', 'duda_carioca', 'leoferreira', 'juh.santos',
+  'marquinhos_zl', 'carol.vibes', 'ricardooo', 'natyyy_', 'felipão92', 'isa.morena',
+  'andrelucas', 'amandinha.s', 'diegomv', 'pris.costa', 'rapha_top', 'luaninha',
+  'gustavotm', 'milena.rj', 'kadu_oficial', 'tata.love', 'dudusilva87', 'larissaf',
+  'biel_mc', 'camis_art', 'paulohenriq', 'fer.oliveira', 'viniciusrp', 'manuzinha_',
+  'renatobh', 'ju.morais', 'rafa.luna', 'taynaraa', 'brunolimaa', 'livia_dz',
+]
+// Pick a random subset each session so participants vary
+function pickBotNames(count: number): string[] {
+  const shuffled = [...BOT_POOL].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count)
+}
 const BOT_MESSAGES = [
   'Que legal essa sala! 😄', 'Boa noite pessoal! 🌙', 'Alguém mais de SP aqui?', 'Adoro esse tema!',
   'Kkkkkk muito bom', 'Primeira vez aqui, gostei!', 'Tô adorando a vibe', 'Salve salve! 👋',
   'Bom demais conversar com vcs', 'Que conversa boa!', 'Alguém quer jogar?', 'Voltei! 🍕',
+  'Eita que sala boa 🔥', 'Tô aqui de novo kk', 'Manda mais', 'Quem é daqui?',
+  'Gente bonita demais nessa sala', 'Aff saudade daqui', 'Olá mundo 🌎', 'Bora papo!',
 ]
 
 // ─── Gradient colors for bot initials avatars ───
@@ -51,10 +65,10 @@ type ChatMessage = {
   type: 'text' | 'emoji' | 'system'
 }
 
-const InitialsAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) => {
+const InitialsAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' | 'lg' }) => {
   const gradient = getAvatarGradient(name)
   const letter = name.charAt(0).toUpperCase()
-  const cls = size === 'md' ? 'w-9 h-9 text-sm' : 'w-7 h-7 text-xs'
+  const cls = size === 'lg' ? 'w-16 h-16 text-2xl' : size === 'md' ? 'w-9 h-9 text-sm' : 'w-7 h-7 text-xs'
   return (
     <div className={`${cls} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white flex-shrink-0`}>
       {letter}
@@ -73,7 +87,7 @@ export const RoomPage = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
   const [allMuted, setAllMuted] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<{ userId: string; username: string } | null>(null)
+  const [selectedUser, setSelectedUser] = useState<{ userId: string; username: string; bio?: string; avatar_url?: string } | null>(null)
   const [privateChat, setPrivateChat] = useState<{ userId: string; username: string } | null>(null)
   const [privateMsgs, setPrivateMsgs] = useState<Map<string, ChatMessage[]>>(new Map())
   const [privateMsgInput, setPrivateMsgInput] = useState('')
@@ -95,7 +109,8 @@ export const RoomPage = () => {
     setSelectedBg(bg.id)
     setBgImage(bg.src)
   }
-  const [botCount] = useState(() => 3 + Math.floor(Math.random() * 6))
+  const [botCount] = useState(() => 5 + Math.floor(Math.random() * 10))
+  const [botNames] = useState(() => pickBotNames(botCount))
 
   // ─── REAL CAMERA ───
   const {
@@ -279,7 +294,7 @@ export const RoomPage = () => {
   // ─── BOT CHAT MESSAGES (every 30-45s) ───
   useEffect(() => {
     const tick = () => {
-      const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]
+      const botName = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)]
       const content = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)]
       setMessages(prev => [...prev, {
         id: `bot-${Date.now()}`,
@@ -352,9 +367,17 @@ export const RoomPage = () => {
   }
 
   // Handle user click (from chat or participants)
-  const handleUserClick = (userId: string, username: string) => {
-    if (userId === user?.id || userId === 'system' || userId.startsWith('bot-')) return
+  const handleUserClick = async (userId: string, username: string) => {
+    if (userId === user?.id || userId === 'system' || userId.startsWith('bot-') || userId.startsWith('sim-')) return
     setSelectedUser({ userId, username })
+    // Fetch profile with bio
+    try {
+      const { supabase: sb } = await import('@/services/supabase/client')
+      const { data } = await sb.from('profiles').select('bio, avatar_url').eq('id', userId).single()
+      if (data) {
+        setSelectedUser(prev => prev?.userId === userId ? { ...prev, bio: data.bio || undefined, avatar_url: data.avatar_url || undefined } : prev)
+      }
+    } catch { /* ignore */ }
   }
 
   const handleShareRoom = () => {
@@ -481,7 +504,7 @@ export const RoomPage = () => {
                       </div>
                     </div>
                   </div>
-                  {BOT_NAMES.slice(0, botCount).map((name) => (
+                  {botNames.map((name) => (
                     <div key={name} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
                       <InitialsAvatar name={name} size="md" />
                       <div className="flex-1 min-w-0">
@@ -617,6 +640,30 @@ export const RoomPage = () => {
                 </div>
               </div>
 
+              {/* ═══ SIMULATED PARTICIPANT TILES (cold-start) ═══ */}
+              {remoteStreams.size === 0 && botNames.slice(0, Math.min(botCount, 5)).map((name, i) => (
+                <div key={`sim-${name}`} className="relative rounded-2xl border-2 border-white/5 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] cursor-pointer" onClick={() => handleUserClick(`sim-${name}`, name)}>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <InitialsAvatar name={name} size="lg" />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-2 left-2">
+                    <span className="px-2 py-1 rounded-lg bg-white/10 text-xs font-semibold text-white/80 backdrop-blur-sm border border-white/10">
+                      {name}
+                    </span>
+                  </div>
+                  <div className="absolute top-2 left-2 p-1 rounded bg-dark-800/60 backdrop-blur-sm">
+                    <VideoOff className="w-3 h-3 text-dark-500" />
+                  </div>
+                  {i % 3 !== 0 && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 backdrop-blur-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[10px] text-emerald-400">online</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+
               {/* ═══ REMOTE VIDEO TILES ═══ */}
               {Array.from(remoteStreams.entries()).map(([peerId, _remoteStream]) => {
                 const peerUser = onlineUsers.find(u => u.userId === peerId)
@@ -711,44 +758,6 @@ export const RoomPage = () => {
             </div>
           </div>
 
-          {/* ─── Mobile Bottom Tab Bar ─── */}
-          <nav className="md:hidden flex-shrink-0 border-t border-white/5 bg-dark-950/95 backdrop-blur-lg">
-            <div className="flex">
-              <button
-                onClick={() => { setShowChat(false); setShowParticipants(false) }}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
-                  !showChat && !showParticipants
-                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
-                    : 'text-dark-500'
-                }`}
-              >
-                <Video className="w-5 h-5" />
-                <span className="text-[11px] font-medium">Vídeo</span>
-              </button>
-              <button
-                onClick={() => { setShowParticipants(true); setShowChat(false) }}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
-                  showParticipants
-                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
-                    : 'text-dark-500'
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length || botCount + 1})</span>
-              </button>
-              <button
-                onClick={() => { setShowChat(true); setShowParticipants(false) }}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
-                  showChat
-                    ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
-                    : 'text-dark-500'
-                }`}
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-[11px] font-medium">Chat</span>
-              </button>
-            </div>
-          </nav>
         </main>
 
         {/* ─── Chat Sidebar ─── */}
@@ -821,6 +830,45 @@ export const RoomPage = () => {
         </aside>
       </div>
 
+      {/* ─── Mobile Bottom Tab Bar (outside main/aside so always visible) ─── */}
+      <nav className="md:hidden flex-shrink-0 border-t border-white/5 bg-dark-950/95 backdrop-blur-lg">
+        <div className="flex">
+          <button
+            onClick={() => { setShowChat(false); setShowParticipants(false) }}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+              !showChat && !showParticipants
+                ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                : 'text-dark-500'
+            }`}
+          >
+            <Video className="w-5 h-5" />
+            <span className="text-[11px] font-medium">Vídeo</span>
+          </button>
+          <button
+            onClick={() => { setShowParticipants(true); setShowChat(false) }}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+              showParticipants
+                ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                : 'text-dark-500'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length || botCount + 1})</span>
+          </button>
+          <button
+            onClick={() => { setShowChat(true); setShowParticipants(false) }}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 min-h-[56px] transition-all ${
+              showChat
+                ? 'text-primary-400 border-t-2 border-primary-500 -mt-px'
+                : 'text-dark-500'
+            }`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-[11px] font-medium">Chat</span>
+          </button>
+        </div>
+      </nav>
+
       <CreateCamaroteModal
         isOpen={showCreateCamarote}
         onClose={() => setShowCreateCamarote(false)}
@@ -854,10 +902,14 @@ export const RoomPage = () => {
             ) : (
               <div className="aspect-video bg-dark-800 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-white text-2xl mx-auto mb-2">
-                    {selectedUser.username.charAt(0).toUpperCase()}
-                  </div>
-                  <p className="text-sm text-dark-400">Câmera não disponível</p>
+                  {selectedUser.avatar_url ? (
+                    <img src={selectedUser.avatar_url} alt={selectedUser.username} className="w-20 h-20 rounded-full object-cover mx-auto mb-2 border-2 border-emerald-500/30" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-white text-3xl mx-auto mb-2">
+                      {selectedUser.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <p className="text-sm text-dark-400">{selectedUser.username}</p>
                 </div>
               </div>
             )}
@@ -867,20 +919,20 @@ export const RoomPage = () => {
               <h3 className="text-lg font-bold text-white mb-1">{selectedUser.username}</h3>
               <p className="text-xs text-dark-500 mb-3">Na sala agora</p>
 
-              {/* Profile Details */}
-              <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-dark-500">👤</span>
-                  <span className="text-dark-300">{selectedUser.username}</span>
+              {/* Bio */}
+              {selectedUser.bio ? (
+                <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <p className="text-sm text-dark-300 leading-relaxed">{selectedUser.bio}</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-dark-500">🟢</span>
-                  <span className="text-dark-400">Online agora</span>
+              ) : (
+                <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <p className="text-sm text-dark-500 italic">Sem bio ainda</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-dark-500">🎯</span>
-                  <span className="text-dark-400">Interesses: <span className="text-dark-300">Conversa, Amizade</span></span>
-                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-xs text-dark-500 mb-4">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                Online agora
               </div>
 
               <div className="flex gap-2">
