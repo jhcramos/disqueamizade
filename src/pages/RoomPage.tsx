@@ -87,11 +87,24 @@ export const RoomPage = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [showCreateCamarote, setShowCreateCamarote] = useState(false)
   const [allMuted, setAllMuted] = useState(false)
+  const [camarotes, setCamarotes] = useState<{ name: string; memberCount: number }[]>([])
+  const [featuredPeer, setFeaturedPeer] = useState<string | null>(null)
+  const [forceMuted, setForceMuted] = useState(false)
   const [selectedUser, setSelectedUser] = useState<{ userId: string; username: string; bio?: string; avatar_url?: string } | null>(null)
   const [privateChat, setPrivateChat] = useState<{ userId: string; username: string } | null>(null)
   const [privateMsgs, setPrivateMsgs] = useState<Map<string, ChatMessage[]>>(new Map())
   const [privateMsgInput, setPrivateMsgInput] = useState('')
   const privateChatEndRef = useRef<HTMLDivElement>(null)
+
+  // ─── 1-on-1 Video Call ───
+  const [oneOnOneCall, setOneOnOneCall] = useState<{ userId: string; username: string; status: 'inviting' | 'active' } | null>(null)
+  const [incomingCall, setIncomingCall] = useState<{ userId: string; username: string } | null>(null)
+  const [oneOnOneMsgs, setOneOnOneMsgs] = useState<ChatMessage[]>([])
+  const [oneOnOneMsgInput, setOneOnOneMsgInput] = useState('')
+  const oneOnOneChatEndRef = useRef<HTMLDivElement>(null)
+  const [pipPos, setPipPos] = useState({ x: 16, y: 16 })
+  const [pipDragging, setPipDragging] = useState(false)
+  const pipDragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 })
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [, setTileSize] = useState({ w: 320, h: 240 })
@@ -199,6 +212,64 @@ export const RoomPage = () => {
   const [onlineUsers, setOnlineUsers] = useState<{ userId: string; username: string; joinedAt: number }[]>([])
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map())
   const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
+
+  // ─── Rei da Sala (Room King) ───
+  const kingUserId = onlineUsers.length > 0
+    ? onlineUsers.reduce((oldest, u) => u.joinedAt < oldest.joinedAt ? u : oldest).userId
+    : null
+  const isKing = kingUserId === user?.id
+
+  // Listen for mute commands via broadcast
+  useEffect(() => {
+    if (!roomReady || !roomSlug || !user) return
+    const setupMuteListener = async () => {
+      const { supabase: sb } = await import('@/services/supabase/client')
+      const channel = sb.channel(`mute-${roomSlug}`)
+      channel
+        .on('broadcast', { event: 'mute-user' }, (payload: any) => {
+          if (payload.payload?.targetUserId === user.id) {
+            setForceMuted(payload.payload?.muted ?? true)
+          }
+        })
+        .on('broadcast', { event: 'mute-all' }, (payload: any) => {
+          // Don't mute the king
+          if (user.id !== kingUserId) {
+            setForceMuted(payload.payload?.muted ?? true)
+          }
+        })
+        .subscribe()
+      return channel
+    }
+    let channelRef: any = null
+    setupMuteListener().then(ch => { channelRef = ch })
+    return () => { if (channelRef) channelRef.unsubscribe() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomReady, roomSlug, user?.id, kingUserId])
+
+  // Apply force mute to local mic
+  useEffect(() => {
+    if (!stream) return
+    const audioTracks = stream.getAudioTracks()
+    if (forceMuted) {
+      audioTracks.forEach(t => { t.enabled = false })
+    }
+  }, [forceMuted, stream])
+
+  const sendMuteCommand = async (targetUserId: string, muted: boolean) => {
+    const { supabase: sb } = await import('@/services/supabase/client')
+    const channel = sb.channel(`mute-${roomSlug}`)
+    await channel.subscribe()
+    await channel.send({ type: 'broadcast', event: 'mute-user', payload: { targetUserId, muted } })
+    channel.unsubscribe()
+  }
+
+  const sendMuteAll = async (muted: boolean) => {
+    const { supabase: sb } = await import('@/services/supabase/client')
+    const channel = sb.channel(`mute-${roomSlug}`)
+    await channel.subscribe()
+    await channel.send({ type: 'broadcast', event: 'mute-all', payload: { muted } })
+    channel.unsubscribe()
+  }
 
   // Join realtime room chat + presence — only after room data is fetched
   useEffect(() => {
@@ -416,6 +487,111 @@ export const RoomPage = () => {
     )
   }
 
+  // ─── 1-on-1 Call Handlers ───
+  const handleInviteOneOnOne = (targetUser: { userId: string; username: string }) => {
+    setSelectedUser(null)
+    setOneOnOneCall({ ...targetUser, status: 'inviting' })
+    addToast({ type: 'info', title: '📞 Chamando...', message: `Convidando ${targetUser.username} para 1:1` })
+    // Simulate bot acceptance after 2-4s
+    if (targetUser.userId.startsWith('sim-') || targetUser.userId.startsWith('bot-')) {
+      const delay = 2000 + Math.random() * 2000
+      setTimeout(() => {
+        setOneOnOneCall(prev => prev?.userId === targetUser.userId ? { ...prev, status: 'active' } : prev)
+        addToast({ type: 'success', title: '✅ Conectado!', message: `${targetUser.username} aceitou o 1:1` })
+      }, delay)
+    }
+  }
+
+  const handleAcceptCall = () => {
+    if (!incomingCall) return
+    setOneOnOneCall({ ...incomingCall, status: 'active' })
+    setIncomingCall(null)
+    addToast({ type: 'success', title: '✅ Conectado!', message: `Você entrou em 1:1 com ${incomingCall.username}` })
+  }
+
+  const handleEndCall = () => {
+    if (oneOnOneCall) {
+      addToast({ type: 'info', title: '📞 Encerrado', message: `Chamada com ${oneOnOneCall.username} encerrada` })
+    }
+    setOneOnOneCall(null)
+    setOneOnOneMsgs([])
+    setOneOnOneMsgInput('')
+  }
+
+  const handleSendOneOnOneMsg = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!oneOnOneMsgInput.trim() || !oneOnOneCall) return
+    const newMsg: ChatMessage = {
+      id: `1on1-${Date.now()}`,
+      userId: user?.id || 'you',
+      username: 'Você',
+      content: oneOnOneMsgInput.trim(),
+      timestamp: new Date(),
+      type: 'text',
+    }
+    setOneOnOneMsgs(prev => [...prev, newMsg])
+    setOneOnOneMsgInput('')
+    // Bot auto-reply
+    if (oneOnOneCall.userId.startsWith('sim-') || oneOnOneCall.userId.startsWith('bot-')) {
+      const replies = ['Haha legal! 😄', 'Concordo!', 'Me conta mais', 'Que massa 🔥', 'Sério? kkkk', 'Tô curtindo conversar com vc', 'Hmm interessante...', 'Boa! 👏']
+      setTimeout(() => {
+        setOneOnOneMsgs(prev => [...prev, {
+          id: `1on1-bot-${Date.now()}`,
+          userId: oneOnOneCall!.userId,
+          username: oneOnOneCall!.username,
+          content: replies[Math.floor(Math.random() * replies.length)],
+          timestamp: new Date(),
+          type: 'text',
+        }])
+      }, 1000 + Math.random() * 2000)
+    }
+    setTimeout(() => oneOnOneChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }
+
+  // PiP drag handlers
+  const handlePipMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    setPipDragging(true)
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    pipDragStart.current = { x: clientX, y: clientY, startX: pipPos.x, startY: pipPos.y }
+  }
+
+  useEffect(() => {
+    if (!pipDragging) return
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+      const dx = clientX - pipDragStart.current.x
+      const dy = clientY - pipDragStart.current.y
+      setPipPos({
+        x: Math.max(0, Math.min(window.innerWidth - 160, pipDragStart.current.startX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 120, pipDragStart.current.startY + dy)),
+      })
+    }
+    const handleUp = () => setPipDragging(false)
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    window.addEventListener('touchmove', handleMove, { passive: false })
+    window.addEventListener('touchend', handleUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+      window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('touchend', handleUp)
+    }
+  }, [pipDragging])
+
+  // Simulate incoming call from bots occasionally
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!oneOnOneCall && !incomingCall && Math.random() < 0.3) {
+        const caller = botNames[Math.floor(Math.random() * botNames.length)]
+        setIncomingCall({ userId: `sim-${caller}`, username: caller })
+      }
+    }, 15000 + Math.random() * 30000)
+    return () => clearTimeout(timer)
+  }, [oneOnOneCall, incomingCall, botNames])
+
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
 
   return (
@@ -478,14 +654,26 @@ export const RoomPage = () => {
               {onlineUsers.length > 0 ? (
                 onlineUsers.map((u) => {
                   const isMe = u.userId === user?.id
+                  const isUserKing = u.userId === kingUserId
                   return (
                     <div key={u.userId} className={`w-full flex items-center gap-3 p-2.5 rounded-xl ${isMe ? 'bg-primary-500/5 border border-primary-500/10' : 'hover:bg-white/[0.03]'} transition-colors`}>
                       <InitialsAvatar name={u.username} size="md" />
                       <div className="flex-1 min-w-0">
                         <span className={`text-sm font-medium ${isMe ? 'text-primary-400' : 'text-white'} truncate block`}>
+                          {isUserKing && '👑 '}
                           {isMe ? `${u.username} (você)` : <span className="cursor-pointer hover:text-primary-400 transition-colors" onClick={() => handleUserClick(u.userId, u.username)}>{u.username}</span>}
                         </span>
+                        {isUserKing && <span className="text-[10px] text-amber-400 font-medium">Rei da Sala</span>}
                       </div>
+                      {isKing && !isMe && (
+                        <button
+                          onClick={() => sendMuteCommand(u.userId, true)}
+                          className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                          title={`Mutar ${u.username}`}
+                        >
+                          <MicOff className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   )
                 })
@@ -515,6 +703,35 @@ export const RoomPage = () => {
                 </>
               )}
             </div>
+
+            {/* King Controls */}
+            {isKing && onlineUsers.length > 1 && (
+              <div className="mt-4">
+                <button
+                  onClick={() => sendMuteAll(true)}
+                  className="w-full px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                >
+                  <MicOff className="w-3.5 h-3.5" /> 👑 Mutar Todos
+                </button>
+              </div>
+            )}
+
+            {/* Camarotes Section */}
+            {camarotes.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <h4 className="text-sm font-bold text-elite-400 mb-3 flex items-center gap-2">
+                  🛋️ Camarotes ({camarotes.length})
+                </h4>
+                <div className="space-y-1.5">
+                  {camarotes.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-elite-500/5 border border-elite-500/10">
+                      <span className="text-sm font-medium text-white">{c.name}</span>
+                      <span className="text-xs text-dark-400">{c.memberCount} 👤</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Room Info Panel */}
             {showInfoPanel && (
@@ -558,9 +775,52 @@ export const RoomPage = () => {
         {/* ─── Main Area: Video ─── */}
         <main className={`flex-1 flex flex-col min-w-0 ${(showChat || showParticipants) ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
-            <div className={`grid gap-3 h-full max-w-4xl mx-auto ${remoteStreams.size > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 max-w-2xl'}`}>
+            {/* Featured peer large view */}
+            {featuredPeer && (
+              <div className="max-w-4xl mx-auto mb-3">
+                {featuredPeer === 'local' ? (
+                  <div className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
+                    {isCameraOn && stream ? (
+                      <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream }} autoPlay playsInline muted className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><InitialsAvatar name="Você" size="lg" /></div>
+                    )}
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
+                        {kingUserId === user?.id && '👑 '}Você
+                      </span>
+                    </div>
+                  </div>
+                ) : remoteStreams.has(featuredPeer) ? (
+                  <div className="relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
+                    <video
+                      ref={(el) => { if (el) { const s = remoteStreams.get(featuredPeer!); if (s && el.srcObject !== s) el.srcObject = s } }}
+                      autoPlay playsInline muted={allMuted}
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
+                        {featuredPeer === kingUserId && '👑 '}{onlineUsers.find(u => u.userId === featuredPeer)?.username || 'Usuário'}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+            <div className={`grid gap-3 max-w-4xl mx-auto ${
+              featuredPeer
+                ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6'
+                : (() => {
+                    const totalCams = 1 + remoteStreams.size + (remoteStreams.size === 0 ? Math.min(botCount, 5) : 0)
+                    return totalCams <= 1
+                      ? 'grid-cols-1 max-w-2xl'
+                      : totalCams <= 4
+                        ? 'grid-cols-1 sm:grid-cols-2'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  })()
+            }`}>
               {/* ═══ YOUR REAL CAMERA TILE ═══ */}
-              <div ref={cameraTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+              <div ref={cameraTileRef} className={`relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === 'local' ? null : 'local')}>
                 {/* Virtual Background Layer */}
                 {bgImage && bgImage !== 'blur' && isCameraOn && (
                   <img src={bgImage} alt="Background" className="absolute inset-0 w-full h-full object-cover z-0" />
@@ -576,7 +836,7 @@ export const RoomPage = () => {
                       autoPlay
                       playsInline
                       muted
-                      className={`absolute inset-0 w-full h-full object-cover ${bgImage && bgImage !== 'blur' ? 'z-10 mix-blend-normal' : ''}`}
+                      className={`absolute inset-0 w-full h-full object-contain ${bgImage && bgImage !== 'blur' ? 'z-10 mix-blend-normal' : ''}`}
                       style={{
                         filter: [
                           filterStyle !== 'none' ? filterStyle : '',
@@ -585,6 +845,26 @@ export const RoomPage = () => {
                         ].filter(Boolean).join(' ') || 'none',
                       }}
                     />
+                    {/* Emoji mask overlay on face */}
+                    {activeMaskData?.emoji && faceBox && (
+                      <div
+                        className="absolute z-20 pointer-events-none select-none"
+                        style={{
+                          left: `${faceBox.x}%`,
+                          top: `${faceBox.y}%`,
+                          width: `${faceBox.w}%`,
+                          height: `${faceBox.h}%`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: `${Math.max(faceBox.w, faceBox.h) * 0.6}vmin`,
+                          lineHeight: 1,
+                          transition: 'all 80ms ease-out',
+                        }}
+                      >
+                        {activeMaskData.emoji}
+                      </div>
+                    )}
                     {activeMaskData && trackingStatus && (
                       <div className="absolute top-2 left-2 z-20 pointer-events-none">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium backdrop-blur-sm ${
@@ -623,7 +903,7 @@ export const RoomPage = () => {
 
                 <div className="absolute bottom-2 left-2">
                   <span className="px-2 py-1 rounded-lg bg-primary-500/20 text-xs font-semibold text-primary-400 backdrop-blur-sm border border-primary-500/30">
-                    Você
+                    {isKing && '👑 '}Você
                   </span>
                 </div>
 
@@ -642,7 +922,7 @@ export const RoomPage = () => {
 
               {/* ═══ SIMULATED PARTICIPANT TILES (cold-start) ═══ */}
               {remoteStreams.size === 0 && botNames.slice(0, Math.min(botCount, 5)).map((name, i) => (
-                <div key={`sim-${name}`} className="relative rounded-2xl border-2 border-white/5 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] cursor-pointer" onClick={() => handleUserClick(`sim-${name}`, name)}>
+                <div key={`sim-${name}`} className={`relative rounded-2xl border-2 border-white/5 bg-dark-900 overflow-hidden cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => handleUserClick(`sim-${name}`, name)}>
                   <div className="w-full h-full flex items-center justify-center">
                     <InitialsAvatar name={name} size="lg" />
                   </div>
@@ -668,8 +948,9 @@ export const RoomPage = () => {
               {Array.from(remoteStreams.entries()).map(([peerId, _remoteStream]) => {
                 const peerUser = onlineUsers.find(u => u.userId === peerId)
                 const peerName = peerUser?.username || 'Usuário'
+                const isPeerKing = peerId === kingUserId
                 return (
-                  <div key={peerId} className="relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden min-h-[200px] sm:min-h-[300px] shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer" onClick={() => handleUserClick(peerId, peerName)}>
+                  <div key={peerId} className={`relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === peerId ? null : peerId)}>
                     <video
                       ref={(el) => {
                         if (el) {
@@ -681,12 +962,12 @@ export const RoomPage = () => {
                       autoPlay
                       playsInline
                       muted={allMuted}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-contain"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                     <div className="absolute bottom-2 left-2">
                       <span className="px-2 py-1 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-400 backdrop-blur-sm border border-emerald-500/30">
-                        {peerName}
+                        {isPeerKing && '👑 '}{peerName}
                       </span>
                     </div>
                     <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
@@ -735,11 +1016,11 @@ export const RoomPage = () => {
               <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
               <button
                 onClick={() => setShowCreateCamarote(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold"
+                className="flex items-center gap-1.5 p-3 sm:px-3 sm:py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold"
                 title="Criar Camarote VIP"
               >
                 <Sparkles className="w-4 h-4" />
-                <span className="hidden md:inline">Camarote</span>
+                <span className="hidden sm:inline">Camarote</span>
               </button>
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
@@ -874,6 +1155,7 @@ export const RoomPage = () => {
         onClose={() => setShowCreateCamarote(false)}
         isPremium={true}
         onConfirm={(data) => {
+          setCamarotes(prev => [...prev, { name: data.name, memberCount: 1 }])
           addToast({ type: 'success', title: '🛋️ Camarote criado!', message: `"${data.name}" está pronto. Até 6 pessoas!` })
           setShowCreateCamarote(false)
         }}
@@ -935,25 +1217,33 @@ export const RoomPage = () => {
                 Online agora
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => {
-                    setPrivateChat(selectedUser)
-                    setSelectedUser(null)
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-primary-500/20 text-primary-400 border border-primary-500/30 text-sm font-semibold hover:bg-primary-500/30 transition-all flex items-center justify-center gap-2"
+                  onClick={() => handleInviteOneOnOne({ userId: selectedUser!.userId, username: selectedUser!.username })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-bold hover:from-pink-600 hover:to-rose-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20"
                 >
-                  <MessageCircle className="w-4 h-4" /> Chat Privado
+                  <Video className="w-4 h-4" /> Chamar para 1:1
                 </button>
-                <button
-                  onClick={() => {
-                    addToast({ type: 'info', title: '👤 Perfil', message: `Você está vendo o perfil de ${selectedUser.username}` })
-                    setSelectedUser(null)
-                  }}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-500/30 transition-all"
-                >
-                  Ver Perfil
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setPrivateChat(selectedUser)
+                      setSelectedUser(null)
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-primary-500/20 text-primary-400 border border-primary-500/30 text-sm font-semibold hover:bg-primary-500/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" /> Chat Privado
+                  </button>
+                  <button
+                    onClick={() => {
+                      addToast({ type: 'info', title: '👤 Perfil', message: `Você está vendo o perfil de ${selectedUser.username}` })
+                      setSelectedUser(null)
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-500/30 transition-all"
+                  >
+                    Ver Perfil
+                  </button>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedUser(null)}
@@ -1017,6 +1307,180 @@ export const RoomPage = () => {
               <Send className="w-3 h-3" />
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ═══ INCOMING CALL MODAL ═══ */}
+      {incomingCall && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-dark-900 border border-white/10 rounded-3xl w-full max-w-xs mx-4 p-6 text-center animate-bounce-in">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center font-bold text-white text-3xl mx-auto mb-4 animate-pulse shadow-lg shadow-pink-500/30">
+              {incomingCall.username.charAt(0).toUpperCase()}
+            </div>
+            <h3 className="text-lg font-bold text-white mb-1">{incomingCall.username}</h3>
+            <p className="text-sm text-dark-400 mb-6">Quer conversar 1:1 com você 📹</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIncomingCall(null)}
+                className="flex-1 py-3 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 font-semibold hover:bg-red-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <Phone className="w-4 h-4 rotate-[135deg]" /> Recusar
+              </button>
+              <button
+                onClick={handleAcceptCall}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 text-white font-semibold hover:from-emerald-600 hover:to-green-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+              >
+                <Video className="w-4 h-4" /> Aceitar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 1-ON-1 CALL: INVITING ═══ */}
+      {oneOnOneCall?.status === 'inviting' && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-dark-900 border border-white/10 rounded-3xl w-full max-w-xs mx-4 p-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-violet-600 flex items-center justify-center font-bold text-white text-3xl mx-auto mb-4 shadow-lg shadow-primary-500/30">
+              {oneOnOneCall.username.charAt(0).toUpperCase()}
+            </div>
+            <h3 className="text-lg font-bold text-white mb-1">{oneOnOneCall.username}</h3>
+            <p className="text-sm text-dark-400 mb-2">Chamando...</p>
+            <div className="flex justify-center gap-1 mb-6">
+              <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '200ms' }} />
+              <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '400ms' }} />
+            </div>
+            <button
+              onClick={handleEndCall}
+              className="w-full py-3 rounded-2xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all flex items-center justify-center gap-2"
+            >
+              <Phone className="w-4 h-4 rotate-[135deg]" /> Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 1-ON-1 CALL: ACTIVE (Full Screen) ═══ */}
+      {oneOnOneCall?.status === 'active' && (
+        <div className="fixed inset-0 z-[60] bg-dark-950 flex flex-col">
+          {/* Main video area (the other person) */}
+          <div className="flex-1 relative bg-dark-900 overflow-hidden">
+            {/* Remote video / avatar */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <InitialsAvatar name={oneOnOneCall.username} size="lg" />
+                <p className="text-white font-semibold mt-3">{oneOnOneCall.username}</p>
+                <p className="text-dark-400 text-sm mt-1">Conectado 🟢</p>
+              </div>
+            </div>
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+
+            {/* PiP: Your camera (draggable) */}
+            <div
+              className="absolute z-20 w-32 h-24 sm:w-40 sm:h-30 rounded-2xl overflow-hidden border-2 border-primary-500/50 shadow-xl cursor-grab active:cursor-grabbing"
+              style={{ left: pipPos.x, top: pipPos.y }}
+              onMouseDown={handlePipMouseDown}
+              onTouchStart={handlePipMouseDown}
+            >
+              {isCameraOn && stream ? (
+                <video
+                  ref={(el) => { if (el && el.srcObject !== stream) el.srcObject = stream }}
+                  autoPlay playsInline muted
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-dark-800 flex items-center justify-center">
+                  <span className="text-2xl">🙈</span>
+                </div>
+              )}
+              <div className="absolute bottom-1 left-1">
+                <span className="px-1.5 py-0.5 rounded bg-primary-500/30 text-[9px] text-primary-300 backdrop-blur-sm font-medium">Você</span>
+              </div>
+            </div>
+
+            {/* Top bar */}
+            <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between z-10">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-xs text-white font-medium">1:1 com {oneOnOneCall.username}</span>
+              </div>
+              <button
+                onClick={handleEndCall}
+                className="p-2.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
+              >
+                <Phone className="w-5 h-5 rotate-[135deg]" />
+              </button>
+            </div>
+          </div>
+
+          {/* Chat area (bottom) */}
+          <div className="flex-shrink-0 border-t border-white/10 bg-dark-950 flex flex-col" style={{ height: '35vh', minHeight: '200px' }}>
+            {/* Chat header */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
+              <MessageCircle className="w-4 h-4 text-primary-400" />
+              <span className="text-sm font-semibold text-white">Chat com {oneOnOneCall.username}</span>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {oneOnOneMsgs.length === 0 && (
+                <p className="text-center text-xs text-dark-500 py-4">Diga algo para {oneOnOneCall.username}! 👋</p>
+              )}
+              {oneOnOneMsgs.map(msg => {
+                const isMe = msg.userId === (user?.id || 'you')
+                return (
+                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                      isMe ? 'bg-primary-500/20 text-primary-100 rounded-br-sm' : 'bg-white/[0.05] text-dark-200 rounded-bl-sm'
+                    }`}>
+                      {!isMe && <span className="text-[10px] text-primary-400 font-semibold block mb-0.5">{msg.username}</span>}
+                      {msg.content}
+                    </div>
+                  </div>
+                )
+              })}
+              <div ref={oneOnOneChatEndRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={handleSendOneOnOneMsg} className="flex-shrink-0 p-3 border-t border-white/5 flex gap-2">
+              <input
+                type="text"
+                value={oneOnOneMsgInput}
+                onChange={e => setOneOnOneMsgInput(e.target.value)}
+                placeholder="Mensagem..."
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-dark-500 text-sm focus:outline-none focus:border-primary-500/40 focus:ring-1 focus:ring-primary-500/20"
+                autoFocus
+              />
+              <button type="submit" disabled={!oneOnOneMsgInput.trim()} className="p-2.5 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-all disabled:opacity-30">
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+
+          {/* Controls */}
+          <div className="flex-shrink-0 border-t border-white/5 bg-dark-950 p-3 flex items-center justify-center gap-3">
+            <button
+              onClick={handleToggleMic}
+              className={`p-3 rounded-2xl transition-all ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10'}`}
+            >
+              {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={handleToggleVideo}
+              className={`p-3 rounded-2xl transition-all ${!isCameraOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10'}`}
+            >
+              {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={handleEndCall}
+              className="px-6 py-3 rounded-2xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center gap-2"
+            >
+              <Phone className="w-5 h-5 rotate-[135deg]" /> Encerrar
+            </button>
+          </div>
         </div>
       )}
     </div>
