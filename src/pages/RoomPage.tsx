@@ -175,10 +175,13 @@ export const RoomPage = () => {
     const fetchRoom = async () => {
       try {
         const { supabase: sb } = await import('@/services/supabase/client')
-        let { data } = await sb.from('rooms').select('*').eq('id', roomId).single()
+        // Try slug first, then by UUID id
+        let data = null
+        const slugRes = await sb.from('rooms').select('*').eq('slug', roomId).maybeSingle()
+        data = slugRes.data
         if (!data) {
-          const res = await sb.from('rooms').select('*').eq('slug', roomId).single()
-          data = res.data
+          const idRes = await sb.from('rooms').select('*').eq('id', roomId).maybeSingle()
+          data = idRes.data
         }
         if (data) {
           // Always use slug as the canonical channel identifier
