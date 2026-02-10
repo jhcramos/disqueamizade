@@ -502,6 +502,43 @@ export const RoomPage = () => {
     else toggleMic()
   }
 
+  // ─── PiP drag effect (moved above early returns for hooks consistency) ───
+  useEffect(() => {
+    if (!pipDragging) return
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+      const dx = clientX - pipDragStart.current.x
+      const dy = clientY - pipDragStart.current.y
+      setPipPos({
+        x: Math.max(0, Math.min(window.innerWidth - 160, pipDragStart.current.startX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 120, pipDragStart.current.startY + dy)),
+      })
+    }
+    const handleUp = () => setPipDragging(false)
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    window.addEventListener('touchmove', handleMove, { passive: false })
+    window.addEventListener('touchend', handleUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+      window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('touchend', handleUp)
+    }
+  }, [pipDragging])
+
+  // ─── Simulate incoming call from bots occasionally ───
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!oneOnOneCall && !incomingCall && Math.random() < 0.3) {
+        const caller = botNames[Math.floor(Math.random() * botNames.length)]
+        setIncomingCall({ userId: `sim-${caller}`, username: caller })
+      }
+    }, 15000 + Math.random() * 30000)
+    return () => clearTimeout(timer)
+  }, [oneOnOneCall, incomingCall, botNames])
+
   if (!roomReady) {
     return (
       <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
@@ -591,42 +628,6 @@ export const RoomPage = () => {
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
     pipDragStart.current = { x: clientX, y: clientY, startX: pipPos.x, startY: pipPos.y }
   }
-
-  useEffect(() => {
-    if (!pipDragging) return
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-      const dx = clientX - pipDragStart.current.x
-      const dy = clientY - pipDragStart.current.y
-      setPipPos({
-        x: Math.max(0, Math.min(window.innerWidth - 160, pipDragStart.current.startX + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 120, pipDragStart.current.startY + dy)),
-      })
-    }
-    const handleUp = () => setPipDragging(false)
-    window.addEventListener('mousemove', handleMove)
-    window.addEventListener('mouseup', handleUp)
-    window.addEventListener('touchmove', handleMove, { passive: false })
-    window.addEventListener('touchend', handleUp)
-    return () => {
-      window.removeEventListener('mousemove', handleMove)
-      window.removeEventListener('mouseup', handleUp)
-      window.removeEventListener('touchmove', handleMove)
-      window.removeEventListener('touchend', handleUp)
-    }
-  }, [pipDragging])
-
-  // Simulate incoming call from bots occasionally
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!oneOnOneCall && !incomingCall && Math.random() < 0.3) {
-        const caller = botNames[Math.floor(Math.random() * botNames.length)]
-        setIncomingCall({ userId: `sim-${caller}`, username: caller })
-      }
-    }, 15000 + Math.random() * 30000)
-    return () => clearTimeout(timer)
-  }, [oneOnOneCall, incomingCall, botNames])
 
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
 
