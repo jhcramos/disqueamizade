@@ -16,14 +16,14 @@ export const ProtectedRoute = ({
   const { isAuthenticated, isSubscriber, isPremium, initialized } = useAuth()
   const location = useLocation()
 
-  // Wait for auth to initialize
+  // Wait for auth to initialize (with timeout fallback)
   if (!initialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="card p-8">
+      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+        <div className="bg-dark-900 border border-white/10 rounded-2xl p-8">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-xl text-gray-400">Carregando...</p>
+            <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xl text-dark-400">Carregando...</p>
           </div>
         </div>
       </div>

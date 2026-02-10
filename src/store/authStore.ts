@@ -202,6 +202,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: async () => {
     set({ loading: true })
+    // Safety timeout — never leave user stuck on loading
+    const safetyTimeout = setTimeout(() => {
+      const state = get()
+      if (!state.initialized) {
+        console.warn('Auth init timeout — forcing initialized')
+        // Try restoring guest session as fallback
+        const guestData = sessionStorage.getItem('guest_session')
+        if (guestData) {
+          try {
+            const { user: gu, profile: gp } = JSON.parse(guestData)
+            set({ user: gu, profile: gp, isGuest: true, initialized: true, loading: false })
+            return
+          } catch { /* ignore */ }
+        }
+        set({ initialized: true, loading: false })
+      }
+    }, 5000)
     try {
       // Check if Supabase is configured
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -249,8 +266,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
         set({ user: session.user, profile, isGuest: false })
 
-        // Set online status
-        await presenceService.setOnlineStatus(session.user.id, true)
+        // Set online status (non-blocking)
+        presenceService.setOnlineStatus(session.user.id, true).catch(() => {})
       } else {
         // No real session — restore guest if exists
         const guestData = sessionStorage.getItem('guest_session')
@@ -290,9 +307,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       })
 
+      clearTimeout(safetyTimeout)
       set({ initialized: true })
     } catch (error) {
       console.error('Initialize error:', error)
+      clearTimeout(safetyTimeout)
       set({ initialized: true })
     } finally {
       set({ loading: false })
