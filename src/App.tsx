@@ -17,6 +17,8 @@ import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { CreatorProfilePage } from './pages/CreatorProfilePage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import { AdminPage } from './pages/AdminPage'
+import { BlogPage } from './pages/blog/BlogPage'
+import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -60,6 +62,10 @@ function App() {
         {/* Features */}
         <Route path="/filtros" element={<VideoFiltersPage />} />
         
+        {/* Blog — public, no auth required (SEO) */}
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
+
         {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />
         
