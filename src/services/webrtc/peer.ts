@@ -1,31 +1,26 @@
 import { supabase } from '@/services/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
-const ICE_SERVERS: RTCIceServer[] = [
+// Metered.ca Premium TURN — credentials fetched dynamically
+const METERED_API_URL = 'https://disqueamizade.metered.live/api/v1/turn/credentials?apiKey=61f52fae1135c1a3362f951216169d97b86f'
+
+// Fallback STUN-only config
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  // Metered.ca Open Relay — free TURN (20GB/month)
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
 ]
+
+async function getIceServers(): Promise<RTCIceServer[]> {
+  try {
+    const res = await fetch(METERED_API_URL)
+    const servers = await res.json()
+    console.log('[WebRTC] Got Metered TURN servers:', servers.length)
+    return servers
+  } catch (err) {
+    console.warn('[WebRTC] Failed to fetch TURN credentials, using STUN fallback:', err)
+    return FALLBACK_ICE_SERVERS
+  }
+}
 
 type PeerCallback = {
   onRemoteStream: (userId: string, stream: MediaStream) => void
@@ -38,6 +33,7 @@ class WebRTCRoom {
   private localStream: MediaStream | null = null
   private userId: string = ''
   private callbacks: PeerCallback | null = null
+  private iceServers: RTCIceServer[] = FALLBACK_ICE_SERVERS
 
   async join(
     roomId: string,
@@ -49,6 +45,9 @@ class WebRTCRoom {
     this.userId = userId
     this.localStream = localStream
     this.callbacks = callbacks
+
+    // Fetch TURN credentials before connecting
+    this.iceServers = await getIceServers()
 
     console.log('[WebRTC] Joining room:', roomId, 'as:', userId.slice(0, 8))
 
@@ -97,7 +96,7 @@ class WebRTCRoom {
   private createPeer(peerId: string) {
     if (this.peers.has(peerId)) return
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    const pc = new RTCPeerConnection({ iceServers: this.iceServers })
     this.peers.set(peerId, pc)
 
     // Polite peer = higher ID (yields on collision)
