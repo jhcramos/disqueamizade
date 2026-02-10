@@ -88,7 +88,7 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({ roomId: _roomId, username:
   const renderSelfTile = (className: string, showMaxBtn = true) => (
     <div className={`bg-surface rounded-xl border-2 border-primary/40 flex items-center justify-center relative overflow-hidden group shadow-[0_0_15px_rgba(139,92,246,0.15)] ${className}`}>
       {isCameraOn && stream ? (
-        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-600/20 to-primary-800/20">
           <div className="text-center">
@@ -215,12 +215,22 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({ roomId: _roomId, username:
   }
 
   // ── GRID VIEW (original, with maximize buttons) ──
-  const gridView = () => (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {renderSelfTile('aspect-video')}
-      {users.slice(0, 3).map((user) => renderUserTile(user, 'aspect-video'))}
-    </div>
-  )
+  const gridView = () => {
+    const totalParticipants = 1 + users.length // self + others
+    // Dynamic grid: 1-2 people = 2 cols, 3-4 = 2 cols, 5+ = 3 cols
+    const gridCols = totalParticipants <= 2 
+      ? 'grid-cols-2' 
+      : totalParticipants <= 4 
+        ? 'grid-cols-2' 
+        : 'grid-cols-3'
+    
+    return (
+      <div className={`grid ${gridCols} gap-4`} style={{ maxHeight: '70vh' }}>
+        {renderSelfTile('aspect-video max-h-[50vh]')}
+        {users.slice(0, 5).map((user) => renderUserTile(user, 'aspect-video max-h-[50vh]'))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

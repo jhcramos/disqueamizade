@@ -70,11 +70,32 @@ export const roomChat = {
 
     channel
       .on('broadcast', { event: 'chat' }, ({ payload }) => {
+        const content = payload.content || ''
+        
+        // Handle DM messages — only deliver to the intended recipient
+        const dmMatch = content.match(/^\[DM:([a-f0-9-]+)\]\s*(.*)$/i)
+        if (dmMatch) {
+          const targetUserId = dmMatch[1]
+          const actualMessage = dmMatch[2]
+          // Only deliver to the target user (or sender for their own echo)
+          if (targetUserId !== userId && payload.userId !== userId) return
+          onMessage({
+            id: payload.id || Date.now().toString(),
+            userId: payload.userId,
+            username: payload.username,
+            content: actualMessage, // Strip the DM prefix
+            timestamp: new Date(payload.timestamp),
+            type: 'dm' as any,
+            _dmTarget: targetUserId,
+          } as any)
+          return
+        }
+        
         onMessage({
           id: payload.id || Date.now().toString(),
           userId: payload.userId,
           username: payload.username,
-          content: payload.content,
+          content,
           timestamp: new Date(payload.timestamp),
           type: payload.type || 'text',
         })
