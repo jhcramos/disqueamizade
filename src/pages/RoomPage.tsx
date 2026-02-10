@@ -174,7 +174,6 @@ export const RoomPage = () => {
         setRoomSlug(roomId || '')
       }
       setRoomReady(true)
-      setRoomLoading(false)
     }
     fetchRoom()
   }, [roomId])
@@ -372,6 +371,14 @@ export const RoomPage = () => {
   const handleToggleMic = () => {
     if (!stream) startCamera()
     else toggleMic()
+  }
+
+  if (!roomReady) {
+    return (
+      <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
+        <div className="text-dark-400 text-lg">Entrando na sala...</div>
+      </div>
+    )
   }
 
   if (!room) {
