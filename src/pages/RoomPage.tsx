@@ -140,7 +140,7 @@ export const RoomPage = () => {
   const [supaRoom, setSupaRoom] = useState<any>(null)
   const [roomSlug, setRoomSlug] = useState<string>('')
   const [roomReady, setRoomReady] = useState(false)
-  const [, setRoomLoading] = useState(true)
+  // roomLoading removed — using roomReady instead
 
   useEffect(() => {
     const fetchRoom = async () => {
