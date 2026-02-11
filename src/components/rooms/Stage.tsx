@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
-import { Mic, MicOff, Video, VideoOff, ArrowDown } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Mic, MicOff, Video, VideoOff, ArrowDown, Expand } from 'lucide-react'
 import { StageQueue } from './StageQueue'
+import { FloatingCamera } from './FloatingCamera'
 import type { StageUser, QueueEntry } from '@/hooks/useStage'
 
 const AVATAR_GRADIENTS = [
@@ -50,6 +51,7 @@ export const Stage = ({
   onToggleCamera,
 }: StageProps) => {
   const stageVideoRef = useRef<HTMLVideoElement>(null)
+  const [isFloating, setIsFloating] = useState(false)
   const isCurrentUser = performer?.userId === currentUserId
 
   // Attach local stream to stage video when current user is performing
@@ -58,7 +60,24 @@ export const Stage = ({
       stageVideoRef.current.srcObject = localStream
     }
   }, [isCurrentUser, localStream])
+  // Close floating when performer leaves or camera turns off
+  useEffect(() => {
+    if (!performer || !isCurrentUser || !performer.isCameraOn || !localStream) {
+      setIsFloating(false)
+    }
+  }, [performer, isCurrentUser, localStream])
+
   return (
+    <>
+    {isFloating && performer && localStream && (
+      <FloatingCamera
+        stream={localStream}
+        performerName={performer.userId === currentUserId ? 'Você' : performer.username}
+        stageTimer={stageTimer}
+        isMicOn={performer.isMicOn}
+        onClose={() => setIsFloating(false)}
+      />
+    )}
     <div className="flex-shrink-0 border-b border-white/5">
       {/* Stage Area */}
       <div
@@ -86,14 +105,34 @@ export const Stage = ({
                 border: '2px solid rgba(236,72,153,0.4)',
               }}
             >
+              {/* Pop-out button */}
+              {isCurrentUser && performer.isCameraOn && localStream && (
+                <button
+                  onClick={() => setIsFloating(true)}
+                  className="absolute top-2 right-2 z-20 p-1.5 rounded-lg bg-black/50 hover:bg-black/70 text-white/70 hover:text-white transition-all"
+                  title="Pop out"
+                >
+                  <Expand className="w-4 h-4" />
+                </button>
+              )}
               {/* Camera feed: real video for current user, avatar for others */}
-              {isCurrentUser && performer.isCameraOn && localStream ? (
+              {isCurrentUser && performer.isCameraOn && localStream && isFloating ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-dark-900/80">
+                  <button
+                    onClick={() => setIsFloating(false)}
+                    className="text-xs text-fuchsia-300/70 hover:text-fuchsia-300 transition-colors"
+                  >
+                    📹 Câmera em modo flutuante — clique para voltar
+                  </button>
+                </div>
+              ) : isCurrentUser && performer.isCameraOn && localStream ? (
                 <video
                   ref={stageVideoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full"
+                  style={{ objectFit: 'contain' }}
                 />
               ) : (
                 <>
@@ -228,5 +267,6 @@ export const Stage = ({
         )}
       </div>
     </div>
+    </>
   )
 }
