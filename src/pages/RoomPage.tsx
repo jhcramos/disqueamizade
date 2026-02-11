@@ -20,7 +20,7 @@ import { HostBotMessage } from '@/components/rooms/HostBot'
 import { BioEditor } from '@/components/profile/BioEditor'
 import type { UserBio } from '@/hooks/useHostBot'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
-import { PushToTalk } from '@/components/rooms/PushToTalk'
+import { PushToTalk, PushToTalkLarge } from '@/components/rooms/PushToTalk'
 import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTVideo, STARTER_PLAYLISTS } from '@/components/rooms/Jukebox'
 import { supabase } from '@/services/supabase/client'
 
@@ -982,6 +982,18 @@ export const RoomPage = () => {
               </div>
             )}
 
+            {/* Criar Camarote — below participants list */}
+            <div className="mt-4 pt-3 border-t border-white/5">
+              <button
+                onClick={() => setShowCreateCamarote(true)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold"
+                title="Criar Camarote VIP"
+              >
+                <Sparkles className="w-4 h-4" />
+                Criar Camarote
+              </button>
+            </div>
+
             {/* Room Info Panel */}
             {showInfoPanel && (
               <div className="mt-6 pt-4 border-t border-white/5 animate-fade-in">
@@ -1250,16 +1262,11 @@ export const RoomPage = () => {
             </div>
           </div>
 
-          {/* Controls Bar */}
+          {/* Controls Bar — PTT centered, big concave button */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur-lg p-3 sm:p-4">
             <div className="flex items-center justify-center gap-2 sm:gap-3">
-              {pttMode ? (
-                <PushToTalk
-                  onTalkStart={handlePttStart}
-                  onTalkEnd={handlePttEnd}
-                  disabled={isGuest}
-                />
-              ) : (
+              {/* Left controls */}
+              {!pttMode && (
                 <button
                   onClick={handleToggleMic}
                   disabled={isGuest}
@@ -1286,16 +1293,19 @@ export const RoomPage = () => {
                   {allMuted ? <MicOff className="w-5 h-5" /> : <Users className="w-5 h-5" />}
                 </button>
               )}
+
+              {/* === CENTER: Big concave PTT button === */}
+              {pttMode && (
+                <PushToTalkLarge
+                  onTalkStart={handlePttStart}
+                  onTalkEnd={handlePttEnd}
+                  disabled={isGuest}
+                />
+              )}
+
+              {/* Right controls */}
               <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
               <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
-              <button
-                onClick={() => setShowCreateCamarote(true)}
-                className="flex items-center gap-1.5 p-3 sm:px-3 sm:py-2.5 rounded-2xl bg-elite-500/10 text-elite-400 border border-elite-500/20 hover:bg-elite-500/20 transition-all text-sm font-semibold"
-                title="Criar Camarote VIP"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Camarote</span>
-              </button>
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
                   <Phone className="w-5 h-5 rotate-[135deg]" />

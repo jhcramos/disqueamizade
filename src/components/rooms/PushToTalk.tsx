@@ -51,8 +51,8 @@ export const PushToTalk = ({ onTalkStart, onTalkEnd, enabled = true, disabled = 
   )
 }
 
-/* Large mobile PTT button for bottom of screen */
-export const PushToTalkMobile = ({ onTalkStart, onTalkEnd, enabled = true, disabled = false }: PushToTalkProps) => {
+/* Large centered PTT button — concave design, prominent center position */
+export const PushToTalkLarge = ({ onTalkStart, onTalkEnd, enabled = true, disabled = false }: PushToTalkProps) => {
   const { isTalking, holdToTalk, releaseTalk } = usePushToTalk({
     onTalkStart,
     onTalkEnd,
@@ -70,25 +70,38 @@ export const PushToTalkMobile = ({ onTalkStart, onTalkEnd, enabled = true, disab
         onMouseLeave={releaseTalk}
         disabled={disabled}
         className={`
-          relative w-16 h-16 rounded-full transition-all select-none touch-none
-          ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
+          relative w-20 h-20 sm:w-24 sm:h-24 rounded-full transition-all select-none touch-none
+          ${disabled ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}
           ${isTalking
-            ? 'bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-[0_0_30px_rgba(236,72,153,0.5)] scale-110'
-            : 'bg-dark-800 text-dark-400 border-2 border-white/10'
+            ? 'bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-[0_0_40px_rgba(236,72,153,0.6),inset_0_2px_4px_rgba(255,255,255,0.2)] scale-105'
+            : 'bg-gradient-to-b from-dark-700 to-dark-900 text-dark-300 border-2 border-white/10 shadow-[inset_0_4px_12px_rgba(0,0,0,0.6),inset_0_-2px_4px_rgba(255,255,255,0.05),0_2px_8px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_4px_12px_rgba(0,0,0,0.6),inset_0_-2px_4px_rgba(255,255,255,0.05),0_0_20px_rgba(236,72,153,0.2)]'
           }
         `}
       >
+        {/* Concave inner shadow ring */}
+        <span className={`absolute inset-[3px] rounded-full pointer-events-none ${
+          isTalking 
+            ? 'bg-gradient-to-b from-rose-400/20 to-transparent' 
+            : 'bg-gradient-to-b from-black/30 to-transparent'
+        }`} />
+        
         {isTalking && (
           <>
             <span className="absolute inset-0 rounded-full border-2 border-pink-400 animate-ping opacity-30" />
-            <span className="absolute inset-[-6px] rounded-full border border-pink-500/20 animate-pulse" />
+            <span className="absolute inset-[-8px] rounded-full border border-pink-500/20 animate-pulse" />
+            <span className="absolute inset-[-16px] rounded-full border border-pink-500/10 animate-pulse" style={{ animationDelay: '0.5s' }} />
           </>
         )}
-        {isTalking ? <Mic className="w-7 h-7 mx-auto relative z-10" /> : <Radio className="w-7 h-7 mx-auto relative z-10" />}
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          {isTalking ? <Mic className="w-8 h-8 sm:w-10 sm:h-10" /> : <Radio className="w-8 h-8 sm:w-10 sm:h-10" />}
+        </div>
       </button>
-      <span className={`text-xs font-medium ${isTalking ? 'text-pink-400' : 'text-dark-500'}`}>
+      <span className={`text-xs sm:text-sm font-semibold tracking-wide ${isTalking ? 'text-pink-400' : 'text-dark-500'}`}>
         {isTalking ? '🔊 Falando...' : 'Segure para falar'}
       </span>
     </div>
   )
 }
+
+/* Legacy alias */
+export const PushToTalkMobile = PushToTalkLarge
