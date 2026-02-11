@@ -1,12 +1,14 @@
 import { useCallback, useRef } from 'react'
 
-// ─── Voice Styles ───
+const API_URL = '/api/tts'
+
+// ─── Voice Styles mapped to edge-tts parameters ───
 export const VOICE_STYLES = {
-  entrance: { rate: 0.85, pitch: 0.7, volume: 0.9 },
-  farewell: { rate: 0.95, pitch: 0.8, volume: 0.7 },
-  icebreaker: { rate: 1.0, pitch: 0.9, volume: 0.8 },
-  quiz: { rate: 0.9, pitch: 1.0, volume: 0.85 },
-  reaction: { rate: 1.1, pitch: 1.1, volume: 0.7 },
+  entrance:   { rate: '-10%', pitch: '-3Hz', volume: '+0%' },
+  farewell:   { rate: '+0%',  pitch: '+0Hz', volume: '-10%' },
+  icebreaker: { rate: '+5%',  pitch: '+2Hz', volume: '+0%' },
+  quiz:       { rate: '+0%',  pitch: '+5Hz', volume: '+0%' },
+  reaction:   { rate: '+15%', pitch: '+5Hz', volume: '-5%' },
 } as const
 
 export type VoiceStyle = keyof typeof VOICE_STYLES
@@ -14,6 +16,12 @@ export type VoiceStyle = keyof typeof VOICE_STYLES
 // ─── Strip emojis from text for TTS ───
 const stripEmojis = (text: string): string =>
   text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim()
+
+// ─── Audio cache for repeated phrases ───
+const audioCache = new Map<string, Blob>()
+const MAX_CACHE = 20
+
+const getCacheKey = (text: string, style: string) => `${style}:${text}`
 
 // ─── Trumpet Fanfare ───
 const playFanfare = (): Promise<void> => {
@@ -31,7 +39,6 @@ const playFanfare = (): Promise<void> => {
         osc.start(ctx.currentTime + i * 0.15)
         osc.stop(ctx.currentTime + i * 0.15 + 0.15)
       })
-      // Wait for fanfare to finish
       setTimeout(resolve, notes.length * 150 + 100)
     } catch {
       resolve()
@@ -39,14 +46,44 @@ const playFanfare = (): Promise<void> => {
   })
 }
 
+// ─── Fetch TTS audio (with caching) ───
+const fetchAudio = async (text: string, style: VoiceStyle): Promise<Blob> => {
+  const key = getCacheKey(text, style)
+  const cached = audioCache.get(key)
+  if (cached) return cached
+
+  const params = VOICE_STYLES[style] || VOICE_STYLES.entrance
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, ...params }),
+  })
+
+  if (!response.ok) throw new Error(`TTS failed: ${response.status}`)
+
+  const blob = await response.blob()
+
+  // Cache it (evict oldest if full)
+  if (audioCache.size >= MAX_CACHE) {
+    const firstKey = audioCache.keys().next().value
+    if (firstKey) audioCache.delete(firstKey)
+  }
+  audioCache.set(key, blob)
+
+  return blob
+}
+
 // ─── TTS Hook ───
 export const useTTS = () => {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const queueRef = useRef<Array<{ text: string; style: VoiceStyle }>>([])
+  const playingRef = useRef(false)
   const lastSpokenTime = useRef(0)
   const joinedTime = useRef(Date.now())
 
   const isEnabled = (): boolean => {
     const stored = localStorage.getItem('arauto-voice-enabled')
-    if (stored === null) return true // Default ON
+    if (stored === null) return true
     return stored === 'true'
   }
 
@@ -54,18 +91,38 @@ export const useTTS = () => {
     localStorage.setItem('arauto-voice-enabled', String(enabled))
   }
 
+  const processQueue = async () => {
+    if (playingRef.current || queueRef.current.length === 0) return
+    playingRef.current = true
+
+    const { text, style } = queueRef.current.shift()!
+
+    try {
+      if (style === 'entrance') await playFanfare()
+
+      const blob = await fetchAudio(text, style)
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audioRef.current = audio
+
+      await new Promise<void>((resolve) => {
+        audio.onended = () => { URL.revokeObjectURL(url); resolve() }
+        audio.onerror = () => { URL.revokeObjectURL(url); resolve() }
+        audio.play().catch(() => resolve())
+      })
+    } catch (e) {
+      console.warn('Edge TTS error:', e)
+    }
+
+    playingRef.current = false
+    if (queueRef.current.length > 0) processQueue()
+  }
+
   const speak = useCallback((text: string, style?: VoiceStyle, withFanfare = false) => {
-    // Check if enabled
     if (!isEnabled()) return
-    if (!('speechSynthesis' in window)) return
-
-    // Don't speak if tab is hidden
     if (document.hidden) return
-
-    // Don't speak if user just joined (2s grace period)
     if (Date.now() - joinedTime.current < 2000) return
 
-    // Rate limit: max 1 spoken announcement per 30 seconds
     const now = Date.now()
     if (now - lastSpokenTime.current < 30000) return
     lastSpokenTime.current = now
@@ -73,34 +130,19 @@ export const useTTS = () => {
     const cleanText = stripEmojis(text)
     if (!cleanText) return
 
-    const opts = style ? VOICE_STYLES[style] : { rate: 0.9, pitch: 0.8, volume: 0.8 }
+    const effectiveStyle = style || 'entrance'
 
-    const doSpeak = () => {
-      window.speechSynthesis.cancel()
-
-      const utterance = new SpeechSynthesisUtterance(cleanText)
-      utterance.lang = 'pt-BR'
-      utterance.rate = opts.rate
-      utterance.pitch = opts.pitch
-      utterance.volume = opts.volume
-
-      // Try to find a Portuguese voice
-      const voices = window.speechSynthesis.getVoices()
-      const ptVoice = voices.find(v => v.lang.startsWith('pt-BR')) || voices.find(v => v.lang.startsWith('pt'))
-      if (ptVoice) utterance.voice = ptVoice
-
-      window.speechSynthesis.speak(utterance)
-    }
-
-    if (withFanfare) {
-      playFanfare().then(doSpeak)
-    } else {
-      doSpeak()
-    }
+    queueRef.current.push({ text: cleanText, style: withFanfare ? 'entrance' : effectiveStyle })
+    processQueue()
   }, [])
 
   const stop = useCallback(() => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    queueRef.current = []
+    playingRef.current = false
   }, [])
 
   return { speak, stop, isEnabled, setEnabled }
