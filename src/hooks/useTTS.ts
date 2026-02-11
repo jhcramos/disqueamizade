@@ -25,15 +25,38 @@ const getAudioCtx = (): AudioContext => {
   return sharedAudioCtx
 }
 
-// Resume audio context on first user interaction
+// Unlocked silent audio element — mobile needs a user-gesture-unlocked Audio
+let unlockedAudio: HTMLAudioElement | null = null
+let audioUnlocked = false
+
+const unlockAudio = () => {
+  if (audioUnlocked) return
+  // Create and play a silent audio to unlock the audio pipeline on mobile
+  try {
+    const ctx = getAudioCtx()
+    if (ctx.state === 'suspended') ctx.resume()
+
+    // Also unlock HTMLAudioElement playback
+    unlockedAudio = new Audio()
+    unlockedAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwMHAAAAAAD/+1DEAAAB8ANX9AAAB0AYd/8QAABBmBQAdAAAAAAAANIKgICAgAAAAAfB8HwfB8EAQBA5/ygIAgCAIHB8Hw'
+    unlockedAudio.volume = 0.01
+    unlockedAudio.play().then(() => {
+      unlockedAudio?.pause()
+      audioUnlocked = true
+    }).catch(() => {})
+  } catch {}
+}
+
+// Resume audio context on EVERY user interaction (mobile needs repeated unlocks)
 if (typeof window !== 'undefined') {
   const resumeCtx = () => {
     if (sharedAudioCtx?.state === 'suspended') sharedAudioCtx.resume()
-    document.removeEventListener('click', resumeCtx)
-    document.removeEventListener('touchstart', resumeCtx)
+    unlockAudio()
   }
-  document.addEventListener('click', resumeCtx, { once: true })
-  document.addEventListener('touchstart', resumeCtx, { once: true })
+  // Use capture phase + don't remove — mobile may need multiple unlocks
+  document.addEventListener('click', resumeCtx, true)
+  document.addEventListener('touchstart', resumeCtx, true)
+  document.addEventListener('touchend', resumeCtx, true)
 }
 
 // ─── Trumpet Fanfare (Enhanced Web Audio API) ───
@@ -158,11 +181,46 @@ const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudio
     if (!res.ok) return null
     const blob = await res.blob()
     if (blob.size < 100) return null // empty/error response
-    const url = URL.createObjectURL(blob)
-    const audio = new Audio(url)
-    // Clean up blob URL after playback
-    audio.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true })
-    return audio
+
+    // On mobile, try AudioContext decodeAudioData first (bypasses autoplay restrictions)
+    try {
+      const ctx = getAudioCtx()
+      if (ctx.state === 'suspended') await ctx.resume()
+      const arrayBuffer = await blob.arrayBuffer()
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
+      // Return a pseudo-audio element that uses AudioContext for playback
+      const pseudoAudio = new Audio()
+      let sourceNode: AudioBufferSourceNode | null = null
+      const originalPlay = pseudoAudio.play.bind(pseudoAudio)
+      pseudoAudio.play = () => {
+        return new Promise<void>((resolve, reject) => {
+          try {
+            sourceNode = ctx.createBufferSource()
+            sourceNode.buffer = audioBuffer
+            sourceNode.connect(ctx.destination)
+            sourceNode.onended = () => {
+              pseudoAudio.dispatchEvent(new Event('ended'))
+            }
+            sourceNode.start(0)
+            resolve()
+          } catch (e) {
+            reject(e)
+          }
+        })
+      }
+      const originalPause = pseudoAudio.pause.bind(pseudoAudio)
+      pseudoAudio.pause = () => {
+        try { sourceNode?.stop() } catch {}
+        originalPause()
+      }
+      return pseudoAudio
+    } catch {
+      // Fallback: standard Audio element (works on desktop)
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audio.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true })
+      return audio
+    }
   } catch (e) {
     console.warn('Edge TTS fetch failed:', e)
     return null
@@ -222,7 +280,6 @@ export function useTTS() {
   const speak = useCallback((text: string, style: VoiceStyle = 'entrance', withFanfare = false) => {
     if (typeof window === 'undefined') return
     if (localStorage.getItem('arauto-voice-enabled') === 'false') return
-    if (document.hidden) return
     
     // Rate limit: min 5s between speaks
     if (Date.now() - lastSpeakTime.current < 5000 && queueRef.current.length > 0) return
