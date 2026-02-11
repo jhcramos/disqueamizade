@@ -42,20 +42,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       sessionStorage.removeItem('guest_session')
       set({ isGuest: false })
 
-      // Retry once on abort (mobile network flakiness)
+      // Retry up to 2 times on network failures (mobile Safari flakiness)
       let result
-      try {
-        result = await authService.signIn(email, password)
-      } catch (firstErr: any) {
-        if (firstErr?.message?.includes('aborted') || firstErr?.name === 'AbortError') {
-          console.warn('Sign in aborted, retrying...')
-          await new Promise(r => setTimeout(r, 500))
+      let lastErr: any
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          if (attempt > 0) await new Promise(r => setTimeout(r, 1000))
           result = await authService.signIn(email, password)
-        } else {
-          throw firstErr
+          break
+        } catch (err: any) {
+          lastErr = err
+          const msg = err?.message?.toLowerCase() || ''
+          const isNetwork = msg.includes('aborted') || msg.includes('load failed') || msg.includes('fetch') || msg.includes('network') || err?.name === 'AbortError' || err?.name === 'TypeError'
+          if (!isNetwork || attempt === 2) throw err
+          console.warn(`Sign in attempt ${attempt + 1} failed (${msg}), retrying...`)
         }
       }
-      const { user } = result
+      const { user } = result!
 
       if (user) {
         let profile: Profile | null = null

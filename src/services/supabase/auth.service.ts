@@ -100,13 +100,56 @@ export const authService = {
    * Sign in with email and password
    */
   async signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) throw error
+      return data
+    } catch (err: any) {
+      const msg = err?.message?.toLowerCase() || ''
+      const isNetwork = msg.includes('load failed') || msg.includes('aborted') || msg.includes('fetch') || err?.name === 'TypeError'
+      
+      if (isNetwork) {
+        // Fallback: direct REST call (Safari mobile fetch workaround)
+        console.warn('Supabase SDK failed, trying direct REST login...')
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+        
+        const res = await new Promise<Response>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', `${supabaseUrl}/auth/v1/token?grant_type=password`)
+          xhr.setRequestHeader('apikey', supabaseKey)
+          xhr.setRequestHeader('Content-Type', 'application/json')
+          xhr.timeout = 15000
+          xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }))
+          xhr.onerror = () => reject(new Error('Network request failed'))
+          xhr.ontimeout = () => reject(new Error('Request timed out'))
+          xhr.send(JSON.stringify({ email, password }))
+        })
+        
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.msg || body.error_description || 'Dados incorretos')
+        }
+        
+        const data = await res.json()
+        
+        // Set the session in Supabase client manually
+        if (data.access_token) {
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          })
+          const { data: sessionData } = await supabase.auth.getSession()
+          return { user: sessionData.session?.user || data.user, session: sessionData.session }
+        }
+        throw new Error('Login falhou')
+      }
+      
+      throw err
+    }
   },
 
   /**
