@@ -16,6 +16,8 @@ import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
+import { PushToTalk } from '@/components/rooms/PushToTalk'
+import { Jukebox, type Song } from '@/components/rooms/Jukebox'
 import { supabase } from '@/services/supabase/client'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
@@ -129,6 +131,13 @@ export const RoomPage = () => {
   }
   const [botCount] = useState(() => 5 + Math.floor(Math.random() * 10))
   const [botNames] = useState(() => pickBotNames(botCount))
+
+  // ─── PTT & Jukebox State ───
+  const [pttMode, _setPttMode] = useState(true) // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [pttTalking, setPttTalking] = useState(false)
+  const [jukeboxOpen, setJukeboxOpen] = useState(false)
+  const [jukeboxVolume, setJukeboxVolume] = useState(70)
+  const jukeboxBaseVolume = useRef(70)
 
   // ─── REAL CAMERA ───
   const {
@@ -497,6 +506,31 @@ export const RoomPage = () => {
     } catch { /* ignore */ }
   }
 
+  // ─── PTT handlers ───
+  const handlePttStart = () => {
+    setPttTalking(true)
+    if (stream) stream.getAudioTracks().forEach(t => { t.enabled = true })
+    // Duck jukebox volume
+    jukeboxBaseVolume.current = jukeboxVolume
+    setJukeboxVolume(Math.round(jukeboxBaseVolume.current * 0.2))
+  }
+  const handlePttEnd = () => {
+    setPttTalking(false)
+    if (stream) stream.getAudioTracks().forEach(t => { t.enabled = false })
+    // Restore jukebox volume
+    setJukeboxVolume(jukeboxBaseVolume.current)
+  }
+  const handleJukeboxSongChange = (song: Song) => {
+    setMessages(prev => [...prev, {
+      id: `jb-${Date.now()}`,
+      userId: 'system',
+      username: 'Sistema',
+      content: `🎵 Agora tocando: ${song.title} — ${song.artist}`,
+      timestamp: new Date(),
+      type: 'system',
+    }])
+  }
+
   const handleShareRoom = () => {
     navigator.clipboard?.writeText(window.location.href)
     addToast({ type: 'success', title: 'Link copiado!', message: 'Link da sala copiado para a área de transferência' })
@@ -670,6 +704,14 @@ export const RoomPage = () => {
               {/* Debug - remove later */}
               <span className="text-[9px] text-dark-600 ml-1">ch:{roomSlug?.slice(0,8)} {isGuest ? 'G' : 'U'}</span>
             </div>
+            <Jukebox
+              roomCategory={room?.category}
+              volume={jukeboxVolume}
+              onVolumeChange={v => { setJukeboxVolume(v); jukeboxBaseVolume.current = v }}
+              onSongChange={handleJukeboxSongChange}
+              isOpen={jukeboxOpen}
+              onToggle={() => setJukeboxOpen(!jukeboxOpen)}
+            />
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
             </button>
@@ -917,7 +959,7 @@ export const RoomPage = () => {
                   })()
             }`}>
               {/* ═══ YOUR REAL CAMERA TILE ═══ */}
-              <div ref={cameraTileRef} className={`relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === 'local' ? null : 'local')}>
+              <div ref={cameraTileRef} className={`relative rounded-2xl border-2 bg-dark-900 overflow-hidden cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'} ${pttTalking ? 'border-pink-500 shadow-[0_0_25px_rgba(236,72,153,0.4)]' : 'border-primary-500/40 shadow-[0_0_20px_rgba(139,92,246,0.15)]'} transition-all`} onClick={() => setFeaturedPeer(featuredPeer === 'local' ? null : 'local')}>
                 {/* Virtual Background Layer */}
                 {bgImage && bgImage !== 'blur' && isCameraOn && (
                   <img src={bgImage} alt="Background" className="absolute inset-0 w-full h-full object-cover z-0" />
@@ -1098,14 +1140,22 @@ export const RoomPage = () => {
           {/* Controls Bar */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur-lg p-3 sm:p-4">
             <div className="flex items-center justify-center gap-2 sm:gap-3">
-              <button
-                onClick={handleToggleMic}
-                disabled={isGuest}
-                className={`p-3 rounded-2xl transition-all ${isGuest ? 'opacity-40 cursor-not-allowed' : ''} ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
-                title={isGuest ? 'Crie uma conta para usar o microfone' : isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
-              >
-                {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-              </button>
+              {pttMode ? (
+                <PushToTalk
+                  onTalkStart={handlePttStart}
+                  onTalkEnd={handlePttEnd}
+                  disabled={isGuest}
+                />
+              ) : (
+                <button
+                  onClick={handleToggleMic}
+                  disabled={isGuest}
+                  className={`p-3 rounded-2xl transition-all ${isGuest ? 'opacity-40 cursor-not-allowed' : ''} ${!isMicOn ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/[0.06] text-white border border-white/10 hover:bg-white/[0.1]'}`}
+                  title={isGuest ? 'Crie uma conta para usar o microfone' : isMicOn ? 'Desligar microfone' : 'Ligar microfone'}
+                >
+                  {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                </button>
+              )}
               <button
                 onClick={handleToggleVideo}
                 disabled={isGuest}
