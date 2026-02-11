@@ -42,7 +42,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       sessionStorage.removeItem('guest_session')
       set({ isGuest: false })
 
-      const { user } = await authService.signIn(email, password)
+      // Retry once on abort (mobile network flakiness)
+      let result
+      try {
+        result = await authService.signIn(email, password)
+      } catch (firstErr: any) {
+        if (firstErr?.message?.includes('aborted') || firstErr?.name === 'AbortError') {
+          console.warn('Sign in aborted, retrying...')
+          await new Promise(r => setTimeout(r, 500))
+          result = await authService.signIn(email, password)
+        } else {
+          throw firstErr
+        }
+      }
+      const { user } = result
 
       if (user) {
         let profile: Profile | null = null
