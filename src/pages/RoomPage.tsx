@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
-  Send, Flag, Lock, Smile,
+  Send, Flag, Lock, Smile, Maximize2,
   Share2, X, Info, AlertTriangle, Sparkles,
 } from 'lucide-react'
 import { useToastStore } from '@/components/common/ToastContainer'
@@ -102,6 +102,7 @@ export const RoomPage = () => {
   const [allMuted, setAllMuted] = useState(false)
   const [camarotes, setCamarotes] = useState<{ name: string; memberCount: number }[]>([])
   const [featuredPeer, setFeaturedPeer] = useState<string | null>(null)
+  const [expandedUser, setExpandedUser] = useState<{ name: string; id: string } | null>(null)
   const [forceMuted, setForceMuted] = useState(false)
   const [selectedUser, setSelectedUser] = useState<{ userId: string; username: string; bio?: string; avatar_url?: string } | null>(null)
   const [privateChat, setPrivateChat] = useState<{ userId: string; username: string } | null>(null)
@@ -1258,7 +1259,7 @@ export const RoomPage = () => {
 
               {/* ═══ SIMULATED PARTICIPANT TILES (cold-start) ═══ */}
               {remoteStreams.size === 0 && botNames.slice(0, Math.min(botCount, 5)).map((name, i) => (
-                <div key={`sim-${name}`} className={`relative rounded-2xl border-2 border-white/5 bg-dark-900 overflow-hidden cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => handleUserClick(`sim-${name}`, name)}>
+                <div key={`sim-${name}`} className={`group relative rounded-2xl border-2 border-white/5 bg-dark-900 overflow-hidden cursor-pointer hover:border-primary-500/30 transition-all ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => handleUserClick(`sim-${name}`, name)}>
                   <div className="w-full h-full flex items-center justify-center">
                     <InitialsAvatar name={name} size="lg" />
                   </div>
@@ -1271,8 +1272,16 @@ export const RoomPage = () => {
                   <div className="absolute top-2 left-2 p-1 rounded bg-dark-800/60 backdrop-blur-sm">
                     <VideoOff className="w-3 h-3 text-dark-500" />
                   </div>
+                  {/* Expand button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setExpandedUser({ name, id: `sim-${name}` }) }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-dark-800/80 text-white/60 hover:text-white hover:bg-fuchsia-500/30 border border-white/10 hover:border-fuchsia-500/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all"
+                    title="Expandir câmera"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
                   {i % 3 !== 0 && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 backdrop-blur-sm">
+                    <div className="absolute top-2 right-10 flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 backdrop-blur-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                       <span className="text-[10px] text-emerald-400">online</span>
                     </div>
@@ -1288,7 +1297,7 @@ export const RoomPage = () => {
                 const isPeerMod = peerId === modUserId
                 const isPeerVip = isVip(peerId)
                 return (
-                  <div key={peerId} className={`relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === peerId ? null : peerId)}>
+                  <div key={peerId} className={`group relative rounded-2xl border-2 border-emerald-500/40 bg-dark-900 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] cursor-pointer ${featuredPeer ? 'aspect-square' : 'aspect-[4/3]'}`} onClick={() => setFeaturedPeer(featuredPeer === peerId ? null : peerId)}>
                     <video
                       ref={(el) => {
                         if (el) {
@@ -1311,8 +1320,17 @@ export const RoomPage = () => {
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm">✨ VIP</span>
                       )}
                     </div>
-                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
-                      LIVE
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white backdrop-blur-sm animate-pulse">
+                        LIVE
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setExpandedUser({ name: peerName, id: peerId }) }}
+                        className="p-1.5 rounded-lg bg-dark-800/80 text-white/60 hover:text-white hover:bg-fuchsia-500/30 border border-white/10 hover:border-fuchsia-500/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all"
+                        title="Expandir câmera"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     {allMuted && (
                       <div className="absolute top-2 left-2 p-1 rounded bg-red-500/30 backdrop-blur-sm">
@@ -1869,6 +1887,42 @@ export const RoomPage = () => {
               className="px-6 py-3 rounded-2xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center gap-2"
             >
               <Phone className="w-5 h-5 rotate-[135deg]" /> Encerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ EXPANDED USER CAMERA OVERLAY ═══ */}
+      {expandedUser && (
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setExpandedUser(null)}>
+          <div className="relative w-[90vw] max-w-[700px] aspect-video bg-dark-900 rounded-2xl overflow-hidden border-2 border-fuchsia-500/40 shadow-[0_0_40px_rgba(236,72,153,0.3)]" onClick={(e) => e.stopPropagation()}>
+            {/* Avatar (simulated user) */}
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-dark-900 to-dark-800">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center text-4xl font-bold text-white shadow-[0_0_30px_rgba(139,92,246,0.4)]">
+                  {expandedUser.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-lg font-semibold text-white">{expandedUser.name}</span>
+                <span className="text-xs text-dark-400">📹 Câmera desligada</span>
+              </div>
+            </div>
+            {/* Name overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-white">🎥 {expandedUser.name}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => { handleUserClick(expandedUser.id, expandedUser.name); setExpandedUser(null) }} className="px-3 py-1.5 rounded-xl bg-primary-500/20 text-primary-300 border border-primary-500/30 hover:bg-primary-500/30 transition-all text-xs font-semibold">
+                    👤 Ver Perfil
+                  </button>
+                  <button onClick={() => setExpandedUser(null)} className="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all text-xs font-semibold">
+                    ✕ Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* Close X */}
+            <button onClick={() => setExpandedUser(null)} className="absolute top-3 right-3 p-2 rounded-xl bg-dark-800/80 text-white/60 hover:text-white hover:bg-red-500/30 backdrop-blur-sm transition-all">
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
