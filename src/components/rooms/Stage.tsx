@@ -66,42 +66,56 @@ export const Stage = ({
         {performer && !isTransitioning ? (
           /* ═══ SOMEONE ON STAGE ═══ */
           <div className="relative z-10">
-            <div className="flex items-center gap-3">
-              {/* Performer avatar with spotlight glow */}
-              <div className="relative flex-shrink-0">
+            {/* Camera highlight — large video area */}
+            <div
+              className="relative w-full aspect-video max-h-[240px] rounded-xl overflow-hidden mb-3"
+              style={{
+                boxShadow: '0 0 30px rgba(236,72,153,0.3), 0 0 60px rgba(139,92,246,0.15)',
+                border: '2px solid rgba(236,72,153,0.4)',
+              }}
+            >
+              {/* Simulated camera feed (gradient + avatar for demo) */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(performer.username)} opacity-20`} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-900/60">
                 <div
-                  className={`w-12 h-12 rounded-full bg-gradient-to-br ${getGradient(performer.username)} flex items-center justify-center font-bold text-white text-lg shadow-lg`}
-                  style={{
-                    boxShadow: '0 0 20px rgba(236,72,153,0.4), 0 0 40px rgba(139,92,246,0.2)',
-                  }}
+                  className={`w-20 h-20 rounded-full bg-gradient-to-br ${getGradient(performer.username)} flex items-center justify-center font-bold text-white text-3xl shadow-lg`}
                 >
                   {performer.username.charAt(0).toUpperCase()}
                 </div>
-                {/* Pulsing ring */}
-                <div className="absolute -inset-1 rounded-full border-2 border-fuchsia-500/30 animate-ping" style={{ animationDuration: '2s' }} />
-                <div className="absolute -inset-0.5 rounded-full border border-fuchsia-500/50" />
+                {performer.isCameraOn && (
+                  <div className="mt-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
+                    📹 Câmera ao vivo
+                  </div>
+                )}
               </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white truncate">
-                    🎤 {performer.userId === currentUserId ? 'Você' : performer.username}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 animate-pulse">
-                    NO PALCO
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[11px] text-dark-400 font-mono">⏱️ {stageTimer}</span>
-                  <span className={`text-[10px] ${performer.isMicOn ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {performer.isMicOn ? '🔊' : '🔇'}
-                  </span>
+              {/* Spotlight corner glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-fuchsia-500/10 blur-2xl rounded-full" />
+              {/* Name overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white">
+                      🎤 {performer.userId === currentUserId ? 'Você' : performer.username}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 animate-pulse">
+                      NO PALCO
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-white/70 font-mono">⏱️ {stageTimer}</span>
+                    <span className={`text-[10px] ${performer.isMicOn ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {performer.isMicOn ? '🔊' : '🔇'}
+                    </span>
+                  </div>
                 </div>
               </div>
+              {/* Pulsing border animation */}
+              <div className="absolute inset-0 rounded-xl border-2 border-fuchsia-500/20 animate-pulse pointer-events-none" style={{ animationDuration: '3s' }} />
+            </div>
 
-              {/* Controls */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Controls bar */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
                 {isOnStage ? (
                   <>
                     <button
@@ -142,6 +156,11 @@ export const Stage = ({
                   </button>
                 )}
               </div>
+              {queue.length > 0 && (
+                <span className="text-[11px] text-dark-400">
+                  🎫 {queue.length} na fila
+                </span>
+              )}
             </div>
 
             {/* Queue */}

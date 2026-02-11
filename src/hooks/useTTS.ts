@@ -13,11 +13,34 @@ export type VoiceStyle = keyof typeof VOICE_STYLES
 const stripEmojis = (text: string): string =>
   text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{FE0F}]/gu, '').replace(/\[.*?\]/g, '').replace(/\s+/g, ' ').trim()
 
+// Shared AudioContext — resumed on first user gesture
+let sharedAudioCtx: AudioContext | null = null
+const getAudioCtx = (): AudioContext => {
+  if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+    sharedAudioCtx = new AudioContext()
+  }
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume()
+  }
+  return sharedAudioCtx
+}
+
+// Resume audio context on first user interaction
+if (typeof window !== 'undefined') {
+  const resumeCtx = () => {
+    if (sharedAudioCtx?.state === 'suspended') sharedAudioCtx.resume()
+    document.removeEventListener('click', resumeCtx)
+    document.removeEventListener('touchstart', resumeCtx)
+  }
+  document.addEventListener('click', resumeCtx, { once: true })
+  document.addEventListener('touchstart', resumeCtx, { once: true })
+}
+
 // ─── Trumpet Fanfare (Enhanced Web Audio API) ───
 const playFanfare = (): Promise<void> => {
   return new Promise((resolve) => {
     try {
-      const ctx = new AudioContext()
+      const ctx = getAudioCtx()
       const masterGain = ctx.createGain()
       masterGain.gain.value = 0.4
       
@@ -86,7 +109,6 @@ const playFanfare = (): Promise<void> => {
       playBrassNote(1046.50, now + 0.25, 0.25, 0.4)
 
       setTimeout(() => {
-        ctx.close()
         resolve()
       }, 550)
     } catch {
@@ -95,10 +117,31 @@ const playFanfare = (): Promise<void> => {
   })
 }
 
+// ─── Browser SpeechSynthesis fallback ───
+const speakBrowserTTS = (text: string, style: VoiceStyle): Promise<void> => {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) { resolve(); return }
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'pt-BR'
+    utterance.rate = style === 'reaction' ? 1.3 : style === 'icebreaker' ? 1.15 : 1.0
+    utterance.pitch = style === 'entrance' ? 0.9 : 1.0
+    // Try to pick a PT-BR voice
+    const voices = speechSynthesis.getVoices()
+    const ptVoice = voices.find(v => v.lang.startsWith('pt-BR')) || voices.find(v => v.lang.startsWith('pt'))
+    if (ptVoice) utterance.voice = ptVoice
+    utterance.onend = () => resolve()
+    utterance.onerror = () => resolve()
+    setTimeout(() => resolve(), 15000) // safety timeout
+    speechSynthesis.speak(utterance)
+  })
+}
+
 // ─── Edge TTS via API ───
 const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudioElement | null> => {
   const params = VOICE_STYLES[style] || VOICE_STYLES.entrance
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
     const res = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -108,9 +151,12 @@ const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudio
         pitch: params.pitch,
         volume: params.volume,
       }),
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
     if (!res.ok) return null
     const blob = await res.blob()
+    if (blob.size < 100) return null // empty/error response
     const url = URL.createObjectURL(blob)
     const audio = new Audio(url)
     // Clean up blob URL after playback
@@ -138,23 +184,26 @@ export function useTTS() {
       // Play fanfare for entrances
       if (withFanfare) await playFanfare()
 
-      // Fetch and play Edge TTS audio
+      // Fetch and play Edge TTS audio, fallback to browser TTS
       const audio = await fetchTTSAudio(text, style)
       if (audio) {
         currentAudioRef.current = audio
         await new Promise<void>((resolve) => {
-          audio.onended = () => resolve()
-          audio.onerror = () => resolve()
-          // Safety timeout (max 20s per utterance)
           const timeout = setTimeout(() => {
             audio.pause()
             resolve()
           }, 20000)
           audio.onended = () => { clearTimeout(timeout); resolve() }
           audio.onerror = () => { clearTimeout(timeout); resolve() }
-          audio.play().catch(() => resolve())
+          audio.play().catch(() => {
+            clearTimeout(timeout)
+            resolve()
+          })
         })
         currentAudioRef.current = null
+      } else {
+        // Fallback: browser speechSynthesis
+        await speakBrowserTTS(text, style)
       }
     } catch (e) {
       console.warn('TTS error:', e)

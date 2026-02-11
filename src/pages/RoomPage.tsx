@@ -1309,10 +1309,10 @@ export const RoomPage = () => {
             </div>
           </div>
 
-          {/* Controls Bar — PTT centered, big concave button */}
+          {/* Controls Bar — PTT is the hero, dead center */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur-lg p-3 sm:p-4">
             <div className="flex items-center justify-center gap-2 sm:gap-3">
-              {/* Left controls */}
+              {/* Left group */}
               {!pttMode && (
                 <button
                   onClick={handleToggleMic}
@@ -1340,18 +1340,20 @@ export const RoomPage = () => {
                   {allMuted ? <MicOff className="w-5 h-5" /> : <Users className="w-5 h-5" />}
                 </button>
               )}
+              <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
 
-              {/* === CENTER: Big concave PTT button === */}
-              {pttMode && (
+              {/* ═══ CENTER: Big concave PTT button ═══ */}
+              {pttMode ? (
                 <PushToTalkLarge
                   onTalkStart={handlePttStart}
                   onTalkEnd={handlePttEnd}
                   disabled={isGuest}
                 />
+              ) : (
+                <div className="w-2" /> /* spacer when not in PTT mode */
               )}
 
-              {/* Right controls */}
-              <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
+              {/* Right group */}
               <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">

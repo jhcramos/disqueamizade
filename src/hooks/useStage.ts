@@ -47,6 +47,28 @@ export function useStage(currentUserId: string, currentUsername: string) {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [performer?.userId])
 
+  // Auto-promote next in queue when stage is empty
+  useEffect(() => {
+    if (!performer && !isTransitioning && queue.length > 0) {
+      const timer = setTimeout(() => {
+        const next = queue[0]
+        setIsTransitioning(true)
+        setTimeout(() => {
+          setPerformer({
+            userId: next.userId,
+            username: next.username,
+            joinedAt: Date.now(),
+            isMicOn: true,
+            isCameraOn: true, // Camera always ON on stage
+          })
+          setQueue(prev => prev.slice(1))
+          setIsTransitioning(false)
+        }, 1500)
+      }, 2000) // 2s delay before auto-promote
+      return () => clearTimeout(timer)
+    }
+  }, [performer, isTransitioning, queue])
+
   // Simulate bots joining queue randomly
   useEffect(() => {
     const scheduleBotQueue = () => {
