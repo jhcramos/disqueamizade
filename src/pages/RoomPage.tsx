@@ -20,7 +20,7 @@ import { HostBotMessage } from '@/components/rooms/HostBot'
 import { BioEditor } from '@/components/profile/BioEditor'
 import type { UserBio } from '@/hooks/useHostBot'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
-import { PushToTalk, PushToTalkLarge } from '@/components/rooms/PushToTalk'
+import { PushToTalkLarge } from '@/components/rooms/PushToTalk'
 import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTVideo, STARTER_PLAYLISTS } from '@/components/rooms/Jukebox'
 import { supabase } from '@/services/supabase/client'
 
