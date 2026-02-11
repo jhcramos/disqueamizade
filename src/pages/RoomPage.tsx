@@ -566,7 +566,22 @@ export const RoomPage = () => {
 
   // Handle user click (from chat or participants)
   const handleUserClick = async (userId: string, username: string) => {
-    if (userId === user?.id || userId === 'system' || userId.startsWith('bot-') || userId.startsWith('sim-')) return
+    if (userId === user?.id || userId === 'system') return
+
+    // For bots/simulated users, use BOT_BIOS
+    if (userId.startsWith('bot-') || userId.startsWith('sim-')) {
+      const botName = username
+      const botBio = BOT_BIOS[botName]
+      setSelectedUser({
+        userId,
+        username,
+        bio: botBio
+          ? [botBio.about, botBio.city ? `📍 ${botBio.city}` : '', botBio.mood || '', (botBio.interests || []).map(i => `#${i}`).join(' ')].filter(Boolean).join(' • ')
+          : undefined,
+      })
+      return
+    }
+
     setSelectedUser({ userId, username })
     // Fetch profile with bio
     try {
@@ -971,10 +986,10 @@ export const RoomPage = () => {
 
                     {/* Bots always visible — shrink as real users join */}
                     {visibleBots.map((name) => (
-                      <div key={`bot-${name}`} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                      <div key={`bot-${name}`} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => handleUserClick(`sim-${name}`, name)}>
                         <InitialsAvatar name={name} size="md" />
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium text-white truncate block">{name}</span>
+                          <span className="text-sm font-medium text-white truncate block hover:text-primary-400 transition-colors">{name}</span>
                         </div>
                       </div>
                     ))}
@@ -1075,6 +1090,7 @@ export const RoomPage = () => {
             isOnStage={stage.isOnStage}
             isInQueue={stage.isInQueue}
             queuePosition={stage.queuePosition}
+            localStream={compositeStream}
             onJoinStage={handleJoinStage}
             onLeaveStage={handleLeaveStage}
             onLeaveQueue={stage.leaveQueue}
@@ -1594,8 +1610,13 @@ export const RoomPage = () => {
                   </button>
                   <button
                     onClick={() => {
-                      addToast({ type: 'info', title: '👤 Perfil', message: `Você está vendo o perfil de ${selectedUser.username}` })
                       setSelectedUser(null)
+                      // Navigate to profile for real users, toast for bots
+                      if (!selectedUser.userId.startsWith('sim-') && !selectedUser.userId.startsWith('bot-')) {
+                        navigate(`/profile/${selectedUser.userId}`)
+                      } else {
+                        addToast({ type: 'info', title: '👤 Perfil', message: `${selectedUser.username} ainda não tem perfil completo` })
+                      }
                     }}
                     className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-500/30 transition-all"
                   >

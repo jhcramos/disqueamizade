@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Mic, MicOff, Video, VideoOff, ArrowDown } from 'lucide-react'
 import { StageQueue } from './StageQueue'
 import type { StageUser, QueueEntry } from '@/hooks/useStage'
@@ -25,6 +26,7 @@ interface StageProps {
   isOnStage: boolean
   isInQueue: boolean
   queuePosition: number
+  localStream: MediaStream | null
   onJoinStage: () => string | undefined
   onLeaveStage: () => { leavingName: string; nextName: string | null } | null
   onLeaveQueue: () => void
@@ -40,12 +42,22 @@ export const Stage = ({
   currentUserId,
   isOnStage,
   isInQueue,
+  localStream,
   onJoinStage,
   onLeaveStage,
   onLeaveQueue,
   onToggleMic,
   onToggleCamera,
 }: StageProps) => {
+  const stageVideoRef = useRef<HTMLVideoElement>(null)
+  const isCurrentUser = performer?.userId === currentUserId
+
+  // Attach local stream to stage video when current user is performing
+  useEffect(() => {
+    if (stageVideoRef.current && isCurrentUser && localStream) {
+      stageVideoRef.current.srcObject = localStream
+    }
+  }, [isCurrentUser, localStream])
   return (
     <div className="flex-shrink-0 border-b border-white/5">
       {/* Stage Area */}
@@ -74,20 +86,32 @@ export const Stage = ({
                 border: '2px solid rgba(236,72,153,0.4)',
               }}
             >
-              {/* Simulated camera feed (gradient + avatar for demo) */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(performer.username)} opacity-20`} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-900/60">
-                <div
-                  className={`w-20 h-20 rounded-full bg-gradient-to-br ${getGradient(performer.username)} flex items-center justify-center font-bold text-white text-3xl shadow-lg`}
-                >
-                  {performer.username.charAt(0).toUpperCase()}
-                </div>
-                {performer.isCameraOn && (
-                  <div className="mt-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
-                    📹 Câmera ao vivo
+              {/* Camera feed: real video for current user, avatar for others */}
+              {isCurrentUser && performer.isCameraOn && localStream ? (
+                <video
+                  ref={stageVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(performer.username)} opacity-20`} />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-900/60">
+                    <div
+                      className={`w-20 h-20 rounded-full bg-gradient-to-br ${getGradient(performer.username)} flex items-center justify-center font-bold text-white text-3xl shadow-lg`}
+                    >
+                      {performer.username.charAt(0).toUpperCase()}
+                    </div>
+                    {performer.isCameraOn && (
+                      <div className="mt-2 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
+                        📹 Câmera ao vivo
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
               {/* Spotlight corner glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-fuchsia-500/10 blur-2xl rounded-full" />
               {/* Name overlay */}
