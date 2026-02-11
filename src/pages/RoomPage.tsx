@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Video, VideoOff, Mic, MicOff, Phone, Users, MessageCircle,
@@ -10,14 +10,14 @@ import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useCompositeStream } from '@/hooks/useCompositeStream'
-import { useAgeVerification, AgeGate } from '@/components/common/AgeVerificationModal'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
 import { PushToTalk } from '@/components/rooms/PushToTalk'
-import { Jukebox, type Song } from '@/components/rooms/Jukebox'
+import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTVideo, STARTER_PLAYLISTS } from '@/components/rooms/Jukebox'
 import { supabase } from '@/services/supabase/client'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
@@ -138,6 +138,14 @@ export const RoomPage = () => {
   const [jukeboxOpen, setJukeboxOpen] = useState(false)
   const [jukeboxVolume, setJukeboxVolume] = useState(70)
   const jukeboxBaseVolume = useRef(70)
+
+  // ─── YouTube Player State ───
+  const [ytQueue, setYtQueue] = useState<YTVideo[]>([])
+  const [ytCurrent, setYtCurrent] = useState<YTVideo | null>(null)
+  const [ytPlaying, setYtPlaying] = useState(true)
+  const [ytExpanded, setYtExpanded] = useState(false)
+  const [ytSkipVotes, setYtSkipVotes] = useState(0)
+  const ytInitRef = useRef(false)
 
   // ─── REAL CAMERA ───
   const {
@@ -510,15 +518,17 @@ export const RoomPage = () => {
   const handlePttStart = () => {
     setPttTalking(true)
     if (stream) stream.getAudioTracks().forEach(t => { t.enabled = true })
-    // Duck jukebox volume
+    // Duck jukebox/YouTube volume
     jukeboxBaseVolume.current = jukeboxVolume
     setJukeboxVolume(Math.round(jukeboxBaseVolume.current * 0.2))
+    duckYouTubeVolume(Math.round(jukeboxBaseVolume.current * 0.2))
   }
   const handlePttEnd = () => {
     setPttTalking(false)
     if (stream) stream.getAudioTracks().forEach(t => { t.enabled = false })
-    // Restore jukebox volume
+    // Restore jukebox/YouTube volume
     setJukeboxVolume(jukeboxBaseVolume.current)
+    duckYouTubeVolume(jukeboxBaseVolume.current)
   }
   const handleJukeboxSongChange = (song: Song) => {
     setMessages(prev => [...prev, {
@@ -530,6 +540,39 @@ export const RoomPage = () => {
       type: 'system',
     }])
   }
+
+  // ─── YouTube Player Handlers ───
+  // Initialize queue from starter playlist when room loads
+  useEffect(() => {
+    if (!room || ytInitRef.current) return
+    ytInitRef.current = true
+    const cat = room.category || 'default'
+    const playlist = STARTER_PLAYLISTS[cat] || STARTER_PLAYLISTS.default
+    const shuffled = [...playlist].sort(() => Math.random() - 0.5)
+    setYtCurrent(shuffled[0] || null)
+    setYtQueue(shuffled.slice(1))
+  }, [room])
+
+  const ytPlayNext = useCallback(() => {
+    if (ytQueue.length === 0) {
+      const cat = room?.category || 'default'
+      const playlist = STARTER_PLAYLISTS[cat] || STARTER_PLAYLISTS.default
+      const shuffled = [...playlist].sort(() => Math.random() - 0.5)
+      setYtCurrent(shuffled[0] || null)
+      setYtQueue(shuffled.slice(1))
+    } else {
+      const sorted = [...ytQueue].sort((a, b) => (b.votes || 0) - (a.votes || 0))
+      setYtCurrent(sorted[0])
+      setYtQueue(sorted.slice(1))
+    }
+    setYtSkipVotes(0)
+  }, [ytQueue, room])
+
+  const handleYtSkipVote = useCallback(() => {
+    const nv = ytSkipVotes + 1
+    setYtSkipVotes(nv)
+    if (nv >= 3) ytPlayNext()
+  }, [ytSkipVotes, ytPlayNext])
 
   const handleShareRoom = () => {
     navigator.clipboard?.writeText(window.location.href)
@@ -711,6 +754,22 @@ export const RoomPage = () => {
               onSongChange={handleJukeboxSongChange}
               isOpen={jukeboxOpen}
               onToggle={() => setJukeboxOpen(!jukeboxOpen)}
+              queue={ytQueue}
+              currentVideo={ytCurrent}
+              currentUserId={profile?.username || user?.user_metadata?.username || 'Você'}
+              onAddVideo={(video) => {
+                setYtQueue(prev => [...prev, video])
+                setMessages(prev => [...prev, {
+                  id: `yt-add-${Date.now()}`,
+                  userId: 'system',
+                  username: 'Sistema',
+                  content: `🎬 ${video.addedBy || 'Alguém'} adicionou: ${video.title}`,
+                  timestamp: new Date(),
+                  type: 'system',
+                }])
+              }}
+              onRemoveVideo={(index) => setYtQueue(prev => prev.filter((_, i) => i !== index))}
+              onVote={(index, direction) => setYtQueue(prev => prev.map((v, i) => i === index ? { ...v, votes: (v.votes || 0) + (direction === 'up' ? 1 : -1) } : v))}
             />
             <button onClick={() => setShowInfoPanel(!showInfoPanel)} className={`p-2 rounded-xl transition-all ${showInfoPanel ? 'bg-primary-500/20 text-primary-400' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
               <Info className="w-5 h-5" />
@@ -732,6 +791,24 @@ export const RoomPage = () => {
           <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
           <p className="text-xs text-red-400">{cameraError || 'Câmera bloqueada. Habilite nas configurações do navegador.'}</p>
         </div>
+      )}
+
+      {/* ─── YouTube Player (minimized bar or expanded) ─── */}
+      {ytCurrent && jukeboxOpen && (
+        <YouTubePlayer
+          currentVideo={ytCurrent}
+          isPlaying={ytPlaying}
+          volume={jukeboxVolume}
+          onVolumeChange={v => { setJukeboxVolume(v); jukeboxBaseVolume.current = v }}
+          onPlayPause={() => setYtPlaying(!ytPlaying)}
+          onSkipVote={handleYtSkipVote}
+          skipVotes={ytSkipVotes}
+          onExpand={() => setYtExpanded(true)}
+          expanded={ytExpanded}
+          onMinimize={() => setYtExpanded(false)}
+          onVideoEnd={ytPlayNext}
+          onVideoError={ytPlayNext}
+        />
       )}
 
       {/* ─── Main Content ─── */}
