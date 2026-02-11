@@ -29,6 +29,20 @@ const STARTER_PLAYLISTS: Record<string, Video[]> = {
     { id: 'fJ9rUzIMcZQ', title: 'Bohemian Rhapsody', artist: 'Queen' },
     { id: 'hTWKbfoikeg', title: 'Smells Like Teen Spirit', artist: 'Nirvana' },
   ],
+  eletronica: [
+    { id: 'mMfxI3r_LyA', title: 'Levels', artist: 'Avicii' },
+    { id: 'gCYcHz2k5x0', title: 'Animals', artist: 'Martin Garrix' },
+    { id: 'IcrbM1l_BoI', title: 'Wake Me Up', artist: 'Avicii' },
+    { id: '60ItHLz5WEA', title: 'Titanium', artist: 'David Guetta ft. Sia' },
+    { id: 'nD2aHHHVmFE', title: 'Strobe', artist: 'Deadmau5' },
+    { id: 'e-ORhEE9VVg', title: 'Sandstorm', artist: 'Darude' },
+    { id: 'y6120QOlsfU', title: "Don't You Worry Child", artist: 'Swedish House Mafia' },
+    { id: 'OPf0YbXqDm0', title: 'Uptown Funk (Remix)', artist: 'Mark Ronson ft. Bruno Mars' },
+    { id: 'fKopy74weus', title: 'Summer', artist: 'Calvin Harris' },
+    { id: '2vjPBrBU-TM', title: 'Scary Monsters and Nice Sprites', artist: 'Skrillex' },
+    { id: 'bek1y2uiQGA', title: 'Insomnia', artist: 'Faithless' },
+    { id: 'EGXPAoyP_cg', title: 'Around the World', artist: 'Daft Punk' },
+  ],
 }
 
 // ─── Extract YouTube Video ID ───
