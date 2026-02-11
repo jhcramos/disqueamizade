@@ -1,7 +1,35 @@
 import edge_tts
 import asyncio
 import json
+import re
 from http.server import BaseHTTPRequestHandler
+
+
+def text_to_ssml(text: str, rate: str, pitch: str, volume: str, use_ssml: bool = False) -> str:
+    """Convert plain text to expressive SSML with pauses and emphasis."""
+    if not use_ssml:
+        return text
+
+    # Add dramatic pauses after punctuation
+    ssml = text
+    # Pause after "!" (excitement)
+    ssml = re.sub(r'!\s*', '! <break time="400ms"/> ', ssml)
+    # Pause after "..." (suspense)
+    ssml = re.sub(r'\.{2,}\s*', ' <break time="600ms"/> ', ssml)
+    # Pause after "?" (anticipation)
+    ssml = re.sub(r'\?\s*', '? <break time="350ms"/> ', ssml)
+    # Pause after ":" (revelation)
+    ssml = re.sub(r':\s*', ': <break time="300ms"/> ', ssml)
+
+    # Emphasize UPPERCASE words (3+ chars, not the whole text)
+    def emphasize_caps(match):
+        word = match.group(0)
+        return f'<emphasis level="strong">{word.title()}</emphasis>'
+    ssml = re.sub(r'\b[A-ZÀ-Ú]{3,}\b', emphasize_caps, ssml)
+
+    # Wrap in SSML prosody
+    ssml = f'<speak><prosody rate="{rate}" pitch="{pitch}" volume="{volume}">{ssml}</prosody></speak>'
+    return ssml
 
 
 class handler(BaseHTTPRequestHandler):
@@ -13,6 +41,7 @@ class handler(BaseHTTPRequestHandler):
         rate = body.get('rate', '+0%')
         pitch = body.get('pitch', '+0Hz')
         volume = body.get('volume', '+0%')
+        use_ssml = body.get('ssml', False)
 
         if not text or len(text) > 500:
             self.send_response(400)
@@ -22,8 +51,18 @@ class handler(BaseHTTPRequestHandler):
 
         voice = body.get('voice', "pt-BR-AntonioNeural")
 
+        # Build SSML or plain text
+        if use_ssml:
+            speech_text = text_to_ssml(text, rate, pitch, volume, True)
+        else:
+            speech_text = text
+
         async def generate():
-            communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, volume=volume)
+            if use_ssml:
+                # When using SSML, rate/pitch/volume are inside the SSML tags
+                communicate = edge_tts.Communicate(speech_text, voice)
+            else:
+                communicate = edge_tts.Communicate(speech_text, voice, rate=rate, pitch=pitch, volume=volume)
             audio_data = b""
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
@@ -46,4 +85,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        self.wfile.write(b'{"status":"ok","voice":"pt-BR-AntonioNeural"}')
+        self.wfile.write(b'{"status":"ok","voice":"pt-BR-AntonioNeural","ssml":true}')

@@ -1,11 +1,11 @@
 import { useCallback, useRef } from 'react'
 
 export const VOICE_STYLES = {
-  entrance:   { rate: '-15%', pitch: '-5Hz', volume: '+0%' },
-  farewell:   { rate: '+0%',  pitch: '+0Hz', volume: '+0%' },
-  icebreaker: { rate: '+10%', pitch: '+3Hz', volume: '+0%' },
-  quiz:       { rate: '+5%',  pitch: '+5Hz', volume: '+0%' },
-  reaction:   { rate: '+15%', pitch: '+5Hz', volume: '+0%' },
+  entrance:   { rate: '-10%', pitch: '-8Hz', volume: '+10%', ssml: true },  // Grave, imponente, locutor de estádio
+  farewell:   { rate: '-5%',  pitch: '+3Hz', volume: '+0%',  ssml: true },  // Caloroso, saudoso
+  icebreaker: { rate: '+20%', pitch: '+8Hz', volume: '+5%',  ssml: true },  // Animado, provocador
+  quiz:       { rate: '+15%', pitch: '+10Hz', volume: '+10%', ssml: true }, // Empolgado, apresentador de game show
+  reaction:   { rate: '+25%', pitch: '+12Hz', volume: '+10%', ssml: true }, // Super expressivo, energia alta
 } as const
 
 export type VoiceStyle = keyof typeof VOICE_STYLES
@@ -150,6 +150,7 @@ const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudio
         rate: params.rate,
         pitch: params.pitch,
         volume: params.volume,
+        ssml: params.ssml ?? false,
       }),
       signal: controller.signal,
     })
