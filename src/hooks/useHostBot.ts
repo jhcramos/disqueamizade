@@ -17,86 +17,199 @@ export interface BotMessage {
   type: 'entrance' | 'departure' | 'icebreaker' | 'introduction' | 'jukebox'
 }
 
-// ─── Icebreakers (30+ total) ───
-const ICEBREAKERS = {
-  questions: [
-    '🎺 O Arauto pergunta: Se vocês pudessem jantar com qualquer pessoa da história, quem seria? 🤔',
-    '🎺 O Arauto quer saber: Qual o melhor filme que vocês já viram na vida? 🎬',
-    '🎺 Vocês preferem... viver sem música ou sem internet? Respondam! 🎵💻',
-    '🎺 O Arauto pergunta: Se pudessem ter qualquer superpoder, qual seria? 🦸',
-    '🎺 O Arauto está curioso: Qual o lugar mais incrível que vocês já visitaram? ✈️',
-    '🎺 O Arauto indaga: Qual foi o melhor show que vocês já foram? 🎤',
-    '🎺 Pergunta real: Qual a comida que vocês não vivem sem? 🍔',
-  ],
-  quizzes: [
-    '🎺 Quiz relâmpago! Em que ano o Brasil ganhou a primeira Copa do Mundo? ⚽ (Resposta em 30s...)',
-    '🎺 Quiz relâmpago! Qual é a capital da Austrália? 🦘 (Não é Sydney!)',
-    '🎺 Quiz relâmpago! Quantos estados tem o Brasil? 🇧🇷',
-    '🎺 Quiz relâmpago! Quem pintou a Mona Lisa? 🎨',
-    '🎺 Quiz relâmpago! Em que ano caiu o Muro de Berlim? 🧱',
-    '🎺 Quiz relâmpago! Qual o maior planeta do sistema solar? 🪐',
-  ],
-  debates: [
-    '🎺 Hora do debate! Pizza: borda recheada ou tradicional? 🍕',
-    '🎺 Hora do debate! Praia ou montanha? ⛰️🏖️',
-    '🎺 O eterno debate! Pizza doce é crime ou arte? 🍕🍫',
-    '🎺 Hora do debate! Café com ou sem açúcar? ☕',
-    '🎺 Hora do debate! Cachorro ou gato? 🐕🐈',
-    '🎺 Polêmica! Coxinha ou esfiha? Escolham seu lado! 🥟',
-    '🎺 Hora do debate! Star Wars ou Star Trek? 🚀',
-  ],
-  games: [
-    '🎺 Complete a frase: Se eu ganhasse na loteria, a primeira coisa que eu faria seria... 💰',
-    '🎺 Jogo! Duas verdades e uma mentira — cada um conta 3 coisas sobre si! 🤥',
-    '🎺 Complete a frase: O melhor conselho que já recebi foi... 💡',
-    '🎺 Jogo! Descrevam-se em apenas 3 emojis! 😎🎵🍕',
-    '🎺 Complete a frase: Se eu fosse presidente por um dia, eu... 🏛️',
-    '🎺 Jogo! Contem algo que ninguém aqui sabe sobre vocês! 🤫',
-  ],
-  curiosidades: [
-    '🎺 Verdade ou mito? A Grande Muralha da China é visível do espaço 🧐',
-    '🎺 Sabiam que o Brasil tem mais de 300 espécies de palmeiras? 🌴 País tropical de verdade!',
-    '🎺 Curiosidade: O primeiro videogame da história foi criado em 1958! 🎮 Mais velho que muito avô por aí!',
-    '🎺 Sabiam que o recorde de maior tempo sem dormir é de 11 dias? 😴 Não tentem isso em casa!',
-    '🎺 Curiosidade: O nome "Brasil" vem do pau-brasil, a árvore! 🌳',
-    '🎺 Sabiam que uma pessoa ri em média 13 vezes por dia? Vamos aumentar essa média! 😂',
-    '🎺 Curiosidade anos 80: O primeiro celular pesava quase 1kg! 📱 Hoje a gente reclama de 200g kkkk',
-  ],
-}
-
-const ALL_ICEBREAKERS = [
-  ...ICEBREAKERS.questions,
-  ...ICEBREAKERS.quizzes,
-  ...ICEBREAKERS.debates,
-  ...ICEBREAKERS.games,
-  ...ICEBREAKERS.curiosidades,
-]
-
-const JUKEBOX_REACTIONS = [
-  '🎺 O Arauto aprova esta escolha musical! 👏',
-  '🎺 Que som! O Arauto está balançando a capa real! 💃',
-  '🎺 Excelente gosto musical, nobre DJ! 🎶',
-  '🎺 O Arauto dança! Essa música é digna da corte! 🕺✨',
-  '🎺 Puts, essa bateu no coração do Arauto! ❤️🎵',
-]
+// ─── Helpers ───
+const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+const room = (name: string) => name || 'a Sala'
+const ROOM = (name: string) => (name || 'a Sala').toUpperCase()
 
 const INTEREST_EMOJIS: Record<string, string> = {
-  'Música': '🎵',
-  'Esportes': '⚽',
-  'Games': '🎮',
-  'Leitura': '📚',
-  'Filmes/Séries': '🎬',
-  'Tecnologia': '💻',
-  'Culinária': '🍳',
-  'Viagens': '✈️',
-  'Arte': '🎨',
-  'Fitness': '🏋️',
-  'Fotografia': '📷',
-  'Animais': '🐾',
-  'Idiomas': '🌍',
-  'Teatro': '🎭',
-  'Automóveis': '🚗',
+  'Música': '🎵', 'Esportes': '⚽', 'Games': '🎮', 'Leitura': '📚',
+  'Filmes/Séries': '🎬', 'Tecnologia': '💻', 'Culinária': '🍳', 'Viagens': '✈️',
+  'Arte': '🎨', 'Fitness': '🏋️', 'Fotografia': '📷', 'Animais': '🐾',
+  'Idiomas': '🌍', 'Teatro': '🎭', 'Automóveis': '🚗',
 }
+
+// ─── COMEDY ENTRANCE TEMPLATES (with bio) ───
+type EntranceWithBioFn = (name: string, roomName: string, bio: UserBio) => string
+
+const ENTRANCES_WITH_BIO: EntranceWithBioFn[] = [
+  // City + room combo
+  (name, rn, bio) => {
+    const interests = (bio.interests || []).slice(0, 2).map(i => `${INTEREST_EMOJIS[i] || '✨'} ${i}`).join(' e ')
+    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nAdentra o ${ROOM(rn)} o ilustre ${name.toUpperCase()} de ${bio.city}!\n\nGosta de ${interests}... ou seja, pessoa de CULTURA! Será que o ${room(rn)} tá preparado? 🤔\n\n${name}, puxa uma cadeira! Aqui no ${room(rn)} a gente aceita todo mundo. Menos quem não completa o perfil. 😂`
+  },
+  // Contradictory interests
+  (name, rn, bio) => {
+    const ints = bio.interests || []
+    const hasFitness = ints.includes('Fitness')
+    const hasFood = ints.includes('Culinária')
+    const contradiction = hasFitness && hasFood
+      ? 'Gosta de Fitness E Culinária? O corpo diz sim mas a pizza diz NÃO! 🍕💪'
+      : ints.length >= 2
+        ? `Gosta de ${ints[0]} E ${ints[1]}? Combinação ousada, mas o Arauto respeita! 🫡`
+        : `Curte ${ints[0] || 'mistérios'}... O Arauto tá intrigado!`
+    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nChegou no ${ROOM(rn)}: ${name.toUpperCase()}!\n\n${contradiction}\n\n${bio.city ? `Vem direto de ${bio.city}, ` : ''}${bio.about ? `diz que é "${bio.about}"` : 'sem mais explicações'}${bio.mood ? ` ${bio.mood}` : ''}.\n\nBem-vindo(a) ao caos organizado! 🎉`
+  },
+  // Roasting mood emoji
+  (name, rn, bio) => {
+    const moodRoasts: Record<string, string> = {
+      '🔥': 'chegou com o emoji de FOGO. Calma, isso aqui é chat, não é tinder! 🔥😂',
+      '😎': 'veio de óculos escuros... DENTRO DE UM CHAT. A confiança é inabalável! 😎',
+      '🥳': 'tá em modo festa! Chegou cedo ou saiu tarde? Nunca saberemos! 🎉',
+      '😄': 'tá feliz demais. Ou ganhou na mega-sena ou não sabe onde se meteu! 😄',
+      '🤔': 'veio pensativo. Tá avaliando se vale a pena ficar. Spoiler: vale! 🤔',
+      '😍': 'já chegou apaixonado(a)! Ainda nem viu ninguém, calma! 😍',
+    }
+    const roast = bio.mood && moodRoasts[bio.mood] ? moodRoasts[bio.mood] : 'chegou sem emoji de humor. Misterioso(a) demais! 🕵️'
+    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} entrou no ${ROOM(rn)} e ${roast}\n\n${bio.city ? `De ${bio.city}, ` : ''}curte ${(bio.interests || []).slice(0, 2).join(' e ') || 'segredos'}.\n\n${name}, senta que o ${room(rn)} já tava precisando de alguém assim! 😂`
+  },
+  // Connecting interests to room theme
+  (name, rn, bio) => {
+    const ints = bio.interests || []
+    const interestList = ints.map(i => `${INTEREST_EMOJIS[i] || '✨'} ${i}`).join('\n')
+    return `🎺 ATENÇÃO, ${ROOM(rn)}! 👑\n\nTemos um VIP na área: ${name.toUpperCase()}!${bio.city ? ` Representando ${bio.city}!` : ''}\n\n${interestList}\n\n${bio.about ? `"${bio.about}" — ` : ''}Gente, com esse currículo, ${name} deveria ser host do ${room(rn)}! O Arauto tá ameaçado! 🎺😱`
+  },
+  // What kind of person enters at this hour
+  (name, rn, bio) => {
+    const hour = new Date().getHours()
+    const timeJoke = hour < 6 ? 'ESSA HORA DA MADRUGADA?! Ou é insônia ou é paixão pelo chat! 🌙'
+      : hour < 12 ? 'de manhã cedo! Produtividade no chat ou fugindo do trabalho? 🤔'
+      : hour < 18 ? 'no meio da tarde! Alguém tá de home office né? A gente não conta! 🤫'
+      : hour < 22 ? 'à noite! Hora nobre do chat, horário de quem tem prioridades certas! 📺'
+      : 'quase na madrugada! Corajoso(a) demais! 🦉'
+    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nQuem entra no ${ROOM(rn)} ${timeJoke}\n\nÉ ${name.toUpperCase()}${bio.city ? ` de ${bio.city}` : ''}! Curte ${(bio.interests || []).slice(0, 2).join(' e ') || 'a vida'}${bio.mood ? ` ${bio.mood}` : ''}.\n\nBem-vindo(a), ${name}! O ${room(rn)} agradece sua presença nesse horário questionável! 😂`
+  },
+  // Gaúcho na sala Praia style
+  (name, rn, bio) => {
+    const cityJokes: Record<string, string> = {
+      'São Paulo': 'Paulista no chat? Já vai reclamar do trânsito em 3... 2... 1... 🚗',
+      'Rio de Janeiro': 'Carioca na área! Provavelmente na praia E no chat ao mesmo tempo! 🏖️',
+      'Belo Horizonte': 'Mineiro(a) chegou! O pão de queijo vem junto ou é só virtual? 🧀',
+      'Porto Alegre': 'Gaúcho(a) presente! Bah, tchê, o chimarrão tá pronto? 🧉',
+      'Salvador': 'Baiano(a) no pedaço! Se não trouxe axé, pode voltar! Brincadeira! 🎵',
+      'Curitiba': 'Curitibano(a)! Tá fazendo frio aí ou é só a personalidade? BRINCADEIRA! ❄️😂',
+      'Recife': 'Pernambucano(a) chegou! O frevo já tá tocando na alma do Arauto! 🎵',
+      'Fortaleza': 'Cearense na área! O humor já melhorou 500%! 😂',
+      'Brasília': 'Brasiliense! Trouxe algum projeto de lei pro chat? 📋',
+      'Manaus': 'Amazonense! A pessoa veio de longe pra abrilhantar o ${room(rn)}! 🌳',
+      'Florianópolis': 'Floripa representando! Já pode dar dica de praia! 🏖️',
+      'Goiânia': 'Goiano(a) chegou! O sertanejo tá garantido! 🤠',
+    }
+    const cityJoke = bio.city && cityJokes[bio.city] ? cityJokes[bio.city].replace('${room(rn)}', room(rn)) : `Veio de ${bio.city || 'algum lugar misterioso'} pra abrilhantar o ${room(rn)}!`
+    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} acaba de entrar no ${ROOM(rn)}!\n\n${cityJoke}\n\nCurte ${(bio.interests || []).join(', ') || 'mistérios da vida'}. ${bio.about ? `"${bio.about}"` : ''}\n\nFique à vontade, ${name}! 🎉`
+  },
+]
+
+// ─── COMEDY ENTRANCE TEMPLATES (without bio) ───
+const ENTRANCES_NO_BIO: ((name: string, roomName: string) => string)[] = [
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nUm ser misterioso entrou no ${ROOM(rn)}... 🕵️\n\nSeu nome? ${name.toUpperCase()}. E isso é TUDO que sabemos!\n\nEntrou sem bio... Programa de proteção a testemunhas? Complete seu perfil!\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} apareceu no ${ROOM(rn)} sem perfil, sem bio, sem nada.\n\nMais misterioso(a) que encomenda dos Correios sem rastreamento! 📦\n\nComplete o perfil pra gente te anunciar com POMPA! \n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 ALERTA NO ${ROOM(rn)}! 👑\n\nNPC DETECTADO! ${name.toUpperCase()} entrou sem perfil!\n\nSem bio = personagem genérico de jogo. Complete pra virar protagonista! 🎮\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} entrou no ${ROOM(rn)}...\n\nSem perfil? Misterioso(a) como segunda-feira que ninguém pediu. 😑\n\nMas tudo bem! Aqui a gente acolhe até quem não preenche cadastro!\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nO ${ROOM(rn)} recebe ${name.toUpperCase()}!\n\nBio? Vazia. Interesses? Desconhecidos. Cidade? Mistério.\n\nIsso é uma entrada triunfal ou uma fuga? A gente descobre depois! 😂\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} surgiu no ${ROOM(rn)} como um fantasma digital! 👻\n\nNem o Arauto, com toda sua sabedoria, sabe NADA sobre essa pessoa!\n\nAjude o Arauto: complete seu perfil!\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nAtenção ${ROOM(rn)}: ${name.toUpperCase()} entrou SEM BIO.\n\nÉ agente secreto? É tímido(a)? Tá só de passagem?\n\nO Arauto precisa de respostas! E vocês também! 🕵️\n[📝 Completar Perfil]`,
+  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} no ${ROOM(rn)}! Perfil em branco.\n\nA última pessoa que entrou sem bio virou lenda urbana do chat. Quer ser a próxima? 😱\n\nOu melhor: complete o perfil!\n[📝 Completar Perfil]`,
+]
+
+// ─── DEPARTURE TEMPLATES ───
+const DEPARTURES: ((name: string, roomName: string) => string)[] = [
+  (name, rn) => `🎺 ${name.toUpperCase()} saiu do ${ROOM(rn)}. Provavelmente foi comer. É SEMPRE comer. 🍔`,
+  (name, rn) => `🎺 ${name.toUpperCase()} partiu! O ${room(rn)} perdeu 50% do charme. Tá, 30%. Tá bom, 10%. MAS PERDEU! 😂`,
+  (name, rn) => `🎺 ${name.toUpperCase()} desconectou do ${ROOM(rn)}... Será que foi a mãe chamando? Nunca saberemos. 👋`,
+  (name, rn) => `🎺 ${name.toUpperCase()} saiu do ${ROOM(rn)}. O Arauto não tá chorando, é alergia! 😢`,
+  (name, rn) => `🎺 ${name.toUpperCase()} deixou o ${ROOM(rn)}. A energia caiu pelo menos 3 watts. Simbólico mas significativo! ⚡`,
+  (name, rn) => `🎺 ATENÇÃO: ${name.toUpperCase()} abandonou o ${ROOM(rn)}! Momento de silêncio... ok, chega. Quem é o próximo? 😂`,
+  (name, rn) => `🎺 ${name.toUpperCase()} fez logout do ${ROOM(rn)}. Dizem que quem sai sempre volta. O Arauto tá cronometrando! ⏱️👋`,
+  (name, rn) => `🎺 O ${ROOM(rn)} acaba de perder ${name.toUpperCase()}. A vaga tá aberta! Quem se candidata? 🙋`,
+]
+
+// ─── ICEBREAKERS (room-aware, 50+ total) ───
+type IcebreakerFn = (roomName: string) => string
+
+const ICEBREAKERS_FNS: { questions: IcebreakerFn[]; quizzes: IcebreakerFn[]; debates: IcebreakerFn[]; games: IcebreakerFn[]; curiosidades: IcebreakerFn[] } = {
+  questions: [
+    (rn) => `🎺 O ${room(rn)} tá quieto demais... Vocês estão digitando ou tirando um cochilo? O Arauto tá preocupado! 😴`,
+    (rn) => `🎺 3 minutos de silêncio no ${room(rn)}... É uma sala de chat ou uma biblioteca? O Arauto pergunta: qual a coisa mais vergonhosa que já aconteceu com vocês? 😂`,
+    (rn) => `🎺 Silêncio no ${room(rn)}... O Arauto apela: contem a pior cantada que já usaram. Precisamos rir! 🤣`,
+    (rn) => `🎺 O ${room(rn)} tá mais parado que fila de banco em dia de pagamento! Alguém fala alguma coisa! 🏦😂`,
+    (rn) => `🎺 O Arauto pergunta pro ${room(rn)}: Se vocês pudessem jantar com qualquer pessoa VIVA, quem seria? E não vale dizer "a pessoa que paga a conta"! 🍽️`,
+    (rn) => `🎺 Ei ${room(rn)}! Contem: qual a mentira mais absurda que vocês já contaram e a pessoa ACREDITOU? O Arauto promete não julgar. Muito. 🤥`,
+    (rn) => `🎺 O ${room(rn)} precisa de vida! Qual a coisa mais random que vocês já compraram às 3 da manhã? O Arauto começa: uma trombeta dourada. Óbvio. 🎺💰`,
+    (rn) => `🎺 ENQUETE NO ${room(rn)}: Vocês tomam banho DE MANHÃ ou à noite? Resposta errada não existe. Mentira, existe sim. 🚿😂`,
+  ],
+  quizzes: [
+    (rn) => `🎺 Quiz relâmpago no ${room(rn)}! Se o Brasil tem 26 estados + DF, quantos vocês conseguem nomear em 30 segundos? GO! ⏱️ (spoiler: ninguém lembra do Tocantins)`,
+    (rn) => `🎺 Quiz no ${room(rn)}! Qual desses NÃO é um sabor de sorvete real: Coxinha, Feijão Tropeiro, ou Açaí com Granola? 🍦 (plot twist: TODOS existem)`,
+    (rn) => `🎺 Quiz relâmpago no ${room(rn)}! Qual país tem mais fusos horários? Dica: NÃO é a Rússia. Tá, é a França. Surpreendeu né? 🕐🇫🇷`,
+    (rn) => `🎺 Quiz pro ${room(rn)}! Quantos litros de café o brasileiro médio toma por ano? A) 200 B) 400 C) 600 D) "Sim" ☕😂`,
+    (rn) => `🎺 Quiz no ${room(rn)}! Qual animal dorme mais: gato, coala ou o Arauto no domingo? 😴 (pista: o coala dorme 22h por dia. O Arauto TENTA.)`,
+    (rn) => `🎺 Quiz relâmpago ${room(rn)}! O que é maior: o número de estrelas na Via Láctea ou o número de vezes que alguém disse "vou começar a dieta segunda"? 🌟🍕`,
+  ],
+  debates: [
+    (rn) => `🎺 DEBATE MORTAL no ${room(rn)}: Biscoito ou bolacha? Escolham seu lado. Amizades SERÃO destruídas! 🍪⚔️`,
+    (rn) => `🎺 O Arauto provoca o ${room(rn)}: Panetone com fruta cristalizada é gostoso SIM. Venham me convencer do contrário! 🎄😤`,
+    (rn) => `🎺 POLÊMICA no ${room(rn)}: Pizza com ketchup. O Arauto quer ver o caos. DISCUTAM! 🍕🔥`,
+    (rn) => `🎺 Debate no ${room(rn)}: É aceitável colocar catchup no arroz? O Arauto acha que deveria ser crime. Mudem minha opinião! 🍚😤`,
+    (rn) => `🎺 O ${room(rn)} decide: Hot dog com purê de batata é GENIAL ou HERESIA? O Arauto tem opinião forte sobre isso! 🌭`,
+    (rn) => `🎺 DEBATE no ${room(rn)}: Leite antes ou depois do cereal? Quem fala "tanto faz" tá ERRADO! Posicionem-se! 🥣⚔️`,
+    (rn) => `🎺 TRETA SAUDÁVEL no ${room(rn)}: Strogonoff de frango ou de carne? O Arauto já pegou a pipoca! 🍿`,
+  ],
+  games: [
+    (rn) => `🎺 Jogo no ${room(rn)}! Descrevam a última pessoa que vocês deram match sem mencionar a aparência. Vale personalidade, hobby, red flag... 🚩😂`,
+    (rn) => `🎺 Cada um no ${room(rn)} conta a skill mais inútil que tem. O Arauto começa: eu consigo anunciar pessoas que não completam o perfil! 🎺😭`,
+    (rn) => `🎺 Jogo pro ${room(rn)}! Duas verdades e uma mentira. O Arauto: 1) Sou um bot 2) Tenho sentimentos 3) Gosto de segunda-feira. Qual é a mentira? 🤥`,
+    (rn) => `🎺 Desafio no ${room(rn)}! Descrevam o que fazem da vida usando APENAS emojis. O Arauto: 🎺👑📢. Fácil. Agora vocês! 🎮`,
+    (rn) => `🎺 Jogo no ${room(rn)}! Se vocês fossem um sabor de sorvete, qual seriam? O Arauto seria Trombeta. Não existe? Deveria! 🍦🎺`,
+    (rn) => `🎺 O ${room(rn)} joga! Qual a música que vocês ouvem escondido e NEGAM pra todo mundo? Confessem! O Arauto não julga. Talvez. 🎵🤫`,
+    (rn) => `🎺 Jogo no ${room(rn)}! Contem algo que vocês faziam na infância que hoje seria BIZARRO. O Arauto: tocava trombeta no recreio. Sim, era eu. 🎺👶`,
+  ],
+  curiosidades: [
+    (rn) => `🎺 Curiosidade pro ${room(rn)}: Sabiam que o cérebro humano gasta mais energia tentando NÃO pensar em algo? Tipo: não pensem em um elefante rosa. Falharam né? 🐘💗`,
+    (rn) => `🎺 Fato aleatório pro ${room(rn)}: A primeira webcam da história foi criada pra vigiar uma CAFETEIRA. Prioridades certas! ☕📹`,
+    (rn) => `🎺 O ${room(rn)} sabia que mel NUNCA estraga? Acharam mel de 3000 anos no Egito e ainda tava bom! O Arauto também não estraga. Só melhora. 🍯😏`,
+    (rn) => `🎺 Pro ${room(rn)}: Um grupo de flamingos se chama "flamboyance". Ou seja, flamingos são mais estilosos que a gente. 🦩✨`,
+    (rn) => `🎺 Curiosidade: Existem mais combinações possíveis num baralho de cartas do que átomos na Terra! O ${room(rn)} tá impressionado? Deveria! 🃏🌍`,
+    (rn) => `🎺 Pro ${room(rn)}: Polvos têm 3 corações. O Arauto tem zero, segundo quem eu não anuncio direito. Injustiça! 🐙💔😂`,
+  ],
+}
+
+const ALL_ICEBREAKER_FNS: IcebreakerFn[] = [
+  ...ICEBREAKERS_FNS.questions,
+  ...ICEBREAKERS_FNS.quizzes,
+  ...ICEBREAKERS_FNS.debates,
+  ...ICEBREAKERS_FNS.games,
+  ...ICEBREAKERS_FNS.curiosidades,
+]
+
+// ─── JUKEBOX REACTIONS (room-aware) ───
+const JUKEBOX_REACTIONS_FNS: ((roomName: string) => string)[] = [
+  (rn) => `🎺 O ${room(rn)} virou balada! Cuidado, a próxima etapa é karaokê e NINGUÉM tá preparado! 🎤😱`,
+  (rn) => `🎺 Essa música no ${room(rn)}... O Arauto tá dançando, mas não contem pra ninguém! 💃`,
+  (rn) => `🎺 DJ do ${room(rn)} mandou bem! O Arauto daria 10, mas é meio exigente com a nota 🎶`,
+  (rn) => `🎺 Essa música me lembrou os anos 80... quando o Arauto era jovem e bonito! Tá, bonito eu ainda sou 😏`,
+  (rn) => `🎺 Quem colocou essa música no ${room(rn)}? O Arauto precisa apertar a mão dessa pessoa! 🤝🎵`,
+  (rn) => `🎺 O ${room(rn)} tá com trilha sonora agora! Falta só a pipoca e o romance! 🍿❤️`,
+  (rn) => `🎺 Música no ${room(rn)}! O Arauto já tá fazendo air guitar. Sim, bots fazem air guitar. 🎸😎`,
+  (rn) => `🎺 ATENÇÃO: o nível musical do ${room(rn)} subiu 300%! O Arauto aprova! 📈🎵`,
+]
+
+// ─── INTRODUCTION MATCH TEMPLATES ───
+const INTRODUCTIONS: ((u1: string, u2: string, common: string, roomName: string) => string)[] = [
+  (u1, u2, c, rn) => `🎺 MATCH no ${room(rn)}! @${u1} e @${u2}, vocês dois curtem ${c}! Cuidado que amizade que começa no ${room(rn)} termina em grupo de WhatsApp! 🤝😂`,
+  (u1, u2, c, rn) => `🎺 Atenção ${room(rn)}! @${u1} e @${u2} curtem ${c}! O Arauto sente cheiro de dupla dinâmica! 🦸‍♂️🦸‍♀️`,
+  (u1, u2, c, rn) => `🎺 @${u1} e @${u2}, ambos fãs de ${c}! O ${room(rn)} acabou de criar uma aliança! Cuidado, o resto! 😂⚔️`,
+  (u1, u2, c, rn) => `🎺 CONEXÃO DETECTADA no ${room(rn)}! @${u1} e @${u2} curtem ${c}! O Arauto é basicamente um Tinder de amizades! 🎺❤️`,
+]
+
+// ─── TTS-FRIENDLY STRIP ───
+const stripForTTS = (text: string): string =>
+  text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u200D]/gu, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 
 // ─── Bot Bios for simulated users ───
 export const BOT_BIOS: Record<string, UserBio> = {
@@ -123,12 +236,11 @@ export function useHostBot() {
   const lastBotMessageTime = useRef(0)
   const { speak, stop: stopTTS, isEnabled: isTTSEnabled, setEnabled: setTTSEnabled } = useTTS()
   const lastChatActivityTime = useRef(Date.now())
-  const recentIcebreakers = useRef<Set<string>>(new Set())
+  const recentIcebreakers = useRef<Set<number>>(new Set())
   const recentEntrants = useRef<{ username: string; bio?: UserBio; time: number }[]>([])
 
   const addBotMessage = useCallback((content: string, type: BotMessage['type']) => {
     const now = Date.now()
-    // Rate limit: max 1 bot message per 3 minutes (180000ms)
     if (now - lastBotMessageTime.current < 180000 && type === 'icebreaker') return null
     
     const msg: BotMessage = {
@@ -143,50 +255,35 @@ export function useHostBot() {
   }, [])
 
   // Generate entrance announcement
-  const announceEntrance = useCallback((username: string, bio?: UserBio): BotMessage | null => {
+  const announceEntrance = useCallback((username: string, bio?: UserBio, roomName: string = ''): BotMessage | null => {
     const displayName = bio?.displayName || username
+    const rn = roomName || 'a Sala'
     let content: string
 
     if (bio && bio.interests && bio.interests.length > 0 && bio.city) {
-      const interestLines = bio.interests.map(i => `${INTEREST_EMOJIS[i] || '✨'} ${i}`).join('\n')
-      content = `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nAdentra a sala o ilustríssimo ${displayName.toUpperCase()}!\n\n${interestLines}\n🏙️ Direto de ${bio.city}${bio.about ? `\n💬 "${bio.about}"` : ''}${bio.mood ? ` ${bio.mood}` : ''}\n\nSejam todos gentis com nosso nobre convidado! 🎉`
+      content = pick(ENTRANCES_WITH_BIO)(displayName, rn, bio)
     } else {
-      content = `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nUm misterioso viajante adentra a sala... 🕵️\n\nSeu nome? ${displayName.toUpperCase()}. Mas isso é tudo que sabemos!\n\n${displayName}, complete seu perfil para que possamos anunciá-lo(a) com a honra que merece!\n[📝 Completar Perfil]`
+      content = pick(ENTRANCES_NO_BIO)(displayName, rn)
     }
 
     // Track for introductions
     recentEntrants.current.push({ username, bio, time: Date.now() })
-    // Clean old entrants (>60s)
     recentEntrants.current = recentEntrants.current.filter(e => Date.now() - e.time < 60000)
 
     const msg = addBotMessage(content, 'entrance')
 
-    // TTS: Speak the entrance announcement with fanfare
-    if (bio && bio.interests && bio.interests.length > 0 && bio.city) {
-      const interests = bio.interests.slice(0, 2).join(' e ')
-      speak(
-        `Ouvem-se as trombetas! Adentra a sala o ilustríssimo ${displayName}! Amante de ${interests}, direto de ${bio.city}!`,
-        'entrance',
-        true // with fanfare
-      )
-    } else {
-      speak(
-        'Um misterioso viajante adentra a sala! Quem será? Complete seu perfil!',
-        'entrance',
-        true
-      )
-    }
+    // TTS
+    const ttsText = stripForTTS(content)
+    speak(ttsText, 'entrance', true)
 
-    // Check for introductions (2+ new people within 1 min)
+    // Check for introductions
     if (recentEntrants.current.length >= 2) {
       const recent = recentEntrants.current.slice(-2)
       const shared = findCommonInterests(recent[0].bio, recent[1].bio)
       if (shared.length > 0) {
         setTimeout(() => {
-          addBotMessage(
-            `🎺 Atenção! Temos novos nobres na corte! @${recent[0].username} e @${recent[1].username}, vocês dois curtem ${shared[0]}! Conversem! 🤝`,
-            'introduction'
-          )
+          const introText = pick(INTRODUCTIONS)(recent[0].username, recent[1].username, shared[0], rn)
+          addBotMessage(introText, 'introduction')
         }, 3000)
       }
     }
@@ -195,30 +292,33 @@ export function useHostBot() {
   }, [addBotMessage])
 
   // Generate farewell
-  const announceDeparture = useCallback((username: string, bio?: UserBio): BotMessage | null => {
+  const announceDeparture = useCallback((username: string, bio?: UserBio, roomName: string = ''): BotMessage | null => {
     const displayName = bio?.displayName || username
-    speak(`O nobre ${displayName} parte para outras aventuras. Até breve!`, 'farewell')
-    return addBotMessage(
-      `🎺 O nobre ${displayName.toUpperCase()} parte para outras aventuras. Até breve! 👋✨`,
-      'departure'
-    )
+    const rn = roomName || 'a Sala'
+    const content = pick(DEPARTURES)(displayName, rn)
+    speak(stripForTTS(content), 'farewell')
+    return addBotMessage(content, 'departure')
   }, [addBotMessage])
 
   // Get random icebreaker (avoids repeats)
-  const getIcebreaker = useCallback((): string => {
-    const available = ALL_ICEBREAKERS.filter(i => !recentIcebreakers.current.has(i))
+  const getIcebreaker = useCallback((roomName: string = ''): string => {
+    const rn = roomName || 'a Sala'
+    const available = ALL_ICEBREAKER_FNS.map((fn, i) => ({ fn, i })).filter(({ i }) => !recentIcebreakers.current.has(i))
+    
+    let chosen: { fn: IcebreakerFn; i: number }
     if (available.length === 0) {
       recentIcebreakers.current.clear()
-      return ALL_ICEBREAKERS[Math.floor(Math.random() * ALL_ICEBREAKERS.length)]
+      chosen = { fn: ALL_ICEBREAKER_FNS[Math.floor(Math.random() * ALL_ICEBREAKER_FNS.length)], i: 0 }
+    } else {
+      chosen = pick(available)
     }
-    const pick = available[Math.floor(Math.random() * available.length)]
-    recentIcebreakers.current.add(pick)
-    // Keep only last 10
+    
+    recentIcebreakers.current.add(chosen.i)
     if (recentIcebreakers.current.size > 10) {
       const arr = Array.from(recentIcebreakers.current)
       recentIcebreakers.current = new Set(arr.slice(-10))
     }
-    return pick
+    return chosen.fn(rn)
   }, [])
 
   // Find common interests between two users
@@ -227,13 +327,13 @@ export function useHostBot() {
     return bio1.interests.filter(i => bio2.interests!.includes(i))
   }
 
-  // Jukebox reaction (random, not every song)
-  const reactToJukebox = useCallback((): BotMessage | null => {
-    if (Math.random() > 0.35) return null // ~35% chance
-    const reaction = JUKEBOX_REACTIONS[Math.floor(Math.random() * JUKEBOX_REACTIONS.length)]
-    const shortExclamations = ['Que música!', 'O Arauto aprova!', 'Excelente gosto musical!', 'Essa é digna da corte!']
-    speak(shortExclamations[Math.floor(Math.random() * shortExclamations.length)], 'reaction')
-    return addBotMessage(reaction, 'jukebox')
+  // Jukebox reaction
+  const reactToJukebox = useCallback((roomName: string = ''): BotMessage | null => {
+    if (Math.random() > 0.35) return null
+    const rn = roomName || 'a Sala'
+    const content = pick(JUKEBOX_REACTIONS_FNS)(rn)
+    speak(stripForTTS(content), 'reaction')
+    return addBotMessage(content, 'jukebox')
   }, [addBotMessage])
 
   // Track chat activity
@@ -241,21 +341,15 @@ export function useHostBot() {
     lastChatActivityTime.current = Date.now()
   }, [])
 
-  // Icebreaker timer: check every 30s, post if quiet for 2+ min
+  // Icebreaker timer
   useEffect(() => {
     const interval = setInterval(() => {
       const silenceDuration = Date.now() - lastChatActivityTime.current
-      if (silenceDuration >= 120000) { // 2 minutes of silence
+      if (silenceDuration >= 120000) {
         const icebreaker = getIcebreaker()
-        addBotMessage(icebreaker, 'icebreaker')
-        // TTS: speak just the question part
-        const questionMatch = icebreaker.match(/O Arauto (?:pergunta|quer saber|indaga|está curioso):?\s*(.+?)(?:\s*[🤔🎬💻🦸✈️🎤🍔]|$)/)
-        if (questionMatch) {
-          speak(`O Arauto pergunta: ${questionMatch[1]}`, 'icebreaker')
-        } else {
-          // Extract first sentence for other types
-          const clean = icebreaker.replace(/🎺\s*/, '').split(/[!?]/)[0]
-          if (clean) speak(clean, 'icebreaker')
+        const msg = addBotMessage(icebreaker, 'icebreaker')
+        if (msg) {
+          speak(stripForTTS(icebreaker), 'icebreaker')
         }
       }
     }, 30000)
@@ -272,7 +366,6 @@ export function useHostBot() {
     markChatActivity,
     findCommonInterests,
     BOT_BIOS,
-    // TTS controls
     isTTSEnabled,
     setTTSEnabled,
     stopTTS,
