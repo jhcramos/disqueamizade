@@ -191,7 +191,6 @@ const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudio
       // Return a pseudo-audio element that uses AudioContext for playback
       const pseudoAudio = new Audio()
       let sourceNode: AudioBufferSourceNode | null = null
-      const originalPlay = pseudoAudio.play.bind(pseudoAudio)
       pseudoAudio.play = () => {
         return new Promise<void>((resolve, reject) => {
           try {

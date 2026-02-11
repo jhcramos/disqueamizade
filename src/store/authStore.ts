@@ -44,14 +44,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Retry up to 2 times on network failures (mobile Safari flakiness)
       let result
-      let lastErr: any
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           if (attempt > 0) await new Promise(r => setTimeout(r, 1000))
           result = await authService.signIn(email, password)
           break
         } catch (err: any) {
-          lastErr = err
           const msg = err?.message?.toLowerCase() || ''
           const isNetwork = msg.includes('aborted') || msg.includes('load failed') || msg.includes('fetch') || msg.includes('network') || err?.name === 'AbortError' || err?.name === 'TypeError'
           if (!isNetwork || attempt === 2) throw err
