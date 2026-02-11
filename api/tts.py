@@ -20,7 +20,7 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"error":"text required, max 500 chars"}')
             return
 
-        voice = "pt-BR-FranciscaNeural"
+        voice = body.get('voice', "pt-BR-AntonioNeural")
 
         async def generate():
             communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, volume=volume)
@@ -46,4 +46,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        self.wfile.write(b'{"status":"ok","voice":"pt-BR-FranciscaNeural"}')
+        self.wfile.write(b'{"status":"ok","voice":"pt-BR-AntonioNeural"}')

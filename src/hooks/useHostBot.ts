@@ -187,7 +187,7 @@ const JUKEBOX_REACTIONS_FNS: ((roomName: string) => string)[] = [
   (rn) => `🎺 O ${room(rn)} virou balada! Cuidado, a próxima etapa é karaokê e NINGUÉM tá preparado! 🎤😱`,
   (rn) => `🎺 Essa música no ${room(rn)}... O Arauto tá dançando, mas não contem pra ninguém! 💃`,
   (rn) => `🎺 DJ do ${room(rn)} mandou bem! O Arauto daria 10, mas é meio exigente com a nota 🎶`,
-  (rn) => `🎺 Essa música me lembrou os anos 80... quando o Arauto era jovem e bonito! Tá, bonito eu ainda sou 😏`,
+  (_rn) => `🎺 Essa música me lembrou os anos 80... quando o Arauto era jovem e bonito! Tá, bonito eu ainda sou 😏`,
   (rn) => `🎺 Quem colocou essa música no ${room(rn)}? O Arauto precisa apertar a mão dessa pessoa! 🤝🎵`,
   (rn) => `🎺 O ${room(rn)} tá com trilha sonora agora! Falta só a pipoca e o romance! 🍿❤️`,
   (rn) => `🎺 Música no ${room(rn)}! O Arauto já tá fazendo air guitar. Sim, bots fazem air guitar. 🎸😎`,
