@@ -4,6 +4,7 @@ import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
 import { RoomCard } from '@/components/rooms/RoomCard'
 import { CreateRoomModal } from '@/components/rooms/CreateRoomModal'
+import { AgeGate } from '@/components/common/AgeVerificationModal'
 import type { MockRoom } from '@/types'
 import { useRooms } from '@/hooks/useSupabaseData'
 
@@ -155,6 +156,7 @@ export const RoomsPage = () => {
   const totalOnline = rooms.reduce((acc: number, r: any) => acc + (r.online_count || 0), 0)
 
   return (
+    <AgeGate>
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
@@ -287,5 +289,6 @@ export const RoomsPage = () => {
 
       <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} userTier="basic" onCreated={refetch} />
     </div>
+    </AgeGate>
   )
 }

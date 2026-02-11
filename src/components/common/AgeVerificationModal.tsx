@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext, useRef } from 'react'
+import { useState, useCallback, useEffect, createContext, useContext, useRef } from 'react'
 
 const AGE_VERIFIED_KEY = 'age-verified'
 
@@ -98,4 +98,22 @@ export const AgeVerificationProvider = ({ children }: { children: React.ReactNod
       )}
     </AgeVerificationContext.Provider>
   )
+}
+
+/**
+ * AgeGate — wrap any page to require age verification before rendering.
+ * Works for direct URL access, Link navigation, back button, etc.
+ */
+export const AgeGate = ({ children }: { children: React.ReactNode }) => {
+  const [verified, setVerified] = useState(() => sessionStorage.getItem(AGE_VERIFIED_KEY) === 'true')
+  const { verifyAge } = useAgeVerification()
+
+  useEffect(() => {
+    if (!verified) {
+      verifyAge(() => setVerified(true))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!verified) return <div className="min-h-screen bg-dark-950" />
+  return <>{children}</>
 }
