@@ -182,6 +182,34 @@ const ALL_ICEBREAKER_FNS: IcebreakerFn[] = [
   ...ICEBREAKERS_FNS.curiosidades,
 ]
 
+// ─── STAGE ANNOUNCEMENT TEMPLATES ───
+const STAGE_UP_FNS: ((name: string, roomName: string) => string)[] = [
+  (name, rn) => `🎺 SENHORAS E SENHORES DO ${ROOM(rn)}! 🌟\n\nCom vocês no palco: ${name.toUpperCase()}!\n\nAplausos! 👏👏👏`,
+  (name, rn) => `🎺 ATENÇÃO ${ROOM(rn)}! O palco agora pertence a ${name.toUpperCase()}! 🎤✨\n\nO show vai começar!`,
+  (name, rn) => `🎺 E sobe ao palco do ${ROOM(rn)}... ${name.toUpperCase()}! 🌟\n\nO Arauto pede silêncio... ou não! Façam barulho! 🔥`,
+  (name, rn) => `🎺 O ${room(rn)} tem um novo protagonista: ${name.toUpperCase()}! 🎤\n\nHolofotes ligados, microfone aberto, é AGORA! ✨`,
+  (name, rn) => `🎺 ${name.toUpperCase()} assumiu o palco do ${ROOM(rn)}! 🎙️\n\nRespira fundo, ${name}! O Arauto acredita em você! 💪😂`,
+]
+
+const STAGE_DOWN_FNS: ((name: string, roomName: string) => string)[] = [
+  (name, rn) => `🎺 Aplausos para ${name.toUpperCase()}! 👏✨ Espetáculo no ${room(rn)}!`,
+  (name, rn) => `🎺 ${name.toUpperCase()} desce do palco do ${ROOM(rn)}! Show de bola! 🌟👏`,
+  (name, rn) => `🎺 E assim se encerra a apresentação de ${name.toUpperCase()} no ${room(rn)}! Nota 10! 🎤🔥`,
+  (name, rn) => `🎺 ${name.toUpperCase()} deixou o palco! O ${room(rn)} aplaude de pé! 👏👏`,
+]
+
+const STAGE_QUEUE_FNS: ((name: string, roomName: string) => string)[] = [
+  (name, rn) => `🎺 ${name.toUpperCase()} pede passagem! Já tá na fila do palco do ${room(rn)}! 🎫`,
+  (name, rn) => `🎺 ${name.toUpperCase()} quer o palco do ${ROOM(rn)}! Entrou na fila! 🎤👀`,
+  (name, rn) => `🎺 Mais um candidato ao palco do ${room(rn)}: ${name.toUpperCase()}! 🎫✨`,
+]
+
+const STAGE_EMPTY_FNS: ((roomName: string) => string)[] = [
+  (rn) => `🎺 O palco do ${room(rn)} chora de saudade! Quem vai ser o próximo? 🎤😢`,
+  (rn) => `🎺 Palco vazio no ${ROOM(rn)}! O microfone tá esfriando! Quem salva? 🎤❄️`,
+  (rn) => `🎺 O ${room(rn)} precisa de alguém no palco! O Arauto implora! 🙏🎤`,
+]
+
 // ─── JUKEBOX REACTIONS (room-aware) ───
 const JUKEBOX_REACTIONS_FNS: ((roomName: string) => string)[] = [
   (rn) => `🎺 O ${room(rn)} virou balada! Cuidado, a próxima etapa é karaokê e NINGUÉM tá preparado! 🎤😱`,
@@ -327,6 +355,34 @@ export function useHostBot() {
     return bio1.interests.filter(i => bio2.interests!.includes(i))
   }
 
+  // Stage announcements
+  const announceStageUp = useCallback((username: string, roomName: string = ''): BotMessage | null => {
+    const rn = roomName || 'a Sala'
+    const content = pick(STAGE_UP_FNS)(username, rn)
+    speak(stripForTTS(content), 'entrance', true)
+    return addBotMessage(content, 'entrance')
+  }, [addBotMessage])
+
+  const announceStageDown = useCallback((username: string, roomName: string = ''): BotMessage | null => {
+    const rn = roomName || 'a Sala'
+    const content = pick(STAGE_DOWN_FNS)(username, rn)
+    speak(stripForTTS(content), 'farewell')
+    return addBotMessage(content, 'departure')
+  }, [addBotMessage])
+
+  const announceStageQueue = useCallback((username: string, roomName: string = ''): BotMessage | null => {
+    if (Math.random() > 0.6) return null // Don't announce every queue join
+    const rn = roomName || 'a Sala'
+    const content = pick(STAGE_QUEUE_FNS)(username, rn)
+    return addBotMessage(content, 'entrance')
+  }, [addBotMessage])
+
+  const announceStageEmpty = useCallback((roomName: string = ''): BotMessage | null => {
+    const rn = roomName || 'a Sala'
+    const content = pick(STAGE_EMPTY_FNS)(rn)
+    return addBotMessage(content, 'icebreaker')
+  }, [addBotMessage])
+
   // Jukebox reaction
   const reactToJukebox = useCallback((roomName: string = ''): BotMessage | null => {
     if (Math.random() > 0.35) return null
@@ -366,6 +422,10 @@ export function useHostBot() {
     markChatActivity,
     findCommonInterests,
     BOT_BIOS,
+    announceStageUp,
+    announceStageDown,
+    announceStageQueue,
+    announceStageEmpty,
     isTTSEnabled,
     setTTSEnabled,
     stopTTS,

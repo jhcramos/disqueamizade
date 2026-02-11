@@ -20,6 +20,8 @@ import { HostBotMessage } from '@/components/rooms/HostBot'
 import { BioEditor } from '@/components/profile/BioEditor'
 import type { UserBio } from '@/hooks/useHostBot'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
+import { Stage } from '@/components/rooms/Stage'
+import { useStage } from '@/hooks/useStage'
 import { PushToTalkLarge } from '@/components/rooms/PushToTalk'
 import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTVideo, STARTER_PLAYLISTS } from '@/components/rooms/Jukebox'
 import { supabase } from '@/services/supabase/client'
@@ -122,7 +124,7 @@ export const RoomPage = () => {
   const { addToast } = useToastStore()
 
   // ─── Host Bot (Arauto) ───
-  const { botMessages, announceEntrance, announceDeparture: _announceDeparture, reactToJukebox, markChatActivity } = useHostBot()
+  const { botMessages, announceEntrance, announceDeparture: _announceDeparture, reactToJukebox, markChatActivity, announceStageUp, announceStageDown, announceStageQueue, announceStageEmpty } = useHostBot()
   const [showBioEditor, setShowBioEditor] = useState(false)
   const [userBio, setUserBio] = useState<UserBio | null>(() => {
     try { const raw = localStorage.getItem('disque-amizade-bio'); return raw ? JSON.parse(raw) : null } catch { return null }
@@ -275,6 +277,34 @@ export const RoomPage = () => {
   const user = useAuthStore((s) => s.user)
   const profile = useAuthStore((s) => s.profile)
   const isGuest = useAuthStore((s) => s.isGuest)
+
+  // ─── Stage (Palco) ───
+  const currentUsername = profile?.username || profile?.display_name || user?.user_metadata?.username || 'Visitante'
+  const currentUserId = user?.id || 'guest'
+  const stage = useStage(currentUserId, currentUsername)
+
+  const handleJoinStage = () => {
+    const result = stage.joinStage()
+    if (result === 'on-stage') {
+      announceStageUp(currentUsername)
+    } else if (result === 'queued') {
+      announceStageQueue(currentUsername)
+    }
+    return result
+  }
+  const handleLeaveStage = () => {
+    const result = stage.leaveStage()
+    if (result) {
+      announceStageDown(result.leavingName)
+      if (result.nextName) {
+        setTimeout(() => announceStageUp(result.nextName!), 1800)
+      } else {
+        setTimeout(() => announceStageEmpty(), 3000)
+      }
+    }
+    return result
+  }
+
   const [onlineUsers, setOnlineUsers] = useState<{ userId: string; username: string; joinedAt: number }[]>([])
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map())
   const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
@@ -1035,6 +1065,23 @@ export const RoomPage = () => {
 
         {/* ─── Main Area: Video ─── */}
         <main className={`flex-1 flex flex-col min-w-0 ${(showChat || showParticipants) ? 'hidden md:flex' : 'flex'}`}>
+          {/* ═══ PALCO (Stage) ═══ */}
+          <Stage
+            performer={stage.performer}
+            queue={stage.queue}
+            isTransitioning={stage.isTransitioning}
+            stageTimer={stage.formatTimer(stage.stageTimer)}
+            currentUserId={currentUserId}
+            isOnStage={stage.isOnStage}
+            isInQueue={stage.isInQueue}
+            queuePosition={stage.queuePosition}
+            onJoinStage={handleJoinStage}
+            onLeaveStage={handleLeaveStage}
+            onLeaveQueue={stage.leaveQueue}
+            onToggleMic={stage.toggleStageMic}
+            onToggleCamera={stage.toggleStageCamera}
+          />
+
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
             {/* Featured peer large view */}
             {featuredPeer && (
