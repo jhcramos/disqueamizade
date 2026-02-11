@@ -15,6 +15,10 @@ import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
+import { useHostBot, BOT_BIOS } from '@/hooks/useHostBot'
+import { HostBotMessage } from '@/components/rooms/HostBot'
+import { BioEditor } from '@/components/profile/BioEditor'
+import type { UserBio } from '@/hooks/useHostBot'
 import { BackgroundSelector, type BackgroundOption } from '@/components/rooms/BackgroundSelector'
 import { PushToTalk } from '@/components/rooms/PushToTalk'
 import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTVideo, STARTER_PLAYLISTS } from '@/components/rooms/Jukebox'
@@ -117,6 +121,14 @@ export const RoomPage = () => {
   const [, setTileSize] = useState({ w: 320, h: 240 })
   const { addToast } = useToastStore()
 
+  // ─── Host Bot (Arauto) ───
+  const { botMessages, announceEntrance, announceDeparture, reactToJukebox, markChatActivity } = useHostBot()
+  const [showBioEditor, setShowBioEditor] = useState(false)
+  const [userBio, setUserBio] = useState<UserBio | null>(() => {
+    try { const raw = localStorage.getItem('disque-amizade-bio'); return raw ? JSON.parse(raw) : null } catch { return null }
+  })
+  const arautoAnnouncedRef = useRef(false)
+
   const [activeFilter, setActiveFilter] = useState('normal')
   const [activeMask, setActiveMask] = useState<string | null>(null)
   const [beautySmooth, setBeautySmooth] = useState(false)
@@ -192,6 +204,30 @@ export const RoomPage = () => {
     if (activeMask) enableMask(activeMask)
     else disableMask()
   }, [activeMask, enableMask, disableMask])
+
+  // ─── Arauto: Announce user entrance when room is ready ───
+  useEffect(() => {
+    if (!roomReady || arautoAnnouncedRef.current) return
+    arautoAnnouncedRef.current = true
+    const username = profile?.username || profile?.display_name || user?.user_metadata?.username || 'Visitante'
+    // Delay entrance announcement by 2s for dramatic effect
+    const timer = setTimeout(() => {
+      announceEntrance(username, userBio || undefined)
+      // Also announce a random bot entering after 5-15s
+      const botDelay = 5000 + Math.random() * 10000
+      setTimeout(() => {
+        const botName = botNames[Math.floor(Math.random() * botNames.length)]
+        const bio = BOT_BIOS[botName]
+        if (bio) announceEntrance(botName, bio)
+      }, botDelay)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [roomReady]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Track chat activity for Arauto icebreaker timer ───
+  useEffect(() => {
+    if (messages.length > 0) markChatActivity()
+  }, [messages.length, markChatActivity])
 
   // Try Supabase first, fall back to mock
   const [supaRoom, setSupaRoom] = useState<any>(null)
@@ -539,6 +575,8 @@ export const RoomPage = () => {
       timestamp: new Date(),
       type: 'system',
     }])
+    // Arauto occasionally reacts to jukebox
+    reactToJukebox()
   }
 
   // ─── YouTube Player Handlers ───
@@ -1291,7 +1329,14 @@ export const RoomPage = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg) => {
+            {/* Arauto bot messages merged with chat */}
+            {[
+              ...messages.map(m => ({ ...m, _isBot: false })),
+              ...botMessages.map(m => ({ id: m.id, userId: 'arauto', username: 'Arauto', content: m.content, timestamp: m.timestamp, type: 'text' as const, _isBot: true, _botMsg: m })),
+            ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()).map((msg: any) => {
+              if (msg._isBot) {
+                return <HostBotMessage key={msg.id} message={msg._botMsg} onCompleteProfile={() => setShowBioEditor(true)} />
+              }
               if (msg.type === 'system') {
                 return (
                   <div key={msg.id} className="text-center">
