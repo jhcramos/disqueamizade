@@ -122,7 +122,7 @@ export const RoomPage = () => {
   const { addToast } = useToastStore()
 
   // ─── Host Bot (Arauto) ───
-  const { botMessages, announceEntrance, announceDeparture, reactToJukebox, markChatActivity } = useHostBot()
+  const { botMessages, announceEntrance, announceDeparture: _announceDeparture, reactToJukebox, markChatActivity } = useHostBot()
   const [showBioEditor, setShowBioEditor] = useState(false)
   const [userBio, setUserBio] = useState<UserBio | null>(() => {
     try { const raw = localStorage.getItem('disque-amizade-bio'); return raw ? JSON.parse(raw) : null } catch { return null }
@@ -205,30 +205,6 @@ export const RoomPage = () => {
     else disableMask()
   }, [activeMask, enableMask, disableMask])
 
-  // ─── Arauto: Announce user entrance when room is ready ───
-  useEffect(() => {
-    if (!roomReady || arautoAnnouncedRef.current) return
-    arautoAnnouncedRef.current = true
-    const username = profile?.username || profile?.display_name || user?.user_metadata?.username || 'Visitante'
-    // Delay entrance announcement by 2s for dramatic effect
-    const timer = setTimeout(() => {
-      announceEntrance(username, userBio || undefined)
-      // Also announce a random bot entering after 5-15s
-      const botDelay = 5000 + Math.random() * 10000
-      setTimeout(() => {
-        const botName = botNames[Math.floor(Math.random() * botNames.length)]
-        const bio = BOT_BIOS[botName]
-        if (bio) announceEntrance(botName, bio)
-      }, botDelay)
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [roomReady]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Track chat activity for Arauto icebreaker timer ───
-  useEffect(() => {
-    if (messages.length > 0) markChatActivity()
-  }, [messages.length, markChatActivity])
-
   // Try Supabase first, fall back to mock
   const [supaRoom, setSupaRoom] = useState<any>(null)
   const [roomSlug, setRoomSlug] = useState<string>('')
@@ -272,6 +248,28 @@ export const RoomPage = () => {
     }
     fetchRoom()
   }, [roomId])
+
+  // ─── Arauto: Announce user entrance when room is ready ───
+  useEffect(() => {
+    if (!roomReady || arautoAnnouncedRef.current) return
+    arautoAnnouncedRef.current = true
+    const uname = profile?.username || profile?.display_name || user?.user_metadata?.username || 'Visitante'
+    const timer = setTimeout(() => {
+      announceEntrance(uname, userBio || undefined)
+      const botDelay = 5000 + Math.random() * 10000
+      setTimeout(() => {
+        const botName = botNames[Math.floor(Math.random() * botNames.length)]
+        const bio = BOT_BIOS[botName]
+        if (bio) announceEntrance(botName, bio)
+      }, botDelay)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [roomReady]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Track chat activity for Arauto icebreaker timer ───
+  useEffect(() => {
+    if (messages.length > 0) markChatActivity()
+  }, [messages.length, markChatActivity])
 
   const room = supaRoom
   const user = useAuthStore((s) => s.user)
@@ -1659,6 +1657,17 @@ export const RoomPage = () => {
           </div>
         </div>
       )}
+
+      {/* ═══ BIO EDITOR MODAL ═══ */}
+      <BioEditor
+        isOpen={showBioEditor}
+        onClose={() => setShowBioEditor(false)}
+        onSave={(bio) => {
+          setUserBio(bio)
+          addToast({ type: 'success', title: '👑 Perfil salvo!', message: 'O Arauto agora pode anunciá-lo(a) com honra!' })
+        }}
+        initialBio={userBio || undefined}
+      />
 
       {/* ═══ 1-ON-1 CALL: ACTIVE (Full Screen) ═══ */}
       {oneOnOneCall?.status === 'active' && (
