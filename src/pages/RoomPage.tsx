@@ -1331,6 +1331,22 @@ export const RoomPage = () => {
               >
                 {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
               </button>
+              <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
+
+              {/* ═══ CENTER: Big PTT button — THE HERO ═══ */}
+              {pttMode ? (
+                <div className="mx-2 sm:mx-4">
+                  <PushToTalkLarge
+                    onTalkStart={handlePttStart}
+                    onTalkEnd={handlePttEnd}
+                    disabled={isGuest}
+                  />
+                </div>
+              ) : (
+                <div className="w-2" /> /* spacer when not in PTT mode */
+              )}
+
+              {/* Right group */}
               {remoteStreams.size > 0 && (
                 <button
                   onClick={handleMuteAll}
@@ -1340,20 +1356,6 @@ export const RoomPage = () => {
                   {allMuted ? <MicOff className="w-5 h-5" /> : <Users className="w-5 h-5" />}
                 </button>
               )}
-              <CameraMasksButton activeFilter={activeFilter} onFilterChange={setActiveFilter} activeMask={activeMask} onMaskChange={setActiveMask} beautySmooth={beautySmooth} onBeautySmoothChange={setBeautySmooth} beautyBrighten={beautyBrighten} onBeautyBrightenChange={setBeautyBrighten} />
-
-              {/* ═══ CENTER: Big concave PTT button ═══ */}
-              {pttMode ? (
-                <PushToTalkLarge
-                  onTalkStart={handlePttStart}
-                  onTalkEnd={handlePttEnd}
-                  disabled={isGuest}
-                />
-              ) : (
-                <div className="w-2" /> /* spacer when not in PTT mode */
-              )}
-
-              {/* Right group */}
               <BackgroundSelector selectedBg={selectedBg} onSelect={handleBgSelect} compact />
               <Link to="/rooms">
                 <button className="p-3 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg hover:shadow-red-500/25">
