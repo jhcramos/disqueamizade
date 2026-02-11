@@ -1548,7 +1548,7 @@ export const RoomPage = () => {
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
           <div className="bg-dark-900 border border-white/10 rounded-2xl w-full max-w-sm mx-4 overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
-            {/* Video grande do usuário */}
+            {/* Video grande do usuário + câmera local mini */}
             {remoteStreams.has(selectedUser.userId) ? (
               <div className="relative aspect-video bg-dark-800">
                 <video
@@ -1563,9 +1563,18 @@ export const RoomPage = () => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/80 text-[10px] font-bold text-white animate-pulse">LIVE</div>
+                {/* Mini câmera local */}
+                {compositeStream && (
+                  <div className="absolute bottom-2 right-2 w-20 h-20 rounded-xl overflow-hidden border-2 border-primary-500/50 shadow-lg cursor-pointer hover:scale-110 transition-transform" onClick={(e) => { e.stopPropagation(); setFeaturedPeer(featuredPeer === 'local' ? null : 'local'); setSelectedUser(null) }}>
+                    <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream }} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors">
+                      <Maximize2 className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="aspect-video bg-dark-800 flex items-center justify-center">
+              <div className="relative aspect-video bg-dark-800 flex items-center justify-center">
                 <div className="text-center">
                   {selectedUser.avatar_url ? (
                     <img src={selectedUser.avatar_url} alt={selectedUser.username} className="w-20 h-20 rounded-full object-cover mx-auto mb-2 border-2 border-emerald-500/30" />
@@ -1576,6 +1585,15 @@ export const RoomPage = () => {
                   )}
                   <p className="text-sm text-dark-400">{selectedUser.username}</p>
                 </div>
+                {/* Mini câmera local */}
+                {compositeStream && (
+                  <div className="absolute bottom-2 right-2 w-20 h-20 rounded-xl overflow-hidden border-2 border-primary-500/50 shadow-lg cursor-pointer hover:scale-110 transition-transform" onClick={(e) => { e.stopPropagation(); setFeaturedPeer(featuredPeer === 'local' ? null : 'local'); setSelectedUser(null) }}>
+                    <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream }} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors">
+                      <Maximize2 className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
