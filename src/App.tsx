@@ -22,6 +22,7 @@ import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
+import { AgeVerificationProvider } from './components/common/AgeVerificationModal'
 import { useAuthStore } from './store/authStore'
 import { useCamaroteStore } from './store/camaroteStore'
 import { useToastStore } from './components/common/ToastContainer'
@@ -36,6 +37,7 @@ function App() {
   }, [initialize])
 
   return (
+    <AgeVerificationProvider>
     <div className="min-h-screen bg-noite-900 text-white">
       <Routes>
         {/* Home principal - design original */}
@@ -92,6 +94,7 @@ function App() {
         />
       )}
     </div>
+    </AgeVerificationProvider>
   )
 }
 

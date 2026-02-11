@@ -156,8 +156,12 @@ export const BlogPage = () => {
             {currentPage === 1 && paginated.length > 0 && (
               <Link to={`/blog/${paginated[0].slug}`} className="block mb-8 group">
                 <div className="relative rounded-2xl overflow-hidden bg-dark-900 border border-white/5 hover:border-pink-500/30 transition-all">
-                  <div className={`h-64 bg-gradient-to-br ${getGradient(paginated[0].slug)} flex items-center justify-center`}>
-                    <span className="text-8xl">{CATEGORY_EMOJIS[paginated[0].category] || '💬'}</span>
+                  <div className={`h-64 bg-gradient-to-br ${getGradient(paginated[0].slug)} flex items-center justify-center relative overflow-hidden`}>
+                    {paginated[0].image ? (
+                      <img src={paginated[0].image} alt={paginated[0].title} className="w-full h-full object-cover absolute inset-0" />
+                    ) : (
+                      <span className="text-8xl">{CATEGORY_EMOJIS[paginated[0].category] || '💬'}</span>
+                    )}
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-3 mb-3">
@@ -185,8 +189,12 @@ export const BlogPage = () => {
               {(currentPage === 1 ? paginated.slice(1) : paginated).map(post => (
                 <Link key={post.slug} to={`/blog/${post.slug}`} className="group">
                   <div className="bg-dark-900 rounded-2xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all h-full flex flex-col">
-                    <div className={`h-40 bg-gradient-to-br ${getGradient(post.slug)} flex items-center justify-center`}>
-                      <span className="text-5xl">{CATEGORY_EMOJIS[post.category] || '💬'}</span>
+                    <div className={`h-40 bg-gradient-to-br ${getGradient(post.slug)} flex items-center justify-center relative overflow-hidden`}>
+                      {post.image ? (
+                        <img src={post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
+                      ) : (
+                        <span className="text-5xl">{CATEGORY_EMOJIS[post.category] || '💬'}</span>
+                      )}
                     </div>
                     <div className="p-5 flex-1 flex flex-col">
                       <div className="flex items-center gap-2 mb-3">

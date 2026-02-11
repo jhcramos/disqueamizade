@@ -195,6 +195,13 @@ export const BlogPostPage = () => {
             </div>
           </header>
 
+          {/* Hero image */}
+          {post.image && (
+            <div className="mb-8 rounded-2xl overflow-hidden">
+              <img src={post.image} alt={post.title} className="w-full h-64 md:h-80 object-cover" />
+            </div>
+          )}
+
           {/* Content with injected CTAs */}
           <div
             className="prose prose-invert prose-pink max-w-none

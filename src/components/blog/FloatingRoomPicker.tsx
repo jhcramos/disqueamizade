@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { X, MessageCircle, ChevronRight, Flame, Building2 } from 'lucide-react'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 
 type Tab = 'hot' | 'cidades' | 'geral'
 

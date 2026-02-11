@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Users, Video, Lock } from 'lucide-react'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import type { MockRoom } from '@/types'
 
 interface RoomCardProps {
@@ -9,9 +10,16 @@ interface RoomCardProps {
 export const RoomCard = ({ room }: RoomCardProps) => {
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
   const isFull = room.participants >= room.max_users
+  const navigate = useNavigate()
+  const { verifyAge } = useAgeVerification()
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    verifyAge(() => navigate(`/room/${(room as any).slug || room.id}`))
+  }
 
   return (
-    <Link to={`/room/${(room as any).slug || room.id}`}>
+    <a href={`/room/${(room as any).slug || room.id}`} onClick={handleClick}>
       <div className="card-interactive p-5 group">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
@@ -95,6 +103,6 @@ export const RoomCard = ({ room }: RoomCardProps) => {
           </div>
         </div>
       </div>
-    </Link>
+    </a>
   )
 }
