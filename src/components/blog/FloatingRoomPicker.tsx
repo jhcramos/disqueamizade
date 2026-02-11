@@ -52,7 +52,14 @@ export const FloatingRoomPicker = () => {
     }
   }, [])
 
+  const navigate = useNavigate()
+  const { verifyAge } = useAgeVerification()
   const filteredRooms = ROOMS.filter(r => r.tabs.includes(activeTab)).slice(0, 5)
+
+  const handleRoomClick = (e: React.MouseEvent, link: string) => {
+    e.preventDefault()
+    verifyAge(() => navigate(link))
+  }
 
   if (!isVisible) return null
 
@@ -92,9 +99,10 @@ export const FloatingRoomPicker = () => {
 
           <div className="p-2 max-h-64 overflow-y-auto">
             {filteredRooms.map(room => (
-              <Link
+              <a
                 key={room.name}
-                to={room.link}
+                href={room.link}
+                onClick={e => handleRoomClick(e, room.link)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group"
               >
                 <span className="text-xl">{room.emoji}</span>
@@ -108,16 +116,17 @@ export const FloatingRoomPicker = () => {
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-dark-600 group-hover:text-pink-400 transition-colors" />
-              </Link>
+              </a>
             ))}
           </div>
 
-          <Link
-            to="/rooms"
+          <a
+            href="/rooms"
+            onClick={e => handleRoomClick(e, '/rooms')}
             className="block p-3 text-center text-sm font-medium text-pink-400 hover:text-pink-300 hover:bg-white/5 border-t border-white/5 transition-colors"
           >
             Ver todas as salas →
-          </Link>
+          </a>
         </div>
       )}
 

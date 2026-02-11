@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Flame } from 'lucide-react'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 
 const CATEGORY_ROOM_MAP: Record<string, { label: string; emoji: string; link: string; desc: string }> = {
   chat: { label: 'Sala Geral', emoji: '💬', link: '/rooms', desc: 'Bate-papo ao vivo com pessoas de todo o Brasil' },
@@ -21,7 +22,14 @@ interface BlogRoomCTAProps {
 
 export const BlogRoomCTA = ({ category, variant = 0 }: BlogRoomCTAProps) => {
   const [onlineCount] = useState(() => Math.floor(Math.random() * 66) + 15)
+  const navigate = useNavigate()
+  const { verifyAge } = useAgeVerification()
   const room = CATEGORY_ROOM_MAP[category] || DEFAULT_ROOM
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    verifyAge(() => navigate(room.link))
+  }
 
   const gradients = [
     'from-pink-600/20 to-purple-600/20',
@@ -48,12 +56,13 @@ export const BlogRoomCTA = ({ category, variant = 0 }: BlogRoomCTAProps) => {
         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
       </div>
 
-      <Link
-        to={room.link}
+      <a
+        href={room.link}
+        onClick={handleClick}
         className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-pink-500/25"
       >
         Entrar na Sala <ChevronRight className="w-5 h-5" />
-      </Link>
+      </a>
     </div>
   )
 }

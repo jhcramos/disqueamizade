@@ -10,6 +10,7 @@ import { CreateCamaroteModal } from '@/components/rooms/CreateCamaroteModal'
 import { useCamera } from '@/hooks/useCamera'
 import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useCompositeStream } from '@/hooks/useCompositeStream'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
 import { webrtcRoom } from '@/services/webrtc/peer'
@@ -80,6 +81,8 @@ const InitialsAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md
 export const RoomPage = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
+  const { verifyAge } = useAgeVerification()
+  const [ageVerified, setAgeVerified] = useState(() => sessionStorage.getItem('age-verified') === 'true')
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 'sys-0', userId: 'system', username: 'Sistema', content: 'Bem-vindo à sala! 🎉', timestamp: new Date(), type: 'system' },
@@ -153,6 +156,13 @@ export const RoomPage = () => {
   // Composite stream with effects for WebRTC
   const { compositeStream, canvasRef: _compositeCanvasRef } = useCompositeStream(videoRef, stream, filterStyle, activeMaskData?.emoji || null, faceBox, beautySmooth, beautyBrighten)
   const pipVideoRef = useRef<HTMLVideoElement>(null)
+
+  // Age verification on direct navigation
+  useEffect(() => {
+    if (!ageVerified) {
+      verifyAge(() => setAgeVerified(true))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show composite stream in local camera tile so preview matches what remote sees
   useEffect(() => {
@@ -630,6 +640,11 @@ export const RoomPage = () => {
   }
 
   const capacityPercent = Math.round((room.participants / room.max_users) * 100)
+
+  // Block rendering until age is verified (modal will show via useEffect above)
+  if (!ageVerified) {
+    return <div className="h-screen bg-dark-950" />
+  }
 
   return (
     <div className="h-screen bg-dark-950 text-white flex flex-col overflow-hidden">
