@@ -51,18 +51,17 @@ class handler(BaseHTTPRequestHandler):
 
         voice = body.get('voice', "pt-BR-AntonioNeural")
 
-        # Build SSML or plain text
+        # Add natural pauses via text manipulation (NOT SSML tags — Edge TTS reads them literally)
+        speech_text = text
         if use_ssml:
-            speech_text = text_to_ssml(text, rate, pitch, volume, True)
-        else:
-            speech_text = text
+            # Insert natural pause words instead of SSML tags
+            speech_text = re.sub(r'!\s*', '!... ', speech_text)
+            speech_text = re.sub(r'\?\s*', '?... ', speech_text)
+            speech_text = re.sub(r'\.{2,}\s*', '...... ', speech_text)
+            # Don't wrap in XML tags — Edge TTS doesn't support SSML
 
         async def generate():
-            if use_ssml:
-                # When using SSML, rate/pitch/volume are inside the SSML tags
-                communicate = edge_tts.Communicate(speech_text, voice)
-            else:
-                communicate = edge_tts.Communicate(speech_text, voice, rate=rate, pitch=pitch, volume=volume)
+            communicate = edge_tts.Communicate(speech_text, voice, rate=rate, pitch=pitch, volume=volume)
             audio_data = b""
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
