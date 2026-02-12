@@ -179,6 +179,11 @@ const fetchTTSAudio = async (text: string, style: VoiceStyle): Promise<HTMLAudio
     })
     clearTimeout(timeout)
     if (!res.ok) return null
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('audio')) {
+      console.warn('TTS returned non-audio response:', contentType)
+      return null
+    }
     const blob = await res.blob()
     if (blob.size < 100) return null // empty/error response
 
@@ -285,6 +290,12 @@ export function useTTS() {
 
     const cleanText = stripEmojis(text)
     if (!cleanText || cleanText.length < 3) return
+
+    // Safety: reject text that looks like code/HTML/markup
+    if (/[{}<>]|function\s|const\s|import\s|export\s|=>\s|console\.|class\s/.test(cleanText)) {
+      console.warn('TTS rejected code-like text:', cleanText.slice(0, 100))
+      return
+    }
 
     queueRef.current.push({ text: cleanText, style, withFanfare })
     processQueue()
