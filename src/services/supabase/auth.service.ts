@@ -5,18 +5,63 @@ export const authService = {
    * Sign up with email and password
    */
   async signUp(email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-          display_name: username,
-          is_creator: options?.is_creator ?? false,
-          birth_date: options?.birth_date || null,
+    let authData: any = null
+    let authError: any = null
+
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            display_name: username,
+            is_creator: options?.is_creator ?? false,
+            birth_date: options?.birth_date || null,
+          },
         },
-      },
-    })
+      })
+      authData = result.data
+      authError = result.error
+    } catch (sdkErr: any) {
+      // Mobile Safari: SDK fetch fails with "Load failed" — fallback to XHR
+      const msg = sdkErr?.message?.toLowerCase() || ''
+      const isNetwork = msg.includes('load failed') || msg.includes('aborted') || msg.includes('fetch') || sdkErr?.name === 'TypeError'
+      if (!isNetwork) throw sdkErr
+
+      console.warn('Supabase SDK signUp failed, trying XHR fallback...')
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      const res = await new Promise<Response>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', `${supabaseUrl}/auth/v1/signup`)
+        xhr.setRequestHeader('apikey', supabaseKey)
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.timeout = 15000
+        xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }))
+        xhr.onerror = () => reject(new Error('Network request failed'))
+        xhr.ontimeout = () => reject(new Error('Request timed out'))
+        xhr.send(JSON.stringify({
+          email,
+          password,
+          data: {
+            username,
+            display_name: username,
+            is_creator: options?.is_creator ?? false,
+            birth_date: options?.birth_date || null,
+          },
+        }))
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.msg || body.error_description || 'Cadastro falhou')
+      }
+
+      const xhrData = await res.json()
+      authData = { user: xhrData.user || xhrData, session: xhrData.session || null }
+    }
 
     // Rate limit on email sending is non-fatal — user may still be created
     if (authError) {
@@ -36,7 +81,7 @@ export const authService = {
       return signInData
     }
 
-    if (!authData.user) throw new Error('No user returned from signup')
+    if (!authData?.user) throw new Error('No user returned from signup')
 
     // Auto-confirm email via server-side admin API
     try {
