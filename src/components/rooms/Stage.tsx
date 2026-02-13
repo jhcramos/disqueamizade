@@ -3,6 +3,7 @@ import { Mic, MicOff, Video, VideoOff, ArrowDown, Expand, ChevronUp, ChevronDown
 import { StageQueue } from './StageQueue'
 import { FloatingCamera } from './FloatingCamera'
 import type { StageUser, QueueEntry } from '@/hooks/useStage'
+import type { FaceBox } from '@/hooks/useVideoFilter'
 
 const AVATAR_GRADIENTS = [
   'from-pink-500 to-rose-600',
@@ -33,6 +34,8 @@ interface StageProps {
   onLeaveQueue: () => void
   onToggleMic: () => void
   onToggleCamera: () => void
+  activeMaskEmoji?: string | null
+  faceBox?: FaceBox | null
 }
 
 export const Stage = ({
@@ -49,8 +52,11 @@ export const Stage = ({
   onLeaveQueue,
   onToggleMic,
   onToggleCamera,
+  activeMaskEmoji,
+  faceBox,
 }: StageProps) => {
   const stageVideoRef = useRef<HTMLVideoElement>(null)
+  const stageContainerRef = useRef<HTMLDivElement>(null)
   const [isFloating, setIsFloating] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const isCurrentUser = performer?.userId === currentUserId
@@ -116,6 +122,7 @@ export const Stage = ({
           <div className="relative z-10">
             {/* Camera highlight — large video area */}
             <div
+              ref={stageContainerRef}
               className="relative w-full aspect-video max-h-[240px] rounded-xl overflow-hidden mb-3"
               style={{
                 boxShadow: '0 0 30px rgba(236,72,153,0.3), 0 0 60px rgba(139,92,246,0.15)',
@@ -143,6 +150,7 @@ export const Stage = ({
                   </button>
                 </div>
               ) : isCurrentUser && performer.isCameraOn && localStream ? (
+                <>
                 <video
                   ref={stageVideoRef}
                   autoPlay
@@ -151,6 +159,35 @@ export const Stage = ({
                   className="absolute inset-0 w-full h-full"
                   style={{ objectFit: 'contain' }}
                 />
+                {/* Emoji mask overlay on stage video */}
+                {activeMaskEmoji && faceBox && (() => {
+                  const el = stageContainerRef.current
+                  const cW = el?.clientWidth || 640
+                  const cH = el?.clientHeight || 360
+                  const emojiPx = Math.min(cW * faceBox.w / 100, cH * faceBox.h / 100) * 1.35
+                  const expandW = faceBox.w * 0.175
+                  const expandH = faceBox.h * 0.175
+                  return (
+                    <div
+                      className="absolute z-20 pointer-events-none select-none"
+                      style={{
+                        left: `${faceBox.x - expandW}%`,
+                        top: `${faceBox.y - expandH}%`,
+                        width: `${faceBox.w + expandW * 2}%`,
+                        height: `${faceBox.h + expandH * 2}%`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: `${emojiPx}px`,
+                        lineHeight: 1,
+                        transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out',
+                      }}
+                    >
+                      {activeMaskEmoji}
+                    </div>
+                  )
+                })()}
+                </>
               ) : (
                 <>
                   <div className={`absolute inset-0 bg-gradient-to-br ${getGradient(performer.username)} opacity-20`} />

@@ -1097,6 +1097,8 @@ export const RoomPage = () => {
             onLeaveQueue={stage.leaveQueue}
             onToggleMic={stage.toggleStageMic}
             onToggleCamera={stage.toggleStageCamera}
+            activeMaskEmoji={activeMaskData?.emoji || null}
+            faceBox={faceBox}
           />
 
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
