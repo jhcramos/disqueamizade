@@ -17,6 +17,7 @@ import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
 import { CreatorProfilePage } from './pages/CreatorProfilePage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import { AdminPage } from './pages/AdminPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import { BlogPage } from './pages/blog/BlogPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { MobileNav } from './components/common/MobileNav'
@@ -59,6 +60,7 @@ function App() {
         {/* User - requer login */}
         <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         
         {/* Features */}

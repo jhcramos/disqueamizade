@@ -134,6 +134,14 @@ export const AuthPage = () => {
             </button>
           </div>
 
+          {mode === 'login' && (
+            <div className="text-right -mt-1">
+              <a href="/reset-password" className="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+                Esqueceu a senha?
+              </a>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
