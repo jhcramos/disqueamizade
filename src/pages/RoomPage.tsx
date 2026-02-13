@@ -1178,21 +1178,26 @@ export const RoomPage = () => {
                       const tileEl = cameraTileRef.current
                       const tileW = tileEl?.clientWidth || 320
                       const tileH = tileEl?.clientHeight || 240
-                      const emojiPx = Math.min(tileW * faceBox.w / 100, tileH * faceBox.h / 100) * 0.85
+                      // Enlarge: 1.35x multiplier (was 0.85) so mask covers the full face
+                      const emojiPx = Math.min(tileW * faceBox.w / 100, tileH * faceBox.h / 100) * 1.35
+                      // Expand box by 35% around center to cover full face
+                      const expandW = faceBox.w * 0.175
+                      const expandH = faceBox.h * 0.175
                       return (
                         <div
                           className="absolute z-20 pointer-events-none select-none"
                           style={{
-                            left: `${faceBox.x}%`,
-                            top: `${faceBox.y}%`,
-                            width: `${faceBox.w}%`,
-                            height: `${faceBox.h}%`,
+                            left: `${faceBox.x - expandW}%`,
+                            top: `${faceBox.y - expandH}%`,
+                            width: `${faceBox.w + expandW * 2}%`,
+                            height: `${faceBox.h + expandH * 2}%`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: `${emojiPx}px`,
                             lineHeight: 1,
-                            transition: 'left 180ms linear, top 180ms linear, width 180ms linear, height 180ms linear, font-size 180ms linear',
+                            // Slower transition to reduce flickering
+                            transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out',
                           }}
                         >
                           {activeMaskData.emoji}

@@ -172,6 +172,7 @@ export const useVideoFilter = (
   const activeRef = useRef<string | null>(null)
   const nativeDetectorRef = useRef<any>(null)
   const smoothBox = useRef<FaceBox | null>(null)
+  const noFaceCountRef = useRef(0)
   const runningRef = useRef(false)
   const timeoutRef = useRef<number>(0)
 
@@ -217,24 +218,30 @@ export const useVideoFilter = (
       }
       const prev = smoothBox.current
       if (prev) {
-        // Heavy smoothing (0.75/0.25) to prevent flickering
+        // Extra heavy smoothing (0.85/0.15) to prevent flickering
         smoothBox.current = {
-          x: prev.x * 0.75 + raw.x * 0.25,
-          y: prev.y * 0.75 + raw.y * 0.25,
-          w: prev.w * 0.75 + raw.w * 0.25,
-          h: prev.h * 0.75 + raw.h * 0.25,
+          x: prev.x * 0.85 + raw.x * 0.15,
+          y: prev.y * 0.85 + raw.y * 0.15,
+          w: prev.w * 0.85 + raw.w * 0.15,
+          h: prev.h * 0.85 + raw.h * 0.15,
         }
       } else {
         smoothBox.current = raw
       }
+      noFaceCountRef.current = 0
       setFaceBox({ ...smoothBox.current })
     } else if (runningRef.current) {
-      setTrackingStatus('no-face')
-      // Fallback: center of frame
+      // Keep last known position for a few frames to avoid flicker
+      noFaceCountRef.current++
+      if (noFaceCountRef.current > 5) {
+        setTrackingStatus('no-face')
+      }
+      // Fallback: center of frame (only if never detected)
       if (!smoothBox.current) {
         smoothBox.current = { x: 25, y: 12, w: 50, h: 55 }
         setFaceBox({ ...smoothBox.current })
       }
+      // Keep showing last box (don't clear it)
     }
 
     // Schedule next detection: 200ms = 5fps (smooth enough, less flicker)

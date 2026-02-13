@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Video, VideoOff, ArrowDown, Expand } from 'lucide-react'
+import { Mic, MicOff, Video, VideoOff, ArrowDown, Expand, ChevronUp, ChevronDown } from 'lucide-react'
 import { StageQueue } from './StageQueue'
 import { FloatingCamera } from './FloatingCamera'
 import type { StageUser, QueueEntry } from '@/hooks/useStage'
@@ -52,6 +52,7 @@ export const Stage = ({
 }: StageProps) => {
   const stageVideoRef = useRef<HTMLVideoElement>(null)
   const [isFloating, setIsFloating] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const isCurrentUser = performer?.userId === currentUserId
 
   // Attach local stream to stage video when current user is performing
@@ -79,7 +80,23 @@ export const Stage = ({
       />
     )}
     <div className="flex-shrink-0 border-b border-white/5">
-      {/* Stage Area */}
+      {/* Stage Header — always visible, click to minimize */}
+      <button
+        onClick={() => setIsMinimized(!isMinimized)}
+        className="w-full flex items-center justify-between px-4 py-2 text-xs text-fuchsia-300/70 hover:text-fuchsia-300 transition-colors"
+        style={{
+          background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(236,72,153,0.06) 100%)',
+        }}
+      >
+        <span className="flex items-center gap-1.5">
+          🎤 Palco {performer ? `— ${performer.userId === currentUserId ? 'Você' : performer.username}` : '— livre'}
+          {queue.length > 0 && <span className="text-dark-500">· {queue.length} na fila</span>}
+        </span>
+        {isMinimized ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+      </button>
+
+      {/* Stage Area — collapsible */}
+      {!isMinimized && (
       <div
         className="relative px-4 py-3 overflow-hidden"
         style={{
@@ -266,6 +283,7 @@ export const Stage = ({
           </div>
         )}
       </div>
+      )}
     </div>
     </>
   )
