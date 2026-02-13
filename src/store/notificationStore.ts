@@ -1,52 +1,21 @@
 import { create } from 'zustand'
+import { databaseService } from '@/services/supabase/database.service'
+import { realtimeService } from '@/services/supabase/realtime.service'
 import type { Notification } from '@/types'
-
-const mockNotifications: Notification[] = [
-  {
-    id: 'n1',
-    user_id: 'me',
-    type: 'room_invite',
-    title: 'Convite para Sala',
-    message: 'ana_paula convidou você para "São Paulo #1"',
-    read: false,
-    created_at: new Date(Date.now() - 300000).toISOString(),
-  },
-  {
-    id: 'n2',
-    user_id: 'me',
-    type: 'game_invite',
-    title: 'Casamento Atrás da Porta',
-    message: 'Um novo jogo começou na sala "Geral Brasil"!',
-    read: false,
-    created_at: new Date(Date.now() - 600000).toISOString(),
-  },
-  {
-    id: 'n3',
-    user_id: 'me',
-    type: 'new_message',
-    title: 'Nova Mensagem',
-    message: 'joao_silva: E aí, bora jogar hoje?',
-    read: true,
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 'n4',
-    user_id: 'me',
-    type: 'subscription_expiring',
-    title: 'Assinatura Expirando',
-    message: 'Sua assinatura Premium expira em 3 dias',
-    read: true,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-]
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface NotificationState {
   notifications: Notification[]
   unreadCount: number
   isOpen: boolean
-  
+  loading: boolean
+  initialized: boolean
+  _channel: RealtimeChannel | null
+
   setOpen: (open: boolean) => void
   toggle: () => void
+  init: (userId: string) => Promise<void>
+  cleanup: () => void
   addNotification: (notification: Omit<Notification, 'id' | 'created_at'>) => void
   markAsRead: (id: string) => void
   markAllAsRead: () => void
@@ -55,17 +24,63 @@ interface NotificationState {
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: mockNotifications,
-  unreadCount: mockNotifications.filter(n => !n.read).length,
+  notifications: [],
+  unreadCount: 0,
   isOpen: false,
+  loading: false,
+  initialized: false,
+  _channel: null,
 
   setOpen: (open) => set({ isOpen: open }),
   toggle: () => set((state) => ({ isOpen: !state.isOpen })),
 
+  // Initialize: fetch from Supabase + subscribe to realtime
+  init: async (userId: string) => {
+    if (get().initialized) return
+
+    set({ loading: true })
+
+    try {
+      // Fetch existing notifications
+      const data = await databaseService.getNotifications(userId)
+      const notifications = (data || []) as Notification[]
+
+      set({
+        notifications,
+        unreadCount: notifications.filter(n => !n.read).length,
+        initialized: true,
+        loading: false,
+      })
+
+      // Subscribe to new notifications in realtime
+      const channel = realtimeService.subscribeToNotifications(userId, (newNotif: Notification) => {
+        set((state) => ({
+          notifications: [newNotif, ...state.notifications],
+          unreadCount: state.unreadCount + (newNotif.read ? 0 : 1),
+        }))
+      })
+
+      set({ _channel: channel })
+    } catch (err) {
+      console.warn('Failed to load notifications:', err)
+      set({ loading: false, initialized: true })
+    }
+  },
+
+  // Cleanup realtime subscription
+  cleanup: () => {
+    const channel = get()._channel
+    if (channel) {
+      realtimeService.unsubscribe(channel)
+    }
+    set({ _channel: null, initialized: false, notifications: [], unreadCount: 0 })
+  },
+
+  // Add a local notification (also useful for in-app events)
   addNotification: (notification) => {
     const newNotif: Notification = {
       ...notification,
-      id: `n-${Date.now()}`,
+      id: `local-${Date.now()}`,
       created_at: new Date().toISOString(),
     }
     set((state) => ({
@@ -74,7 +89,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }))
   },
 
-  markAsRead: (id) => {
+  markAsRead: async (id) => {
+    // Optimistic update
     set((state) => {
       const notifications = state.notifications.map(n =>
         n.id === id ? { ...n, read: true } : n
@@ -84,13 +100,34 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         unreadCount: notifications.filter(n => !n.read).length,
       }
     })
+
+    // Persist to Supabase (ignore errors for local-only notifications)
+    if (!id.startsWith('local-')) {
+      try {
+        await databaseService.markNotificationAsRead(id)
+      } catch (err) {
+        console.warn('Failed to mark notification as read:', err)
+      }
+    }
   },
 
-  markAllAsRead: () => {
+  markAllAsRead: async () => {
+    const userId = get().notifications[0]?.user_id
+    
+    // Optimistic update
     set((state) => ({
       notifications: state.notifications.map(n => ({ ...n, read: true })),
       unreadCount: 0,
     }))
+
+    // Persist to Supabase
+    if (userId) {
+      try {
+        await databaseService.markAllNotificationsAsRead(userId)
+      } catch (err) {
+        console.warn('Failed to mark all notifications as read:', err)
+      }
+    }
   },
 
   removeNotification: (id) => {

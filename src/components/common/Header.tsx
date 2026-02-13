@@ -23,10 +23,20 @@ export const Header = () => {
   const location = useLocation()
   const notifRef = useRef<HTMLDivElement>(null)
 
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, init: initNotifications, cleanup: cleanupNotifications } = useNotificationStore()
   const { balance, isOstentacao } = useFichaStore()
   const { user, profile, isGuest, signOut } = useAuthStore()
   const navigate = useNavigate()
+
+  // Initialize notifications when user is available
+  useEffect(() => {
+    if (user?.id) {
+      initNotifications(user.id)
+    }
+    return () => {
+      cleanupNotifications()
+    }
+  }, [user?.id, initNotifications, cleanupNotifications])
 
   // Close notification dropdown on outside click
   useEffect(() => {
