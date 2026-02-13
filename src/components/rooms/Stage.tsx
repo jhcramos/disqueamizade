@@ -159,22 +159,42 @@ export const Stage = ({
                   className="absolute inset-0 w-full h-full"
                   style={{ objectFit: 'contain' }}
                 />
-                {/* Emoji mask overlay on stage video */}
+                {/* Emoji mask overlay on stage video — accounts for object-contain */}
                 {activeMaskEmoji && faceBox && (() => {
-                  const el = stageContainerRef.current
-                  const cW = el?.clientWidth || 640
-                  const cH = el?.clientHeight || 360
-                  const emojiPx = Math.min(cW * faceBox.w / 100, cH * faceBox.h / 100) * 1.35
+                  const container = stageContainerRef.current
+                  const video = stageVideoRef.current
+                  if (!container) return null
+                  const cW = container.clientWidth
+                  const cH = container.clientHeight
+                  const vw = video?.videoWidth || 640
+                  const vh = video?.videoHeight || 480
+                  const videoAspect = vw / vh
+                  const containerAspect = cW / cH
+                  let renderW: number, renderH: number, offsetX: number, offsetY: number
+                  if (videoAspect > containerAspect) {
+                    renderW = cW; renderH = cW / videoAspect; offsetX = 0; offsetY = (cH - renderH) / 2
+                  } else {
+                    renderH = cH; renderW = cH * videoAspect; offsetX = (cW - renderW) / 2; offsetY = 0
+                  }
                   const expandW = faceBox.w * 0.175
                   const expandH = faceBox.h * 0.175
+                  const fx = faceBox.x - expandW
+                  const fy = faceBox.y - expandH
+                  const fw = faceBox.w + expandW * 2
+                  const fh = faceBox.h + expandH * 2
+                  const pxLeft = offsetX + (fx / 100) * renderW
+                  const pxTop = offsetY + (fy / 100) * renderH
+                  const pxW = (fw / 100) * renderW
+                  const pxH = (fh / 100) * renderH
+                  const emojiPx = Math.min(pxW, pxH) * 1.1
                   return (
                     <div
                       className="absolute z-20 pointer-events-none select-none"
                       style={{
-                        left: `${faceBox.x - expandW}%`,
-                        top: `${faceBox.y - expandH}%`,
-                        width: `${faceBox.w + expandW * 2}%`,
-                        height: `${faceBox.h + expandH * 2}%`,
+                        left: `${pxLeft}px`,
+                        top: `${pxTop}px`,
+                        width: `${pxW}px`,
+                        height: `${pxH}px`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

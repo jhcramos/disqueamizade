@@ -1110,23 +1110,53 @@ export const RoomPage = () => {
                   <div ref={featuredTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
                     {isCameraOn && stream ? (
                       <>
-                      <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream }} autoPlay playsInline muted className="w-full h-full object-contain" />
-                      {/* Emoji mask overlay on featured view */}
+                      <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream; (featuredTileRef as any)._videoEl = el }} autoPlay playsInline muted className="w-full h-full object-contain" />
+                      {/* Emoji mask overlay on featured view — accounts for object-contain letterboxing */}
                       {activeMaskData?.emoji && faceBox && (() => {
-                        const el = featuredTileRef.current
-                        const cW = el?.clientWidth || 800
-                        const cH = el?.clientHeight || 600
-                        const emojiPx = Math.min(cW * faceBox.w / 100, cH * faceBox.h / 100) * 1.35
+                        const container = featuredTileRef.current
+                        const video = (featuredTileRef as any)._videoEl as HTMLVideoElement | null
+                        if (!container) return null
+                        const cW = container.clientWidth
+                        const cH = container.clientHeight
+                        // Calculate actual video render area within container (object-contain)
+                        const vw = video?.videoWidth || 640
+                        const vh = video?.videoHeight || 480
+                        const videoAspect = vw / vh
+                        const containerAspect = cW / cH
+                        let renderW: number, renderH: number, offsetX: number, offsetY: number
+                        if (videoAspect > containerAspect) {
+                          // Video wider than container — black bars top/bottom
+                          renderW = cW
+                          renderH = cW / videoAspect
+                          offsetX = 0
+                          offsetY = (cH - renderH) / 2
+                        } else {
+                          // Video taller — black bars left/right
+                          renderH = cH
+                          renderW = cH * videoAspect
+                          offsetX = (cW - renderW) / 2
+                          offsetY = 0
+                        }
+                        // Convert faceBox percentages to pixels within the video render area
                         const expandW = faceBox.w * 0.175
                         const expandH = faceBox.h * 0.175
+                        const fx = faceBox.x - expandW
+                        const fy = faceBox.y - expandH
+                        const fw = faceBox.w + expandW * 2
+                        const fh = faceBox.h + expandH * 2
+                        const pxLeft = offsetX + (fx / 100) * renderW
+                        const pxTop = offsetY + (fy / 100) * renderH
+                        const pxW = (fw / 100) * renderW
+                        const pxH = (fh / 100) * renderH
+                        const emojiPx = Math.min(pxW, pxH) * 1.1
                         return (
                           <div
                             className="absolute z-20 pointer-events-none select-none"
                             style={{
-                              left: `${faceBox.x - expandW}%`,
-                              top: `${faceBox.y - expandH}%`,
-                              width: `${faceBox.w + expandW * 2}%`,
-                              height: `${faceBox.h + expandH * 2}%`,
+                              left: `${pxLeft}px`,
+                              top: `${pxTop}px`,
+                              width: `${pxW}px`,
+                              height: `${pxH}px`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1206,30 +1236,46 @@ export const RoomPage = () => {
                         ].filter(Boolean).join(' ') || 'none',
                       }}
                     />
-                    {/* Emoji mask overlay on face — sized relative to camera tile */}
+                    {/* Emoji mask overlay on face — accounts for object-contain letterboxing */}
                     {activeMaskData?.emoji && faceBox && (() => {
-                      const tileEl = cameraTileRef.current
-                      const tileW = tileEl?.clientWidth || 320
-                      const tileH = tileEl?.clientHeight || 240
-                      // Enlarge: 1.35x multiplier (was 0.85) so mask covers the full face
-                      const emojiPx = Math.min(tileW * faceBox.w / 100, tileH * faceBox.h / 100) * 1.35
-                      // Expand box by 35% around center to cover full face
+                      const container = cameraTileRef.current
+                      if (!container) return null
+                      const cW = container.clientWidth
+                      const cH = container.clientHeight
+                      const vw = videoRef.current?.videoWidth || 640
+                      const vh = videoRef.current?.videoHeight || 480
+                      const videoAspect = vw / vh
+                      const containerAspect = cW / cH
+                      let renderW: number, renderH: number, offsetX: number, offsetY: number
+                      if (videoAspect > containerAspect) {
+                        renderW = cW; renderH = cW / videoAspect; offsetX = 0; offsetY = (cH - renderH) / 2
+                      } else {
+                        renderH = cH; renderW = cH * videoAspect; offsetX = (cW - renderW) / 2; offsetY = 0
+                      }
                       const expandW = faceBox.w * 0.175
                       const expandH = faceBox.h * 0.175
+                      const fx = faceBox.x - expandW
+                      const fy = faceBox.y - expandH
+                      const fw = faceBox.w + expandW * 2
+                      const fh = faceBox.h + expandH * 2
+                      const pxLeft = offsetX + (fx / 100) * renderW
+                      const pxTop = offsetY + (fy / 100) * renderH
+                      const pxW = (fw / 100) * renderW
+                      const pxH = (fh / 100) * renderH
+                      const emojiPx = Math.min(pxW, pxH) * 1.1
                       return (
                         <div
                           className="absolute z-20 pointer-events-none select-none"
                           style={{
-                            left: `${faceBox.x - expandW}%`,
-                            top: `${faceBox.y - expandH}%`,
-                            width: `${faceBox.w + expandW * 2}%`,
-                            height: `${faceBox.h + expandH * 2}%`,
+                            left: `${pxLeft}px`,
+                            top: `${pxTop}px`,
+                            width: `${pxW}px`,
+                            height: `${pxH}px`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: `${emojiPx}px`,
                             lineHeight: 1,
-                            // Slower transition to reduce flickering
                             transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out',
                           }}
                         >
