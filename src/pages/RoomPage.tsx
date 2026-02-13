@@ -120,6 +120,7 @@ export const RoomPage = () => {
   const [pipDragging, setPipDragging] = useState(false)
   const pipDragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 })
   const cameraTileRef = useRef<HTMLDivElement>(null)
+  const featuredTileRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [, setTileSize] = useState({ w: 320, h: 240 })
   const { addToast } = useToastStore()
@@ -1106,9 +1107,39 @@ export const RoomPage = () => {
             {featuredPeer && (
               <div className="max-w-4xl mx-auto mb-3">
                 {featuredPeer === 'local' ? (
-                  <div className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
+                  <div ref={featuredTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
                     {isCameraOn && stream ? (
+                      <>
                       <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream }} autoPlay playsInline muted className="w-full h-full object-contain" />
+                      {/* Emoji mask overlay on featured view */}
+                      {activeMaskData?.emoji && faceBox && (() => {
+                        const el = featuredTileRef.current
+                        const cW = el?.clientWidth || 800
+                        const cH = el?.clientHeight || 600
+                        const emojiPx = Math.min(cW * faceBox.w / 100, cH * faceBox.h / 100) * 1.35
+                        const expandW = faceBox.w * 0.175
+                        const expandH = faceBox.h * 0.175
+                        return (
+                          <div
+                            className="absolute z-20 pointer-events-none select-none"
+                            style={{
+                              left: `${faceBox.x - expandW}%`,
+                              top: `${faceBox.y - expandH}%`,
+                              width: `${faceBox.w + expandW * 2}%`,
+                              height: `${faceBox.h + expandH * 2}%`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: `${emojiPx}px`,
+                              lineHeight: 1,
+                              transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out',
+                            }}
+                          >
+                            {activeMaskData.emoji}
+                          </div>
+                        )
+                      })()}
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><InitialsAvatar name="Você" size="lg" /></div>
                     )}
