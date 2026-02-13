@@ -19,6 +19,11 @@ export function useCompositeStream(
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const animFrameRef = useRef<number>(0)
   const [compositeStream, setCompositeStream] = useState<MediaStream | null>(null)
+  // Use refs for values that change frequently so render loop reads latest without re-creating stream
+  const maskEmojiRef = useRef(maskEmoji)
+  const faceBoxRef = useRef(faceBox)
+  maskEmojiRef.current = maskEmoji
+  faceBoxRef.current = faceBox
 
   // Build the CSS filter string
   const buildFilter = useCallback(() => {
@@ -72,16 +77,18 @@ export function useCompositeStream(
       // Reset filter for overlay drawing
       ctx.filter = 'none'
 
-      // Draw emoji mask at face position
-      if (maskEmoji && faceBox) {
-        const cx = (faceBox.x + faceBox.w / 2) / 100 * canvas.width
-        const cy = (faceBox.y + faceBox.h / 2) / 100 * canvas.height
-        const size = Math.max(faceBox.w, faceBox.h) / 100 * Math.max(canvas.width, canvas.height) * 0.3
+      // Draw emoji mask at face position (read from refs for latest values)
+      const currentEmoji = maskEmojiRef.current
+      const currentBox = faceBoxRef.current
+      if (currentEmoji && currentBox) {
+        const cx = (currentBox.x + currentBox.w / 2) / 100 * canvas.width
+        const cy = (currentBox.y + currentBox.h / 2) / 100 * canvas.height
+        const size = Math.max(currentBox.w, currentBox.h) / 100 * Math.max(canvas.width, canvas.height) * 0.3
 
         ctx.font = `${Math.round(size)}px serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(maskEmoji, cx, cy)
+        ctx.fillText(currentEmoji, cx, cy)
       }
 
       animFrameRef.current = requestAnimationFrame(render)
@@ -103,7 +110,8 @@ export function useCompositeStream(
     return () => {
       cancelAnimationFrame(animFrameRef.current)
     }
-  }, [rawStream, videoRef, buildFilter, maskEmoji, faceBox])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawStream, videoRef, buildFilter])
 
   // Update composite when filter/mask changes (no need to recreate stream)
   // The render loop already reads the latest values via closure
