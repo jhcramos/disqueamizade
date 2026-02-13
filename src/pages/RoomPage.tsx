@@ -121,6 +121,7 @@ export const RoomPage = () => {
   const pipDragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 })
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const featuredTileRef = useRef<HTMLDivElement>(null)
+  const featuredVideoRef = useRef<HTMLVideoElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [, setTileSize] = useState({ w: 320, h: 240 })
   const { addToast } = useToastStore()
@@ -203,6 +204,13 @@ export const RoomPage = () => {
       pipVideoRef.current.srcObject = compositeStream
     }
   }, [compositeStream])
+
+  // Attach compositeStream to featured video when it appears
+  useEffect(() => {
+    if (featuredVideoRef.current && compositeStream && featuredPeer === 'local') {
+      featuredVideoRef.current.srcObject = compositeStream
+    }
+  }, [compositeStream, featuredPeer])
 
   useEffect(() => {
     if (activeMask) enableMask(activeMask)
@@ -1110,11 +1118,11 @@ export const RoomPage = () => {
                   <div ref={featuredTileRef} className="relative rounded-2xl border-2 border-primary-500/40 bg-dark-900 overflow-hidden cursor-pointer aspect-[4/3] max-h-[60vh]" onClick={() => setFeaturedPeer(null)}>
                     {isCameraOn && stream ? (
                       <>
-                      <video ref={(el) => { if (el && compositeStream) el.srcObject = compositeStream; (featuredTileRef as any)._videoEl = el }} autoPlay playsInline muted className="w-full h-full object-contain" />
+                      <video ref={featuredVideoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
                       {/* Emoji mask overlay on featured view — accounts for object-contain letterboxing */}
                       {activeMaskData?.emoji && faceBox && (() => {
                         const container = featuredTileRef.current
-                        const video = (featuredTileRef as any)._videoEl as HTMLVideoElement | null
+                        const video = featuredVideoRef.current
                         if (!container) return null
                         const cW = container.clientWidth
                         const cH = container.clientHeight
