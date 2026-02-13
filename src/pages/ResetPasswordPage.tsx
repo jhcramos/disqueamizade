@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '@/services/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ArrowLeft, Mail, KeyRound, CheckCircle } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
-  const isReset = searchParams.get('type') === 'recovery' // Supabase redirect after clicking email link
+  const isReset = searchParams.get('type') === 'recovery'
   
   if (isReset) {
     return <NewPasswordForm />
@@ -27,12 +25,11 @@ function RequestResetForm() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password?type=recovery`,
       })
-      if (error) throw error
+      if (resetError) throw resetError
       
-      // Also send our custom styled email
       try {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -45,12 +42,13 @@ function RequestResetForm() {
           }),
         })
       } catch {
-        // Non-critical — Supabase already sent the email
+        // Non-critical
       }
 
       setSent(true)
-    } catch (err: any) {
-      setError(err.message || 'Erro ao enviar email')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao enviar email'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -90,25 +88,25 @@ function RequestResetForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm text-gray-300 mb-1 block">Seu email</label>
-            <Input
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
-              className="bg-gray-800 border-gray-700 text-white"
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500/40 transition-all"
             />
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
-          <Button
+          <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold text-sm disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg shadow-purple-500/20"
           >
             {loading ? 'Enviando...' : 'Enviar link de recuperação'}
-          </Button>
+          </button>
         </form>
       </div>
     </div>
@@ -137,11 +135,12 @@ function NewPasswordForm() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) throw updateError
       setDone(true)
-    } catch (err: any) {
-      setError(err.message || 'Erro ao redefinir senha')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao redefinir senha'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -154,10 +153,8 @@ function NewPasswordForm() {
           <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Senha redefinida! 🎉</h2>
           <p className="text-gray-400 mb-6">Sua nova senha foi salva com sucesso.</p>
-          <Link to="/auth">
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              Ir para o login
-            </Button>
+          <Link to="/auth" className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold text-sm">
+            Ir para o login
           </Link>
         </div>
       </div>
@@ -176,37 +173,37 @@ function NewPasswordForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm text-gray-300 mb-1 block">Nova senha</label>
-            <Input
+            <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 6 caracteres"
               required
               minLength={6}
-              className="bg-gray-800 border-gray-700 text-white"
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500/40 transition-all"
             />
           </div>
           <div>
             <label className="text-sm text-gray-300 mb-1 block">Confirmar senha</label>
-            <Input
+            <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repita a senha"
               required
-              className="bg-gray-800 border-gray-700 text-white"
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500/40 transition-all"
             />
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
-          <Button
+          <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold text-sm disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg shadow-purple-500/20"
           >
             {loading ? 'Salvando...' : 'Salvar nova senha'}
-          </Button>
+          </button>
         </form>
       </div>
     </div>

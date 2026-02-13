@@ -105,7 +105,7 @@ export function resetPasswordEmail(username: string, resetUrl: string): { subjec
   }
 }
 
-export function magicLinkEmail(email: string, magicUrl: string): { subject: string; html: string } {
+export function magicLinkEmail(_email: string, magicUrl: string): { subject: string; html: string } {
   return {
     subject: 'Seu link de acesso — Disque Amizade ✨',
     html: baseLayout('Link Mágico', `
