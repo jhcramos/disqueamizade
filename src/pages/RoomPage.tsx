@@ -122,6 +122,7 @@ export const RoomPage = () => {
   const cameraTileRef = useRef<HTMLDivElement>(null)
   const featuredTileRef = useRef<HTMLDivElement>(null)
   const featuredVideoRef = useRef<HTMLVideoElement>(null)
+  const featuredEmojiRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [, setTileSize] = useState({ w: 320, h: 240 })
   const { addToast } = useToastStore()
@@ -211,6 +212,47 @@ export const RoomPage = () => {
       featuredVideoRef.current.srcObject = compositeStream
     }
   }, [compositeStream, featuredPeer])
+
+  // Update featured emoji overlay via direct DOM manipulation (no React re-render)
+  useEffect(() => {
+    const el = featuredEmojiRef.current
+    const container = featuredTileRef.current
+    const video = featuredVideoRef.current
+    if (!el) return
+
+    if (!activeMaskData?.emoji || !faceBox || !container) {
+      el.style.display = 'none'
+      return
+    }
+
+    const cW = container.clientWidth
+    const cH = container.clientHeight
+    const vw = video?.videoWidth || 640
+    const vh = video?.videoHeight || 480
+    const videoAspect = vw / vh
+    const containerAspect = cW / cH
+    let renderW: number, renderH: number, offsetX: number, offsetY: number
+    if (videoAspect > containerAspect) {
+      renderW = cW; renderH = cW / videoAspect; offsetX = 0; offsetY = (cH - renderH) / 2
+    } else {
+      renderH = cH; renderW = cH * videoAspect; offsetX = (cW - renderW) / 2; offsetY = 0
+    }
+    const expandW = faceBox.w * 0.175
+    const expandH = faceBox.h * 0.175
+    const pxLeft = offsetX + ((faceBox.x - expandW) / 100) * renderW
+    const pxTop = offsetY + ((faceBox.y - expandH) / 100) * renderH
+    const pxW = ((faceBox.w + expandW * 2) / 100) * renderW
+    const pxH = ((faceBox.h + expandH * 2) / 100) * renderH
+    const emojiPx = Math.min(pxW, pxH) * 1.1
+
+    el.style.display = 'flex'
+    el.style.left = `${pxLeft}px`
+    el.style.top = `${pxTop}px`
+    el.style.width = `${pxW}px`
+    el.style.height = `${pxH}px`
+    el.style.fontSize = `${emojiPx}px`
+    el.textContent = activeMaskData.emoji
+  }, [activeMaskData?.emoji, faceBox])
 
   useEffect(() => {
     if (activeMask) enableMask(activeMask)
@@ -1119,64 +1161,8 @@ export const RoomPage = () => {
                     {isCameraOn && stream ? (
                       <>
                       <video ref={featuredVideoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
-                      {/* Emoji mask overlay on featured view — accounts for object-contain letterboxing */}
-                      {activeMaskData?.emoji && faceBox && (() => {
-                        const container = featuredTileRef.current
-                        const video = featuredVideoRef.current
-                        if (!container) return null
-                        const cW = container.clientWidth
-                        const cH = container.clientHeight
-                        // Calculate actual video render area within container (object-contain)
-                        const vw = video?.videoWidth || 640
-                        const vh = video?.videoHeight || 480
-                        const videoAspect = vw / vh
-                        const containerAspect = cW / cH
-                        let renderW: number, renderH: number, offsetX: number, offsetY: number
-                        if (videoAspect > containerAspect) {
-                          // Video wider than container — black bars top/bottom
-                          renderW = cW
-                          renderH = cW / videoAspect
-                          offsetX = 0
-                          offsetY = (cH - renderH) / 2
-                        } else {
-                          // Video taller — black bars left/right
-                          renderH = cH
-                          renderW = cH * videoAspect
-                          offsetX = (cW - renderW) / 2
-                          offsetY = 0
-                        }
-                        // Convert faceBox percentages to pixels within the video render area
-                        const expandW = faceBox.w * 0.175
-                        const expandH = faceBox.h * 0.175
-                        const fx = faceBox.x - expandW
-                        const fy = faceBox.y - expandH
-                        const fw = faceBox.w + expandW * 2
-                        const fh = faceBox.h + expandH * 2
-                        const pxLeft = offsetX + (fx / 100) * renderW
-                        const pxTop = offsetY + (fy / 100) * renderH
-                        const pxW = (fw / 100) * renderW
-                        const pxH = (fh / 100) * renderH
-                        const emojiPx = Math.min(pxW, pxH) * 1.1
-                        return (
-                          <div
-                            className="absolute z-20 pointer-events-none select-none"
-                            style={{
-                              left: `${pxLeft}px`,
-                              top: `${pxTop}px`,
-                              width: `${pxW}px`,
-                              height: `${pxH}px`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: `${emojiPx}px`,
-                              lineHeight: 1,
-                              transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out',
-                            }}
-                          >
-                            {activeMaskData.emoji}
-                          </div>
-                        )
-                      })()}
+                      {/* Emoji overlay — positioned via DOM ref to avoid re-renders */}
+                      <div ref={featuredEmojiRef} className="absolute z-20 pointer-events-none select-none" style={{ display: 'none', alignItems: 'center', justifyContent: 'center', lineHeight: 1, transition: 'left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out, font-size 300ms ease-out' }} />
                       </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><InitialsAvatar name="Você" size="lg" /></div>
