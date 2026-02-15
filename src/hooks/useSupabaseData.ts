@@ -120,6 +120,7 @@ export function useRooms() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [trigger, setTrigger] = useState(0)
+  const { settings: coldStart, loading: coldStartLoading } = useColdStartSettings()
 
   const refetch = () => setTrigger(t => t + 1)
 
@@ -129,16 +130,22 @@ export function useRooms() {
       setError('not-configured')
       return
     }
+    if (coldStartLoading) return
 
     setLoading(true)
     databaseService.getRooms()
       .then((data) => {
         if (data && data.length > 0) {
-          const enriched = data.map((room: any) => ({
-            ...room,
-            current_participants: (room.current_participants || 0) + 
-              getSimulatedPresence(room.slug || room.id, room.name || '', room.current_participants || 0)
-          }))
+          const enriched = data.map((room: any) => {
+            const real = room.current_participants || 0
+            const simulated = coldStart.bots_presence 
+              ? getSimulatedPresence(room.slug || room.id, room.name || '', real)
+              : 0
+            return {
+              ...room,
+              current_participants: real + simulated
+            }
+          })
           setRooms(enriched)
         } else {
           setError('empty')
@@ -146,7 +153,7 @@ export function useRooms() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [trigger])
+  }, [trigger, coldStartLoading, coldStart.bots_presence])
 
   return { rooms, loading, error, refetch }
 }
@@ -212,9 +219,10 @@ export function useStats() {
     totalCreators: 0,
     totalLive: 0,
   })
+  const { settings: coldStart, loading: coldStartLoading } = useColdStartSettings()
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return
+    if (!isSupabaseConfigured() || coldStartLoading) return
 
     const fetchStats = async () => {
       try {
@@ -224,27 +232,35 @@ export function useStats() {
           supabase.from('creator_profiles').select('id', { count: 'exact', head: true }),
         ])
         const realOnline = participantsRes.count || 0
-        // Simulated total online = sum of base presence across rooms
-        const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
-        let simOnline = 85 // base
-        if (hourBR >= 19 && hourBR <= 23) simOnline = 180
-        else if (hourBR >= 14 && hourBR < 19) simOnline = 120
-        else if (hourBR >= 0 && hourBR < 3) simOnline = 140
-        else if (hourBR >= 9 && hourBR < 14) simOnline = 95
+        const realCreators = creatorsRes.count || 0
+        
+        let totalOnline = realOnline
+        let totalCreators = realCreators
+        let totalLive = 0
 
-        // Add time variation
-        const variation = Math.abs(Math.sin(Date.now() / 600000)) * 30
+        if (coldStart.inflated_counters) {
+          const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
+          let simOnline = 85
+          if (hourBR >= 19 && hourBR <= 23) simOnline = 180
+          else if (hourBR >= 14 && hourBR < 19) simOnline = 120
+          else if (hourBR >= 0 && hourBR < 3) simOnline = 140
+          else if (hourBR >= 9 && hourBR < 14) simOnline = 95
+          const variation = Math.abs(Math.sin(Date.now() / 600000)) * 30
+          totalOnline = realOnline + Math.round(simOnline + variation)
+          totalCreators = realCreators + 3
+          totalLive = Math.round(2 + variation / 10)
+        }
         
         setStats({
           totalRooms: roomsRes.count || 0,
-          totalOnline: realOnline + Math.round(simOnline + variation),
-          totalCreators: (creatorsRes.count || 0) + 3, // show at least a few
-          totalLive: Math.round(2 + variation / 10),
+          totalOnline,
+          totalCreators,
+          totalLive,
         })
       } catch { /* ignore */ }
     }
     fetchStats()
-  }, [])
+  }, [coldStartLoading, coldStart.inflated_counters])
 
   return stats
 }
