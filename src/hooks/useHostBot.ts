@@ -8,6 +8,7 @@ export interface UserBio {
   interests?: string[]
   about?: string
   mood?: string
+  lookingFor?: string[]
 }
 
 export interface BotMessage {
@@ -65,6 +66,7 @@ async function generateAIAnnouncement(
     if (bio?.city) ctx += `, Cidade: ${bio.city}`
     if (bio?.interests?.length) ctx += `, Interesses: ${bio.interests.join(', ')}`
     if (bio?.about) ctx += `, Bio: "${bio.about}"`
+    if (bio?.lookingFor?.length) ctx += `, Busca: ${bio.lookingFor.join(', ')}`
 
     const res = await fetch(GEMINI_URL, {
       method: 'POST',
@@ -181,6 +183,19 @@ function buildCreativeEntrance(name: string, rn: string, bio?: UserBio): string 
   if (bio?.interests && bio.interests.length > 0) {
     const ints = bio.interests.slice(0, 2).map(i => `${INTEREST_EMOJIS[i] || '✨'}${i}`).join(' e ')
     text += `\nCurte ${ints}.`
+  }
+
+  // Add looking_for flavor (public info, ok to show)
+  const LOOKING_LABELS: Record<string, string> = {
+    'amizade': 'fazer amizades 🤝',
+    'namoro': 'encontrar o amor 💕',
+    'bate-papo': 'bater um papo 💬',
+    'networking': 'fazer networking 💼',
+    'games': 'jogar junto 🎮',
+  }
+  if (bio?.lookingFor && bio.lookingFor.length > 0) {
+    const goals = bio.lookingFor.slice(0, 2).map(l => LOOKING_LABELS[l] || l).join(' e ')
+    text += `\nVeio pra ${goals}.`
   }
 
   // If no bio, add profile nudge

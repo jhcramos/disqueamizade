@@ -11,8 +11,26 @@ import { Footer } from '@/components/common/Footer'
 import { useAuthStore } from '@/store/authStore'
 import { supabase } from '@/services/supabase/client'
 import { useToastStore } from '@/components/common/ToastContainer'
+import type { LookingFor, InterestedIn } from '@/types'
 
 type Tab = 'profile' | 'stats' | 'settings'
+
+// ══════════════════════════════════════════════════════════════
+// Looking For & Interested In options
+// ══════════════════════════════════════════════════════════════
+const LOOKING_FOR_OPTIONS: { id: LookingFor; label: string; emoji: string; desc: string }[] = [
+  { id: 'amizade', label: 'Amizade', emoji: '🤝', desc: 'Fazer novos amigos' },
+  { id: 'namoro', label: 'Namoro', emoji: '💕', desc: 'Encontrar alguém especial' },
+  { id: 'bate-papo', label: 'Bate-papo', emoji: '💬', desc: 'Conversar sem compromisso' },
+  { id: 'networking', label: 'Networking', emoji: '💼', desc: 'Conexões profissionais' },
+  { id: 'games', label: 'Jogar junto', emoji: '🎮', desc: 'Parceiros de jogo' },
+]
+
+const INTERESTED_IN_OPTIONS: { id: InterestedIn; label: string; emoji: string }[] = [
+  { id: 'homens', label: 'Homens', emoji: '👨' },
+  { id: 'mulheres', label: 'Mulheres', emoji: '👩' },
+  { id: 'todos', label: 'Todos', emoji: '🌈' },
+]
 
 // ══════════════════════════════════════════════════════════════
 // Interest categories with emojis for the selector
@@ -85,6 +103,10 @@ export const ProfilePage = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [savingInterests, setSavingInterests] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [selectedLookingFor, setSelectedLookingFor] = useState<LookingFor[]>([])
+  const [selectedInterestedIn, setSelectedInterestedIn] = useState<InterestedIn | undefined>()
+  const [savingPrefs, setSavingPrefs] = useState(false)
+  const [showPrefsModal, setShowPrefsModal] = useState(false)
 
   const user = useAuthStore((s) => s.user)
   const authProfile = useAuthStore((s) => s.profile)
@@ -108,6 +130,8 @@ export const ProfilePage = () => {
     is_featured: false,
     is_creator: authProfile?.is_creator || false,
     hobbies: user?.user_metadata?.hobbies || (authProfile as any)?.hobbies || [],
+    looking_for: (authProfile as any)?.looking_for || user?.user_metadata?.looking_for || [],
+    interested_in: (authProfile as any)?.interested_in || user?.user_metadata?.interested_in || undefined,
     joined_at: authProfile?.created_at || new Date().toISOString(),
     stats: {
       rooms_visited: authProfile?.rooms_visited || 0,
@@ -119,6 +143,8 @@ export const ProfilePage = () => {
 
   useEffect(() => {
     setSelectedInterests(profile.hobbies)
+    setSelectedLookingFor(profile.looking_for || [])
+    setSelectedInterestedIn(profile.interested_in)
   }, [authProfile])
 
   const handleStartEditing = () => {
@@ -268,6 +294,58 @@ export const ProfilePage = () => {
     } finally {
       setSavingInterests(false)
     }
+  }
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true)
+    try {
+      const isGuest = useAuthStore.getState().isGuest
+      if (isGuest) {
+        addToast({ type: 'warning', title: 'Conta de convidado', message: 'Crie uma conta para salvar!' })
+        setSavingPrefs(false)
+        return
+      }
+
+      let token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) {
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        token = refreshed.session?.access_token
+      }
+      if (!token) {
+        addToast({ type: 'error', title: 'Sessão expirada', message: 'Faça login novamente.' })
+        setSavingPrefs(false)
+        return
+      }
+
+      // Save to user_metadata (same pattern as interests)
+      const { error } = await supabase.auth.updateUser({
+        data: { looking_for: selectedLookingFor, interested_in: selectedInterestedIn }
+      })
+      if (error) throw error
+
+      // Also try saving to profiles table
+      await supabase.from('profiles').update({
+        looking_for: selectedLookingFor,
+        interested_in: selectedInterestedIn,
+      }).eq('id', profile.id)
+
+      await supabase.auth.refreshSession()
+      const { data } = await supabase.auth.getUser()
+      if (data.user) useAuthStore.getState().setUser(data.user)
+
+      addToast({ type: 'success', title: '✨ Preferências salvas!', message: 'Agora podemos te conectar melhor!' })
+      setShowPrefsModal(false)
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Erro', message: err.message || 'Tente novamente' })
+    } finally {
+      setSavingPrefs(false)
+    }
+  }
+
+  const toggleLookingFor = (item: LookingFor) => {
+    setSelectedLookingFor(prev =>
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    )
   }
 
   const tierLabel = profile.subscription_tier === 'premium' ? 'Elite' : profile.subscription_tier === 'basic' ? 'VIP' : 'Free'
@@ -455,6 +533,53 @@ export const ProfilePage = () => {
         </div>
 
         {/* ═══════════════════════════════════════════════
+            LOOKING FOR & PREFERENCES
+        ═══════════════════════════════════════════════ */}
+        <div className="card p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-violet-400" />
+              <h3 className="font-bold text-white">O que busco</h3>
+            </div>
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowPrefsModal(true)}
+                className="text-xs text-primary-400 hover:text-primary-300 font-medium flex items-center gap-1 transition-colors"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                {profile.looking_for?.length ? 'Editar' : 'Definir'}
+              </button>
+            )}
+          </div>
+
+          {profile.looking_for && profile.looking_for.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {profile.looking_for.map((item: string) => {
+                const opt = LOOKING_FOR_OPTIONS.find(o => o.id === item)
+                return opt ? (
+                  <span key={item} className="px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-sm text-violet-300">
+                    {opt.emoji} {opt.label}
+                  </span>
+                ) : null
+              })}
+            </div>
+          ) : isOwnProfile ? (
+            <button
+              onClick={() => setShowPrefsModal(true)}
+              className="w-full py-6 rounded-xl border-2 border-dashed border-white/[0.08] hover:border-violet-500/30 hover:bg-violet-500/[0.03] transition-all group"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎯</div>
+                <p className="text-sm font-medium text-dark-300 group-hover:text-white transition-colors">Defina o que você busca</p>
+                <p className="text-xs text-dark-600 mt-1">Amizade, namoro, bate-papo... ajuda nos matches!</p>
+              </div>
+            </button>
+          ) : (
+            <p className="text-sm text-dark-600 text-center py-3">Nenhuma preferência definida.</p>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════
             TABS
         ═══════════════════════════════════════════════ */}
         <div className="flex gap-1 mb-6 p-1 bg-white/[0.02] rounded-xl border border-white/5">
@@ -606,6 +731,113 @@ export const ProfilePage = () => {
         )}
       </main>
       <Footer />
+
+      {/* ═══════════════════════════════════════════════
+          PREFERENCES MODAL (Looking For + Interested In)
+      ═══════════════════════════════════════════════ */}
+      {showPrefsModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setShowPrefsModal(false)}>
+          <div
+            className="w-full sm:max-w-md bg-dark-950 border border-white/[0.08] rounded-t-3xl sm:rounded-2xl max-h-[85vh] flex flex-col animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/5">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  🎯 O que você busca
+                </h2>
+                <p className="text-xs text-dark-500 mt-0.5">Ajuda a encontrar as pessoas certas pra você</p>
+              </div>
+              <button onClick={() => setShowPrefsModal(false)} className="p-2 rounded-xl text-dark-400 hover:text-white hover:bg-white/5 transition-all">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* Looking For */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Estou aqui para...</h3>
+                <p className="text-xs text-dark-500 mb-3">Selecione um ou mais objetivos</p>
+                <div className="space-y-2">
+                  {LOOKING_FOR_OPTIONS.map(opt => {
+                    const isSelected = selectedLookingFor.includes(opt.id)
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => toggleLookingFor(opt.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                          isSelected
+                            ? 'bg-violet-500/15 border-violet-500/30 text-white'
+                            : 'bg-white/[0.02] border-white/[0.06] text-dark-300 hover:bg-white/[0.05]'
+                        }`}
+                      >
+                        <span className="text-2xl">{opt.emoji}</span>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{opt.label}</p>
+                          <p className="text-xs text-dark-500">{opt.desc}</p>
+                        </div>
+                        {isSelected && <Check className="w-5 h-5 text-violet-400" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Interested In */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Quero conhecer...</h3>
+                <p className="text-xs text-dark-500 mb-3">Isso é privado — só usado para matches</p>
+                <div className="flex gap-2">
+                  {INTERESTED_IN_OPTIONS.map(opt => {
+                    const isSelected = selectedInterestedIn === opt.id
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setSelectedInterestedIn(isSelected ? undefined : opt.id)}
+                        className={`flex-1 flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all ${
+                          isSelected
+                            ? 'bg-pink-500/15 border-pink-500/30 text-white'
+                            : 'bg-white/[0.02] border-white/[0.06] text-dark-300 hover:bg-white/[0.05]'
+                        }`}
+                      >
+                        <span className="text-2xl">{opt.emoji}</span>
+                        <span className="text-xs font-medium">{opt.label}</span>
+                        {isSelected && <Check className="w-4 h-4 text-pink-400" />}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-dark-600">
+                  <Lock className="w-3 h-3" /> Essa informação não aparece no seu perfil público
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 border-t border-white/5 flex gap-3">
+              <button
+                onClick={() => { setSelectedLookingFor([]); setSelectedInterestedIn(undefined) }}
+                className="px-4 py-2.5 rounded-xl text-sm text-dark-400 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={handleSavePreferences}
+                disabled={savingPrefs}
+                className="flex-1 btn-primary py-2.5 disabled:opacity-50 font-semibold"
+              >
+                {savingPrefs ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Salvando...
+                  </span>
+                ) : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════
           INTERESTS SELECTOR MODAL
