@@ -1,5 +1,8 @@
 {
   "framework": "vite",
+  "rewrites": [
+    { "source": "/((?!api|_next|blog-posts|blog-images|.*\\..*).*)", "destination": "/index.html" }
+  ],
   "functions": {
     "api/tts.py": {
       "maxDuration": 10
