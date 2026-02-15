@@ -19,6 +19,7 @@ export type DBProfile = {
   cidade?: string
   estado?: string
   bio?: string
+  is_admin?: boolean
   is_creator: boolean
   is_vip: boolean
   is_elite: boolean
@@ -50,6 +51,7 @@ export type Profile = {
   fichas_balance: number
   saldo_fichas: number
   is_ostentacao: boolean
+  is_admin?: boolean
   is_creator: boolean
   is_vip: boolean
   is_elite: boolean

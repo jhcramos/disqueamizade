@@ -251,13 +251,13 @@ export function AdminPage() {
 
   // ─── Auth Guard ───
   useEffect(() => {
-    if (!authLoading && (!profile || !(profile as any).is_admin)) {
-      if (profile) {
-        supabase.from('profiles').select('is_admin').eq('id', profile.id).single()
-          .then(({ data }) => { if (!data?.is_admin) navigate('/') })
-      } else {
-        navigate('/')
-      }
+    if (!authLoading && !profile) {
+      navigate('/')
+      return
+    }
+    if (!authLoading && profile && !profile.is_admin) {
+      supabase.from('profiles').select('is_admin').eq('id', profile.id).single()
+        .then(({ data }) => { if (!data?.is_admin) navigate('/') })
     }
   }, [profile, authLoading, navigate])
 
