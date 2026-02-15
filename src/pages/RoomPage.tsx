@@ -27,26 +27,7 @@ import { Jukebox, YouTubePlayer, duckYouTubeVolume, type Song, type Video as YTV
 import { supabase } from '@/services/supabase/client'
 
 // ─── Simulated Presence (cold-start bots to keep rooms alive) ───
-const BOT_POOL = [
-  'gabizinha_22', 'thiago.m', 'bruninha💜', 'duda_carioca', 'leoferreira', 'juh.santos',
-  'marquinhos_zl', 'carol.vibes', 'ricardooo', 'natyyy_', 'felipão92', 'isa.morena',
-  'andrelucas', 'amandinha.s', 'diegomv', 'pris.costa', 'rapha_top', 'luaninha',
-  'gustavotm', 'milena.rj', 'kadu_oficial', 'tata.love', 'dudusilva87', 'larissaf',
-  'biel_mc', 'camis_art', 'paulohenriq', 'fer.oliveira', 'viniciusrp', 'manuzinha_',
-  'renatobh', 'ju.morais', 'rafa.luna', 'taynaraa', 'brunolimaa', 'livia_dz',
-]
-// Pick a random subset each session so participants vary
-function pickBotNames(count: number): string[] {
-  const shuffled = [...BOT_POOL].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, count)
-}
-const BOT_MESSAGES = [
-  'Que legal essa sala! 😄', 'Boa noite pessoal! 🌙', 'Alguém mais de SP aqui?', 'Adoro esse tema!',
-  'Kkkkkk muito bom', 'Primeira vez aqui, gostei!', 'Tô adorando a vibe', 'Salve salve! 👋',
-  'Bom demais conversar com vcs', 'Que conversa boa!', 'Alguém quer jogar?', 'Voltei! 🍕',
-  'Eita que sala boa 🔥', 'Tô aqui de novo kk', 'Manda mais', 'Quem é daqui?',
-  'Gente bonita demais nessa sala', 'Aff saudade daqui', 'Olá mundo 🌎', 'Bora papo!',
-]
+// Bots removed — real users only
 
 // ─── Gradient colors for bot initials avatars ───
 const AVATAR_GRADIENTS = [
@@ -147,8 +128,9 @@ export const RoomPage = () => {
     setSelectedBg(bg.id)
     setBgImage(bg.src)
   }
-  const [botCount] = useState(() => 5 + Math.floor(Math.random() * 10))
-  const [botNames] = useState(() => pickBotNames(botCount))
+  // Bots removed — real users only
+  const botCount = 0
+  const botNames: string[] = []
 
   // ─── PTT & Jukebox State ───
   const [pttMode, _setPttMode] = useState(true) // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -310,12 +292,6 @@ export const RoomPage = () => {
     const uname = profile?.username || profile?.display_name || user?.user_metadata?.username || 'Visitante'
     const timer = setTimeout(() => {
       announceEntrance(uname, userBio || undefined)
-      const botDelay = 5000 + Math.random() * 10000
-      setTimeout(() => {
-        const botName = botNames[Math.floor(Math.random() * botNames.length)]
-        const bio = BOT_BIOS[botName]
-        if (bio) announceEntrance(botName, bio)
-      }, botDelay)
     }, 2000)
     return () => clearTimeout(timer)
   }, [roomReady]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -541,24 +517,7 @@ export const RoomPage = () => {
     return () => ro.disconnect()
   }, [])
 
-  // ─── BOT CHAT MESSAGES (every 30-45s) ───
-  useEffect(() => {
-    const tick = () => {
-      const botName = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)]
-      const content = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)]
-      setMessages(prev => [...prev, {
-        id: `bot-${Date.now()}`,
-        userId: `bot-${botName}`,
-        username: botName,
-        content,
-        timestamp: new Date(),
-        type: 'text',
-      }])
-    }
-    const schedule = () => setTimeout(() => { tick(); id = schedule() }, 30000 + Math.random() * 15000)
-    let id = schedule()
-    return () => clearTimeout(id)
-  }, [])
+  // Bot chat messages removed — real users only
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -748,16 +707,7 @@ export const RoomPage = () => {
     }
   }, [pipDragging])
 
-  // ─── Simulate incoming call from bots occasionally ───
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!oneOnOneCall && !incomingCall && Math.random() < 0.3) {
-        const caller = botNames[Math.floor(Math.random() * botNames.length)]
-        setIncomingCall({ userId: `sim-${caller}`, username: caller })
-      }
-    }, 15000 + Math.random() * 30000)
-    return () => clearTimeout(timer)
-  }, [oneOnOneCall, incomingCall, botNames])
+  // Simulated incoming calls removed — real users only
 
   if (!roomReady) {
     return (
@@ -951,14 +901,11 @@ export const RoomPage = () => {
           <div className="p-4">
             <h3 className="text-sm font-bold text-primary-400 mb-4 flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Participantes ({onlineUsers.length + Math.max(3, botCount - onlineUsers.length)})
+              Participantes ({onlineUsers.length})
             </h3>
             <div className="space-y-1">
-              {/* Real users + bots (bots shrink as real users join) */}
+              {/* Real users only */}
               {(() => {
-                // Show fewer bots as real users join — always keep minimum of 3 bots
-                const botsToShow = Math.max(3, botCount - onlineUsers.length)
-                const visibleBots = botNames.slice(0, botsToShow)
 
                 // Sort real users: King → Mod → VIP → Regular
                 const sortedReal = [...onlineUsers].sort((a, b) => {
@@ -1036,15 +983,7 @@ export const RoomPage = () => {
                       </div>
                     )}
 
-                    {/* Bots always visible — shrink as real users join */}
-                    {visibleBots.map((name) => (
-                      <div key={`bot-${name}`} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => handleUserClick(`sim-${name}`, name)}>
-                        <InitialsAvatar name={name} size="md" />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium text-white truncate block hover:text-primary-400 transition-colors">{name}</span>
-                        </div>
-                      </div>
-                    ))}
+                    {/* Bots removed */}
                   </>
                 )
               })()}

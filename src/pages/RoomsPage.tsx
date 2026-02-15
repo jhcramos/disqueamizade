@@ -76,11 +76,8 @@ function mapDbRoom(r: any, hotIds: Set<string>): MockRoom {
   const cat = classifyRoom(r.slug, r.owner_id)
   const isHot = hotIds.has(r.id)
 
-  // Simulate participants for cold start
-  const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
-  const isNight = hourBR >= 20 || hourBR <= 3
-  const baseOnline = isHot ? (isNight ? 15 : 8) : (isNight ? 5 : 2)
-  const simParticipants = Math.max(r.current_participants || 0, baseOnline + Math.floor(Math.random() * (isHot ? 20 : 8)))
+  // Real participant count only
+  const simParticipants = r.current_participants || 0
 
   let category: MockRoom['category'] = 'hobby'
   if (cat === 'cities') category = 'cidade'
