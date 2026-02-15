@@ -218,7 +218,7 @@ function RoomEditorModal({ room, onSave, onClose }: {
 // ─── Main Component ───
 export function AdminPage() {
   const navigate = useNavigate()
-  const { profile, loading: authLoading } = useAuth()
+  const { profile, loading: authLoading, initialized } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('cold_start')
   const [saving, setSaving] = useState(false)
 
@@ -251,15 +251,19 @@ export function AdminPage() {
 
   // ─── Auth Guard ───
   useEffect(() => {
-    if (!authLoading && !profile) {
+    // Wait until auth is fully initialized
+    if (!initialized || authLoading) return
+    
+    if (!profile) {
       navigate('/')
       return
     }
-    if (!authLoading && profile && !profile.is_admin) {
+    if (!profile.is_admin) {
+      // Double-check from DB in case profile was cached without is_admin
       supabase.from('profiles').select('is_admin').eq('id', profile.id).single()
         .then(({ data }) => { if (!data?.is_admin) navigate('/') })
     }
-  }, [profile, authLoading, navigate])
+  }, [profile, authLoading, initialized, navigate])
 
   // ─── Fetch Rooms ───
   const fetchRooms = useCallback(async () => {
