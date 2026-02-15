@@ -36,6 +36,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: true,
   },
   {
     id: 'off-papo',
@@ -54,6 +55,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -76,6 +78,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-rj',
@@ -94,6 +97,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-bh',
@@ -112,6 +116,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-salvador',
@@ -130,6 +135,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-curitiba',
@@ -148,6 +154,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-poa',
@@ -166,6 +173,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-recife',
@@ -184,6 +192,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-fortaleza',
@@ -202,6 +211,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-brasilia',
@@ -220,6 +230,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
 
   // ── Remaining Capitals ──
@@ -240,6 +251,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-belem',
@@ -258,6 +270,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-goiania',
@@ -276,6 +289,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-floripa',
@@ -294,6 +308,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-vitoria',
@@ -312,6 +327,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-natal',
@@ -330,6 +346,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-maceio',
@@ -348,6 +365,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-joaopessoa',
@@ -366,6 +384,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-teresina',
@@ -384,6 +403,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-saoluis',
@@ -402,6 +422,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-campogrande',
@@ -420,6 +441,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-cuiaba',
@@ -438,6 +460,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-aracaju',
@@ -456,6 +479,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-macapa',
@@ -474,6 +498,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-portovelho',
@@ -492,6 +517,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-boavista',
@@ -510,6 +536,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-riobranco',
@@ -528,6 +555,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-palmas',
@@ -546,6 +574,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -568,6 +597,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-26-35',
@@ -586,6 +616,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-36-45',
@@ -604,13 +635,14 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-46plus',
-    name: '🌟 46+ anos',
-    description: 'Experiência de vida! Sabedoria, histórias e novas amizades.',
+    name: '🌟 +40 anos',
+    description: 'Papo maduro! Experiência, histórias e novas amizades para quem tem 40+.',
     category: 'idade',
-    theme: '46+',
+    theme: '40+',
     participants: rp(6, 18),
     max_users: 30,
     is_private: false,
@@ -622,6 +654,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: true,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -644,6 +677,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-futebol',
@@ -662,6 +696,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-musica',
@@ -680,6 +715,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-games',
@@ -698,6 +734,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: true,
   },
   {
     id: 'off-series',
@@ -716,6 +753,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-fitness',
@@ -734,6 +772,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -756,6 +795,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-espanol',
@@ -774,6 +814,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-francais',
@@ -792,6 +833,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -814,6 +856,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'karaoke',
     instance_number: 1,
+    enabled: true,
   },
   {
     id: 'off-dj',
@@ -832,6 +875,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'dj',
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'off-danca',
@@ -850,6 +894,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -873,6 +918,7 @@ export const mockRooms: MockRoom[] = [
     room_type: 'vip',
     entry_cost_fichas: 50,
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'vip-diamond',
@@ -892,6 +938,7 @@ export const mockRooms: MockRoom[] = [
     room_type: 'vip',
     entry_cost_fichas: 100,
     instance_number: 1,
+    enabled: false,
   },
   {
     id: 'vip-after',
@@ -911,6 +958,7 @@ export const mockRooms: MockRoom[] = [
     room_type: 'vip',
     entry_cost_fichas: 25,
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -933,6 +981,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'speed_dating',
     instance_number: 1,
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -953,6 +1002,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'amber',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
   {
     id: 'c2',
@@ -969,6 +1019,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'red',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
   {
     id: 'c3',
@@ -985,6 +1036,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'amber',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
   {
     id: 'c4',
@@ -1001,6 +1053,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'green',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
   {
     id: 'c5',
@@ -1017,6 +1070,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'purple',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
   {
     id: 'c6',
@@ -1033,6 +1087,7 @@ export const mockRooms: MockRoom[] = [
     badge_color: 'red',
     is_official: false,
     room_type: 'community',
+    enabled: false,
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -1040,8 +1095,8 @@ export const mockRooms: MockRoom[] = [
   // ═══════════════════════════════════════════════════════════════════════
   {
     id: 'adult-paquera',
-    name: '💋 Paquera',
-    description: 'Flerte, paquera e química. Só maiores de 18.',
+    name: '💋 Paquera Hetero',
+    description: 'Flerte e paquera hetero. Só maiores de 18.',
     category: 'adulta',
     theme: 'Paquera',
     participants: rp(18, 30),
@@ -1054,6 +1109,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: true,
   },
   {
     id: 'adult-solteiros',
@@ -1071,6 +1127,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-noite',
@@ -1088,6 +1145,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-verdade-desafio',
@@ -1105,6 +1163,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-casados',
@@ -1122,6 +1181,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-speed-dating',
@@ -1139,6 +1199,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-lgbtq',
@@ -1156,6 +1217,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: true,
   },
   {
     id: 'adult-confissoes',
@@ -1173,6 +1235,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-fetiche',
@@ -1191,6 +1254,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     entry_cost_fichas: 5,
+    enabled: false,
   },
   {
     id: 'adult-swing',
@@ -1209,6 +1273,7 @@ export const mockRooms: MockRoom[] = [
     is_fixed: true,
     room_type: 'official',
     entry_cost_fichas: 10,
+    enabled: false,
   },
   {
     id: 'adult-poliamor',
@@ -1226,6 +1291,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-divorcio',
@@ -1243,6 +1309,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-30mais',
@@ -1260,6 +1327,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-40mais',
@@ -1277,6 +1345,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-sexy-dance',
@@ -1294,6 +1363,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-massagem',
@@ -1311,6 +1381,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-contos',
@@ -1328,6 +1399,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-astrologia',
@@ -1345,6 +1417,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-karaoke',
@@ -1362,6 +1435,7 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
   },
   {
     id: 'adult-after',
@@ -1379,5 +1453,31 @@ export const mockRooms: MockRoom[] = [
     is_official: true,
     is_fixed: true,
     room_type: 'official',
+    enabled: false,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ROLETA ROOM
+  // ═══════════════════════════════════════════════════════════════════════
+  {
+    id: 'off-roleta',
+    name: '🎲 Roleta',
+    description: 'Encontro aleatório 1-a-1! Gire a roleta e conheça alguém novo.',
+    category: 'especial',
+    theme: 'Roleta',
+    participants: rp(15, 25),
+    max_users: 100,
+    is_private: false,
+    owner: OFFICIAL_OWNER,
+    has_video: true,
+    online_count: 150,
+    badge_color: 'cyan',
+    is_official: true,
+    is_fixed: true,
+    room_type: 'roleta',
+    enabled: true,
   },
 ]
+
+/** Only rooms with enabled !== false (backward compatible) */
+export const enabledMockRooms = mockRooms.filter(r => r.enabled !== false)

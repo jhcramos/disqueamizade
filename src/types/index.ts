@@ -72,7 +72,7 @@ export type Profile = {
   total_earnings_stars: number
 }
 
-export type RoomType = 'official' | 'community' | 'vip' | 'speed_dating' | 'karaoke' | 'dj'
+export type RoomType = 'official' | 'community' | 'vip' | 'speed_dating' | 'karaoke' | 'dj' | 'roleta'
 
 export type Room = {
   id: string
@@ -112,6 +112,7 @@ export type MockRoom = {
   room_type?: RoomType
   entry_cost_fichas?: number
   is_fixed?: boolean
+  enabled?: boolean
 }
 
 export type MockCreator = {
