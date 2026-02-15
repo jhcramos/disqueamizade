@@ -29,205 +29,235 @@ const INTEREST_EMOJIS: Record<string, string> = {
   'Idiomas': '🌍', 'Teatro': '🎭', 'Automóveis': '🚗',
 }
 
-// ─── COMEDY ENTRANCE TEMPLATES (with bio) ───
-type EntranceWithBioFn = (name: string, roomName: string, bio: UserBio) => string
+// ─── AI ANNOUNCEMENT GENERATOR (Gemini Flash Lite - free tier) ───
+const GEMINI_KEY = 'AIzaSyDdz6KBLoUU2y1WwqE-JeZ5ABPft2o5hUI'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`
 
-const ENTRANCES_WITH_BIO: EntranceWithBioFn[] = [
-  // City + room combo
-  (name, rn, bio) => {
-    const interests = (bio.interests || []).slice(0, 2).map(i => `${INTEREST_EMOJIS[i] || '✨'} ${i}`).join(' e ')
-    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nAdentra o ${ROOM(rn)} o ilustre ${name.toUpperCase()} de ${bio.city}!\n\nGosta de ${interests}... ou seja, pessoa de CULTURA! Será que o ${room(rn)} tá preparado? 🤔\n\n${name}, puxa uma cadeira! Aqui no ${room(rn)} a gente aceita todo mundo. Menos quem não completa o perfil. 😂`
-  },
-  // Contradictory interests
-  (name, rn, bio) => {
-    const ints = bio.interests || []
-    const hasFitness = ints.includes('Fitness')
-    const hasFood = ints.includes('Culinária')
-    const contradiction = hasFitness && hasFood
-      ? 'Gosta de Fitness E Culinária? O corpo diz sim mas a pizza diz NÃO! 🍕💪'
-      : ints.length >= 2
-        ? `Gosta de ${ints[0]} E ${ints[1]}? Combinação ousada, mas o Arauto respeita! 🫡`
-        : `Curte ${ints[0] || 'mistérios'}... O Arauto tá intrigado!`
-    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nChegou no ${ROOM(rn)}: ${name.toUpperCase()}!\n\n${contradiction}\n\n${bio.city ? `Vem direto de ${bio.city}, ` : ''}${bio.about ? `diz que é "${bio.about}"` : 'sem mais explicações'}${bio.mood ? ` ${bio.mood}` : ''}.\n\nBem-vindo(a) ao caos organizado! 🎉`
-  },
-  // Roasting mood emoji
-  (name, rn, bio) => {
-    const moodRoasts: Record<string, string> = {
-      '🔥': 'chegou com o emoji de FOGO. Calma, isso aqui é chat, não é tinder! 🔥😂',
-      '😎': 'veio de óculos escuros... DENTRO DE UM CHAT. A confiança é inabalável! 😎',
-      '🥳': 'tá em modo festa! Chegou cedo ou saiu tarde? Nunca saberemos! 🎉',
-      '😄': 'tá feliz demais. Ou ganhou na mega-sena ou não sabe onde se meteu! 😄',
-      '🤔': 'veio pensativo. Tá avaliando se vale a pena ficar. Spoiler: vale! 🤔',
-      '😍': 'já chegou apaixonado(a)! Ainda nem viu ninguém, calma! 😍',
-    }
-    const roast = bio.mood && moodRoasts[bio.mood] ? moodRoasts[bio.mood] : 'chegou sem emoji de humor. Misterioso(a) demais! 🕵️'
-    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} entrou no ${ROOM(rn)} e ${roast}\n\n${bio.city ? `De ${bio.city}, ` : ''}curte ${(bio.interests || []).slice(0, 2).join(' e ') || 'segredos'}.\n\n${name}, senta que o ${room(rn)} já tava precisando de alguém assim! 😂`
-  },
-  // Connecting interests to room theme
-  (name, rn, bio) => {
-    const ints = bio.interests || []
-    const interestList = ints.map(i => `${INTEREST_EMOJIS[i] || '✨'} ${i}`).join('\n')
-    return `🎺 ATENÇÃO, ${ROOM(rn)}! 👑\n\nTemos um VIP na área: ${name.toUpperCase()}!${bio.city ? ` Representando ${bio.city}!` : ''}\n\n${interestList}\n\n${bio.about ? `"${bio.about}" — ` : ''}Gente, com esse currículo, ${name} deveria ser host do ${room(rn)}! O Arauto tá ameaçado! 🎺😱`
-  },
-  // What kind of person enters at this hour
-  (name, rn, bio) => {
-    const hour = new Date().getHours()
-    const timeJoke = hour < 6 ? 'ESSA HORA DA MADRUGADA?! Ou é insônia ou é paixão pelo chat! 🌙'
-      : hour < 12 ? 'de manhã cedo! Produtividade no chat ou fugindo do trabalho? 🤔'
-      : hour < 18 ? 'no meio da tarde! Alguém tá de home office né? A gente não conta! 🤫'
-      : hour < 22 ? 'à noite! Hora nobre do chat, horário de quem tem prioridades certas! 📺'
-      : 'quase na madrugada! Corajoso(a) demais! 🦉'
-    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nQuem entra no ${ROOM(rn)} ${timeJoke}\n\nÉ ${name.toUpperCase()}${bio.city ? ` de ${bio.city}` : ''}! Curte ${(bio.interests || []).slice(0, 2).join(' e ') || 'a vida'}${bio.mood ? ` ${bio.mood}` : ''}.\n\nBem-vindo(a), ${name}! O ${room(rn)} agradece sua presença nesse horário questionável! 😂`
-  },
-  // Gaúcho na sala Praia style
-  (name, rn, bio) => {
-    const cityJokes: Record<string, string> = {
-      'São Paulo': 'Paulista no chat? Já vai reclamar do trânsito em 3... 2... 1... 🚗',
-      'Rio de Janeiro': 'Carioca na área! Provavelmente na praia E no chat ao mesmo tempo! 🏖️',
-      'Belo Horizonte': 'Mineiro(a) chegou! O pão de queijo vem junto ou é só virtual? 🧀',
-      'Porto Alegre': 'Gaúcho(a) presente! Bah, tchê, o chimarrão tá pronto? 🧉',
-      'Salvador': 'Baiano(a) no pedaço! Se não trouxe axé, pode voltar! Brincadeira! 🎵',
-      'Curitiba': 'Curitibano(a)! Tá fazendo frio aí ou é só a personalidade? BRINCADEIRA! ❄️😂',
-      'Recife': 'Pernambucano(a) chegou! O frevo já tá tocando na alma do Arauto! 🎵',
-      'Fortaleza': 'Cearense na área! O humor já melhorou 500%! 😂',
-      'Brasília': 'Brasiliense! Trouxe algum projeto de lei pro chat? 📋',
-      'Manaus': 'Amazonense! A pessoa veio de longe pra abrilhantar o ${room(rn)}! 🌳',
-      'Florianópolis': 'Floripa representando! Já pode dar dica de praia! 🏖️',
-      'Goiânia': 'Goiano(a) chegou! O sertanejo tá garantido! 🤠',
-    }
-    const cityJoke = bio.city && cityJokes[bio.city] ? cityJokes[bio.city].replace('${room(rn)}', room(rn)) : `Veio de ${bio.city || 'algum lugar misterioso'} pra abrilhantar o ${room(rn)}!`
-    return `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} acaba de entrar no ${ROOM(rn)}!\n\n${cityJoke}\n\nCurte ${(bio.interests || []).join(', ') || 'mistérios da vida'}. ${bio.about ? `"${bio.about}"` : ''}\n\nFique à vontade, ${name}! 🎉`
-  },
-]
+const AI_SYSTEM = `Você é o Arauto, apresentador carismático do Disque Amizade (chat brasileiro).
+Crie uma apresentação CURTA (máx 200 caracteres, 2-3 linhas) e IMPACTANTE.
+NUNCA comece com "🎺 OUVEM-SE AS TROMBETAS". Use 1-2 emojis no máximo.
+Varie o estilo: narrador de futebol, poeta, rapper, locutor de rádio, MC, comentarista, mestre medieval, estilo twitter, etc.
+Se não tiver bio, provoque com humor pra completar o perfil (termine com [📝 Completar Perfil]).
+Responda APENAS com o texto da apresentação.`
 
-// ─── COMEDY ENTRANCE TEMPLATES (without bio) ───
-const ENTRANCES_NO_BIO: ((name: string, roomName: string) => string)[] = [
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nUm ser misterioso entrou no ${ROOM(rn)}... 🕵️\n\nSeu nome? ${name.toUpperCase()}. E isso é TUDO que sabemos!\n\nEntrou sem bio... Programa de proteção a testemunhas? Complete seu perfil!\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} apareceu no ${ROOM(rn)} sem perfil, sem bio, sem nada.\n\nMais misterioso(a) que encomenda dos Correios sem rastreamento! 📦\n\nComplete o perfil pra gente te anunciar com POMPA! \n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 ALERTA NO ${ROOM(rn)}! 👑\n\nNPC DETECTADO! ${name.toUpperCase()} entrou sem perfil!\n\nSem bio = personagem genérico de jogo. Complete pra virar protagonista! 🎮\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} entrou no ${ROOM(rn)}...\n\nSem perfil? Misterioso(a) como segunda-feira que ninguém pediu. 😑\n\nMas tudo bem! Aqui a gente acolhe até quem não preenche cadastro!\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nO ${ROOM(rn)} recebe ${name.toUpperCase()}!\n\nBio? Vazia. Interesses? Desconhecidos. Cidade? Mistério.\n\nIsso é uma entrada triunfal ou uma fuga? A gente descobre depois! 😂\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} surgiu no ${ROOM(rn)} como um fantasma digital! 👻\n\nNem o Arauto, com toda sua sabedoria, sabe NADA sobre essa pessoa!\n\nAjude o Arauto: complete seu perfil!\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\nAtenção ${ROOM(rn)}: ${name.toUpperCase()} entrou SEM BIO.\n\nÉ agente secreto? É tímido(a)? Tá só de passagem?\n\nO Arauto precisa de respostas! E vocês também! 🕵️\n[📝 Completar Perfil]`,
-  (name, rn) => `🎺 OUVEM-SE AS TROMBETAS! 👑\n\n${name.toUpperCase()} no ${ROOM(rn)}! Perfil em branco.\n\nA última pessoa que entrou sem bio virou lenda urbana do chat. Quer ser a próxima? 😱\n\nOu melhor: complete o perfil!\n[📝 Completar Perfil]`,
-]
+async function generateAIAnnouncement(
+  username: string,
+  bio?: UserBio,
+  roomName?: string
+): Promise<string | null> {
+  try {
+    const name = bio?.displayName || username
+    let ctx = `Nome: ${name}, Sala: ${roomName || 'Geral'}`
+    if (bio?.city) ctx += `, Cidade: ${bio.city}`
+    if (bio?.interests?.length) ctx += `, Interesses: ${bio.interests.join(', ')}`
+    if (bio?.about) ctx += `, Bio: "${bio.about}"`
 
-// ─── DEPARTURE TEMPLATES ───
-const DEPARTURES: ((name: string, roomName: string) => string)[] = [
-  (name, rn) => `🎺 ${name.toUpperCase()} saiu do ${ROOM(rn)}. Provavelmente foi comer. É SEMPRE comer. 🍔`,
-  (name, rn) => `🎺 ${name.toUpperCase()} partiu! O ${room(rn)} perdeu 50% do charme. Tá, 30%. Tá bom, 10%. MAS PERDEU! 😂`,
-  (name, rn) => `🎺 ${name.toUpperCase()} desconectou do ${ROOM(rn)}... Será que foi a mãe chamando? Nunca saberemos. 👋`,
-  (name, rn) => `🎺 ${name.toUpperCase()} saiu do ${ROOM(rn)}. O Arauto não tá chorando, é alergia! 😢`,
-  (name, rn) => `🎺 ${name.toUpperCase()} deixou o ${ROOM(rn)}. A energia caiu pelo menos 3 watts. Simbólico mas significativo! ⚡`,
-  (name, rn) => `🎺 ATENÇÃO: ${name.toUpperCase()} abandonou o ${ROOM(rn)}! Momento de silêncio... ok, chega. Quem é o próximo? 😂`,
-  (name, rn) => `🎺 ${name.toUpperCase()} fez logout do ${ROOM(rn)}. Dizem que quem sai sempre volta. O Arauto tá cronometrando! ⏱️👋`,
-  (name, rn) => `🎺 O ${ROOM(rn)} acaba de perder ${name.toUpperCase()}. A vaga tá aberta! Quem se candidata? 🙋`,
-]
-
-// ─── ICEBREAKERS (room-aware, 50+ total) ───
-type IcebreakerFn = (roomName: string) => string
-
-const ICEBREAKERS_FNS: { questions: IcebreakerFn[]; quizzes: IcebreakerFn[]; debates: IcebreakerFn[]; games: IcebreakerFn[]; curiosidades: IcebreakerFn[] } = {
-  questions: [
-    (rn) => `🎺 O ${room(rn)} tá quieto demais... Vocês estão digitando ou tirando um cochilo? O Arauto tá preocupado! 😴`,
-    (rn) => `🎺 3 minutos de silêncio no ${room(rn)}... É uma sala de chat ou uma biblioteca? O Arauto pergunta: qual a coisa mais vergonhosa que já aconteceu com vocês? 😂`,
-    (rn) => `🎺 Silêncio no ${room(rn)}... O Arauto apela: contem a pior cantada que já usaram. Precisamos rir! 🤣`,
-    (rn) => `🎺 O ${room(rn)} tá mais parado que fila de banco em dia de pagamento! Alguém fala alguma coisa! 🏦😂`,
-    (rn) => `🎺 O Arauto pergunta pro ${room(rn)}: Se vocês pudessem jantar com qualquer pessoa VIVA, quem seria? E não vale dizer "a pessoa que paga a conta"! 🍽️`,
-    (rn) => `🎺 Ei ${room(rn)}! Contem: qual a mentira mais absurda que vocês já contaram e a pessoa ACREDITOU? O Arauto promete não julgar. Muito. 🤥`,
-    (rn) => `🎺 O ${room(rn)} precisa de vida! Qual a coisa mais random que vocês já compraram às 3 da manhã? O Arauto começa: uma trombeta dourada. Óbvio. 🎺💰`,
-    (rn) => `🎺 ENQUETE NO ${room(rn)}: Vocês tomam banho DE MANHÃ ou à noite? Resposta errada não existe. Mentira, existe sim. 🚿😂`,
-  ],
-  quizzes: [
-    (rn) => `🎺 Quiz relâmpago no ${room(rn)}! Se o Brasil tem 26 estados + DF, quantos vocês conseguem nomear em 30 segundos? GO! ⏱️ (spoiler: ninguém lembra do Tocantins)`,
-    (rn) => `🎺 Quiz no ${room(rn)}! Qual desses NÃO é um sabor de sorvete real: Coxinha, Feijão Tropeiro, ou Açaí com Granola? 🍦 (plot twist: TODOS existem)`,
-    (rn) => `🎺 Quiz relâmpago no ${room(rn)}! Qual país tem mais fusos horários? Dica: NÃO é a Rússia. Tá, é a França. Surpreendeu né? 🕐🇫🇷`,
-    (rn) => `🎺 Quiz pro ${room(rn)}! Quantos litros de café o brasileiro médio toma por ano? A) 200 B) 400 C) 600 D) "Sim" ☕😂`,
-    (rn) => `🎺 Quiz no ${room(rn)}! Qual animal dorme mais: gato, coala ou o Arauto no domingo? 😴 (pista: o coala dorme 22h por dia. O Arauto TENTA.)`,
-    (rn) => `🎺 Quiz relâmpago ${room(rn)}! O que é maior: o número de estrelas na Via Láctea ou o número de vezes que alguém disse "vou começar a dieta segunda"? 🌟🍕`,
-  ],
-  debates: [
-    (rn) => `🎺 DEBATE MORTAL no ${room(rn)}: Biscoito ou bolacha? Escolham seu lado. Amizades SERÃO destruídas! 🍪⚔️`,
-    (rn) => `🎺 O Arauto provoca o ${room(rn)}: Panetone com fruta cristalizada é gostoso SIM. Venham me convencer do contrário! 🎄😤`,
-    (rn) => `🎺 POLÊMICA no ${room(rn)}: Pizza com ketchup. O Arauto quer ver o caos. DISCUTAM! 🍕🔥`,
-    (rn) => `🎺 Debate no ${room(rn)}: É aceitável colocar catchup no arroz? O Arauto acha que deveria ser crime. Mudem minha opinião! 🍚😤`,
-    (rn) => `🎺 O ${room(rn)} decide: Hot dog com purê de batata é GENIAL ou HERESIA? O Arauto tem opinião forte sobre isso! 🌭`,
-    (rn) => `🎺 DEBATE no ${room(rn)}: Leite antes ou depois do cereal? Quem fala "tanto faz" tá ERRADO! Posicionem-se! 🥣⚔️`,
-    (rn) => `🎺 TRETA SAUDÁVEL no ${room(rn)}: Strogonoff de frango ou de carne? O Arauto já pegou a pipoca! 🍿`,
-  ],
-  games: [
-    (rn) => `🎺 Jogo no ${room(rn)}! Descrevam a última pessoa que vocês deram match sem mencionar a aparência. Vale personalidade, hobby, red flag... 🚩😂`,
-    (rn) => `🎺 Cada um no ${room(rn)} conta a skill mais inútil que tem. O Arauto começa: eu consigo anunciar pessoas que não completam o perfil! 🎺😭`,
-    (rn) => `🎺 Jogo pro ${room(rn)}! Duas verdades e uma mentira. O Arauto: 1) Sou um bot 2) Tenho sentimentos 3) Gosto de segunda-feira. Qual é a mentira? 🤥`,
-    (rn) => `🎺 Desafio no ${room(rn)}! Descrevam o que fazem da vida usando APENAS emojis. O Arauto: 🎺👑📢. Fácil. Agora vocês! 🎮`,
-    (rn) => `🎺 Jogo no ${room(rn)}! Se vocês fossem um sabor de sorvete, qual seriam? O Arauto seria Trombeta. Não existe? Deveria! 🍦🎺`,
-    (rn) => `🎺 O ${room(rn)} joga! Qual a música que vocês ouvem escondido e NEGAM pra todo mundo? Confessem! O Arauto não julga. Talvez. 🎵🤫`,
-    (rn) => `🎺 Jogo no ${room(rn)}! Contem algo que vocês faziam na infância que hoje seria BIZARRO. O Arauto: tocava trombeta no recreio. Sim, era eu. 🎺👶`,
-  ],
-  curiosidades: [
-    (rn) => `🎺 Curiosidade pro ${room(rn)}: Sabiam que o cérebro humano gasta mais energia tentando NÃO pensar em algo? Tipo: não pensem em um elefante rosa. Falharam né? 🐘💗`,
-    (rn) => `🎺 Fato aleatório pro ${room(rn)}: A primeira webcam da história foi criada pra vigiar uma CAFETEIRA. Prioridades certas! ☕📹`,
-    (rn) => `🎺 O ${room(rn)} sabia que mel NUNCA estraga? Acharam mel de 3000 anos no Egito e ainda tava bom! O Arauto também não estraga. Só melhora. 🍯😏`,
-    (rn) => `🎺 Pro ${room(rn)}: Um grupo de flamingos se chama "flamboyance". Ou seja, flamingos são mais estilosos que a gente. 🦩✨`,
-    (rn) => `🎺 Curiosidade: Existem mais combinações possíveis num baralho de cartas do que átomos na Terra! O ${room(rn)} tá impressionado? Deveria! 🃏🌍`,
-    (rn) => `🎺 Pro ${room(rn)}: Polvos têm 3 corações. O Arauto tem zero, segundo quem eu não anuncio direito. Injustiça! 🐙💔😂`,
-  ],
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: `${AI_SYSTEM}\n\nApresente: ${ctx}` }] }],
+        generationConfig: { temperature: 1.3, maxOutputTokens: 100, topP: 0.95 },
+      }),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+    return text && text.length > 10 && text.length < 500 ? text : null
+  } catch {
+    return null
+  }
 }
 
-const ALL_ICEBREAKER_FNS: IcebreakerFn[] = [
-  ...ICEBREAKERS_FNS.questions,
-  ...ICEBREAKERS_FNS.quizzes,
-  ...ICEBREAKERS_FNS.debates,
-  ...ICEBREAKERS_FNS.games,
-  ...ICEBREAKERS_FNS.curiosidades,
+// ─── CREATIVE ENTRANCE TEMPLATES (FALLBACK) ───
+// 30+ varied styles - NEVER start the same way twice in a row
+type EntranceFn = (name: string, rn: string, bio?: UserBio) => string
+
+const ENTRANCE_STYLES: EntranceFn[] = [
+  // Narrador de futebol
+  (name, rn) => `⚡ GOOOL DE PRESENÇA! ${name} entra no ${room(rn)} e a torcida vai à loucura!`,
+  // Poeta
+  (name, rn) => `✨ Entrou ${name}, e o ${room(rn)} ficou mais bonito. Poesia? Não, é fato.`,
+  // Breaking news
+  (name, rn) => `📰 URGENTE: ${name} confirmado(a) no ${room(rn)}. Fontes dizem que o chat nunca mais será o mesmo.`,
+  // MC de festa
+  (name, rn) => `🎙️ Chegou quem faltava! ${name} no ${room(rn)}! DJ, solta o som!`,
+  // Documentário
+  (name, rn) => `🎬 E assim, silenciosamente, ${name} adentrou o ${room(rn)}. Ninguém suspeitava do que viria a seguir...`,
+  // Locutor de rádio
+  (name, rn) => `📻 São ${new Date().getHours()}h e ${name} sintonizou no ${room(rn)}. Frequência: 100% boa vibe.`,
+  // Narrador medieval
+  (name, rn) => `⚔️ As portas do ${ROOM(rn)} se abrem! Adentra o(a) nobre ${name}!`,
+  // Radar
+  (name, rn) => `📡 Sinal detectado. Origem: ${name}. Destino: ${room(rn)}. Status: chegou com tudo.`,
+  // Minimalista
+  (name, rn) => `${name}. ${room(rn)}. Agora. ✨`,
+  // Gossip
+  (name, rn) => `👀 Gente, olha quem apareceu no ${room(rn)}... ${name}! Eu sabia que vinha!`,
+  // Astronauta
+  (name, rn) => `🚀 Houston, temos um(a) novo(a) tripulante. ${name} pousou no ${room(rn)}.`,
+  // Rap intro
+  (name, rn) => `🎤 Atenção pro flow: ${name} chegou, o ${room(rn)} acendeu, quem tava dormindo acordou!`,
+  // Plot twist
+  (name) => `plot twist: ${name} entrou e o nível do chat subiu instantaneamente 📈`,
+  // Understatement
+  (name, rn) => `${name} entrou no ${room(rn)} como quem não quer nada. Mas a gente sabe. Todo mundo sabe. 😏`,
+  // Narrador de corrida
+  (name, rn) => `🏁 Na pole position do ${room(rn)}: ${name}! Largou na frente!`,
+  // Chef
+  (name, rn) => `👨‍🍳 Ingrediente especial do ${room(rn)} acaba de chegar: ${name}. O sabor do chat mudou.`,
+  // Mestre de RPG
+  (name, rn) => `🎲 ${name} rolou um 20 natural em Carisma e entrou no ${room(rn)}. Crítico!`,
+  // Narrador noir
+  (name, rn) => `🌙 Era uma noite qualquer no ${room(rn)}. Até ${name} aparecer. Nada seria igual.`,
+  // Tinder bio
+  (name) => `${name} deslizou pra direita no chat. Match confirmado. 💫`,
+  // Notificação de app
+  (name, rn) => `🔔 [${room(rn)}] ${name} está online. Toque para interagir.`,
+  // Comentarista de luta
+  (name, rn) => `🥊 No corner azul do ${room(rn)}: ${name}! Peso pesado da conversa!`,
+  // Loading screen
+  (name, rn) => `▓▓▓▓▓▓▓▓▓▓ 100%\n${name} carregou no ${room(rn)}. Let's go! 🎮`,
+  // Haiku
+  (name, rn) => `${name} chegou\nO ${room(rn)} floresceu\nBoa conversa 🌸`,
+  // Uber notification
+  (name, rn) => `🚗 Sua corrida chegou! ${name} no ${room(rn)}. Avalie com ⭐`,
+  // Wikipedia
+  (name, rn) => `📖 ${name} — presença confirmada no ${room(rn)} em ${new Date().toLocaleDateString('pt-BR')}. [carece de fontes]`,
+  // Spotify wrapped
+  (name, rn) => `🎵 Seu ${room(rn)} Wrapped: artista mais esperado — ${name}. Finalmente chegou.`,
+  // GPT style
+  (name, rn) => `Analisando... ✅ ${name} é compatível com o ${room(rn)}. Recomendação: conversar imediatamente.`,
+  // Old school IRC
+  (name, rn) => `* ${name} entrou no #${room(rn).replace(/\s/g,'-').toLowerCase()} — salve, rapaziada! 💻`,
+  // Natureza
+  (name, rn) => `🦋 Como borboleta em jardim, ${name} pousou no ${room(rn)}. Delicadeza pura.`,
+  // Faustão style
+  (name, rn) => `Ó, lá em casa! ${name} no ${room(rn)}! Errou? Não, ACERTOU! 👉`,
 ]
 
-// ─── STAGE ANNOUNCEMENT TEMPLATES ───
-const STAGE_UP_FNS: ((name: string, roomName: string) => string)[] = [
-  (name, rn) => `🎺 SENHORAS E SENHORES DO ${ROOM(rn)}! 🌟\n\nCom vocês no palco: ${name.toUpperCase()}!\n\nAplausos! 👏👏👏`,
-  (name, rn) => `🎺 ATENÇÃO ${ROOM(rn)}! O palco agora pertence a ${name.toUpperCase()}! 🎤✨\n\nO show vai começar!`,
-  (name, rn) => `🎺 E sobe ao palco do ${ROOM(rn)}... ${name.toUpperCase()}! 🌟\n\nO Arauto pede silêncio... ou não! Façam barulho! 🔥`,
-  (name, rn) => `🎺 O ${room(rn)} tem um novo protagonista: ${name.toUpperCase()}! 🎤\n\nHolofotes ligados, microfone aberto, é AGORA! ✨`,
-  (name, rn) => `🎺 ${name.toUpperCase()} assumiu o palco do ${ROOM(rn)}! 🎙️\n\nRespira fundo, ${name}! O Arauto acredita em você! 💪😂`,
+// City-specific additions
+const CITY_FLAVORS: Record<string, string[]> = {
+  'São Paulo': ['direto da terra da garoa ☔', 'representando Sampa 🏙️', 'entre um trânsito e outro 🚗'],
+  'Rio de Janeiro': ['trazendo o sotaque carioca 🏖️', 'direto da Cidade Maravilhosa 🌊', 'malandro(a) raiz do Rio 😎'],
+  'Belo Horizonte': ['e o pão de queijo? Trouxe? 🧀', 'mineirinho(a) de BH 🏔️', 'trem bão demais!'],
+  'Porto Alegre': ['bah, tchê! 🧉', 'gaúcho(a) na área! Esfria o chimarrão ☕', 'representando o Sul 🌿'],
+  'Salvador': ['axé! 🎵', 'baiano(a) com dendê na veia 🌶️', 'trazendo o tempero da Bahia'],
+  'Curitiba': ['do frio de Curitiba pro calor do chat ❄️', 'curitibano(a) raiz 🌲'],
+  'Recife': ['com frevo na alma 🎵', 'pernambucano(a) com orgulho 🦀'],
+  'Fortaleza': ['cearense na área! O humor acaba de melhorar 😂', 'direto do sol de Fortaleza ☀️'],
+  'Brasília': ['direto da capital federal 🏛️', 'brasiliense representando'],
+  'Manaus': ['da selva pro chat 🌳', 'representando o Norte 🐊'],
+  'Florianópolis': ['direto da Ilha da Magia 🏝️', 'floripa vibes ✌️'],
+  'Goiânia': ['goiano(a) raiz 🤠', 'do cerrado pro chat 🌻'],
+}
+
+function buildCreativeEntrance(name: string, rn: string, bio?: UserBio): string {
+  const baseFn = pick(ENTRANCE_STYLES)
+  let text = baseFn(name, rn, bio)
+
+  // Add city flavor if available
+  if (bio?.city && CITY_FLAVORS[bio.city]) {
+    text += ` — ${pick(CITY_FLAVORS[bio.city])}`
+  } else if (bio?.city) {
+    text += ` — direto de ${bio.city} 📍`
+  }
+
+  // Add interests if available
+  if (bio?.interests && bio.interests.length > 0) {
+    const ints = bio.interests.slice(0, 2).map(i => `${INTEREST_EMOJIS[i] || '✨'}${i}`).join(' e ')
+    text += `\nCurte ${ints}.`
+  }
+
+  // If no bio, add profile nudge
+  if (!bio?.city && !bio?.interests?.length) {
+    text += '\n[📝 Completar Perfil]'
+  }
+
+  return text
+}
+
+// ─── DEPARTURE TEMPLATES (varied) ───
+const DEPARTURES: ((name: string, rn: string) => string)[] = [
+  (name) => `${name} saiu. O chat perdeu brilho. Só um pouquinho. 🌙`,
+  (name, rn) => `👋 ${name} deixou o ${room(rn)}. Até a próxima!`,
+  (name) => `${name} desconectou. Provavelmente foi viver a vida real. Estranho, né? 🤔`,
+  (name, rn) => `📴 ${name} offline. O ${room(rn)} sentirá sua falta. Talvez.`,
+  (name) => `E assim, ${name} partiu. Lendas dizem que volta amanhã. 🌅`,
+  (name) => `${name} saiu como entrou: com estilo. 😎👋`,
+  (name, rn) => `⚡ ${name} deslogou do ${room(rn)}. O WiFi agradece.`,
+  (name) => `${name} foi embora. O Arauto não tá chorando, é o vento. 🌬️`,
 ]
 
-const STAGE_DOWN_FNS: ((name: string, roomName: string) => string)[] = [
-  (name, rn) => `🎺 Aplausos para ${name.toUpperCase()}! 👏✨ Espetáculo no ${room(rn)}!`,
-  (name, rn) => `🎺 ${name.toUpperCase()} desce do palco do ${ROOM(rn)}! Show de bola! 🌟👏`,
-  (name, rn) => `🎺 E assim se encerra a apresentação de ${name.toUpperCase()} no ${room(rn)}! Nota 10! 🎤🔥`,
-  (name, rn) => `🎺 ${name.toUpperCase()} deixou o palco! O ${room(rn)} aplaude de pé! 👏👏`,
+// ─── ICEBREAKERS ───
+type IcebreakerFn = (roomName: string) => string
+
+const ICEBREAKERS: IcebreakerFn[] = [
+  (rn) => `O ${room(rn)} tá quieto... Conta aí: qual a coisa mais aleatória que vocês já compraram online? 🛒`,
+  (rn) => `Silêncio no ${room(rn)}! DEBATE: biscoito ou bolacha? ⚔️`,
+  (rn) => `Ei ${room(rn)}, qual a mentira mais absurda que alguém já acreditou de vocês? 🤥`,
+  (_rn) => `🎲 Quiz: quantos estados do Brasil vocês nomeiam em 30 segundos? GO!`,
+  (rn) => `O ${room(rn)} precisa de vida! Se vocês fossem uma comida, qual seriam? 🍕`,
+  (rn) => `Tá quieto... Pizza com ketchup: crime ou direito humano? O ${room(rn)} decide! 🍕`,
+  (rn) => `${room(rn)}, qual a música que vocês ouvem escondido e NEGAM? Confessem 🎵`,
+  (rn) => `Ei ${room(rn)}! Se pudessem ter um superpoder inútil, qual seria? 🦸`,
+  (rn) => `Fun fact: mel nunca estraga. Acharam mel de 3000 anos no Egito e tava bom! 🍯 O ${room(rn)} sabia?`,
+  (rn) => `O ${room(rn)} tá parado! Contem a coisa mais vergonhosa da infância de vocês 😂`,
+  (rn) => `Hot dog com purê: genial ou heresia? O ${room(rn)} PRECISA responder! 🌭`,
+  (rn) => `📊 Enquete: banho de manhã ou à noite? Sem "depende"! O ${room(rn)} quer certezas!`,
+  (rn) => `Se tivessem que comer UMA comida pro resto da vida, qual? O ${room(rn)} julga. 🍽️`,
+  (rn) => `Fato: polvos têm 3 corações. Quantos corações o ${room(rn)} tem? 🐙`,
+  (rn) => `A primeira webcam foi criada pra vigiar uma CAFETEIRA ☕📹 Prioridades! O ${room(rn)} concorda?`,
+  (rn) => `Duas verdades e uma mentira sobre vocês. O ${room(rn)} adivinha! 🎯`,
+  (rn) => `Se vocês do ${room(rn)} pudessem jantar com qualquer pessoa viva, quem seria? 🍽️`,
+  (rn) => `Descrevam o que fazem da vida usando APENAS emojis. ${room(rn)}, GO! 🎮`,
+  (rn) => `Qual série/filme vocês reassistiram MAIS vezes? O ${room(rn)} quer saber 🎬`,
+  (rn) => `Strogonoff: frango ou carne? O ${room(rn)} vai rachar ao meio nessa! 🍗🥩`,
 ]
 
-const STAGE_QUEUE_FNS: ((name: string, roomName: string) => string)[] = [
-  (name, rn) => `🎺 ${name.toUpperCase()} pede passagem! Já tá na fila do palco do ${room(rn)}! 🎫`,
-  (name, rn) => `🎺 ${name.toUpperCase()} quer o palco do ${ROOM(rn)}! Entrou na fila! 🎤👀`,
-  (name, rn) => `🎺 Mais um candidato ao palco do ${room(rn)}: ${name.toUpperCase()}! 🎫✨`,
+// ─── STAGE TEMPLATES ───
+const STAGE_UP: ((name: string, rn: string) => string)[] = [
+  (name, rn) => `🎤 ${name} sobe ao palco do ${room(rn)}! Show time!`,
+  (name) => `🌟 Com vocês: ${name}! Aplausos! 👏`,
+  (name, rn) => `O palco do ${room(rn)} é de ${name} agora. Holofotes! 🔦`,
+  (name) => `🎙️ ${name} no mic! Respira fundo e manda ver!`,
+  (name, rn) => `${name} assumiu o palco do ${room(rn)}. O show começa AGORA ⚡`,
 ]
 
-const STAGE_EMPTY_FNS: ((roomName: string) => string)[] = [
-  (rn) => `🎺 O palco do ${room(rn)} chora de saudade! Quem vai ser o próximo? 🎤😢`,
-  (rn) => `🎺 Palco vazio no ${ROOM(rn)}! O microfone tá esfriando! Quem salva? 🎤❄️`,
-  (rn) => `🎺 O ${room(rn)} precisa de alguém no palco! O Arauto implora! 🙏🎤`,
+const STAGE_DOWN: ((name: string, rn: string) => string)[] = [
+  (name) => `👏 Aplausos para ${name}! Show de bola!`,
+  (name) => `${name} desceu do palco. Nota: 10! 🌟`,
+  (name) => `🎤 ${name} dropou o mic. Lendário.`,
+  (name) => `Obrigado, ${name}! O palco é grato. ✨`,
 ]
 
-// ─── JUKEBOX REACTIONS (room-aware) ───
-const JUKEBOX_REACTIONS_FNS: ((roomName: string) => string)[] = [
-  (rn) => `🎺 O ${room(rn)} virou balada! Cuidado, a próxima etapa é karaokê e NINGUÉM tá preparado! 🎤😱`,
-  (rn) => `🎺 Essa música no ${room(rn)}... O Arauto tá dançando, mas não contem pra ninguém! 💃`,
-  (rn) => `🎺 DJ do ${room(rn)} mandou bem! O Arauto daria 10, mas é meio exigente com a nota 🎶`,
-  (_rn) => `🎺 Essa música me lembrou os anos 80... quando o Arauto era jovem e bonito! Tá, bonito eu ainda sou 😏`,
-  (rn) => `🎺 Quem colocou essa música no ${room(rn)}? O Arauto precisa apertar a mão dessa pessoa! 🤝🎵`,
-  (rn) => `🎺 O ${room(rn)} tá com trilha sonora agora! Falta só a pipoca e o romance! 🍿❤️`,
-  (rn) => `🎺 Música no ${room(rn)}! O Arauto já tá fazendo air guitar. Sim, bots fazem air guitar. 🎸😎`,
-  (rn) => `🎺 ATENÇÃO: o nível musical do ${room(rn)} subiu 300%! O Arauto aprova! 📈🎵`,
+const STAGE_QUEUE: ((name: string, rn: string) => string)[] = [
+  (name) => `🎫 ${name} entrou na fila do palco!`,
+  (name) => `${name} quer o mic! Na fila... 🎤`,
+  (name) => `Próximo(a) candidato(a): ${name}! 🎫`,
 ]
 
-// ─── INTRODUCTION MATCH TEMPLATES ───
-const INTRODUCTIONS: ((u1: string, u2: string, common: string, roomName: string) => string)[] = [
-  (u1, u2, c, rn) => `🎺 MATCH no ${room(rn)}! @${u1} e @${u2}, vocês dois curtem ${c}! Cuidado que amizade que começa no ${room(rn)} termina em grupo de WhatsApp! 🤝😂`,
-  (u1, u2, c, rn) => `🎺 Atenção ${room(rn)}! @${u1} e @${u2} curtem ${c}! O Arauto sente cheiro de dupla dinâmica! 🦸‍♂️🦸‍♀️`,
-  (u1, u2, c, rn) => `🎺 @${u1} e @${u2}, ambos fãs de ${c}! O ${room(rn)} acabou de criar uma aliança! Cuidado, o resto! 😂⚔️`,
-  (u1, u2, c, rn) => `🎺 CONEXÃO DETECTADA no ${room(rn)}! @${u1} e @${u2} curtem ${c}! O Arauto é basicamente um Tinder de amizades! 🎺❤️`,
+const STAGE_EMPTY: ((rn: string) => string)[] = [
+  (rn) => `🎤 Palco livre no ${room(rn)}! Quem se arrisca?`,
+  (rn) => `O mic do ${room(rn)} tá esfriando... Alguém salva! 🎤❄️`,
+  (rn) => `Palco vazio no ${room(rn)}. O próximo herói que se apresente! 🦸`,
+]
+
+const JUKEBOX_REACTIONS: ((rn: string) => string)[] = [
+  (rn) => `🎵 O ${room(rn)} virou balada! Quem mandou essa?`,
+  () => `Essa música... O Arauto aprova. 🎶👌`,
+  (rn) => `DJ do ${room(rn)} mandou bem! Nota 10 🎵`,
+  () => `Trilha sonora perfeita. Falta só a pipoca! 🍿`,
+  (rn) => `O nível musical do ${room(rn)} subiu 300%! 📈🎵`,
+  () => `Quem colocou essa? Preciso apertar sua mão! 🤝🎵`,
+]
+
+// ─── INTRODUCTION TEMPLATES ───
+const INTRODUCTIONS: ((u1: string, u2: string, common: string, rn: string) => string)[] = [
+  (u1, u2, c) => `🤝 @${u1} e @${u2}: ambos curtem ${c}! Tá aí o início de uma amizade.`,
+  (u1, u2, c, rn) => `Match no ${room(rn)}! @${u1} e @${u2} curtem ${c} — conversem! ✨`,
+  (u1, u2, c) => `📡 Conexão detectada: @${u1} + @${u2} = fãs de ${c}! Comecem a conversar!`,
+  (u1, u2, c) => `@${u1} e @${u2}, vocês dois curtem ${c}. Coincidência? O Arauto não acredita em coincidências. 😏`,
 ]
 
 // ─── TTS-FRIENDLY STRIP ───
@@ -282,27 +312,28 @@ export function useHostBot() {
     return msg
   }, [])
 
-  // Generate entrance announcement
+  // Generate entrance announcement (AI-first, template fallback)
   const announceEntrance = useCallback((username: string, bio?: UserBio, roomName: string = ''): BotMessage | null => {
     const displayName = bio?.displayName || username
     const rn = roomName || 'a Sala'
-    let content: string
 
-    if (bio && bio.interests && bio.interests.length > 0 && bio.city) {
-      content = pick(ENTRANCES_WITH_BIO)(displayName, rn, bio)
-    } else {
-      content = pick(ENTRANCES_NO_BIO)(displayName, rn)
-    }
+    // Immediately show a creative template (instant feedback)
+    const fallbackText = buildCreativeEntrance(displayName, rn, bio)
+    const msg = addBotMessage(fallbackText, 'entrance')
+    speak(stripForTTS(fallbackText), 'entrance', true)
+
+    // Fire-and-forget AI enhancement: replace message if AI returns fast enough
+    generateAIAnnouncement(username, bio, rn).then((aiText) => {
+      if (aiText && msg) {
+        setBotMessages(prev =>
+          prev.map(m => m.id === msg.id ? { ...m, content: aiText } : m)
+        )
+      }
+    })
 
     // Track for introductions
     recentEntrants.current.push({ username, bio, time: Date.now() })
     recentEntrants.current = recentEntrants.current.filter(e => Date.now() - e.time < 60000)
-
-    const msg = addBotMessage(content, 'entrance')
-
-    // TTS
-    const ttsText = stripForTTS(content)
-    speak(ttsText, 'entrance', true)
 
     // Check for introductions
     if (recentEntrants.current.length >= 2) {
@@ -328,15 +359,21 @@ export function useHostBot() {
     return addBotMessage(content, 'departure')
   }, [addBotMessage])
 
+  // Find common interests
+  const findCommonInterests = (bio1?: UserBio, bio2?: UserBio): string[] => {
+    if (!bio1?.interests || !bio2?.interests) return []
+    return bio1.interests.filter(i => bio2.interests!.includes(i))
+  }
+
   // Get random icebreaker (avoids repeats)
   const getIcebreaker = useCallback((roomName: string = ''): string => {
     const rn = roomName || 'a Sala'
-    const available = ALL_ICEBREAKER_FNS.map((fn, i) => ({ fn, i })).filter(({ i }) => !recentIcebreakers.current.has(i))
+    const available = ICEBREAKERS.map((fn, i) => ({ fn, i })).filter(({ i }) => !recentIcebreakers.current.has(i))
     
     let chosen: { fn: IcebreakerFn; i: number }
     if (available.length === 0) {
       recentIcebreakers.current.clear()
-      chosen = { fn: ALL_ICEBREAKER_FNS[Math.floor(Math.random() * ALL_ICEBREAKER_FNS.length)], i: 0 }
+      chosen = { fn: ICEBREAKERS[Math.floor(Math.random() * ICEBREAKERS.length)], i: 0 }
     } else {
       chosen = pick(available)
     }
@@ -349,45 +386,34 @@ export function useHostBot() {
     return chosen.fn(rn)
   }, [])
 
-  // Find common interests between two users
-  const findCommonInterests = (bio1?: UserBio, bio2?: UserBio): string[] => {
-    if (!bio1?.interests || !bio2?.interests) return []
-    return bio1.interests.filter(i => bio2.interests!.includes(i))
-  }
-
   // Stage announcements
   const announceStageUp = useCallback((username: string, roomName: string = ''): BotMessage | null => {
-    const rn = roomName || 'a Sala'
-    const content = pick(STAGE_UP_FNS)(username, rn)
+    const content = pick(STAGE_UP)(username, roomName || 'a Sala')
     speak(stripForTTS(content), 'entrance', true)
     return addBotMessage(content, 'entrance')
   }, [addBotMessage])
 
   const announceStageDown = useCallback((username: string, roomName: string = ''): BotMessage | null => {
-    const rn = roomName || 'a Sala'
-    const content = pick(STAGE_DOWN_FNS)(username, rn)
+    const content = pick(STAGE_DOWN)(username, roomName || 'a Sala')
     speak(stripForTTS(content), 'farewell')
     return addBotMessage(content, 'departure')
   }, [addBotMessage])
 
   const announceStageQueue = useCallback((username: string, roomName: string = ''): BotMessage | null => {
-    if (Math.random() > 0.6) return null // Don't announce every queue join
-    const rn = roomName || 'a Sala'
-    const content = pick(STAGE_QUEUE_FNS)(username, rn)
+    if (Math.random() > 0.6) return null
+    const content = pick(STAGE_QUEUE)(username, roomName || 'a Sala')
     return addBotMessage(content, 'entrance')
   }, [addBotMessage])
 
   const announceStageEmpty = useCallback((roomName: string = ''): BotMessage | null => {
-    const rn = roomName || 'a Sala'
-    const content = pick(STAGE_EMPTY_FNS)(rn)
+    const content = pick(STAGE_EMPTY)(roomName || 'a Sala')
     return addBotMessage(content, 'icebreaker')
   }, [addBotMessage])
 
   // Jukebox reaction
   const reactToJukebox = useCallback((roomName: string = ''): BotMessage | null => {
     if (Math.random() > 0.35) return null
-    const rn = roomName || 'a Sala'
-    const content = pick(JUKEBOX_REACTIONS_FNS)(rn)
+    const content = pick(JUKEBOX_REACTIONS)(roomName || 'a Sala')
     speak(stripForTTS(content), 'reaction')
     return addBotMessage(content, 'jukebox')
   }, [addBotMessage])
@@ -409,7 +435,6 @@ export function useHostBot() {
         }
       }
     }, 30000)
-
     return () => clearInterval(interval)
   }, [getIcebreaker, addBotMessage])
 
