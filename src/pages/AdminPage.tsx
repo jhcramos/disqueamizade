@@ -265,11 +265,27 @@ export function AdminPage() {
     }
   }, [profile, authLoading, initialized, navigate])
 
-  // ─── Fetch Rooms ───
+  // ─── Fetch Rooms (via admin API to bypass RLS) ───
   const fetchRooms = useCallback(async () => {
     setRoomsLoading(true)
-    const { data } = await supabase.from('rooms').select('*').order('created_at', { ascending: true })
-    if (data) setRooms(data as Room[])
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      const res = await fetch('/api/admin-rooms', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setRooms(data as Room[])
+      } else {
+        // Fallback to direct query
+        const { data } = await supabase.from('rooms').select('*').order('created_at', { ascending: true })
+        if (data) setRooms(data as Room[])
+      }
+    } catch {
+      const { data } = await supabase.from('rooms').select('*').order('created_at', { ascending: true })
+      if (data) setRooms(data as Room[])
+    }
     setRoomsLoading(false)
   }, [])
 
@@ -342,7 +358,17 @@ export function AdminPage() {
   }
 
   const handleToggleRoom = async (roomId: string, isActive: boolean) => {
-    await supabase.from('rooms').update({ is_active: !isActive }).eq('id', roomId)
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      await fetch('/api/admin-rooms', {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, is_active: !isActive })
+      })
+    } catch {
+      await supabase.from('rooms').update({ is_active: !isActive }).eq('id', roomId)
+    }
     fetchRooms()
   }
 
