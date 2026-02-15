@@ -20,8 +20,6 @@ export interface BotMessage {
 // ─── Helpers ───
 const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
 const room = (name: string) => name || 'a Sala'
-const ROOM = (name: string) => (name || 'a Sala').toUpperCase()
-
 const INTEREST_EMOJIS: Record<string, string> = {
   'Música': '🎵', 'Esportes': '⚽', 'Games': '🎮', 'Leitura': '📚',
   'Filmes/Séries': '🎬', 'Tecnologia': '💻', 'Culinária': '🍳', 'Viagens': '✈️',
@@ -33,12 +31,28 @@ const INTEREST_EMOJIS: Record<string, string> = {
 const GEMINI_KEY = 'REVOKED_GOOGLE_API_KEY'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`
 
-const AI_SYSTEM = `Você é o Arauto, apresentador carismático do Disque Amizade (chat brasileiro).
-Crie uma apresentação CURTA (máx 200 caracteres, 2-3 linhas) e IMPACTANTE.
-NUNCA comece com "🎺 OUVEM-SE AS TROMBETAS". Use 1-2 emojis no máximo.
-Varie o estilo: narrador de futebol, poeta, rapper, locutor de rádio, MC, comentarista, mestre medieval, estilo twitter, etc.
-Se não tiver bio, provoque com humor pra completar o perfil (termine com [📝 Completar Perfil]).
-Responda APENAS com o texto da apresentação.`
+const AI_SYSTEM = [
+  'Você é o Arauto, apresentador carismático do Disque Amizade (chat brasileiro).',
+  'Crie uma apresentação CURTA (máx 200 caracteres, 2-3 linhas) EXTREMAMENTE POSITIVA e ENGRAÇADA.',
+  '',
+  'O TOM É: elogiar a pessoa de forma exagerada e cômica, como se fosse a pessoa mais incrível que já entrou no chat.',
+  'Exemplos de estilo:',
+  '- "Chegou o incrivelmente simpático NOME! A sala inteira já tá sorrindo!"',
+  '- "O mais querido dos amigos acaba de entrar: NOME! 🏆"',
+  '- "Ganhador do prêmio Forbes da Alegria 2026: NOME!"',
+  '- "A pessoa mais interessante do Brasil acabou de entrar. Sim, é NOME."',
+  '- "ALERTA DE CARISMA: NOME detectado(a). Níveis de simpatia: OVER 9000!"',
+  '- "Se simpatia fosse crime, NOME pegava perpétua. Bem-vindo(a)! 😂"',
+  '',
+  'REGRAS:',
+  '- SEMPRE elogiar, SEMPRE pra cima, SEMPRE engraçado',
+  '- Inventar títulos absurdos e engraçados pra pessoa',
+  '- NUNCA comece com "🎺 OUVEM-SE AS TROMBETAS"',
+  '- Use 1-2 emojis no máximo',
+  '- Se tiver bio/cidade, incorpore no elogio',
+  '- Se NÃO tiver bio, elogie mesmo assim mas provoque pra completar perfil (termine com [📝 Completar Perfil])',
+  '- Responda APENAS com o texto da apresentação, nada mais.',
+].join('\n')
 
 async function generateAIAnnouncement(
   username: string,
@@ -74,66 +88,66 @@ async function generateAIAnnouncement(
 type EntranceFn = (name: string, rn: string, bio?: UserBio) => string
 
 const ENTRANCE_STYLES: EntranceFn[] = [
+  // Forbes da alegria
+  (name, rn) => `🏆 Ganhador(a) do prêmio Forbes da Alegria 2026 acaba de entrar no ${room(rn)}: ${name}!`,
+  // Mais querido
+  (name, rn) => `Chegou o(a) mais querido(a) dos amigos do ${room(rn)}! ${name}, a sala já tá sorrindo! 😄`,
+  // Incrivelmente simpático
+  (name, rn) => `Chegou o(a) incrivelmente simpático(a) ${name}! O ${room(rn)} acaba de melhorar 200%! ✨`,
+  // Pessoa mais interessante
+  (name, rn) => `A pessoa mais interessante do Brasil acabou de entrar no ${room(rn)}. Sim, é ${name}. 🇧🇷`,
+  // Crime de simpatia
+  (name) => `Se simpatia fosse crime, ${name} pegava perpétua. Bem-vindo(a)! 😂`,
+  // Over 9000
+  (name, rn) => `ALERTA DE CARISMA no ${room(rn)}: ${name} detectado(a). Níveis de simpatia: OVER 9000! 🔥`,
+  // Oscar
+  (name, rn) => `E o Oscar de Melhor Presença no ${room(rn)} vai para... ${name}! Aplausos! 👏`,
+  // Patrimônio da humanidade
+  (name) => `${name} deveria ser patrimônio da humanidade. Que presença, que energia! ✨`,
+  // Sorriso contagiante
+  (name, rn) => `ATENÇÃO ${room(rn)}: ${name} entrou e trouxe o sorriso mais contagiante do chat! 😁`,
+  // Influencer da boa vibe
+  (name, rn) => `O(A) maior influencer da boa vibe chegou no ${room(rn)}: ${name}! Segue que vale a pena! 🌟`,
+  // Medalha de ouro
+  (name) => `🥇 Medalha de ouro em simpatia olímpica: ${name}! Ninguém compete!`,
+  // Fenômeno
+  (name, rn) => `Fenômeno da natureza detectado no ${room(rn)}: ${name}! Raro, precioso e incrível! 💎`,
+  // QI de alegria
+  (name, rn) => `${name} entrou no ${room(rn)} com QI de alegria acima de 300. Gênio da boa vibe! 🧠✨`,
+  // Faustão positivo
+  (name, rn) => `Ó lá! Chegou a estrela do ${room(rn)}! ${name} na área, gente! É sucesso! 🌟`,
   // Narrador de futebol
-  (name, rn) => `⚡ GOOOL DE PRESENÇA! ${name} entra no ${room(rn)} e a torcida vai à loucura!`,
-  // Poeta
-  (name, rn) => `✨ Entrou ${name}, e o ${room(rn)} ficou mais bonito. Poesia? Não, é fato.`,
-  // Breaking news
-  (name, rn) => `📰 URGENTE: ${name} confirmado(a) no ${room(rn)}. Fontes dizem que o chat nunca mais será o mesmo.`,
+  (name, rn) => `GOOOL DE PRESENÇA! ${name} entra no ${room(rn)} e a torcida vai à loucura! ⚡`,
+  // Previsão do tempo
+  (name, rn) => `Previsão atualizada pro ${room(rn)}: 100% de chance de alegria. Motivo: ${name} chegou! ☀️`,
+  // Herdeiro da simpatia
+  (name) => `Se carisma fosse herança, ${name} nasceu milionário(a). Que pessoa incrível! 💰😂`,
+  // Nota 10
+  (name, rn) => `Nota 10 em tudo: simpatia, carisma e bom humor. ${name} no ${room(rn)}! ⭐`,
   // MC de festa
-  (name, rn) => `🎙️ Chegou quem faltava! ${name} no ${room(rn)}! DJ, solta o som!`,
-  // Documentário
-  (name, rn) => `🎬 E assim, silenciosamente, ${name} adentrou o ${room(rn)}. Ninguém suspeitava do que viria a seguir...`,
-  // Locutor de rádio
-  (name, rn) => `📻 São ${new Date().getHours()}h e ${name} sintonizou no ${room(rn)}. Frequência: 100% boa vibe.`,
-  // Narrador medieval
-  (name, rn) => `⚔️ As portas do ${ROOM(rn)} se abrem! Adentra o(a) nobre ${name}!`,
-  // Radar
-  (name, rn) => `📡 Sinal detectado. Origem: ${name}. Destino: ${room(rn)}. Status: chegou com tudo.`,
-  // Minimalista
-  (name, rn) => `${name}. ${room(rn)}. Agora. ✨`,
-  // Gossip
-  (name, rn) => `👀 Gente, olha quem apareceu no ${room(rn)}... ${name}! Eu sabia que vinha!`,
-  // Astronauta
-  (name, rn) => `🚀 Houston, temos um(a) novo(a) tripulante. ${name} pousou no ${room(rn)}.`,
-  // Rap intro
-  (name, rn) => `🎤 Atenção pro flow: ${name} chegou, o ${room(rn)} acendeu, quem tava dormindo acordou!`,
-  // Plot twist
-  (name) => `plot twist: ${name} entrou e o nível do chat subiu instantaneamente 📈`,
-  // Understatement
-  (name, rn) => `${name} entrou no ${room(rn)} como quem não quer nada. Mas a gente sabe. Todo mundo sabe. 😏`,
-  // Narrador de corrida
-  (name, rn) => `🏁 Na pole position do ${room(rn)}: ${name}! Largou na frente!`,
-  // Chef
-  (name, rn) => `👨‍🍳 Ingrediente especial do ${room(rn)} acaba de chegar: ${name}. O sabor do chat mudou.`,
-  // Mestre de RPG
-  (name, rn) => `🎲 ${name} rolou um 20 natural em Carisma e entrou no ${room(rn)}. Crítico!`,
-  // Narrador noir
-  (name, rn) => `🌙 Era uma noite qualquer no ${room(rn)}. Até ${name} aparecer. Nada seria igual.`,
-  // Tinder bio
-  (name) => `${name} deslizou pra direita no chat. Match confirmado. 💫`,
-  // Notificação de app
-  (name, rn) => `🔔 [${room(rn)}] ${name} está online. Toque para interagir.`,
-  // Comentarista de luta
-  (name, rn) => `🥊 No corner azul do ${room(rn)}: ${name}! Peso pesado da conversa!`,
-  // Loading screen
-  (name, rn) => `▓▓▓▓▓▓▓▓▓▓ 100%\n${name} carregou no ${room(rn)}. Let's go! 🎮`,
-  // Haiku
-  (name, rn) => `${name} chegou\nO ${room(rn)} floresceu\nBoa conversa 🌸`,
-  // Uber notification
-  (name, rn) => `🚗 Sua corrida chegou! ${name} no ${room(rn)}. Avalie com ⭐`,
-  // Wikipedia
-  (name, rn) => `📖 ${name} — presença confirmada no ${room(rn)} em ${new Date().toLocaleDateString('pt-BR')}. [carece de fontes]`,
-  // Spotify wrapped
-  (name, rn) => `🎵 Seu ${room(rn)} Wrapped: artista mais esperado — ${name}. Finalmente chegou.`,
-  // GPT style
-  (name, rn) => `Analisando... ✅ ${name} é compatível com o ${room(rn)}. Recomendação: conversar imediatamente.`,
-  // Old school IRC
-  (name, rn) => `* ${name} entrou no #${room(rn).replace(/\s/g,'-').toLowerCase()} — salve, rapaziada! 💻`,
-  // Natureza
-  (name, rn) => `🦋 Como borboleta em jardim, ${name} pousou no ${room(rn)}. Delicadeza pura.`,
-  // Faustão style
-  (name, rn) => `Ó, lá em casa! ${name} no ${room(rn)}! Errou? Não, ACERTOU! 👉`,
+  (name, rn) => `Chegou quem faltava pro ${room(rn)} ficar perfeito: ${name}! DJ, solta o som! 🎶`,
+  // Salvou o dia
+  (name, rn) => `${name} acabou de salvar o dia do ${room(rn)}. Herói(na) sem capa! 🦸`,
+  // Mais legal do mundo
+  (name, rn) => `Pesquisa confirma: ${name} é oficialmente a pessoa mais legal do ${room(rn)}. Ciência! 📊`,
+  // Estrela cadente
+  (name, rn) => `Estrela cadente avistada no ${room(rn)}! Ah não, é ${name}. Ainda melhor! 🌠`,
+  // Rei/Rainha
+  (name, rn) => `Abram alas! A realeza do ${room(rn)} chegou: ${name}! Tragam o tapete vermelho! 👑`,
+  // Vitamina de alegria
+  (name, rn) => `${name} é tipo vitamina de alegria pro ${room(rn)}. Dose diária recomendada: infinita! 💊😄`,
+  // TED Talk
+  (name, rn) => `Se existisse TED Talk de simpatia, ${name} seria palestrante principal. Bem-vindo(a) ao ${room(rn)}! 🎤`,
+  // WiFi de energia boa
+  (name, rn) => `${name} conectou no ${room(rn)} e a energia boa tá com sinal máximo! WiFi da alegria! 📶`,
+  // Melhor plot twist
+  (name, rn) => `Melhor plot twist do dia: ${name} apareceu no ${room(rn)}! Tudo ficou mais legal! 📈`,
+  // Embaixador da alegria
+  (name, rn) => `Embaixador(a) oficial da alegria brasileira, ${name}, acaba de honrar o ${room(rn)} com sua presença! 🇧🇷`,
+  // Upgrade
+  (name, rn) => `O ${room(rn)} acaba de receber um UPGRADE premium: ${name} entrou! Tudo melhorou! ⬆️`,
+  // Presente de aniversário
+  (name, rn) => `Não é aniversário de ninguém, mas ${name} no ${room(rn)} é o melhor presente! 🎁`,
 ]
 
 // City-specific additions
