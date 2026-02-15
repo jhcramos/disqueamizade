@@ -11,6 +11,9 @@ export type OstentacaoStatus = {
 }
 
 // DB profile (matches Supabase schema)
+export type LookingFor = 'amizade' | 'namoro' | 'bate-papo' | 'networking' | 'games'
+export type InterestedIn = 'homens' | 'mulheres' | 'todos'
+
 export type DBProfile = {
   id: string
   username: string
@@ -25,6 +28,8 @@ export type DBProfile = {
   is_elite: boolean
   saldo_fichas: number
   total_earned: number
+  looking_for?: LookingFor[]
+  interested_in?: InterestedIn
   created_at: string
   updated_at: string
 }
@@ -67,6 +72,8 @@ export type Profile = {
   games_played: number
   time_online_minutes: number
   badges: string[]
+  looking_for?: LookingFor[]
+  interested_in?: InterestedIn
   created_at: string
   updated_at: string
   // Legacy alias

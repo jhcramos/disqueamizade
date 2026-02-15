@@ -31,6 +31,14 @@ const INTERESTS = [
 
 const MOODS = ['😄', '😎', '🤔', '😴', '🔥', '💀', '🥳', '😍']
 
+const LOOKING_FOR = [
+  { id: 'amizade', label: 'Amizade', emoji: '🤝' },
+  { id: 'namoro', label: 'Namoro', emoji: '💕' },
+  { id: 'bate-papo', label: 'Bate-papo', emoji: '💬' },
+  { id: 'networking', label: 'Networking', emoji: '💼' },
+  { id: 'games', label: 'Jogar', emoji: '🎮' },
+]
+
 interface BioEditorProps {
   isOpen: boolean
   onClose: () => void
@@ -70,6 +78,7 @@ export const BioEditor = ({ isOpen, onClose, onSave, initialBio }: BioEditorProp
   const [interests, setInterests] = useState<string[]>(base.interests || [])
   const [about, setAbout] = useState(base.about || '')
   const [mood, setMood] = useState(base.mood || '')
+  const [lookingFor, setLookingFor] = useState<string[]>(base.lookingFor || [])
 
   useEffect(() => {
     if (isOpen) {
@@ -80,6 +89,7 @@ export const BioEditor = ({ isOpen, onClose, onSave, initialBio }: BioEditorProp
         setInterests(s.interests || [])
         setAbout(s.about || '')
         setMood(s.mood || '')
+        setLookingFor(s.lookingFor || [])
       }
     }
   }, [isOpen])
@@ -88,8 +98,12 @@ export const BioEditor = ({ isOpen, onClose, onSave, initialBio }: BioEditorProp
     setInterests(prev => prev.includes(label) ? prev.filter(i => i !== label) : [...prev, label])
   }
 
+  const toggleLookingFor = (id: string) => {
+    setLookingFor(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  }
+
   const handleSave = () => {
-    const bio: UserBio = { displayName, city: city || undefined, interests: interests.length > 0 ? interests : undefined, about: about || undefined, mood: mood || undefined }
+    const bio: UserBio = { displayName, city: city || undefined, interests: interests.length > 0 ? interests : undefined, about: about || undefined, mood: mood || undefined, lookingFor: lookingFor.length > 0 ? lookingFor : undefined }
     saveBio(bio)
     onSave(bio)
     onClose()
@@ -185,6 +199,26 @@ export const BioEditor = ({ isOpen, onClose, onSave, initialBio }: BioEditorProp
               rows={2}
               className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-dark-500 text-sm focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all resize-none"
             />
+          </div>
+
+          {/* Looking For */}
+          <div>
+            <label className="block text-xs font-semibold text-dark-300 mb-2">O que busco</label>
+            <div className="flex flex-wrap gap-2">
+              {LOOKING_FOR.map(({ id, label, emoji }) => (
+                <button
+                  key={id}
+                  onClick={() => toggleLookingFor(id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                    lookingFor.includes(id)
+                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-sm shadow-violet-500/10'
+                      : 'bg-white/[0.03] text-dark-400 border border-white/[0.06] hover:bg-white/[0.06]'
+                  }`}
+                >
+                  {emoji} {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Mood */}
