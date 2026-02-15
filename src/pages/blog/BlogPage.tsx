@@ -14,6 +14,10 @@ export interface BlogPost {
   date: string
   readTime: number
   image?: string
+  coverImage?: string
+  relatedSlugs?: string[]
+  wordCount?: number
+  lastModified?: string
 }
 
 const CATEGORIES = [
@@ -152,37 +156,42 @@ export const BlogPage = () => {
           </div>
         ) : (
           <>
-            {/* Featured post (first one) */}
-            {currentPage === 1 && paginated.length > 0 && (
-              <Link to={`/blog/${paginated[0].slug}`} className="block mb-8 group">
-                <div className="relative rounded-2xl overflow-hidden bg-dark-900 border border-white/5 hover:border-pink-500/30 transition-all">
-                  <div className={`h-64 bg-gradient-to-br ${getGradient(paginated[0].slug)} flex items-center justify-center relative overflow-hidden`}>
-                    {paginated[0].image ? (
-                      <img src={paginated[0].image} alt={paginated[0].title} className="w-full h-full object-cover absolute inset-0" />
+            {/* Featured post - full-width hero with text overlay */}
+            {currentPage === 1 && paginated.length > 0 && (() => {
+              const feat = paginated[0]
+              const featImg = feat.coverImage || feat.image
+              return (
+                <Link to={`/blog/${feat.slug}`} className="block mb-8 group">
+                  <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
+                    {featImg ? (
+                      <img src={featImg} alt={feat.title} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-8xl">{CATEGORY_EMOJIS[paginated[0].category] || '💬'}</span>
+                      <div className={`w-full h-full bg-gradient-to-br ${getGradient(feat.slug)} flex items-center justify-center`}>
+                        <span className="text-8xl">{CATEGORY_EMOJIS[feat.category] || '💬'}</span>
+                      </div>
                     )}
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[paginated[0].category] || 'bg-dark-700 text-dark-300'}`}>
-                        {paginated[0].category}
-                      </span>
-                      <span className="text-dark-500 text-sm flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {new Date(paginated[0].date).toLocaleDateString('pt-BR')}
-                      </span>
-                      <span className="text-dark-500 text-sm flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {paginated[0].readTime} min
-                      </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/60 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[feat.category] || 'bg-dark-700 text-dark-300'}`}>
+                          {feat.category}
+                        </span>
+                        <span className="text-dark-300 text-sm flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {new Date(feat.date).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="text-dark-300 text-sm flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {feat.readTime} min
+                        </span>
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-bold text-white group-hover:text-pink-400 transition-colors mb-2">
+                        {feat.title}
+                      </h2>
+                      <p className="text-dark-300 line-clamp-2 max-w-2xl">{feat.excerpt}</p>
                     </div>
-                    <h2 className="text-2xl font-bold text-white group-hover:text-pink-400 transition-colors mb-2">
-                      {paginated[0].title}
-                    </h2>
-                    <p className="text-dark-400 line-clamp-2">{paginated[0].excerpt}</p>
                   </div>
-                </div>
-              </Link>
-            )}
+                </Link>
+              )
+            })()}
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -190,8 +199,8 @@ export const BlogPage = () => {
                 <Link key={post.slug} to={`/blog/${post.slug}`} className="group">
                   <div className="bg-dark-900 rounded-2xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all h-full flex flex-col">
                     <div className={`h-40 bg-gradient-to-br ${getGradient(post.slug)} flex items-center justify-center relative overflow-hidden`}>
-                      {post.image ? (
-                        <img src={post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
+                      {(post.coverImage || post.image) ? (
+                        <img src={post.coverImage || post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
                       ) : (
                         <span className="text-5xl">{CATEGORY_EMOJIS[post.category] || '💬'}</span>
                       )}
