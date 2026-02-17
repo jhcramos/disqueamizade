@@ -13,6 +13,7 @@ import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useAuthStore } from '@/store/authStore'
 import { roomChat } from '@/services/supabase/roomChat'
+import { useColdStartSettings } from '@/hooks/useSupabaseData'
 import { webrtcRoom } from '@/services/webrtc/peer'
 import { CameraMasksButton, FILTER_CSS } from '@/components/camera/CameraMasks'
 import { useHostBot, BOT_BIOS } from '@/hooks/useHostBot'
@@ -128,9 +129,10 @@ export const RoomPage = () => {
     setSelectedBg(bg.id)
     setBgImage(bg.src)
   }
-  // Bots removed — real users only
-  const botCount = 0
-  const botNames: string[] = []
+  // Bots only when cold start bots_presence is enabled
+  const { settings: coldStart } = useColdStartSettings()
+  const botCount = coldStart.bots_presence ? 3 : 0
+  const botNames: string[] = coldStart.bots_presence ? ['Ana', 'Carlos', 'Bia'] : []
 
   // ─── PTT & Jukebox State ───
   const [pttMode, _setPttMode] = useState(true) // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -826,7 +828,7 @@ export const RoomPage = () => {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-semibold">{onlineUsers.length + Math.max(3, botCount - onlineUsers.length)} online</span>
+              <span className="text-xs text-emerald-400 font-semibold">{onlineUsers.length + botCount} online</span>
               {/* Debug - remove later */}
               <span className="text-[9px] text-dark-600 ml-1">ch:{roomSlug?.slice(0,8)} {isGuest ? 'G' : 'U'}</span>
             </div>
@@ -1534,7 +1536,7 @@ export const RoomPage = () => {
             }`}
           >
             <Users className="w-5 h-5" />
-            <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length + Math.max(3, botCount - onlineUsers.length)})</span>
+            <span className="text-[11px] font-medium">Pessoas ({onlineUsers.length + botCount})</span>
           </button>
           <button
             onClick={() => { setShowChat(true); setShowParticipants(false) }}
