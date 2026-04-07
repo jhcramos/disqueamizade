@@ -1330,4 +1330,20 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://disqueamizade.vercel.app/blog/video-chat-gratis-navegador-sem-instalacao</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.vercel.app/blog/chat-por-cidade-em-tempo-real-encontreSuaCidade</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.vercel.app/blog/bate-papo-online-tempo-real-x-whatsapp</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>
