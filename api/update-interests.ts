@@ -33,7 +33,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // Save to user_metadata via admin
-    const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
+    const { data, error } = await (supabase.auth as any).admin.updateUserById(user.id, {
       user_metadata: { ...user.user_metadata, hobbies }
     })
 

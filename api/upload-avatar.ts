@@ -52,7 +52,7 @@ export default async function handler(req: any, res: any) {
 
   if (updateError) {
     // Fallback: update user_metadata
-    await supabase.auth.admin.updateUserById(user.id, {
+    await (supabase.auth as any).admin.updateUserById(user.id, {
       user_metadata: { ...user.user_metadata, avatar_url: avatarUrl }
     })
   }
