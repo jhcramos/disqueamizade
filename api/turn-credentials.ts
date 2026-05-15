@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
@@ -14,7 +13,7 @@ const ALLOWED_ORIGINS = new Set([
   'https://disqueamizade.vercel.app',
 ])
 
-function setCors(req: VercelRequest, res: VercelResponse) {
+function setCors(req: any, res: any) {
   const origin = req.headers.origin
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
@@ -25,7 +24,7 @@ function setCors(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   setCors(req, res)
 
   if (req.method === 'OPTIONS') return res.status(204).end()
