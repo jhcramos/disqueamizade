@@ -34,3 +34,14 @@ dist-ssr
 .supabase
 .vercel
 .env*.local
+
+
+# Local secrets and deployment env files
+.env
+.env.*
+!.env.example
+stripe-live-env.txt
+linz-env.txt
+*.pem
+*.key
+service-account*.json

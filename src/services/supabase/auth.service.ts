@@ -83,18 +83,10 @@ export const authService = {
 
     if (!authData?.user) throw new Error('No user returned from signup')
 
-    // Auto-confirm email via server-side admin API
-    try {
-      await fetch('/api/confirm-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: authData.user.id }),
-      })
-    } catch (e) {
-      console.warn('Auto-confirm failed:', e)
-    }
+    // Email confirmation is handled by Supabase email flow.
+    // Do not auto-confirm from the browser. That would allow account verification bypass.
 
-    // Now sign in immediately (email is confirmed)
+    // Try immediate sign-in for projects that have confirmation disabled.
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,

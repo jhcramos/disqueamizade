@@ -1,8 +1,8 @@
 import { supabase } from '@/services/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
-// Metered.ca Premium TURN — credentials fetched dynamically
-const METERED_API_URL = 'https://disqueamizade.metered.live/api/v1/turn/credentials?apiKey=61f52fae1135c1a3362f951216169d97b86f'
+// Metered.ca Premium TURN — credentials are minted server-side.
+const TURN_CREDENTIALS_URL = '/api/turn-credentials'
 
 // Fallback STUN-only config
 const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
@@ -12,9 +12,16 @@ const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
 
 async function getIceServers(): Promise<RTCIceServer[]> {
   try {
-    const res = await fetch(METERED_API_URL)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return FALLBACK_ICE_SERVERS
+
+    const res = await fetch(TURN_CREDENTIALS_URL, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    if (!res.ok) throw new Error(`TURN credential request failed: ${res.status}`)
+
     const servers = await res.json()
-    console.log('[WebRTC] Got Metered TURN servers:', servers.length)
+    console.log('[WebRTC] Got TURN servers:', servers.length)
     return servers
   } catch (err) {
     console.warn('[WebRTC] Failed to fetch TURN credentials, using STUN fallback:', err)

@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig({
   base: '/',
   build: {
-    sourcemap: true,
+    sourcemap: false,
   },
   plugins: [react()],
   resolve: {
