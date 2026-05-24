@@ -28,9 +28,13 @@ for path, priority, freq in static_pages:
     <priority>{priority}</priority>
   </url>""")
 
-# Blog posts
+# Blog posts (dedupe by canonical URL; index.json can contain duplicate slugs)
+seen_slugs = set()
 for post in posts:
     slug = post["slug"]
+    if slug in seen_slugs:
+        continue
+    seen_slugs.add(slug)
     lastmod = post.get("lastModified", today)
     urls.append(f"""  <url>
     <loc>{BASE_URL}/blog/{slug}</loc>
@@ -47,4 +51,4 @@ sitemap += "\n</urlset>"
 with open("public/sitemap.xml", "w") as f:
     f.write(sitemap)
 
-print(f"Sitemap generated with {len(urls)} URLs ({len(static_pages)} static + {len(posts)} blog posts)")
+print(f"Sitemap generated with {len(urls)} URLs ({len(static_pages)} static + {len(seen_slugs)} unique blog posts)")
