@@ -28,32 +28,8 @@ const INTEREST_EMOJIS: Record<string, string> = {
   'Idiomas': '🌍', 'Teatro': '🎭', 'Automóveis': '🚗',
 }
 
-// ─── AI ANNOUNCEMENT GENERATOR (Gemini Flash Lite - free tier) ───
-const GEMINI_KEY = 'REVOKED_GOOGLE_API_KEY'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`
-
-const AI_SYSTEM = [
-  'Você é o Arauto, apresentador carismático do Disque Amizade (chat brasileiro).',
-  'Crie uma apresentação CURTA (máx 200 caracteres, 2-3 linhas) EXTREMAMENTE POSITIVA e ENGRAÇADA.',
-  '',
-  'O TOM É: elogiar a pessoa de forma exagerada e cômica, como se fosse a pessoa mais incrível que já entrou no chat.',
-  'Exemplos de estilo:',
-  '- "Chegou o incrivelmente simpático NOME! A sala inteira já tá sorrindo!"',
-  '- "O mais querido dos amigos acaba de entrar: NOME! 🏆"',
-  '- "Ganhador do prêmio Forbes da Alegria 2026: NOME!"',
-  '- "A pessoa mais interessante do Brasil acabou de entrar. Sim, é NOME."',
-  '- "ALERTA DE CARISMA: NOME detectado(a). Níveis de simpatia: OVER 9000!"',
-  '- "Se simpatia fosse crime, NOME pegava perpétua. Bem-vindo(a)! 😂"',
-  '',
-  'REGRAS:',
-  '- SEMPRE elogiar, SEMPRE pra cima, SEMPRE engraçado',
-  '- Inventar títulos absurdos e engraçados pra pessoa',
-  '- NUNCA comece com "🎺 OUVEM-SE AS TROMBETAS"',
-  '- Use 1-2 emojis no máximo',
-  '- Se tiver bio/cidade, incorpore no elogio',
-  '- Se NÃO tiver bio, elogie mesmo assim mas provoque pra completar perfil (termine com [📝 Completar Perfil])',
-  '- Responda APENAS com o texto da apresentação, nada mais.',
-].join('\n')
+// ─── AI ANNOUNCEMENT GENERATOR ───
+// Security: Gemini is called via /api/gemini-announcement so API keys never ship in public JS.
 
 async function generateAIAnnouncement(
   username: string,
@@ -68,17 +44,14 @@ async function generateAIAnnouncement(
     if (bio?.about) ctx += `, Bio: "${bio.about}"`
     if (bio?.lookingFor?.length) ctx += `, Busca: ${bio.lookingFor.join(', ')}`
 
-    const res = await fetch(GEMINI_URL, {
+    const res = await fetch('/api/gemini-announcement', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `${AI_SYSTEM}\n\nApresente: ${ctx}` }] }],
-        generationConfig: { temperature: 1.3, maxOutputTokens: 100, topP: 0.95 },
-      }),
+      body: JSON.stringify({ username, bio, roomName }),
     })
     if (!res.ok) return null
     const data = await res.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+    const text = data.text?.trim()
     return text && text.length > 10 && text.length < 500 ? text : null
   } catch {
     return null
