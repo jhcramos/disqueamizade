@@ -44,10 +44,10 @@ export const Footer = () => {
             <h4 className="font-bold text-primary-light mb-4">Suporte</h4>
             <ul className="space-y-2">
               <li><Link to="/auth" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Entrar / Cadastrar</Link></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Central de Ajuda</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Segurança</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Denunciar Abuso</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Contato</a></li>
+              <li><Link to="/diretrizes" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Central de Ajuda</Link></li>
+              <li><Link to="/diretrizes" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Segurança</Link></li>
+              <li><Link to="/diretrizes" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Denunciar Abuso</Link></li>
+              <li><Link to="/privacidade" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Contato</Link></li>
             </ul>
           </div>
 
@@ -55,10 +55,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-primary-light mb-4">Legal</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Termos de Uso</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Política de Privacidade</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Diretrizes da Comunidade</a></li>
-              <li><a href="#" className="text-sm text-gray-400 hover:text-primary-light transition-colors">LGPD</a></li>
+              <li><Link to="/termos" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Termos de Uso</Link></li>
+              <li><Link to="/privacidade" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Política de Privacidade</Link></li>
+              <li><Link to="/diretrizes" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Diretrizes da Comunidade</Link></li>
+              <li><Link to="/lgpd" className="text-sm text-gray-400 hover:text-primary-light transition-colors">LGPD</Link></li>
             </ul>
           </div>
         </div>

@@ -117,6 +117,7 @@ const faqs = [
 
 export const PricingPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [acceptedCheckoutTerms, setAcceptedCheckoutTerms] = useState(false)
   const { packages: dbPackages } = useFichaPackages()
   const user = useAuthStore((s) => s.user)
 
@@ -137,6 +138,10 @@ export const PricingPage = () => {
 
   const handleBuyFichas = async (pkg: any) => {
     if (!pkg.stripe_price_id) return
+    if (!acceptedCheckoutTerms) {
+      alert('Antes de comprar, aceite os Termos, a Política de Privacidade, a LGPD e as Diretrizes da Comunidade.')
+      return
+    }
     try {
       await checkoutService.createCheckout(pkg.stripe_price_id, user?.id)
     } catch (err) {
@@ -335,6 +340,7 @@ export const PricingPage = () => {
                   </div>
                   <button
                     onClick={() => handleBuyFichas(pkg)}
+                    disabled={!acceptedCheckoutTerms}
                     className="btn-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-dark-950 rounded-lg font-semibold text-xs transition-all"
                   >
                     Comprar
@@ -351,6 +357,21 @@ export const PricingPage = () => {
               </div>
             ))}
           </div>
+
+          <label className="mt-6 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left text-sm text-dark-300 max-w-3xl mx-auto">
+            <input
+              type="checkbox"
+              checked={acceptedCheckoutTerms}
+              onChange={(e) => setAcceptedCheckoutTerms(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-amber-500"
+            />
+            <span>
+              Eu aceito os <Link to="/termos" className="text-amber-400 hover:underline">Termos de Uso</Link>, a{' '}
+              <Link to="/privacidade" className="text-amber-400 hover:underline">Política de Privacidade</Link>, a{' '}
+              <Link to="/lgpd" className="text-amber-400 hover:underline">LGPD</Link> e as{' '}
+              <Link to="/diretrizes" className="text-amber-400 hover:underline">Diretrizes da Comunidade</Link> antes de comprar fichas ou assinar recursos pagos.
+            </span>
+          </label>
         </section>
 
         <div className="divider max-w-7xl mx-auto" />

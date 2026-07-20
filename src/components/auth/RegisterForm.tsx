@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
@@ -16,6 +17,7 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedLegal, setAcceptedLegal] = useState(false)
   const [error, setError] = useState('')
 
   const validateForm = () => {
@@ -41,6 +43,11 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
 
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
+      return false
+    }
+
+    if (!acceptedLegal) {
+      setError('Você precisa aceitar os Termos, a Política de Privacidade e confirmar que tem 18+ anos')
       return false
     }
 
@@ -128,11 +135,29 @@ export const RegisterForm = ({ onToggleMode }: RegisterFormProps) => {
           <p>• Você deve ter 18+ anos</p>
         </div>
 
+        <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-gray-300">
+          <input
+            type="checkbox"
+            checked={acceptedLegal}
+            onChange={(e) => setAcceptedLegal(e.target.checked)}
+            disabled={loading}
+            className="mt-1 h-4 w-4 accent-primary"
+          />
+          <span>
+            Eu tenho 18 anos ou mais e aceito os{' '}
+            <Link to="/termos" className="text-primary-light hover:underline">Termos de Uso</Link>, a{' '}
+            <Link to="/privacidade" className="text-primary-light hover:underline">Política de Privacidade</Link>, a{' '}
+            <Link to="/lgpd" className="text-primary-light hover:underline">LGPD</Link> e as{' '}
+            <Link to="/diretrizes" className="text-primary-light hover:underline">Diretrizes da Comunidade</Link>.
+          </span>
+        </label>
+
         <Button
           type="submit"
           variant="primary"
           fullWidth
           loading={loading}
+          disabled={!acceptedLegal}
         >
           Criar Conta
         </Button>

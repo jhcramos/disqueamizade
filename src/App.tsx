@@ -18,6 +18,7 @@ import { CreatorProfilePage } from './pages/CreatorProfilePage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import { AdminPage } from './pages/AdminPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import { LegalPage } from './pages/LegalPage'
 import { BlogPage } from './pages/blog/BlogPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { MobileNav } from './components/common/MobileNav'
@@ -62,6 +63,10 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/termos" element={<LegalPage type="terms" />} />
+        <Route path="/privacidade" element={<LegalPage type="privacy" />} />
+        <Route path="/lgpd" element={<LegalPage type="lgpd" />} />
+        <Route path="/diretrizes" element={<LegalPage type="guidelines" />} />
         
         {/* Features */}
         <Route path="/filtros" element={<VideoFiltersPage />} />
