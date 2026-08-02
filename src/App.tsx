@@ -21,6 +21,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import { LegalPage } from './pages/LegalPage'
 import { BlogPage } from './pages/blog/BlogPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
+import { AboutPage } from './pages/AboutPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -74,6 +75,9 @@ function App() {
         {/* Blog — public, no auth required (SEO) */}
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
+
+        {/* About — public, SEO */}
+        <Route path="/sobre" element={<AboutPage />} />
 
         {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />

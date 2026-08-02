@@ -14,6 +14,7 @@ const navLinks = [
   { to: '/hobbies', label: 'Hobbies' },
   { to: '/pricing', label: 'Planos' },
   { to: '/blog', label: 'Blog' },
+  { to: '/sobre', label: 'Sobre' },
   { to: '/creator', label: 'Creator' },
 ]
 
