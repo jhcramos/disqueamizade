@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageCircle, ShoppingBag, Users, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { MessageCircle, ShoppingBag, Users, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { track } from '@/services/analytics'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { useRooms, useStats } from '../hooks/useSupabaseData'
@@ -39,30 +41,6 @@ const features = [
     image: 'features/ostentacao.png',
     accentColor: '#f59e0b',
     link: '/pricing',
-  },
-]
-
-const testimonials = [
-  {
-    name: 'Mariana S.',
-    city: 'São Paulo, SP',
-    text: 'A roleta é incrível! Já fiz amizades de verdade conversando com pessoas aleatórias.',
-    initials: 'MS',
-    rating: 5,
-  },
-  {
-    name: 'Carlos R.',
-    city: 'Rio de Janeiro, RJ',
-    text: 'As aulas de guitarra pelo marketplace são excelentes. Pagar com fichas é muito prático!',
-    initials: 'CR',
-    rating: 5,
-  },
-  {
-    name: 'Ana Paula M.',
-    city: 'Curitiba, PR',
-    text: 'O speed dating é viciante! 3 minutos de conversa e já consegui 3 matches.',
-    initials: 'AP',
-    rating: 4,
   },
 ]
 
@@ -172,6 +150,7 @@ if (!document.querySelector('#disque-home-styles')) {
 
 export const HomePage = () => {
   const heroImage = getWeeklyHeroImage()
+  useEffect(() => { track('home_view') }, [])
   const { rooms: dbRooms } = useRooms()
   const stats = useStats()
 
@@ -255,6 +234,7 @@ export const HomePage = () => {
           <div className="animate-slide-up-fade-d3 flex flex-col sm:flex-row items-center justify-center gap-5 mb-16">
             <Link
               to="/rooms"
+              onClick={() => track('cta_enter_click', { cta: 'hero_rooms' })}
               style={{
                 background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 minWidth: '230px',
@@ -268,6 +248,7 @@ export const HomePage = () => {
             </Link>
             <Link
               to="/roulette"
+              onClick={() => track('cta_enter_click', { cta: 'hero_roulette' })}
               style={{
                 background: 'linear-gradient(135deg, #ec4899, #d946ef)',
                 minWidth: '230px',
@@ -611,40 +592,6 @@ export const HomePage = () => {
               </Link>
             )
           })}
-        </div>
-      </section>
-
-      {/* ═══════════════════ TESTIMONIALS ═══════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
-        <h2 className="text-3xl md:text-5xl font-black text-center text-gradient-section mb-14">
-          O que Dizem Nossos Usuários
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <div key={i} className="gradient-border rounded-2xl">
-              <div className="glass-strong rounded-2xl p-7 h-full hover:bg-white/[0.06] transition-colors duration-300">
-                <div className="flex items-center gap-1 mb-5">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star
-                      key={j}
-                      className={`w-5 h-5 ${j < t.rating ? 'text-amber-400 fill-amber-400' : 'text-dark-700'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-base text-dark-200 mb-6 leading-relaxed italic">"{t.text}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full ring-2 ring-primary-500/30 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-base font-bold text-white">{t.name}</p>
-                    <p className="text-xs text-dark-400 mt-0.5">{t.city}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

@@ -10,7 +10,7 @@ today = datetime.now().strftime("%Y-%m-%d")
 static_pages = [
     ("", 1.0, "weekly"),
     ("/blog", 0.8, "weekly"),
-    ("/contato", 0.7, "weekly"),
+    ("/sobre", 0.7, "monthly"),
     ("/filtros", 0.7, "weekly"),
     ("/pricing", 0.7, "weekly"),
 ]

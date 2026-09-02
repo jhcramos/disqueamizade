@@ -4,8 +4,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import App from './App'
 import './styles/index.css'
+import { initAnalytics } from './services/analytics'
 
 console.log('🚀 Disque Amizade starting...')
+initAnalytics()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

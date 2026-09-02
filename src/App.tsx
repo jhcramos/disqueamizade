@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
 import { RoomsPage } from './pages/RoomsPage'
 import { MarketplacePage } from './pages/MarketplacePage'
@@ -22,6 +22,7 @@ import { LegalPage } from './pages/LegalPage'
 import { BlogPage } from './pages/blog/BlogPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { AboutPage } from './pages/AboutPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -86,7 +87,7 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <MobileNav />
       <ToastContainer />
