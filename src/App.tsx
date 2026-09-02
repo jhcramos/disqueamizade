@@ -48,10 +48,11 @@ function App() {
         <Route path="/" element={<HomePage />} />
         
         {/* Salas - requer login */}
-        <Route path="/rooms" element={<ProtectedRoute><RoomsPage /></ProtectedRoute>} />
-        <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
+        {/* Públicas: entram convidado, sem cadastro (Plano V4 1.4/2.1) */}
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/room/:roomId" element={<RoomPage />} />
         <Route path="/camarote/:camaroteId" element={<ProtectedRoute><CamarotePage /></ProtectedRoute>} />
-        <Route path="/roulette" element={<ProtectedRoute><RoulettePage /></ProtectedRoute>} />
+        <Route path="/roulette" element={<RoulettePage />} />
         {/* cabines removed — simplifying */}
         <Route path="/hobbies" element={<ProtectedRoute><HobbiesPage /></ProtectedRoute>} />
         

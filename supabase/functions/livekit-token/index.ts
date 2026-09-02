@@ -34,10 +34,13 @@ async function createLiveKitToken(
   apiSecret: string,
   roomName: string,
   participantName: string,
-  ttlSeconds: number = 3600
+  ttlSeconds?: number
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  
+  // Convidado (identity guest-*) recebe token de vida mais curta.
+  const isGuest = participantName.startsWith('guest-')
+  const ttl = ttlSeconds ?? (isGuest ? 1800 : 3600)
+
   const header = {
     alg: 'HS256',
     typ: 'JWT',
@@ -47,9 +50,10 @@ async function createLiveKitToken(
     iss: apiKey,
     sub: participantName,
     nbf: now,
-    exp: now + ttlSeconds,
+    exp: now + ttl,
     iat: now,
     jti: `${participantName}-${roomName}-${now}`,
+    metadata: JSON.stringify({ guest: isGuest }),
     video: {
       roomJoin: true,
       room: roomName,

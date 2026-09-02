@@ -62,12 +62,14 @@ function classifyRoom(slug: string, ownerId?: string | null): string {
   return 'cities'
 }
 
-/** Simulate "hot" rooms — random selection that changes per session */
+/** Salas "em alta" = as com mais gente real agora (nada aleatório). */
 function getHotRoomIds(rooms: any[]): Set<string> {
   const ids = new Set<string>()
-  // Pick ~15 random rooms as "hot"
-  const shuffled = [...rooms].sort(() => Math.random() - 0.5)
-  shuffled.slice(0, 15).forEach(r => ids.add(r.id))
+  ;[...rooms]
+    .filter(r => (r.current_participants || 0) > 0)
+    .sort((a, b) => (b.current_participants || 0) - (a.current_participants || 0))
+    .slice(0, 15)
+    .forEach(r => ids.add(r.id))
   return ids
 }
 
@@ -105,6 +107,7 @@ function mapDbRoom(r: any, hotIds: Set<string>): MockRoom {
     entry_cost_fichas: r.ficha_cost || 0,
     _category: cat,
     _isHot: isHot,
+    _slug: r.slug || r.id,
   } as any
 }
 
@@ -152,6 +155,19 @@ export const RoomsPage = () => {
 
   const totalOnline = rooms.reduce((acc: number, r: any) => acc + (r.online_count || 0), 0)
 
+  // Sala principal única: com menos de 20 pessoas no total, concentramos todo
+  // mundo na "Geral Brasil" para a conversa começar. As demais só aparecem
+  // quando há gente suficiente para não parecerem vazias. (Plano V4, item 1.5)
+  const MAIN_THRESHOLD = 20
+  const MAIN_SLUG = 'geral-brasil'
+  const concentrated = totalOnline < MAIN_THRESHOLD
+  const visibleRooms = useMemo(() => {
+    if (!concentrated) return filteredRooms
+    const main = rooms.find((r: any) => r._slug === MAIN_SLUG)
+      || [...rooms].sort((a: any, b: any) => (b.online_count || 0) - (a.online_count || 0))[0]
+    return main ? [main] : []
+  }, [concentrated, filteredRooms, rooms])
+
   return (
     <AgeGate>
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
@@ -185,6 +201,7 @@ export const RoomsPage = () => {
         </div>
 
         {/* Search + Category Filters */}
+        {!concentrated && (
         <div className="mb-6 space-y-3">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
@@ -218,6 +235,13 @@ export const RoomsPage = () => {
             })}
           </div>
         </div>
+        )}
+
+        {concentrated && !loading && (
+          <div className="mb-6 p-4 rounded-xl bg-primary-500/[0.06] border border-primary-500/15 text-sm text-dark-300">
+            👋 Começamos concentrando todo mundo na <b className="text-white">sala principal</b> para a conversa fluir. As outras salas abrem quando passar de 20 pessoas online.
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (
@@ -228,7 +252,7 @@ export const RoomsPage = () => {
         )}
 
         {/* Rooms Grid */}
-        {!loading && filteredRooms.length > 0 && (
+        {!loading && visibleRooms.length > 0 && (
           <div>
             {/* Section header with context */}
             <div className="flex items-center gap-2 mb-4">
@@ -248,7 +272,7 @@ export const RoomsPage = () => {
                  selectedCategory === 'community' ? '🫂 Salas da Comunidade — Criadas por Vocês' :
                  '💬 Papo Geral'}
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.04] text-dark-400">{filteredRooms.length}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.04] text-dark-400">{visibleRooms.length}</span>
             </div>
 
             {/* Subtitle per category */}
@@ -266,7 +290,7 @@ export const RoomsPage = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredRooms.map((room) => (
+              {visibleRooms.map((room) => (
                 <RoomCard key={room.id} room={room} />
               ))}
             </div>
@@ -274,7 +298,7 @@ export const RoomsPage = () => {
         )}
 
         {/* No rooms */}
-        {!loading && filteredRooms.length === 0 && (
+        {!loading && visibleRooms.length === 0 && (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-bold text-white mb-2">Nenhuma sala encontrada</h3>
