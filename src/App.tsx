@@ -7,7 +7,7 @@ import { PricingPage } from './pages/PricingPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { HobbiesPage } from './pages/HobbiesPage'
 import { AuthPage } from './pages/AuthPage'
-import { RoomPage } from './pages/RoomPage'
+import { RoomPage } from './rooms/RoomPage'
 import { CamarotePage } from './pages/CamarotePage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 // SecretCabinsPage removed — simplifying
