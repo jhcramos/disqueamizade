@@ -167,7 +167,7 @@ export const AuthPage = () => {
         </button>
 
         <p className="text-center text-[10px] text-dark-600 mt-6">
-          Ao continuar você aceita os <a href="#" className="text-primary-400/60">Termos</a> e <a href="#" className="text-primary-400/60">Privacidade</a>.
+          Ao continuar você aceita os <Link to="/termos" className="text-primary-400/60">Termos</Link> e <Link to="/privacidade" className="text-primary-400/60">Privacidade</Link>.
           <br />Apenas maiores de 18 anos.
         </p>
       </div>

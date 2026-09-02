@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Flame } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 
 const CATEGORY_ROOM_MAP: Record<string, { label: string; emoji: string; link: string; desc: string }> = {
@@ -21,7 +20,6 @@ interface BlogRoomCTAProps {
 }
 
 export const BlogRoomCTA = ({ category, variant = 0 }: BlogRoomCTAProps) => {
-  const [onlineCount] = useState(() => Math.floor(Math.random() * 66) + 15)
   const navigate = useNavigate()
   const { verifyAge } = useAgeVerification()
   const room = CATEGORY_ROOM_MAP[category] || DEFAULT_ROOM
@@ -48,13 +46,6 @@ export const BlogRoomCTA = ({ category, variant = 0 }: BlogRoomCTAProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <Flame className="w-4 h-4 text-orange-400" />
-        <span className="text-sm text-orange-300 font-medium">
-          {onlineCount} pessoas online agora
-        </span>
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-      </div>
 
       <a
         href={room.link}
