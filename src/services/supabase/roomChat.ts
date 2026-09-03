@@ -1,4 +1,5 @@
 import { supabase } from './client'
+import { filterMessage } from '@/services/moderation'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 type ChatMessage = {
@@ -165,6 +166,11 @@ export const roomChat = {
       return false // silently drop
     }
     messageTimestamps.push(now)
+
+    // Filtro de moderação (Plano V4, Fase 3): barra links, mascara palavrões.
+    const filtered = filterMessage(content)
+    if (!filtered.ok) return false
+    content = filtered.cleaned
 
     const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     const timestamp = new Date().toISOString()

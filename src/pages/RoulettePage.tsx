@@ -16,6 +16,7 @@ import { roomChat } from '@/services/supabase/roomChat'
 import { useToastStore } from '@/components/common/ToastContainer'
 import { isLiveKitConfigured, fetchRoomToken } from '@/rooms/livekit'
 import { RouletteCall } from '@/rooms/RouletteCall'
+import { reportUser } from '@/services/moderation'
 
 type Status = 'idle' | 'searching' | 'matched' | 'no-match'
 
@@ -129,10 +130,11 @@ export const RoulettePage = () => {
     startSearch()
   }, [startSearch])
 
-  const handleReport = useCallback((_peerId: string) => {
+  const handleReport = useCallback((peerId: string) => {
+    reportUser({ reportedIdentity: peerId, reporterIdentity: identity, reason: 'inappropriate_content', roomSlug: match?.roomId })
     addToast({ type: 'success', title: 'Denúncia enviada', message: 'Obrigado. Vamos revisar e já pulamos para a próxima pessoa.' })
     nextPerson()
-  }, [addToast, nextPerson])
+  }, [addToast, nextPerson, identity, match])
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
