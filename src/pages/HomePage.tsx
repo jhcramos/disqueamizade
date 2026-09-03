@@ -16,7 +16,7 @@ const features = [
     icon: MessageCircle,
     title: 'Salas de Chat',
     description: 'Salas temáticas com vídeo e máscaras virtuais para chat anônimo. Converse por cidade, idade, hobby ou idioma com até 30 pessoas.',
-    image: 'features/chat-rooms.png',
+    image: 'features/chat-rooms.webp',
     accentColor: '#6366f1',
     link: '/rooms',
   },
@@ -24,7 +24,7 @@ const features = [
     icon: Shuffle,
     title: 'Roleta 1:1',
     description: 'Conheça alguém aleatório com filtros de vídeo e máscaras! Use óculos virtuais, emojis ou máscaras de carnaval. "Próximo" sempre disponível.',
-    image: 'features/roulette.png',
+    image: 'features/roulette.webp',
     accentColor: '#ec4899',
     link: '/roulette',
   },
@@ -32,7 +32,7 @@ const features = [
     icon: ShoppingBag,
     title: 'Marketplace',
     description: 'Ofereça ou contrate: aulas, coaching, terapia, entretenimento e muito mais com fichas.',
-    image: 'features/marketplace.png',
+    image: 'features/marketplace.webp',
     accentColor: '#10b981',
     link: '/marketplace',
   },
@@ -40,7 +40,7 @@ const features = [
     icon: Crown,
     title: 'Ostentação',
     description: 'Com 300+ fichas, ganhe o badge dourado, efeitos especiais e prioridade em tudo!',
-    image: 'features/ostentacao.png',
+    image: 'features/ostentacao.webp',
     accentColor: '#f59e0b',
     link: '/pricing',
   },
@@ -51,7 +51,7 @@ const getWeeklyHeroImage = () => {
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const weekNumber = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)
-  return weekNumber % 2 === 0 ? 'hero-week-even.png' : 'hero-week-odd.png'
+  return weekNumber % 2 === 0 ? 'hero-week-even.webp' : 'hero-week-odd.webp'
 }
 
 /* ── CSS-only keyframes injected once ── */
@@ -498,7 +498,7 @@ export const HomePage = () => {
         {/* Banner background */}
         <div className="absolute inset-0">
           <img 
-            src={import.meta.env.BASE_URL + 'features/adult-banner.png'} 
+            src={import.meta.env.BASE_URL + 'features/adult-banner.webp'} 
             alt="" 
             className="w-full h-full object-cover opacity-20"
           />
