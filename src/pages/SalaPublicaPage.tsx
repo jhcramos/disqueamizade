@@ -16,6 +16,7 @@ import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { supabase } from '@/services/supabase/client'
 import { track } from '@/services/analytics'
 import { getSalaPublica } from '@/data/salasPublicas'
+import { ProgramaAoVivo } from '@/components/common/ProgramaAoVivo'
 
 const SITE = 'https://disqueamizade.com.br'
 
@@ -117,6 +118,8 @@ export const SalaPublicaPage = () => {
             <Video className="w-5 h-5" /> Entrar na sala
           </button>
         </div>
+
+        <div className="mb-8"><ProgramaAoVivo compact /></div>
 
         {/* Como funciona */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
