@@ -115,6 +115,7 @@ const salas = [
   { slug: 'geral-brasil', h1: 'Bate-papo Geral do Brasil com vídeo', descricao: 'Sala principal do Disque Amizade: bate-papo ao vivo com vídeo e gente de todo o Brasil, sem cadastro.' },
   { slug: 'sao-paulo', h1: 'Chat online de São Paulo com vídeo', descricao: 'Converse com paulistanos e gente de São Paulo ao vivo, com vídeo e sem cadastro.' },
   { slug: 'rio-de-janeiro', h1: 'Chat online do Rio de Janeiro com vídeo', descricao: 'Bate-papo ao vivo com cariocas e gente do Rio de Janeiro, com vídeo e sem cadastro.' },
+  { slug: 'belo-horizonte', h1: 'Chat online de Belo Horizonte com vídeo', descricao: 'Bate-papo ao vivo com mineiros e gente de Belo Horizonte, com vídeo e sem cadastro.' },
   { slug: 'paquera', h1: 'Sala de paquera online com vídeo', descricao: 'Paquere e conheça gente nova ao vivo, com vídeo e sem cadastro. Só para maiores de 18.' },
   { slug: '30-mais', h1: 'Chat para maiores de 30 com vídeo', descricao: 'Bate-papo ao vivo para pessoas com mais de 30 anos, com vídeo e sem cadastro.' },
   { slug: 'nordeste', h1: 'Chat online do Nordeste com vídeo', descricao: 'Converse com gente de todo o Nordeste ao vivo, com vídeo e sem cadastro.' },
