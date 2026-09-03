@@ -7,15 +7,10 @@ import { useAuthStore } from '@/store/authStore'
 import { OstentacaoBadge } from '@/components/fichas/OstentacaoBadge'
 
 const navLinks = [
-  { to: '/', label: 'Início' },
   { to: '/rooms', label: 'Salas' },
   { to: '/roulette', label: 'Roleta 1:1' },
-  { to: '/marketplace', label: 'Marketplace' },
-  { to: '/hobbies', label: 'Hobbies' },
-  { to: '/pricing', label: 'Planos' },
   { to: '/blog', label: 'Blog' },
   { to: '/sobre', label: 'Sobre' },
-  { to: '/creator', label: 'Creator' },
 ]
 
 export const Header = () => {

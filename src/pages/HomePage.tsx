@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MessageCircle, ShoppingBag, Users, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
 import { track } from '@/services/analytics'
+import { useAuthStore } from '@/store/authStore'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { useRooms, useStats } from '../hooks/useSupabaseData'
@@ -150,7 +152,16 @@ if (!document.querySelector('#disque-home-styles')) {
 
 export const HomePage = () => {
   const heroImage = getWeeklyHeroImage()
+  const navigate = useNavigate()
+  const signInAsGuest = useAuthStore((s) => s.signInAsGuest)
+  const { verifyAge } = useAgeVerification()
   useEffect(() => { track('home_view') }, [])
+
+  // Entrar agora, sem cadastro: confirma 18+, cria convidado e abre a sala principal.
+  const enterNow = () => {
+    track('cta_enter_click', { cta: 'hero_main' })
+    verifyAge(() => { signInAsGuest(); navigate('/room/geral-brasil') })
+  }
   const { rooms: dbRooms } = useRooms()
   const stats = useStats()
 
@@ -226,26 +237,25 @@ export const HomePage = () => {
           </h1>
 
           <p className="animate-slide-up-fade-d2 text-lg md:text-xl lg:text-2xl text-dark-300 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
-            Salas de vídeo com até 30 pessoas, chat 1:1 aleatório e máscaras virtuais
-            para quem quer conversar de forma anônima — tudo ao vivo.
+            Salas de vídeo ao vivo, roleta 1:1 e máscaras virtuais para conversar
+            de forma anônima. Entra pelo navegador, sem baixar nada e sem cadastro.
           </p>
 
           {/* CTAs */}
           <div className="animate-slide-up-fade-d3 flex flex-col sm:flex-row items-center justify-center gap-5 mb-16">
-            <Link
-              to="/rooms"
-              onClick={() => track('cta_enter_click', { cta: 'hero_rooms' })}
+            <button
+              onClick={enterNow}
               style={{
                 background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                minWidth: '230px',
+                minWidth: '260px',
                 boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 10px 40px rgba(99,102,241,0.2)'
               }}
               className="flex items-center gap-3 justify-center text-white font-bold text-lg py-5 px-10 rounded-2xl hover:scale-105 transition-all duration-300 no-underline relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
               <Users className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Entrar nas Salas</span>
-            </Link>
+              <span className="relative z-10">Entrar agora, sem cadastro</span>
+            </button>
             <Link
               to="/roulette"
               onClick={() => track('cta_enter_click', { cta: 'hero_roulette' })}
@@ -262,10 +272,9 @@ export const HomePage = () => {
             </Link>
           </div>
 
-          <Link to="/pricing" className="text-amber-400 hover:text-amber-300 text-sm font-medium flex items-center gap-2 justify-center mb-16 transition-colors">
-            <Coins className="w-4 h-4" />
-            Ver Fichas & Planos Premium
-          </Link>
+          <p className="text-dark-400 text-sm flex items-center gap-2 justify-center mb-16">
+            Grátis · 18+ · funciona no navegador
+          </p>
 
           {/* Stats bar */}
           <div className="glass-strong rounded-2xl py-6 px-8 max-w-3xl mx-auto">
