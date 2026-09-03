@@ -108,6 +108,23 @@ serve(async (req: Request) => {
       )
     }
 
+    // Nega token a quem está banido (Plano V4, Fase 3, item 3.1). Best-effort:
+    // se as envs do Supabase não estiverem setadas, segue emitindo (degrada).
+    try {
+      const sbUrl = Deno.env.get('SUPABASE_URL')
+      const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      const isUuid = /^[0-9a-f-]{36}$/i.test(participantName)
+      if (sbUrl && svc && isUuid) {
+        const r = await fetch(`${sbUrl}/rest/v1/user_bans?user_id=eq.${participantName}&or=(expires_at.is.null,expires_at.gt.${new Date().toISOString()})&select=id`, {
+          headers: { apikey: svc, Authorization: `Bearer ${svc}` },
+        })
+        const bans = await r.json()
+        if (Array.isArray(bans) && bans.length > 0) {
+          return new Response(JSON.stringify({ error: 'banned' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+      }
+    } catch (_e) { /* degrada: emite token */ }
+
     const token = await createLiveKitToken(apiKey, apiSecret, roomId, participantName)
 
     return new Response(

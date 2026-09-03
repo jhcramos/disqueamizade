@@ -29,6 +29,7 @@ import { isLiveKitConfigured, fetchRoomToken, LIVEKIT_URL } from './livekit'
 import { useStageCamera } from './useStageCamera'
 import { RoomVideoGrid } from './RoomVideoGrid'
 import { DMConversation, type DMMessage } from './dm'
+import { reportUser, blockUser as persistBlock } from '@/services/moderation'
 
 type ChatMessage = {
   id: string; userId: string; username: string; content: string
@@ -195,18 +196,15 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
   }, [input, identity, displayName, addToast])
 
   const handleBlock = useCallback((id: string, name: string) => {
-    setBlocked((prev) => {
-      const next = new Set(prev); next.add(id)
-      try { localStorage.setItem('blocked-users', JSON.stringify([...next])) } catch { /* ignore */ }
-      return next
-    })
+    setBlocked(persistBlock(id))
     addToast({ type: 'success', title: 'Bloqueado', message: `Você não verá mais ${name}.` })
   }, [addToast])
 
-  const handleReport = useCallback((_id: string, name: string) => {
+  const handleReport = useCallback((id: string, name: string) => {
     analytics('report_sent', { room: roomId })
+    reportUser({ reportedIdentity: id, reporterIdentity: identity, reason: 'inappropriate_content', roomSlug: roomId })
     onReport(name)
-  }, [roomId, onReport])
+  }, [roomId, identity, onReport])
 
   const handleShare = useCallback(() => {
     const url = `${window.location.origin}/sala/${roomId}`
