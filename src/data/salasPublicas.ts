@@ -49,6 +49,14 @@ export const SALAS_PUBLICAS: SalaPublica[] = [
     faq: FAQ_BASE,
   },
   {
+    slug: 'belo-horizonte',
+    nome: 'Belo Horizonte',
+    h1: 'Chat online de Belo Horizonte com vídeo',
+    descricao: 'Bate-papo ao vivo com mineiros e gente de Belo Horizonte, com vídeo e sem cadastro.',
+    intro: 'A sala de Belo Horizonte reúne o mineirinho de todo canto para conversar ao vivo. Amizade, prosa boa e paquera com gente de BH e região, por vídeo ou texto, sem cadastro.',
+    faq: FAQ_BASE,
+  },
+  {
     slug: 'paquera',
     nome: 'Paquera',
     h1: 'Sala de paquera online com vídeo',
