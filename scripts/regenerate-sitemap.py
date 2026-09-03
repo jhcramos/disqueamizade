@@ -15,6 +15,14 @@ static_pages = [
     ("/pricing", 0.7, "weekly"),
 ]
 
+# Salas públicas indexáveis (/sala/:slug) — prioridade alta (transacional)
+sala_slugs = [
+    "geral-brasil", "sao-paulo", "rio-de-janeiro", "belo-horizonte",
+    "paquera", "30-mais", "nordeste",
+]
+for slug in sala_slugs:
+    static_pages.append((f"/sala/{slug}", 0.9, "daily"))
+
 with open("public/blog-posts/index.json", "r") as f:
     posts = json.load(f)
 

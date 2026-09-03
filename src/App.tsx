@@ -22,6 +22,7 @@ import { LegalPage } from './pages/LegalPage'
 import { BlogPage } from './pages/blog/BlogPage'
 import { BlogPostPage } from './pages/blog/BlogPostPage'
 import { AboutPage } from './pages/AboutPage'
+import { SalaPublicaPage } from './pages/SalaPublicaPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
@@ -80,6 +81,7 @@ function App() {
 
         {/* About — public, SEO */}
         <Route path="/sobre" element={<AboutPage />} />
+        <Route path="/sala/:slug" element={<SalaPublicaPage />} />
 
         {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />
