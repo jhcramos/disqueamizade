@@ -4,6 +4,7 @@ import { MessageCircle, ShoppingBag, Users, ChevronRight, Phone, Shuffle, Crown,
 import { track } from '@/services/analytics'
 import { useAuthStore } from '@/store/authStore'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
+import { ProgramaAoVivo } from '@/components/common/ProgramaAoVivo'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { useRooms, useStats } from '../hooks/useSupabaseData'
@@ -303,6 +304,10 @@ export const HomePage = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 -mt-8 mb-8 w-full relative z-10">
+        <ProgramaAoVivo />
       </section>
 
       {/* ═══════════════════ FEATURES ═══════════════════ */}
