@@ -149,6 +149,9 @@ interface StageProps {
 const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport }: StageProps) => {
   const connState = useConnectionState()
   const { addToast } = useToastStore()
+  const setGuestNickname = useAuthStore((s) => s.setGuestNickname)
+  const [editingNick, setEditingNick] = useState(false)
+  const [nickInput, setNickInput] = useState(displayName)
   const cam = useStageCamera(roomId)
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -228,6 +231,17 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          {isGuest && !editingNick && (
+            <button onClick={() => { setNickInput(displayName); setEditingNick(true) }} title="Trocar apelido" className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs">
+              <span className="text-dark-300">você:</span> <span className="font-semibold">{displayName}</span> <span className="text-dark-500">✎</span>
+            </button>
+          )}
+          {isGuest && editingNick && (
+            <form onSubmit={(e) => { e.preventDefault(); setGuestNickname(nickInput); setEditingNick(false); addToast({ type: 'success', title: 'Apelido atualizado', message: `Agora você é ${nickInput.trim().slice(0, 24)}.` }) }} className="flex items-center gap-1">
+              <input value={nickInput} onChange={(e) => setNickInput(e.target.value)} maxLength={24} autoFocus className="w-28 px-2 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-primary-500/40" />
+              <button type="submit" className="px-2 py-1.5 rounded-xl bg-primary-500 text-white text-xs font-bold">ok</button>
+            </form>
+          )}
           <button onClick={handleShare} title="Compartilhar" className="p-2 rounded-xl bg-white/5 hover:bg-white/10"><Share2 className="w-4 h-4" /></button>
           <button onClick={() => setShowChat((v) => !v)} title="Chat" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 lg:hidden"><Users className="w-4 h-4" /></button>
         </div>
