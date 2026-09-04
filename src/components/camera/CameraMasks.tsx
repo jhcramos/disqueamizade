@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useToastStore } from '@/components/common/ToastContainer'
-import { EMOJI_MASKS } from '@/hooks/useVideoFilter'
+import { MASKS } from '@/masks'
 
 // CSS filter strings for each filter ID
 export const FILTER_CSS: Record<string, string> = {
@@ -12,7 +12,7 @@ export const FILTER_CSS: Record<string, string> = {
   blur: 'blur(2px)',
 }
 
-const FILTERS = [
+export const FILTERS = [
   { id: 'normal', label: 'Normal', emoji: '🔄' },
   { id: 'sepia', label: 'Sépia', emoji: '🟤' },
   { id: 'bw', label: 'P&B', emoji: '⬛' },
@@ -105,10 +105,11 @@ export const CameraMasksButton = ({
             {/* ─── MASKS TAB ─── */}
             {tab === 'masks' && (
               <>
-                {/* Emojis */}
-                <p className="text-[10px] text-dark-500 font-semibold mb-1.5">😺 Emojis ({EMOJI_MASKS.filter(m => m.category === 'emoji').length})</p>
-                <div className="grid grid-cols-6 gap-1 mb-3">
-                  {EMOJI_MASKS.filter(m => m.category === 'emoji').map(mask => {
+                <p className="text-[10px] text-dark-500 font-semibold mb-2">
+                  Seguem seu rosto e aparecem para todo mundo na sala
+                </p>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {MASKS.map((mask) => {
                     const selected = activeMask === mask.id
                     return (
                       <button
@@ -116,68 +117,24 @@ export const CameraMasksButton = ({
                         onClick={() => {
                           const next = selected ? null : mask.id
                           onMaskChange?.(next)
-                          addToast({ type: 'success', title: next ? `🎭 ${mask.name}` : '🎭 Removida' })
+                          addToast({ type: 'success', title: next ? `${mask.icon} ${mask.name}` : '🎭 Máscara removida' })
                         }}
-                        className={`flex flex-col items-center gap-0 p-1.5 rounded-lg transition-all ${
+                        title={mask.description}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                           selected
-                            ? 'bg-primary-500/20 border-2 border-primary-500/40 scale-110'
-                            : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] hover:scale-105'
+                            ? 'bg-primary-500/20 border-2 border-primary-500/50 scale-[1.04]'
+                            : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] hover:scale-[1.03]'
                         }`}
                       >
-                        <span className="text-lg">{mask.emoji}</span>
-                        <span className="text-[7px] text-dark-500 truncate w-full text-center leading-tight">{mask.name}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Óculos */}
-                <p className="text-[10px] text-dark-500 font-semibold mb-1.5">🕶️ Óculos</p>
-                <div className="grid grid-cols-2 gap-1.5 mb-3">
-                  {EMOJI_MASKS.filter(m => m.category === 'glasses').map(mask => {
-                    const selected = activeMask === mask.id
-                    return (
-                      <button
-                        key={mask.id}
-                        onClick={() => {
-                          const next = selected ? null : mask.id
-                          onMaskChange?.(next)
-                          addToast({ type: 'success', title: next ? `🕶️ ${mask.name}` : '🕶️ Removido' })
-                        }}
-                        className={`flex items-center gap-2 p-2 rounded-xl transition-all ${
-                          selected
-                            ? 'bg-primary-500/20 border-2 border-primary-500/40'
-                            : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <img src={mask.image} alt={mask.name} className="w-10 h-6 object-contain rounded" />
-                        <span className="text-[10px] text-dark-300">{mask.name}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Carnaval */}
-                <p className="text-[10px] text-dark-500 font-semibold mb-1.5">🎭 Carnaval</p>
-                <div className="grid grid-cols-2 gap-1.5 mb-3">
-                  {EMOJI_MASKS.filter(m => m.category === 'carnival').map(mask => {
-                    const selected = activeMask === mask.id
-                    return (
-                      <button
-                        key={mask.id}
-                        onClick={() => {
-                          const next = selected ? null : mask.id
-                          onMaskChange?.(next)
-                          addToast({ type: 'success', title: next ? `🎭 ${mask.name}` : '🎭 Removida' })
-                        }}
-                        className={`flex items-center gap-2 p-2 rounded-xl transition-all ${
-                          selected
-                            ? 'bg-pink-500/20 border-2 border-pink-500/40'
-                            : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <img src={mask.image} alt={mask.name} className="w-10 h-6 object-contain rounded" />
-                        <span className="text-[10px] text-dark-300">{mask.name}</span>
+                        <div className="w-16 h-16 rounded-lg bg-dark-800 flex items-center justify-center overflow-hidden">
+                          {mask.thumb ? (
+                            <img src={mask.thumb} alt={mask.name} className="w-full h-full object-contain scale-[1.35] translate-y-1" />
+                          ) : (
+                            <span className="text-3xl">{mask.icon}</span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-semibold text-white leading-tight">{mask.name}</span>
+                        <span className="text-[9px] text-dark-500 leading-tight text-center">{mask.description}</span>
                       </button>
                     )
                   })}
@@ -191,8 +148,6 @@ export const CameraMasksButton = ({
                     ✕ Remover máscara
                   </button>
                 )}
-
-                {/* removed tracking label */}
               </>
             )}
 

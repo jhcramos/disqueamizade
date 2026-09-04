@@ -1,31 +1,29 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// useCompositeStream — compõe vídeo + filtro de cor + máscara num canvas e
+// devolve um MediaStream. É ESSE stream que vai para o LiveKit: os outros
+// participantes veem exatamente o que você vê (máscara inclusa).
+// ═══════════════════════════════════════════════════════════════════════════
+
 import { useRef, useEffect, useCallback, useState } from 'react'
+import { getMask } from '@/masks'
+import type { TrackedFace } from './useVideoFilter'
 
-type FaceBox = { x: number; y: number; w: number; h: number }
-
-/**
- * Composites video + CSS filters + emoji mask into a canvas,
- * returning a MediaStream that includes all visual effects.
- * This stream is what gets sent via WebRTC so remote users see filters/masks.
- */
 export function useCompositeStream(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   rawStream: MediaStream | undefined | null,
   filterStyle: string,
-  maskEmoji: string | null,
-  faceBox: FaceBox | null,
+  maskId: string | null,
+  faceRef: React.MutableRefObject<TrackedFace | null>,
   beautySmooth: boolean,
   beautyBrighten: boolean,
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const animFrameRef = useRef<number>(0)
   const [compositeStream, setCompositeStream] = useState<MediaStream | null>(null)
-  // Use refs for values that change frequently so render loop reads latest without re-creating stream
-  const maskEmojiRef = useRef(maskEmoji)
-  const faceBoxRef = useRef(faceBox)
-  maskEmojiRef.current = maskEmoji
-  faceBoxRef.current = faceBox
+  // refs para o loop ler o valor mais recente sem recriar o stream
+  const maskIdRef = useRef(maskId)
+  maskIdRef.current = maskId
 
-  // Build the CSS filter string
   const buildFilter = useCallback(() => {
     const parts: string[] = []
     if (filterStyle && filterStyle !== 'none') parts.push(filterStyle)
@@ -40,81 +38,46 @@ export function useCompositeStream(
       return
     }
 
-    // Create offscreen canvas
-    if (!canvasRef.current) {
-      canvasRef.current = document.createElement('canvas')
-    }
+    if (!canvasRef.current) canvasRef.current = document.createElement('canvas')
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')!
-
-    // Match video dimensions
     const video = videoRef.current
+
     const updateSize = () => {
       const vw = video.videoWidth || 640
       const vh = video.videoHeight || 480
-      if (canvas.width !== vw || canvas.height !== vh) {
-        canvas.width = vw
-        canvas.height = vh
-      }
+      if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh }
     }
 
-    // Render loop
     const render = () => {
-      if (!video || video.paused || video.ended) {
-        animFrameRef.current = requestAnimationFrame(render)
-        return
-      }
-
+      animFrameRef.current = requestAnimationFrame(render)
+      if (!video || video.paused || video.ended) return
       updateSize()
 
-      // Apply CSS filter to canvas context
       const filter = buildFilter()
       ctx.filter = filter === 'none' ? 'none' : filter
-
-      // Draw video frame
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-      // Reset filter for overlay drawing
       ctx.filter = 'none'
 
-      // Draw emoji mask at face position (read from refs for latest values)
-      const currentEmoji = maskEmojiRef.current
-      const currentBox = faceBoxRef.current
-      if (currentEmoji && currentBox) {
-        const cx = (currentBox.x + currentBox.w / 2) / 100 * canvas.width
-        const cy = (currentBox.y + currentBox.h / 2) / 100 * canvas.height
-        const size = Math.max(currentBox.w, currentBox.h) / 100 * Math.max(canvas.width, canvas.height) * 0.3
-
-        ctx.font = `${Math.round(size)}px serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(currentEmoji, cx, cy)
+      const mask = getMask(maskIdRef.current)
+      const face = faceRef.current
+      if (mask && face) {
+        try {
+          mask.render({ ctx, w: canvas.width, h: canvas.height, frame: face.frame, pose: face.pose, t: performance.now() })
+        } catch (e) {
+          console.warn('[mask] render', e)
+        }
       }
-
-      animFrameRef.current = requestAnimationFrame(render)
     }
-
-    // Start rendering
     animFrameRef.current = requestAnimationFrame(render)
 
-    // Capture stream from canvas (30fps)
     const canvasStream = canvas.captureStream(30)
-
-    // Add audio tracks from original stream
-    for (const audioTrack of rawStream.getAudioTracks()) {
-      canvasStream.addTrack(audioTrack)
-    }
-
+    for (const audioTrack of rawStream.getAudioTracks()) canvasStream.addTrack(audioTrack)
     setCompositeStream(canvasStream)
 
-    return () => {
-      cancelAnimationFrame(animFrameRef.current)
-    }
+    return () => { cancelAnimationFrame(animFrameRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawStream, videoRef, buildFilter])
-
-  // Update composite when filter/mask changes (no need to recreate stream)
-  // The render loop already reads the latest values via closure
 
   return { compositeStream, canvasRef }
 }

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Mask Lab — Disque Amizade</title>
+  <style>
+    body { margin: 0; background: #0b0b12; color: #ddd; font: 13px system-ui, sans-serif; }
+    h1 { font-size: 15px; margin: 12px 16px 4px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 16px; }
+    figure { margin: 0; }
+    figcaption { font-size: 11px; color: #9a9ab0; margin-top: 3px; }
+    canvas { display: block; background: #000; border-radius: 6px; }
+    #status { padding: 6px 16px; color: #8f8; font-family: monospace; white-space: pre-wrap; }
+    #controls { padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>🎭 Mask Lab — rastreamento MediaPipe + máscaras v2</h1>
+  <div id="controls">
+    <button id="cam">Usar webcam</button>
+    <span style="color:#889">(ou ?img=/caminho.jpg)</span>
+  </div>
+  <div id="status">carregando…</div>
+  <div id="out"></div>
+  <script type="module" src="/dev/mask-lab.ts"></script>
+</body>
+</html>
