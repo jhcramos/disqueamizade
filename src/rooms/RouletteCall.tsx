@@ -3,7 +3,7 @@ import { useToastStore } from '@/components/common/ToastContainer'
 // RouletteCall — chamada 1:1 da roleta em LiveKit (Plano V4, item 1.7)
 //
 // Recebe o par já formado pelo matchmaking e conecta os dois numa sala LiveKit
-// (nome = id do par). Publica a câmera COMPOSTA (máscaras) automaticamente e
+// (nome = id do par). Publica somente a câmera confirmada na prévia privada e
 // mostra o parceiro grande + PiP local. Chat via Supabase realtime.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -13,7 +13,7 @@ import {
 } from '@livekit/components-react'
 import { ConnectionState } from 'livekit-client'
 import { Video, VideoOff, Mic, MicOff, SkipForward, X, Send, Flag } from 'lucide-react'
-import { CameraMasksButton } from '@/components/camera/CameraMasks'
+import { ProcessedPreview } from './CameraSetup'
 import { roomChat, chatError } from '@/services/supabase/roomChat'
 import { track as analytics } from '@/services/analytics'
 import { LIVEKIT_URL } from './livekit'
@@ -49,7 +49,7 @@ export const RouletteCall = (props: Props) => {
   )
 }
 
-const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onEnd, onReport }: Props) => {
+const CallInner = ({ roomId, identity, displayName, peerId, onNext, onEnd, onReport }: Props) => {
   const connState = useConnectionState()
   const cam = useStageCamera(roomId)
   const cameraTracks = useTracks(['camera' as any], { onlySubscribed: false })
@@ -60,16 +60,6 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
   const [sending, setSending] = useState(false)
   const { addToast } = useToastStore()
   const endRef = useRef<HTMLDivElement>(null)
-  const goneLiveRef = useRef(false)
-
-  // Publica a câmera automaticamente ao conectar (roleta = todo mundo com vídeo)
-  useEffect(() => {
-    if (connState === ConnectionState.Connected && !goneLiveRef.current) {
-      goneLiveRef.current = true
-      cam.goLive()
-    }
-  }, [connState, cam])
-
   useEffect(() => {
     if (remote) analytics('roulette_matched', { room: roomId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,6 +94,7 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
+      {cam.error && <p role="alert" className="text-sm text-red-300">{cam.error}</p>}
       {/* Vídeo do parceiro */}
       <div className="flex-1 relative rounded-2xl overflow-hidden bg-dark-900 border border-white/10 min-h-[300px]">
         {remote ? (
@@ -128,7 +119,7 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
 
         {/* PiP local */}
         <div className="absolute bottom-3 right-3 w-32 h-24 sm:w-44 sm:h-32 rounded-xl overflow-hidden border-2 border-primary-500/50 shadow-xl bg-dark-800 z-20">
-          <video ref={cam.videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          <ProcessedPreview stream={cam.previewStream} className="w-full h-full object-cover" />
           <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-primary-500/30 backdrop-blur-sm text-[9px] text-primary-300 font-semibold">Você</div>
         </div>
       </div>
@@ -165,30 +156,24 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
 
       {/* Controles (mobile: barra flutuante embaixo) */}
       <div className="lg:hidden fixed bottom-4 inset-x-0 flex justify-center gap-2 z-30">
-        <ControlBar cam={cam} isGuest={isGuest} onNext={onNext} onEnd={onEnd} />
+        <ControlBar cam={cam} onNext={onNext} onEnd={onEnd} />
       </div>
       <div className="hidden lg:flex absolute bottom-6 left-1/2 -translate-x-1/2 gap-2 z-30">
-        <ControlBar cam={cam} isGuest={isGuest} onNext={onNext} onEnd={onEnd} />
+        <ControlBar cam={cam} onNext={onNext} onEnd={onEnd} />
       </div>
     </div>
   )
 }
 
-const ControlBar = ({ cam, isGuest, onNext, onEnd }: { cam: ReturnType<typeof useStageCamera>; isGuest: boolean; onNext: () => void; onEnd: () => void }) => (
+const ControlBar = ({ cam, onNext, onEnd }: { cam: ReturnType<typeof useStageCamera>; onNext: () => void; onEnd: () => void }) => (
   <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-dark-900/90 border border-white/10 backdrop-blur">
     <button onClick={cam.toggleCamera} className={`p-2.5 rounded-xl border ${cam.isCameraOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
       {cam.isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
     </button>
-    <button onClick={cam.toggleMic} className={`p-2.5 rounded-xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
+    <button disabled={!cam.isLive} onClick={cam.toggleMic} className={`p-2.5 rounded-xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
       {cam.isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
     </button>
-    <CameraMasksButton
-      userTier={isGuest ? 'free' : 'basic'}
-      activeFilter={cam.activeFilter} onFilterChange={cam.setActiveFilter}
-      activeMask={cam.activeMask} onMaskChange={cam.setActiveMask}
-      beautySmooth={cam.beautySmooth} onBeautySmoothChange={cam.setBeautySmooth}
-      beautyBrighten={cam.beautyBrighten} onBeautyBrightenChange={cam.setBeautyBrighten}
-    />
+    <button onClick={cam.goLive} className="p-2.5 rounded-xl border border-white/10" title="Ajustar máscara na prévia privada">🎭</button>
     <button onClick={onNext} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm flex items-center gap-1.5">
       <SkipForward className="w-4 h-4" /> Próximo
     </button>

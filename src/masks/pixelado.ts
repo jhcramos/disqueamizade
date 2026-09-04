@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Pixelado — anonimato de verdade: pixeliza só a região do rosto, seguindo
+// Pixelado — efeito visual: pixeliza só a região do rosto, seguindo
 // o oval facial (posição, tamanho e inclinação) frame a frame.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -42,7 +42,7 @@ function render({ ctx, pose, w, h }: MaskContext) {
 
 export const pixelado: MaskDef = {
   id: 'pixelado',
-  name: 'Anônimo',
+  name: 'Pixelado',
   icon: '👾',
   description: 'Rosto pixelado, seguindo você',
   preload: () => Promise.resolve(),

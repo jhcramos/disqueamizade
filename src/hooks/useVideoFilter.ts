@@ -19,6 +19,8 @@ export interface FaceBox { x: number; y: number; w: number; h: number }
 
 export interface TrackedFace {
   frame: FaceFrame
+  videoTime: number
+  source: HTMLCanvasElement
   pose: FacePose
   /** dimensões do vídeo em que a pose foi calculada */
   w: number
@@ -63,6 +65,8 @@ export const useVideoFilter = (
     }
 
     let cancelled = false
+    const source = document.createElement('canvas')
+    const sourceContext = source.getContext('2d')
     let lastVideoTime = -1
     let lastBoxAt = 0
     let lastStatus: TrackingStatus | null = null
@@ -88,22 +92,27 @@ export const useVideoFilter = (
         try {
           raw = detectFrame(fl, video, t0)
         } catch (e) {
-          console.warn('[face] detect', e)
+          faceRef.current = null
+          setStatus('error')
           return
         }
         skipNext = performance.now() - t0 > SLOW_DETECT_MS
 
-        const frame = smootherRef.current.push(raw)
+        const frame = raw ? smootherRef.current.push(raw) : null
         if (frame) {
           const w = video.videoWidth, h = video.videoHeight
+          if (!sourceContext) { faceRef.current = null; setStatus('error'); return }
+          source.width = w; source.height = h
+          sourceContext.drawImage(video, 0, 0, w, h)
           const pose = computePose(frame, w, h)
-          faceRef.current = { frame, pose, w, h }
+          faceRef.current = { frame, pose, w, h, videoTime: video.currentTime, source }
           setStatus('tracking')
           if (t0 - lastBoxAt > 150) {
             lastBoxAt = t0
             setFaceBox({ x: (pose.box.x / w) * 100, y: (pose.box.y / h) * 100, w: (pose.box.w / w) * 100, h: (pose.box.h / h) * 100 })
           }
         } else {
+          smootherRef.current.reset()
           faceRef.current = null
           setStatus('no-face')
         }
@@ -111,11 +120,12 @@ export const useVideoFilter = (
       rafRef.current = requestAnimationFrame(tick)
     }).catch((e) => {
       console.error('[face] falha ao carregar o rastreador', e)
-      if (!cancelled) setStatus('error')
+      if (!cancelled) { faceRef.current = null; setStatus('error') }
     })
 
     return () => {
       cancelled = true
+      faceRef.current = null
       cancelAnimationFrame(rafRef.current)
     }
   }, [currentFilter, stream, videoRef])

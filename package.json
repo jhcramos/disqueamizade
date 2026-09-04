@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "predev": "node scripts/copy-mediapipe.mjs",
     "optimize:blog-images": "node scripts/optimize-blog-images.mjs",
-    "test:chat": "node --test tests/chat-client.test.mjs supabase/functions/_shared/*.test.ts"
+    "test:chat": "node --test tests/chat-client.test.mjs supabase/functions/_shared/*.test.ts",
+    "test:camera": "node --test tests/camera-privacy.test.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.19",

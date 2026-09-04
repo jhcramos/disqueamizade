@@ -23,7 +23,7 @@ import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useToastStore } from '@/components/common/ToastContainer'
 import { supabase } from '@/services/supabase/client'
 import { roomChat, chatError } from '@/services/supabase/roomChat'
-import { CameraMasksButton } from '@/components/camera/CameraMasks'
+import { CameraSetupProvider, CameraPreview } from './CameraSetup'
 import { track as analytics, startRoomSession } from '@/services/analytics'
 import { isLiveKitConfigured, fetchRoomToken, LIVEKIT_URL } from './livekit'
 import { useStageCamera } from './useStageCamera'
@@ -40,12 +40,19 @@ type Presence = { userId: string; username: string; joinedAt: number }
 
 export const RoomPage = () => {
   const { roomId } = useParams()
+  const identity = useAuthStore(s => s.user?.id)
+  return <CameraSetupProvider key={`${roomId}:${identity}`}><RoomEntry /></CameraSetupProvider>
+}
+
+const RoomEntry = () => {
+  const { roomId } = useParams()
   const navigate = useNavigate()
   const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { verifyAge } = useAgeVerification()
   const { addToast } = useToastStore()
 
   const [ready, setReady] = useState(false)
+  const [entryConfirmed, setEntryConfirmed] = useState(false)
   const [ageOk, setAgeOk] = useState(() => sessionStorage.getItem('age-verified') === 'true')
   const [roomName, setRoomName] = useState('Sala')
   const [roomSlug, setRoomSlug] = useState('')
@@ -118,6 +125,8 @@ export const RoomPage = () => {
       </div>
     )
   }
+
+  if (!entryConfirmed) return <CameraPreview onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
 
   return (
     <LiveKitRoom
@@ -273,6 +282,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
 
           {/* Barra de controles */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur p-3">
+            {cam.error && <p role="alert" className="text-sm text-red-300 text-center mb-2">{cam.error}</p>}
             <div className="flex items-center justify-center gap-2 sm:gap-3">
               {!cam.isLive ? (
                 <button
@@ -290,27 +300,14 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
                   <button onClick={cam.toggleMic} className={`p-3 rounded-2xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
                     {cam.isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                   </button>
-                  <CameraMasksButton
-                    userTier={isGuest ? 'free' : 'basic'}
-                    activeFilter={cam.activeFilter}
-                    onFilterChange={cam.setActiveFilter}
-                    activeMask={cam.activeMask}
-                    onMaskChange={cam.setActiveMask}
-                    beautySmooth={cam.beautySmooth}
-                    onBeautySmoothChange={cam.setBeautySmooth}
-                    beautyBrighten={cam.beautyBrighten}
-                    onBeautyBrightenChange={cam.setBeautyBrighten}
-                  />
+                  <button onClick={cam.goLive} className="p-3 rounded-2xl border border-white/10 bg-white/5" title="Ajustar máscara na prévia privada">🎭</button>
                   <button onClick={cam.leaveStage} className="p-3 rounded-2xl bg-red-500 text-white font-bold">
                     <VideoOff className="w-5 h-5" />
                   </button>
                 </>
               )}
             </div>
-            {/* Fonte oculta do canvas (rastreador + máscara). NÃO usar
-                display:none: o navegador para de decodificar frames e o vídeo
-                composto sai preto. Fica 1px fora da vista, ainda renderizado. */}
-            <video ref={cam.videoRef} autoPlay playsInline muted className="fixed top-0 left-0 w-px h-px opacity-[0.01] pointer-events-none -z-10" />
+
           </div>
         </main>
 

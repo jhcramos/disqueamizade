@@ -1,3 +1,4 @@
+import { CameraSetupProvider, CameraPreview, useCameraSetup } from '@/rooms/CameraSetup'
 // ═══════════════════════════════════════════════════════════════════════════
 // RoulettePage — roleta 1:1 em LiveKit (Plano V4, item 1.7)
 //
@@ -48,6 +49,12 @@ function slug(s: string) {
 }
 
 export const RoulettePage = () => {
+  const identity = useAuthStore(s => s.user?.id)
+  return <CameraSetupProvider key={identity}><RouletteEntry /></CameraSetupProvider>
+}
+const RouletteEntry = () => {
+  const camera = useCameraSetup()
+  const [showPreview, setShowPreview] = useState(false)
   const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -91,6 +98,7 @@ export const RoulettePage = () => {
   const startSearch = useCallback(async () => {
     if (!identity) return // ainda criando convidado
     if (!isLiveKitConfigured()) {
+      camera.stop()
       setStatus('no-match')
       setNoMatchMessage('O vídeo ainda não está configurado neste ambiente.')
       return
@@ -115,6 +123,7 @@ export const RoulettePage = () => {
           setStatus('matched')
         } catch {
           if (revision !== searchRevision.current) return
+          camera.stop()
           setStatus('no-match')
           setNoMatchMessage('Não foi possível conectar o vídeo. Tente de novo.')
         }
@@ -122,13 +131,14 @@ export const RoulettePage = () => {
       (s) => {
         if (revision !== searchRevision.current) return
         setStatus(s)
-        if (s === 'no-match') setNoMatchMessage('Ninguém disponível agora. Tente novamente!')
+        if (s === 'no-match') { camera.stop(); setNoMatchMessage('Ninguém disponível agora. Tente novamente!') }
       },
       { bucketKey, avoid: new Set(recentRef.current.keys()), timeoutMs: 30000 },
     )
-  }, [identity, bucketKey])
+  }, [identity, bucketKey, camera.stop])
 
   const endSession = useCallback(() => {
+    camera.stop()
     ++searchRevision.current
     matchmaking.leaveQueue()
     roomChat.leave()
@@ -136,13 +146,17 @@ export const RoulettePage = () => {
     setStatus('idle')
     setSearchTime(0)
     setNoMatchMessage('')
-  }, [])
+  }, [camera.stop])
 
   const nextPerson = useCallback(() => {
+    ++searchRevision.current
+    matchmaking.leaveQueue()
     roomChat.leave()
     setMatch(null)
-    startSearch()
-  }, [startSearch])
+    setStatus('idle')
+    camera.stop()
+    setShowPreview(true)
+  }, [camera.stop])
 
   const handleReport = useCallback((peerId: string) => {
     reportUser({ reportedIdentity: peerId, reporterIdentity: identity, reason: 'inappropriate_content', roomSlug: match?.roomId })
@@ -151,6 +165,8 @@ export const RoulettePage = () => {
   }, [addToast, nextPerson, identity, match])
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
+
+  if (showPreview) return <CameraPreview onContinue={() => { setShowPreview(false); void startSearch() }} onSkip={() => { setShowPreview(false); void startSearch() }} onCancel={() => { camera.stop(); setShowPreview(false) }} />
 
   // ─── Match ativo: chamada LiveKit ───
   if (status === 'matched' && match && match.identity === identity) {
@@ -222,8 +238,8 @@ export const RoulettePage = () => {
             <div className="text-center max-w-xs">
               <div className="text-6xl mb-4">🎰</div>
               <h3 className="text-xl font-bold mb-2">Pronto para conhecer alguém?</h3>
-              <p className="text-sm text-dark-400 mb-6">A câmera liga ao conectar. Você pode usar máscaras.</p>
-              <button onClick={startSearch} disabled={!identity} className="btn-primary flex items-center gap-2 mx-auto disabled:opacity-50">
+              <p className="text-sm text-dark-400 mb-6">Escolha e teste sua máscara numa prévia privada antes de conversar. Você também pode entrar sem câmera.</p>
+              <button onClick={() => setShowPreview(true)} disabled={!identity} className="btn-primary flex items-center gap-2 mx-auto disabled:opacity-50">
                 <Shuffle className="w-5 h-5" /> Buscar
               </button>
             </div>
@@ -246,7 +262,7 @@ export const RoulettePage = () => {
               <div className="text-5xl mb-3">😔</div>
               <h3 className="text-lg font-bold mb-2">Ninguém encontrado</h3>
               <p className="text-sm text-dark-400 mb-4">{noMatchMessage}</p>
-              <button onClick={startSearch} className="btn-primary flex items-center gap-2 mx-auto">
+              <button onClick={() => setShowPreview(true)} className="btn-primary flex items-center gap-2 mx-auto">
                 <Shuffle className="w-5 h-5" /> Tentar novamente
               </button>
             </div>

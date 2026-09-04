@@ -29,7 +29,10 @@ export interface UseCameraResult {
   toggleMic: () => void
 }
 
-export const useCamera = (): UseCameraResult => {
+export const useCamera = (options: { startMuted?: boolean } = {}): UseCameraResult => {
+  const startMuted = options.startMuted ?? false
+  const requestVersion = useRef(0)
+  const pendingRequest = useRef(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isCameraOn, setIsCameraOn] = useState(false)
   const [isMicOn, setIsMicOn] = useState(false)
@@ -54,6 +57,7 @@ export const useCamera = (): UseCameraResult => {
   // Cleanup on unmount — stop ALL tracks
   useEffect(() => {
     return () => {
+      ++requestVersion.current
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => {
           track.stop()
@@ -64,6 +68,9 @@ export const useCamera = (): UseCameraResult => {
   }, [])
 
   const startCamera = useCallback(async () => {
+    if (pendingRequest.current || streamRef.current) return
+    pendingRequest.current = true
+    const version = ++requestVersion.current
     try {
       setError(null)
 
@@ -86,6 +93,7 @@ export const useCamera = (): UseCameraResult => {
           audio: true,
         })
       } catch {
+        if (version !== requestVersion.current) return
         // Fallback: try video only
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -97,10 +105,12 @@ export const useCamera = (): UseCameraResult => {
         })
       }
 
+      if (version !== requestVersion.current) { mediaStream.getTracks().forEach(track => track.stop()); return }
+      mediaStream.getAudioTracks().forEach(track => { track.enabled = !startMuted })
       streamRef.current = mediaStream
       setStream(mediaStream)
       setIsCameraOn(true)
-      setIsMicOn(mediaStream.getAudioTracks().length > 0)
+      setIsMicOn(!startMuted && mediaStream.getAudioTracks().length > 0)
       setPermissionState('granted')
 
       // Attach to video ref if available (com play() explícito, ver acima)
@@ -110,6 +120,7 @@ export const useCamera = (): UseCameraResult => {
         videoRef.current.play().catch(() => {})
       }
     } catch (err: unknown) {
+      if (version !== requestVersion.current) return
       const e = err as DOMException
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
         setPermissionState('denied')
@@ -125,10 +136,11 @@ export const useCamera = (): UseCameraResult => {
         setError('Erro ao acessar câmera. Tente novamente.')
       }
       console.error('Camera error:', e)
-    }
-  }, [])
+    } finally { pendingRequest.current = false }
+  }, [startMuted])
 
   const stopCamera = useCallback(() => {
+    ++requestVersion.current
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
         track.stop()
