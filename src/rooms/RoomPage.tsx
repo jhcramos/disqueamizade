@@ -248,9 +248,9 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
         </div>
       </header>
 
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* Vídeo */}
-        <main className={`relative flex-1 flex flex-col min-w-0 ${showChat ? 'hidden lg:flex' : 'flex'}`}>
+        <main className="relative flex-1 flex flex-col min-w-0 min-h-0">
           <RoomVideoGrid
             roomId={roomId}
             names={names}
@@ -310,7 +310,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
 
         {/* Chat */}
         {showChat && (
-          <aside className="w-full lg:w-80 flex-shrink-0 flex flex-col border-l border-white/5 bg-dark-950">
+          <aside className="w-full h-[42vh] border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l flex-shrink-0 flex flex-col border-white/5 bg-dark-950 min-h-0">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
               <span className="font-bold text-sm">Chat</span>
               <button onClick={() => setShowChat(false)} className="p-1.5 rounded-lg hover:bg-white/5 lg:hidden"><X className="w-4 h-4" /></button>
