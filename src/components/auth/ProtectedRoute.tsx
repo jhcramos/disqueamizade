@@ -4,16 +4,12 @@ import { useAuth } from '@/hooks/useAuth'
 
 interface ProtectedRouteProps {
   children: ReactNode
-  requireSubscription?: boolean
-  requirePremium?: boolean
 }
 
 export const ProtectedRoute = ({
   children,
-  requireSubscription = false,
-  requirePremium = false,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isSubscriber, isPremium, initialized } = useAuth()
+  const { isAuthenticated, initialized } = useAuth()
   const location = useLocation()
 
   // Wait for auth to initialize (with timeout fallback)
@@ -33,16 +29,6 @@ export const ProtectedRoute = ({
   // Not authenticated — redirect to auth, saving intended destination
   if (!isAuthenticated) {
     return <Navigate to="/auth" state={{ from: location.pathname }} replace />
-  }
-
-  // Requires subscription but user is free
-  if (requireSubscription && !isSubscriber) {
-    return <Navigate to="/pricing" replace />
-  }
-
-  // Requires premium but user is not premium
-  if (requirePremium && !isPremium) {
-    return <Navigate to="/pricing" replace />
   }
 
   return <>{children}</>

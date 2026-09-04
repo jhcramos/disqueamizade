@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Coins, User, LogIn, Bell, Crown } from 'lucide-react'
+import { Menu, X, User, LogIn, Bell } from 'lucide-react'
 import { useNotificationStore } from '@/store/notificationStore'
-import { useFichaStore } from '@/store/fichaStore'
 import { useAuthStore } from '@/store/authStore'
-import { OstentacaoBadge } from '@/components/fichas/OstentacaoBadge'
 
 const navLinks = [
   { to: '/rooms', label: 'Salas' },
@@ -20,7 +18,6 @@ export const Header = () => {
   const notifRef = useRef<HTMLDivElement>(null)
 
   const { notifications, unreadCount, markAsRead, markAllAsRead, init: initNotifications, cleanup: cleanupNotifications } = useNotificationStore()
-  const { balance, isOstentacao } = useFichaStore()
   const { user, profile, isGuest, signOut } = useAuthStore()
   const navigate = useNavigate()
 
@@ -81,30 +78,6 @@ export const Header = () => {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Ostentação Badge */}
-            {isOstentacao && (
-              <div className="hidden md:block">
-                <OstentacaoBadge size="sm" />
-              </div>
-            )}
-
-            {/* Fichas Balance */}
-            <Link
-              to="/pricing"
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all group ${
-                isOstentacao
-                  ? 'bg-gradient-to-r from-amber-500/15 to-yellow-500/15 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.15)]'
-                  : 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15'
-              }`}
-            >
-              {isOstentacao ? (
-                <Crown className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              ) : (
-                <Coins className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              )}
-              <span className="text-amber-400 font-bold text-sm">{balance}</span>
-            </Link>
-
             {/* Notifications */}
             <div ref={notifRef} className="relative">
               <button
@@ -177,11 +150,7 @@ export const Header = () => {
                 to={`/profile/${profile?.id || 'me'}`}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 transition-all"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
-                  isOstentacao
-                    ? 'ring-2 ring-amber-400/60 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
-                    : 'border border-primary-400/30'
-                } bg-gradient-to-br from-primary-500 to-primary-700`}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border border-primary-400/30 bg-gradient-to-br from-primary-500 to-primary-700">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (

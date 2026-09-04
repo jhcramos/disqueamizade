@@ -31,9 +31,6 @@ export const Footer = () => {
             <h4 className="font-bold text-primary-light mb-4">Plataforma</h4>
             <ul className="space-y-2">
               <li><Link to="/rooms" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Salas de Chat</Link></li>
-              <li><Link to="/marketplace" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Marketplace</Link></li>
-              <li><Link to="/hobbies" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Hobbies</Link></li>
-              <li><Link to="/pricing" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Planos & Fichas</Link></li>
               <li><Link to="/blog" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Blog</Link></li>
               <li><Link to="/sobre" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Sobre</Link></li>
               <li><Link to="/filtros" className="text-sm text-gray-400 hover:text-primary-light transition-colors">Filtros de Vídeo</Link></li>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageCircle, ShoppingBag, Users, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { MessageCircle, Users, ChevronRight, Phone, Shuffle } from 'lucide-react'
 import { track } from '@/services/analytics'
 import { useAuthStore } from '@/store/authStore'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
@@ -8,9 +8,7 @@ import { ProgramaAoVivo } from '@/components/common/ProgramaAoVivo'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { useRooms, useStats } from '../hooks/useSupabaseData'
-import { getPopularHobbies } from '../data/mockHobbies'
 
-const popularHobbies = getPopularHobbies()
 
 const features = [
   {
@@ -29,22 +27,7 @@ const features = [
     accentColor: '#ec4899',
     link: '/roulette',
   },
-  {
-    icon: ShoppingBag,
-    title: 'Marketplace',
-    description: 'Ofereça ou contrate: aulas, coaching, terapia, entretenimento e muito mais com fichas.',
-    image: 'features/marketplace.webp',
-    accentColor: '#10b981',
-    link: '/marketplace',
-  },
-  {
-    icon: Crown,
-    title: 'Ostentação',
-    description: 'Com 300+ fichas, ganhe o badge dourado, efeitos especiais e prioridade em tudo!',
-    image: 'features/ostentacao.webp',
-    accentColor: '#f59e0b',
-    link: '/pricing',
-  },
+
 ]
 
 // Alternância semanal de hero image
@@ -175,8 +158,6 @@ export const HomePage = () => {
     max_users: r.max_participants || 30,
     online_count: r.current_participants || 0,
     category: r.cidade ? 'cidade' : 'hobby',
-    room_type: r.ficha_cost > 0 ? 'vip' : 'official',
-    entry_cost_fichas: r.ficha_cost || 0,
     is_official: true,
   }))
 
@@ -291,16 +272,6 @@ export const HomePage = () => {
                 </div>
                 <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Online Agora</div>
               </div>
-              <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-amber-400">{stats.totalCreators}</div>
-                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Creators</div>
-              </div>
-              <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-pink-400">{stats.totalLive}</div>
-                <div className="text-xs text-dark-400 mt-1 uppercase tracking-wider font-medium">Ao Vivo</div>
-              </div>
             </div>
           </div>
         </div>
@@ -393,7 +364,6 @@ export const HomePage = () => {
           {popularRooms.map((room) => {
             const percentage = (room.participants / room.max_users) * 100
             const isFull = room.participants >= room.max_users
-            const isVIP = room.room_type === 'vip'
             return (
               <Link key={room.id} to={`/room/${room.id}`} className="group block">
                 <div className="glass rounded-2xl p-5 hover:bg-white/[0.06] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
@@ -419,21 +389,13 @@ export const HomePage = () => {
                         <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">Ao vivo</span>
                       </div>
                     </div>
-                    {isVIP && (
-                      <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                        <Crown className="w-3 h-3" /> VIP
-                      </span>
-                    )}
+
                   </div>
 
                   <h3 className="font-bold text-base text-white group-hover:text-primary-400 transition-colors mb-1.5">{room.name}</h3>
                   <p className="text-xs text-dark-400 mb-4 line-clamp-2">{room.description}</p>
 
-                  {room.entry_cost_fichas && room.entry_cost_fichas > 0 && (
-                    <div className="flex items-center gap-1.5 mb-3 text-amber-400 text-xs font-semibold">
-                      <Coins className="w-3.5 h-3.5" /> {room.entry_cost_fichas} fichas
-                    </div>
-                  )}
+
 
                   {/* Progress bar */}
                   <div className="flex items-center gap-3">
@@ -451,50 +413,6 @@ export const HomePage = () => {
               </Link>
             )
           })}
-        </div>
-      </section>
-
-      {/* ═══════════════════ OSTENTAÇÃO PROMO ═══════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 w-full">
-        <div className="relative rounded-3xl overflow-hidden p-10 md:p-14" style={{
-          background: 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.02) 50%, rgba(251,191,36,0.05) 100%)'
-        }}>
-          {/* Animated glow */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-amber-400/[0.08] rounded-full blur-[80px] animate-pulse-glow" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/[0.05] rounded-full blur-[60px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
-
-          <div className="relative flex flex-col md:flex-row items-center gap-10">
-            <div className="flex-shrink-0 text-center">
-              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 flex items-center justify-center shadow-[0_0_50px_rgba(251,191,36,0.4)] animate-float">
-                <Crown className="w-14 h-14 text-dark-950" />
-              </div>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-black text-amber-300 mb-3">Status Ostentação 🏆</h2>
-              <p className="text-dark-300 text-base mb-6 leading-relaxed max-w-xl">
-                Tenha <span className="text-amber-400 font-bold">300+ fichas</span> e ganhe o badge dourado exclusivo,
-                nome brilhante no chat, prioridade em filas e efeitos visuais especiais!
-              </p>
-              <div className="flex flex-wrap gap-4 mb-6">
-                {['Badge dourado', 'Nome destacado', 'Prioridade', 'Efeitos especiais'].map((perk) => (
-                  <div key={perk} className="flex items-center gap-2 text-sm text-dark-200 glass px-3 py-1.5 rounded-full">
-                    <span className="text-amber-400">✦</span> {perk}
-                  </div>
-                ))}
-              </div>
-              <Link
-                to="/pricing"
-                style={{
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                  boxShadow: '0 0 30px rgba(245,158,11,0.3)'
-                }}
-                className="inline-flex items-center gap-2 text-dark-950 font-bold text-base py-4 px-8 rounded-2xl hover:scale-105 transition-transform duration-300 no-underline"
-              >
-                <Coins className="w-5 h-5" />
-                Comprar Fichas
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -545,14 +463,7 @@ export const HomePage = () => {
                         <Users className="w-3 h-3" />
                         <span>{room.participants}/{room.max_users}</span>
                       </div>
-                      {room.entry_cost_fichas ? (
-                        <div className="flex items-center gap-1 text-amber-400">
-                          <Coins className="w-3 h-3" />
-                          <span>{room.entry_cost_fichas}</span>
-                        </div>
-                      ) : (
-                        <span className="text-green-400">Grátis</span>
-                      )}
+                      <span className="text-green-400">Grátis</span>
                     </div>
                     <div className="mt-2 h-1 bg-white/[0.06] rounded-full overflow-hidden">
                       <div
@@ -573,41 +484,6 @@ export const HomePage = () => {
           </div>
         </div>
       </section>}
-
-      {/* ═══════════════════ HOBBIES ═══════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
-        <div className="flex items-end justify-between mb-12">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-black text-gradient-section mb-3">Explore por Hobbies</h2>
-            <p className="text-dark-400 text-base">Encontre pessoas com os mesmos interesses</p>
-          </div>
-          <Link to="/hobbies" className="hidden sm:flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors text-sm font-semibold glass px-4 py-2 rounded-full hover:bg-white/[0.06]">
-            Ver Todos <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {popularHobbies.map((hobby, i) => {
-            const gradients = [
-              'from-primary-600/20 to-violet-600/10',
-              'from-pink-600/20 to-rose-600/10',
-              'from-emerald-600/20 to-teal-600/10',
-              'from-amber-600/20 to-orange-600/10',
-              'from-cyan-600/20 to-blue-600/10',
-              'from-fuchsia-600/20 to-purple-600/10',
-            ]
-            return (
-              <Link key={hobby.id} to="/hobbies" className="group block">
-                <div className={`glass rounded-2xl p-5 text-center hover:scale-105 transition-all duration-300 bg-gradient-to-br ${gradients[i % gradients.length]} hover:bg-white/[0.06]`}>
-                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{hobby.emoji}</div>
-                  <h3 className="font-bold text-white text-sm mb-1">{hobby.name}</h3>
-                  <p className="text-[11px] text-dark-400 font-medium">{hobby.activeRooms} salas</p>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      </section>
 
       {/* ═══════════════════ FINAL CTA ═══════════════════ */}
       <section className="px-4 sm:px-6 py-24 w-full relative overflow-hidden">
@@ -642,12 +518,6 @@ export const HomePage = () => {
                   className="glass-strong text-white font-bold text-base py-4 px-8 rounded-2xl hover:bg-white/[0.1] transition-all duration-300 no-underline flex items-center gap-2"
                 >
                   <Shuffle className="w-5 h-5" /> Testar a Roleta
-                </Link>
-                <Link
-                  to="/pricing"
-                  className="text-amber-400 hover:text-amber-300 font-bold text-base py-4 px-6 transition-colors no-underline"
-                >
-                  Ver Planos →
                 </Link>
               </div>
             </div>

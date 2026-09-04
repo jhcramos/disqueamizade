@@ -158,86 +158,27 @@ export function useRooms() {
   return { rooms, loading, error, refetch }
 }
 
-/** Fetch ficha packages from Supabase */
-export function useFichaPackages() {
-  const [packages, setPackages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setLoading(false)
-      return
-    }
-
-    databaseService.getFichaPackages()
-      .then((data) => {
-        if (data && data.length > 0) setPackages(data)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  return { packages, loading }
-}
-
-/** Fetch creator profiles from Supabase */
-export function useCreators() {
-  const [creators, setCreators] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setLoading(false)
-      return
-    }
-
-    const fetchCreators = async () => {
-      try {
-        const { data, error: err } = await supabase
-          .from('creator_profiles')
-          .select('*, profile:profiles(*)')
-        if (err) {
-          setError(err.message)
-        } else if (data) {
-          setCreators(data)
-        }
-      } catch { /* ignore */ }
-      setLoading(false)
-    }
-    fetchCreators()
-  }, [])
-
-  return { creators, loading, error }
-}
-
 /** Fetch aggregate stats from Supabase */
 export function useStats() {
   const [stats, setStats] = useState({
     totalRooms: 0,
     totalOnline: 0,
-    totalCreators: 0,
-    totalLive: 0,
   })
   useEffect(() => {
     if (!isSupabaseConfigured()) return
 
     const fetchStats = async () => {
       try {
-        const [roomsRes, participantsRes, creatorsRes] = await Promise.all([
+        const [roomsRes, participantsRes] = await Promise.all([
           supabase.from('rooms').select('id', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('room_participants').select('id', { count: 'exact', head: true }),
-          supabase.from('creator_profiles').select('id', { count: 'exact', head: true }),
         ])
         const realOnline = participantsRes.count || 0
-        const realCreators = creatorsRes.count || 0
         
         // Plano V4 (0.5): somente números reais. Nada de contadores simulados.
         setStats({
           totalRooms: roomsRes.count || 0,
           totalOnline: realOnline,
-          totalCreators: realCreators,
-          totalLive: 0,
         })
       } catch { /* ignore */ }
     }

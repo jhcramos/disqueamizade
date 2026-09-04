@@ -3,16 +3,16 @@ import { Link, useLocation } from 'react-router-dom'
 const mobileNavItems = [
   { to: '/', label: 'Início', emoji: '🏠' },
   { to: '/rooms', label: 'Salas', emoji: '📹' },
-  { to: '/marketplace', label: 'Creators', emoji: '⭐' },
-  { to: '/hobbies', label: 'Hobbies', emoji: '🎯' },
+  { to: '/roulette', label: 'Roleta 1:1', emoji: '🔀' },
+  { to: '/blog', label: 'Blog', emoji: '📝' },
   { to: '/profile/me', label: 'Perfil', emoji: '👤' },
 ]
 
 export const MobileNav = () => {
   const location = useLocation()
 
-  // Hide on full-screen experiences (inside a room/camarote)
-  const hideOnPaths = ['/room/', '/camarote/']
+  // Hide on full-screen experiences (inside a room)
+  const hideOnPaths = ['/room/']
   if (hideOnPaths.some(path => location.pathname.startsWith(path))) {
     return null
   }
