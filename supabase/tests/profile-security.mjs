@@ -23,7 +23,7 @@ try {
     CREATE POLICY update_profile ON profiles FOR UPDATE USING (auth.uid()=id);
     SET request.jwt.claim.sub='${a}';
   `)
-  await db.exec(await readFile(new URL('../migrations/20260904060328_guard_privileged_profile_fields.sql', import.meta.url), 'utf8'))
+  await db.exec(await readFile(new URL('../migrations/20260904063330_guard_privileged_profile_fields.sql', import.meta.url), 'utf8'))
   for (const role of ['authenticated', 'anon']) {
     await db.exec(`RESET ROLE; SET ROLE ${role};`)
     await assert.rejects(db.exec(`INSERT INTO profiles(id,username,display_name,is_admin) VALUES ('${a}','test','test',true)`), /privileged_profile_fields/)

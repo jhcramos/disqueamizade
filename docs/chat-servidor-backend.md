@@ -37,7 +37,7 @@ mensagens recentes altera o orçamento; clientes não têm permissão de exclus�
 
 ## Aplicação
 
-Migration criada pela CLI: 20260904054854_moderated_chat.sql. Destina-se ao schema
+Migration criada pela CLI: 20260904063337_moderated_chat.sql. Destina-se ao schema
 verificado do projeto: chat_messages ainda ausente, rooms com slug/is_active/type/
 ficha_cost e user_bans com user_id/expires_at. Se chat_messages já existir, a
 migration aborta para revisão, evitando destruir dados de um bootstrap histórico.
@@ -46,8 +46,8 @@ Não executar toda a sequência de migrations antigas cegamente sobre produção
 Ordem de implantação coordenada: revisar/aplicar migration no projeto correto;
 habilitar e validar autenticação anônima; publicar send-chat; publicar clientes
 que usem JWT real e mensagens persistidas. Validar convidados, conta, DM e roleta
-com sessões independentes antes de declarar conclusão em produção. Nenhuma
-migration ou função foi aplicada/publicada por esta implementação local.
+com sessões independentes antes de declarar conclusão em produção. As migrations e funções foram aplicadas/publicadas em 04/09/2026; ver
+docs/publicacao-2026-09-04.md.
 
 ## Verificação local
 
@@ -86,7 +86,7 @@ sinalização. A validação do par não comprova consentimento prévio ou amiza
 
 ## Proteção de privilégios no perfil
 
-A migration 20260904060328_guard_privileged_profile_fields.sql impede clientes
+A migration 20260904063330_guard_privileged_profile_fields.sql impede clientes
 anon/authenticated de se tornarem administradores/VIP/elite, alterarem saldos ou
 hidden_until. Escritas do backend com service_role permanecem permitidas. Inserção
 inicial aceita saldo0 ou50 para compatibilidade com o cadastro já publicado;
@@ -95,3 +95,6 @@ is_creator continua sendo atributo autodeclarado do perfil legado.
 `CHAT_PGLITE_MODULE=/caminho/pglite/dist/index.js node supabase/tests/profile-security.mjs`
 exercita edições comuns, tentativas de autoelevação, defaults iniciais e escrita
 confiável. Não aponta para dados reais.
+
+As versões dos arquivos de migration foram alinhadas às versões registradas pela
+Management API no banco remoto. Os SQLs são os mesmos que passaram pelos testes.

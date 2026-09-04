@@ -8,7 +8,7 @@ const db = new PGlite()
 const a = '11111111-1111-4111-8111-111111111111'
 const b = '22222222-2222-4222-8222-222222222222'
 const outsider = '33333333-3333-4333-8333-333333333333'
-const sql = await readFile(new URL('../migrations/20260904054854_moderated_chat.sql', import.meta.url), 'utf8')
+const sql = await readFile(new URL('../migrations/20260904063337_moderated_chat.sql', import.meta.url), 'utf8')
 try {
   await db.exec(`
     CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;

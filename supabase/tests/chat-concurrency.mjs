@@ -21,7 +21,7 @@ await query(`
   INSERT INTO auth.users VALUES ('${a}'), ('${b}');
   INSERT INTO rooms VALUES ('geral',true,'publica',0);
 `)
-await query(await readFile(new URL('../migrations/20260904054854_moderated_chat.sql', import.meta.url), 'utf8'))
+await query(await readFile(new URL('../migrations/20260904063337_moderated_chat.sql', import.meta.url), 'utf8'))
 const send = () => query(`SET ROLE service_role; SELECT id FROM send_chat_message('${a}','geral','Olá','Convidado','text')`)
 // An independent transaction holds the same sender lock so all workers contend.
 const blocker = query(`BEGIN; SELECT pg_advisory_xact_lock(hashtextextended('${a}',61057)); SELECT pg_sleep(1); COMMIT;`)

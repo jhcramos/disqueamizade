@@ -45,3 +45,11 @@ redirect_uri = "http://localhost:54321/auth/v1/callback"
 
 [realtime]
 ip_version = "IPv4"
+
+# As funções validam o JWT atual com auth.getUser antes de autorizar a operação.
+# O gateway legado não deve impor o formato antigo de assinatura.
+[functions.send-chat]
+verify_jwt = false
+
+[functions.livekit-token]
+verify_jwt = false

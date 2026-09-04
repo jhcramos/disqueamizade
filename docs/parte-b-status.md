@@ -8,17 +8,16 @@ reintroduzir propriedades antigas ao salvar. Nenhum offset é somado aos número
 do banco; falta de contagem resulta em 0.
 
 A migration remove as três propriedades JSON de admin_settings.value, se essa
-tabela já existir. O seed também não as recria. A migration ainda não foi aplicada
-em ambiente remoto. Os contadores vêm das tabelas existentes; esta alteração não
+tabela já existir. O seed também não as recria. A migration foi aplicada no projeto remoto em 04/09/2026. Os contadores vêm das tabelas existentes; esta alteração não
 comprova sincronização dessas tabelas com participantes LiveKit em produção.
 
 Validação local: npm run build passou (TypeScript, Vite, 498 páginas de prerender).
 Busca `rg -i "bots_presence|inflated|simulated|auto_chat" src` sem ocorrências.
 
-## B.2 — implementação preparada; ativação remota pendente
+## B.2 — publicado e verificado em 04/09/2026
 
-O projeto Supabase correto foi confirmado: DisqueAmizade. O schema remoto não
-possui chat_messages; a nova migration cria a tabela sem alterar mensagens legadas.
+O projeto Supabase correto foi confirmado: DisqueAmizade. Na auditoria, o schema remoto não
+possuía chat_messages; a migration criou a tabela sem alterar mensagens legadas.
 
 - Convidados usam Supabase Auth anônimo, com UUID/JWT real; cache antigo migra só
   o apelido. Saída encerra a sessão remota. A biblioteca Supabase foi atualizada e
@@ -36,17 +35,21 @@ possui chat_messages; a nova migration cria a tabela sem alterar mensagens legad
 - Revisão do schema identificou que o perfil permitia alterar privilégios próprios.
   Uma migration adicional protege esses campos antes de habilitar convidados.
 
-O painel confirmou que Anonymous Sign-Ins está desabilitado. Nenhuma configuração,
-função ou migration desta etapa foi aplicada em produção. A ativação exige aplicar
-as migrations revisadas, habilitar a opção e publicar as duas edges e o frontend
-coordenadamente. O preview anterior permanece disponível; não aponta para código
-que depende de infraestrutura ainda desabilitada.
+Anonymous Sign-Ins foi habilitado com autorização do proprietário. As três
+migrations foram aplicadas, send-chat v1 e livekit-token v2 estão ativas, e o
+frontend foi publicado na Vercel. O JWT é validado por auth.getUser nas funções;
+a opção verify_jwt do gateway legado está desativada por compatibilidade.
 
-Validação local: testes de identidade/fluxo assíncrono, entrega aprovada e falhas;
-testes de moderação; RLS e limite em banco isolado. Seis conexões simultâneas em
-PostgreSQL 17 admitiram cinco mensagens e recusaram uma. Build gera 498 páginas.
-Falta teste integrado remoto com duas sessões e verificação do site após ativação.
-Ver docs/chat-servidor-backend.md para contratos e comandos de verificação.
+Validação local: 13 testes e build com 498 páginas passaram. Banco isolado testou
+RLS, privilégios e seis conexões simultâneas. Em produção, duas sessões anônimas e
+uma conta temporária confirmaram entrega por Realtime, isolamento da DM, filtro,
+negação de INSERT/RPC direto e autoelevação, e limite concorrente 5 aceitas/1 negada.
+O token de vídeo foi emitido para o UUID autenticado; identidade adulterada, chave
+anon sem usuário e sala inexistente foram recusadas. As quatro contas temporárias
+foram removidas e suas mensagens excluídas por cascade. Não houve captura de câmera
+ou microfone nem envio de mensagens a usuários reais.
+
+Ver docs/publicacao-2026-09-04.md para a referência da publicação.
 
 ## Itens condicionais
 
