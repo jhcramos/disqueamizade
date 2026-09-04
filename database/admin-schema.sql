@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.admin_settings (
 
 -- Seed cold-start settings
 INSERT INTO public.admin_settings (key, value) VALUES
-  ('cold_start', '{"bots_presence": true, "inflated_counters": true, "auto_chat": true, "lobby_mode": true}'),
+  ('cold_start', '{"bots_presence": false, "inflated_counters": false, "auto_chat": false, "lobby_mode": true}'),
   ('moderation', '{"profanity_filter": true, "auto_ban_threshold": 5, "banned_words": ["puta", "merda", "caralho"]}'),
   ('general', '{"maintenance_mode": false, "registration_open": true, "max_rooms": 100}')
 ON CONFLICT (key) DO NOTHING;

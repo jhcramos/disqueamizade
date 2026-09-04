@@ -45,3 +45,6 @@ linz-env.txt
 *.pem
 *.key
 service-account*.json
+
+# MediaPipe WASM runtime (gerado por scripts/copy-mediapipe.mjs no build)
+public/mediapipe/

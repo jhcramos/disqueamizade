@@ -1,27 +1,31 @@
-import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, lazy, Suspense } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
-import { RoomsPage } from './pages/RoomsPage'
-import { MarketplacePage } from './pages/MarketplacePage'
-import { PricingPage } from './pages/PricingPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { HobbiesPage } from './pages/HobbiesPage'
-import { AuthPage } from './pages/AuthPage'
-import { RoomPage } from './pages/RoomPage'
-import { CamarotePage } from './pages/CamarotePage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
-// SecretCabinsPage removed — simplifying
-import { VideoFiltersPage } from './pages/VideoFiltersPage'
-import { RoulettePage } from './pages/RoulettePage'
-import { InfluencerDashboardPage } from './pages/InfluencerDashboardPage'
-import { CreatorProfilePage } from './pages/CreatorProfilePage'
-import DesignSystemPage from './pages/DesignSystemPage'
-import { AdminPage } from './pages/AdminPage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import { LegalPage } from './pages/LegalPage'
-import { BlogPage } from './pages/blog/BlogPage'
-import { BlogPostPage } from './pages/blog/BlogPostPage'
-import { AboutPage } from './pages/AboutPage'
+import { NotFoundPage } from './pages/NotFoundPage'
+
+// Rotas pesadas/secundárias em lazy: tira LiveKit + MediaPipe + face-api do
+// bundle inicial. A Home fica leve. (Plano V4, item 2.4)
+const RoomsPage = lazy(() => import('./pages/RoomsPage').then(m => ({ default: m.RoomsPage })))
+const MarketplacePage = lazy(() => import('./pages/MarketplacePage').then(m => ({ default: m.MarketplacePage })))
+const PricingPage = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const HobbiesPage = lazy(() => import('./pages/HobbiesPage').then(m => ({ default: m.HobbiesPage })))
+const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })))
+const RoomPage = lazy(() => import('./rooms/RoomPage').then(m => ({ default: m.RoomPage })))
+const CamarotePage = lazy(() => import('./pages/CamarotePage').then(m => ({ default: m.CamarotePage })))
+const VideoFiltersPage = lazy(() => import('./pages/VideoFiltersPage').then(m => ({ default: m.VideoFiltersPage })))
+const RoulettePage = lazy(() => import('./pages/RoulettePage').then(m => ({ default: m.RoulettePage })))
+const InfluencerDashboardPage = lazy(() => import('./pages/InfluencerDashboardPage').then(m => ({ default: m.InfluencerDashboardPage })))
+const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage').then(m => ({ default: m.CreatorProfilePage })))
+const DesignSystemPage = lazy(() => import('./pages/DesignSystemPage'))
+const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const LegalPage = lazy(() => import('./pages/LegalPage').then(m => ({ default: m.LegalPage })))
+const BlogPage = lazy(() => import('./pages/blog/BlogPage').then(m => ({ default: m.BlogPage })))
+const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage').then(m => ({ default: m.BlogPostPage })))
+const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })))
+const SalaPublicaPage = lazy(() => import('./pages/SalaPublicaPage').then(m => ({ default: m.SalaPublicaPage })))
 import { MobileNav } from './components/common/MobileNav'
 import { ToastContainer } from './components/common/ToastContainer'
 import { CamaroteMinimizado } from './components/rooms/CamaroteMinimizado'
@@ -42,15 +46,17 @@ function App() {
   return (
     <AgeVerificationProvider>
     <div className="min-h-screen bg-noite-900 text-white">
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-dark-400">Carregando…</div>}>
       <Routes>
         {/* Home principal - design original */}
         <Route path="/" element={<HomePage />} />
         
         {/* Salas - requer login */}
-        <Route path="/rooms" element={<ProtectedRoute><RoomsPage /></ProtectedRoute>} />
-        <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
+        {/* Públicas: entram convidado, sem cadastro (Plano V4 1.4/2.1) */}
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/room/:roomId" element={<RoomPage />} />
         <Route path="/camarote/:camaroteId" element={<ProtectedRoute><CamarotePage /></ProtectedRoute>} />
-        <Route path="/roulette" element={<ProtectedRoute><RoulettePage /></ProtectedRoute>} />
+        <Route path="/roulette" element={<RoulettePage />} />
         {/* cabines removed — simplifying */}
         <Route path="/hobbies" element={<ProtectedRoute><HobbiesPage /></ProtectedRoute>} />
         
@@ -78,6 +84,7 @@ function App() {
 
         {/* About — public, SEO */}
         <Route path="/sobre" element={<AboutPage />} />
+        <Route path="/sala/:slug" element={<SalaPublicaPage />} />
 
         {/* Dev */}
         <Route path="/design" element={<DesignSystemPage />} />
@@ -86,8 +93,9 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       <MobileNav />
       <ToastContainer />
       

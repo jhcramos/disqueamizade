@@ -67,7 +67,7 @@ export const Footer = () => {
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-600">
-            © 2025 Disque Amizade. Todos os direitos reservados.
+            © {new Date().getFullYear()} Disque Amizade. Todos os direitos reservados.
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             Feito com <Heart className="w-3 h-3 text-primary-light" /> no Brasil 🇧🇷

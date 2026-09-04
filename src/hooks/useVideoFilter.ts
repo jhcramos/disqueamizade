@@ -1,320 +1,132 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// useVideoFilter — Face tracking with emoji overlay
-// Strategy: Try native FaceDetector → fallback face-api.js (throttled)
-// Detection runs async, never blocks UI. Emoji via HTML overlay.
+// useVideoFilter — rastreamento facial ao vivo para as máscaras (v2)
+//
+// Roda o MediaPipe Face Landmarker num loop de animação enquanto houver uma
+// máscara ativa. O rosto rastreado (478 pontos + pose) fica em `faceRef`,
+// atualizado a cada frame SEM re-render do React; o loop de composição
+// (useCompositeStream) lê essa ref e desenha a máscara.
+//
+// Substitui o face-api.js (caixa grosseira a 5 fps, emoji "flutuando").
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getFaceLandmarker, detectFrame, FaceSmoother, type FaceFrame } from '@/vision/faceTracker'
+import { computePose, type FacePose } from '@/vision/facePose'
+import { getMask, type MaskDef } from '@/masks'
 
-export type MaskItem = {
-  id: string
-  name: string
-  emoji?: string       // emoji character (covers full face)
-  image?: string       // PNG image path (positioned on face)
-  imageType?: 'face' | 'eyes'  // face = covers face, eyes = sits on eye line
-  blendMode?: string   // CSS mix-blend-mode ('screen' for black bg images)
-  category: 'emoji' | 'glasses' | 'carnival'
+/** Caixa do rosto em percentuais 0-100 (compatibilidade com UI antiga). */
+export interface FaceBox { x: number; y: number; w: number; h: number }
+
+export interface TrackedFace {
+  frame: FaceFrame
+  pose: FacePose
+  /** dimensões do vídeo em que a pose foi calculada */
+  w: number
+  h: number
 }
 
-export const EMOJI_MASKS: MaskItem[] = [
-  // ─── Emojis (cobrem o rosto) ───
-  // Animais
-  { id: 'cat', name: 'Gatinho', emoji: '😺', category: 'emoji' },
-  { id: 'dog', name: 'Cachorro', emoji: '🐶', category: 'emoji' },
-  { id: 'monkey', name: 'Macaco', emoji: '🐵', category: 'emoji' },
-  { id: 'pig', name: 'Porquinho', emoji: '🐷', category: 'emoji' },
-  { id: 'bear', name: 'Urso', emoji: '🐻', category: 'emoji' },
-  { id: 'panda', name: 'Panda', emoji: '🐼', category: 'emoji' },
-  { id: 'fox', name: 'Raposa', emoji: '🦊', category: 'emoji' },
-  { id: 'lion', name: 'Leão', emoji: '🦁', category: 'emoji' },
-  { id: 'tiger', name: 'Tigre', emoji: '🐯', category: 'emoji' },
-  { id: 'cow', name: 'Vaquinha', emoji: '🐮', category: 'emoji' },
-  { id: 'rabbit', name: 'Coelho', emoji: '🐰', category: 'emoji' },
-  { id: 'frog', name: 'Sapo', emoji: '🐸', category: 'emoji' },
-  { id: 'chicken', name: 'Galinha', emoji: '🐔', category: 'emoji' },
-  { id: 'unicorn', name: 'Unicórnio', emoji: '🦄', category: 'emoji' },
-  { id: 'koala', name: 'Coala', emoji: '🐨', category: 'emoji' },
-  { id: 'mouse', name: 'Ratinho', emoji: '🐭', category: 'emoji' },
-  { id: 'hamster', name: 'Hamster', emoji: '🐹', category: 'emoji' },
-  { id: 'wolf', name: 'Lobo', emoji: '🐺', category: 'emoji' },
-  // Caras engraçadas
-  { id: 'clown', name: 'Palhaço', emoji: '🤡', category: 'emoji' },
-  { id: 'alien', name: 'Alien', emoji: '👽', category: 'emoji' },
-  { id: 'robot', name: 'Robô', emoji: '🤖', category: 'emoji' },
-  { id: 'skull', name: 'Caveira', emoji: '💀', category: 'emoji' },
-  { id: 'devil', name: 'Diabinho', emoji: '😈', category: 'emoji' },
-  { id: 'ghost', name: 'Fantasma', emoji: '👻', category: 'emoji' },
-  { id: 'sunglasses', name: 'Estiloso', emoji: '😎', category: 'emoji' },
-  { id: 'heart_eyes', name: 'Apaixonado', emoji: '😍', category: 'emoji' },
-  { id: 'star_eyes', name: 'Deslumbrado', emoji: '🤩', category: 'emoji' },
-  { id: 'money', name: 'Ricaço', emoji: '🤑', category: 'emoji' },
-  { id: 'nerd', name: 'Nerd', emoji: '🤓', category: 'emoji' },
-  { id: 'monocle', name: 'Distinto', emoji: '🧐', category: 'emoji' },
-  { id: 'zany', name: 'Maluco', emoji: '🤪', category: 'emoji' },
-  { id: 'wink', name: 'Piscadela', emoji: '😜', category: 'emoji' },
-  { id: 'crying', name: 'Chorando', emoji: '😭', category: 'emoji' },
-  { id: 'laughing', name: 'Morrendo', emoji: '🤣', category: 'emoji' },
-  { id: 'angry', name: 'Bravo', emoji: '🤬', category: 'emoji' },
-  { id: 'scream', name: 'Grito', emoji: '😱', category: 'emoji' },
-  { id: 'vomit', name: 'Enjoado', emoji: '🤮', category: 'emoji' },
-  { id: 'cowboy', name: 'Cowboy', emoji: '🤠', category: 'emoji' },
-  { id: 'party', name: 'Festa', emoji: '🥳', category: 'emoji' },
-  { id: 'disguise', name: 'Disfarce', emoji: '🥸', category: 'emoji' },
-  { id: 'shush', name: 'Silêncio', emoji: '🤫', category: 'emoji' },
-  { id: 'think', name: 'Pensando', emoji: '🤔', category: 'emoji' },
-  { id: 'hot', name: 'Quente', emoji: '🥵', category: 'emoji' },
-  { id: 'cold', name: 'Frio', emoji: '🥶', category: 'emoji' },
-  { id: 'dizzy', name: 'Tonto', emoji: '😵‍💫', category: 'emoji' },
-  { id: 'explode', name: 'Explodindo', emoji: '🤯', category: 'emoji' },
-  { id: 'sleeping', name: 'Dormindo', emoji: '😴', category: 'emoji' },
-  { id: 'drool', name: 'Babando', emoji: '🤤', category: 'emoji' },
-  // Objetos e fantasia
-  { id: 'pumpkin', name: 'Abóbora', emoji: '🎃', category: 'emoji' },
-  { id: 'santa', name: 'Papai Noel', emoji: '🎅', category: 'emoji' },
-  { id: 'baby', name: 'Bebê', emoji: '👶', category: 'emoji' },
-  { id: 'old_man', name: 'Vovô', emoji: '👴', category: 'emoji' },
-  { id: 'princess', name: 'Princesa', emoji: '👸', category: 'emoji' },
-  { id: 'superhero', name: 'Herói', emoji: '🦸', category: 'emoji' },
-  { id: 'villain', name: 'Vilão', emoji: '🦹', category: 'emoji' },
-  { id: 'zombie', name: 'Zumbi', emoji: '🧟', category: 'emoji' },
-  { id: 'vampire', name: 'Vampiro', emoji: '🧛', category: 'emoji' },
-  { id: 'mage', name: 'Mago', emoji: '🧙', category: 'emoji' },
-  { id: 'fairy', name: 'Fada', emoji: '🧚', category: 'emoji' },
-  { id: 'ogre', name: 'Ogro', emoji: '👹', category: 'emoji' },
-  { id: 'goblin', name: 'Goblin', emoji: '👺', category: 'emoji' },
-  // Óculos (posicionados nos olhos)
-  { id: 'aviator', name: 'Aviador', image: '/masks/aviator-glasses.png', imageType: 'eyes', blendMode: 'lighten', category: 'glasses' },
-  { id: 'party_glasses', name: 'Festa', image: '/masks/party-glasses.png', imageType: 'eyes', blendMode: 'lighten', category: 'glasses' },
-  // Máscaras de carnaval (cobrem metade superior do rosto)
-  { id: 'carnival_venice', name: 'Veneziana', image: '/masks/carnival-mask.png', imageType: 'eyes', blendMode: 'lighten', category: 'carnival' },
-  { id: 'carnival_brazil', name: 'Carnaval BR', image: '/masks/carnival-brazil.png', imageType: 'eyes', blendMode: 'lighten', category: 'carnival' },
-]
-
-export interface FaceBox {
-  x: number; y: number; w: number; h: number  // percentages 0-100
-}
+export type TrackingStatus = 'idle' | 'loading' | 'tracking' | 'no-face' | 'error'
 
 export interface VideoFilterHookResult {
-  activeMask: MaskItem | null
-  activeMaskEmoji: string | null
+  activeMask: MaskDef | null
   faceBox: FaceBox | null
+  /** último rosto rastreado; atualizado por frame, sem re-render */
+  faceRef: React.MutableRefObject<TrackedFace | null>
   enableFilter: (maskId: string) => void
   disableFilter: () => void
   currentFilter: string | null
-  trackingStatus: 'idle' | 'loading' | 'tracking' | 'no-face' | 'fallback'
+  trackingStatus: TrackingStatus
 }
 
-// ─── Detection backends ───
-
-async function tryNativeFaceDetector(): Promise<any | null> {
-  if (typeof globalThis === 'undefined' || !('FaceDetector' in globalThis)) return null
-  try {
-    // @ts-ignore
-    const fd = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
-    // Test it works
-    const canvas = document.createElement('canvas')
-    canvas.width = 10; canvas.height = 10
-    await fd.detect(canvas)
-    return fd
-  } catch {
-    return null
-  }
-}
-
-let faceApiLoaded = false
-let faceApiLoading = false
-
-async function loadFaceApi() {
-  if (faceApiLoaded) return true
-  if (faceApiLoading) {
-    // Wait for existing load
-    while (faceApiLoading) await new Promise(r => setTimeout(r, 100))
-    return faceApiLoaded
-  }
-  faceApiLoading = true
-  try {
-    const faceapi = await import('face-api.js')
-    await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
-    faceApiLoaded = true
-    return true
-  } catch (e) {
-    console.warn('face-api.js failed to load:', e)
-    return false
-  } finally {
-    faceApiLoading = false
-  }
-}
-
-async function detectWithFaceApi(video: HTMLVideoElement): Promise<{ x: number; y: number; width: number; height: number } | null> {
-  try {
-    const faceapi = await import('face-api.js')
-    const result = await faceapi.detectSingleFace(
-      video,
-      new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.3 })
-    )
-    if (result) {
-      return { x: result.box.x, y: result.box.y, width: result.box.width, height: result.box.height }
-    }
-  } catch { /* ignore */ }
-  return null
-}
-
-// ─── Hook ───
+/** Acima disso (ms) por detecção, pulamos um frame para não travar o vídeo. */
+const SLOW_DETECT_MS = 28
 
 export const useVideoFilter = (
-  videoRef: React.RefObject<HTMLVideoElement>,
+  videoRef: React.RefObject<HTMLVideoElement | null>,
   stream: MediaStream | null,
 ): VideoFilterHookResult => {
   const [currentFilter, setCurrentFilter] = useState<string | null>(null)
+  const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>('idle')
   const [faceBox, setFaceBox] = useState<FaceBox | null>(null)
-  const [trackingStatus, setTrackingStatus] = useState<VideoFilterHookResult['trackingStatus']>('idle')
+  const faceRef = useRef<TrackedFace | null>(null)
+  const rafRef = useRef(0)
+  const smootherRef = useRef(new FaceSmoother())
 
-  const activeRef = useRef<string | null>(null)
-  const nativeDetectorRef = useRef<any>(null)
-  const smoothBox = useRef<FaceBox | null>(null)
-  const noFaceCountRef = useRef(0)
-  const runningRef = useRef(false)
-  const timeoutRef = useRef<number>(0)
-
-  // ─── Detection loop (recursive setTimeout, never overlaps) ───
-  const runDetection = useCallback(async () => {
-    if (!runningRef.current || !activeRef.current) return
-
-    const video = videoRef.current
-    if (!video || video.readyState < 2) {
-      timeoutRef.current = window.setTimeout(runDetection, 200)
-      return
-    }
-
-    const vw = video.videoWidth
-    const vh = video.videoHeight
-    if (!vw || !vh) {
-      timeoutRef.current = window.setTimeout(runDetection, 200)
-      return
-    }
-
-    let box: { x: number; y: number; width: number; height: number } | null = null
-
-    // Try native first
-    if (nativeDetectorRef.current) {
-      try {
-        const faces = await nativeDetectorRef.current.detect(video)
-        if (faces.length > 0) box = faces[0].boundingBox
-      } catch { /* fall through */ }
-    }
-
-    // Fallback to face-api.js
-    if (!box && faceApiLoaded) {
-      box = await detectWithFaceApi(video)
-    }
-
-    if (box && runningRef.current) {
-      setTrackingStatus('tracking')
-      const raw: FaceBox = {
-        x: (box.x / vw) * 100,
-        y: ((box.y + box.height * 0.08) / vh) * 100, // slight down shift
-        w: (box.width / vw) * 100,
-        h: (box.height / vh) * 100,
-      }
-      const prev = smoothBox.current
-      if (prev) {
-        // Extra heavy smoothing (0.85/0.15) to prevent flickering
-        smoothBox.current = {
-          x: prev.x * 0.85 + raw.x * 0.15,
-          y: prev.y * 0.85 + raw.y * 0.15,
-          w: prev.w * 0.85 + raw.w * 0.15,
-          h: prev.h * 0.85 + raw.h * 0.15,
-        }
-      } else {
-        smoothBox.current = raw
-      }
-      noFaceCountRef.current = 0
-      setFaceBox({ ...smoothBox.current })
-    } else if (runningRef.current) {
-      // Keep last known position for a few frames to avoid flicker
-      noFaceCountRef.current++
-      if (noFaceCountRef.current > 5) {
-        setTrackingStatus('no-face')
-      }
-      // Fallback: center of frame (only if never detected)
-      if (!smoothBox.current) {
-        smoothBox.current = { x: 25, y: 12, w: 50, h: 55 }
-        setFaceBox({ ...smoothBox.current })
-      }
-      // Keep showing last box (don't clear it)
-    }
-
-    // Schedule next detection: 200ms = 5fps (smooth enough, less flicker)
-    if (runningRef.current) {
-      timeoutRef.current = window.setTimeout(runDetection, 200)
-    }
-  }, [videoRef])
-
-  // ─── Start/stop detection when filter changes ───
   useEffect(() => {
     if (!currentFilter || !stream) {
-      runningRef.current = false
-      clearTimeout(timeoutRef.current)
+      cancelAnimationFrame(rafRef.current)
+      faceRef.current = null
+      smootherRef.current.reset()
+      setFaceBox(null)
       setTrackingStatus('idle')
       return
     }
 
     let cancelled = false
+    let lastVideoTime = -1
+    let lastBoxAt = 0
+    let lastStatus: TrackingStatus | null = null
+    let skipNext = false
+    const setStatus = (s: TrackingStatus) => { if (s !== lastStatus) { lastStatus = s; setTrackingStatus(s) } }
 
-    const startTracking = async () => {
-      setTrackingStatus('loading')
+    setStatus('loading')
+    getMask(currentFilter)?.preload().catch((e) => console.warn('[mask] preload', e))
 
-      // Try native FaceDetector
-      if (!nativeDetectorRef.current) {
-        nativeDetectorRef.current = await tryNativeFaceDetector()
-      }
-
-      // If no native, load face-api.js
-      if (!nativeDetectorRef.current && !faceApiLoaded) {
-        await loadFaceApi()
-      }
-
+    getFaceLandmarker().then((fl) => {
       if (cancelled) return
+      const tick = () => {
+        if (cancelled) return
+        rafRef.current = requestAnimationFrame(tick)
+        const video = videoRef.current
+        if (!video || video.readyState < 2 || !video.videoWidth) return
+        if (video.currentTime === lastVideoTime) return // mesmo frame, nada a fazer
+        if (skipNext) { skipNext = false; return }
+        lastVideoTime = video.currentTime
 
-      if (!nativeDetectorRef.current && !faceApiLoaded) {
-        setTrackingStatus('fallback')
-        smoothBox.current = { x: 25, y: 12, w: 50, h: 55 }
-        setFaceBox({ ...smoothBox.current })
-        return
+        const t0 = performance.now()
+        let raw: FaceFrame | null = null
+        try {
+          raw = detectFrame(fl, video, t0)
+        } catch (e) {
+          console.warn('[face] detect', e)
+          return
+        }
+        skipNext = performance.now() - t0 > SLOW_DETECT_MS
+
+        const frame = smootherRef.current.push(raw)
+        if (frame) {
+          const w = video.videoWidth, h = video.videoHeight
+          const pose = computePose(frame, w, h)
+          faceRef.current = { frame, pose, w, h }
+          setStatus('tracking')
+          if (t0 - lastBoxAt > 150) {
+            lastBoxAt = t0
+            setFaceBox({ x: (pose.box.x / w) * 100, y: (pose.box.y / h) * 100, w: (pose.box.w / w) * 100, h: (pose.box.h / h) * 100 })
+          }
+        } else {
+          faceRef.current = null
+          setStatus('no-face')
+        }
       }
-
-      runningRef.current = true
-      runDetection()
-    }
-
-    startTracking()
+      rafRef.current = requestAnimationFrame(tick)
+    }).catch((e) => {
+      console.error('[face] falha ao carregar o rastreador', e)
+      if (!cancelled) setStatus('error')
+    })
 
     return () => {
       cancelled = true
-      runningRef.current = false
-      clearTimeout(timeoutRef.current)
+      cancelAnimationFrame(rafRef.current)
     }
-  }, [currentFilter, stream, runDetection])
+  }, [currentFilter, stream, videoRef])
 
-  const enableFilter = useCallback((maskId: string) => {
-    activeRef.current = maskId
-    setCurrentFilter(maskId)
-    smoothBox.current = null
-  }, [])
-
-  const disableFilter = useCallback(() => {
-    activeRef.current = null
-    setCurrentFilter(null)
-    setFaceBox(null)
-    smoothBox.current = null
-  }, [])
-
-  const mask = currentFilter ? EMOJI_MASKS.find(m => m.id === currentFilter) ?? null : null
+  const enableFilter = useCallback((maskId: string) => setCurrentFilter(maskId), [])
+  const disableFilter = useCallback(() => setCurrentFilter(null), [])
 
   return {
-    activeMask: mask,
-    activeMaskEmoji: mask?.emoji ?? null,
+    activeMask: getMask(currentFilter),
     faceBox,
+    faceRef,
     enableFilter,
     disableFilter,
     currentFilter,

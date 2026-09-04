@@ -1,5 +1,10 @@
-import { Link } from 'react-router-dom'
-import { MessageCircle, ShoppingBag, Users, Star, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { MessageCircle, ShoppingBag, Users, ChevronRight, Phone, Shuffle, Crown, Coins } from 'lucide-react'
+import { track } from '@/services/analytics'
+import { useAuthStore } from '@/store/authStore'
+import { useAgeVerification } from '@/components/common/AgeVerificationModal'
+import { ProgramaAoVivo } from '@/components/common/ProgramaAoVivo'
 import { Header } from '../components/common/Header'
 import { Footer } from '../components/common/Footer'
 import { useRooms, useStats } from '../hooks/useSupabaseData'
@@ -12,7 +17,7 @@ const features = [
     icon: MessageCircle,
     title: 'Salas de Chat',
     description: 'Salas temáticas com vídeo e máscaras virtuais para chat anônimo. Converse por cidade, idade, hobby ou idioma com até 30 pessoas.',
-    image: 'features/chat-rooms.png',
+    image: 'features/chat-rooms.webp',
     accentColor: '#6366f1',
     link: '/rooms',
   },
@@ -20,7 +25,7 @@ const features = [
     icon: Shuffle,
     title: 'Roleta 1:1',
     description: 'Conheça alguém aleatório com filtros de vídeo e máscaras! Use óculos virtuais, emojis ou máscaras de carnaval. "Próximo" sempre disponível.',
-    image: 'features/roulette.png',
+    image: 'features/roulette.webp',
     accentColor: '#ec4899',
     link: '/roulette',
   },
@@ -28,7 +33,7 @@ const features = [
     icon: ShoppingBag,
     title: 'Marketplace',
     description: 'Ofereça ou contrate: aulas, coaching, terapia, entretenimento e muito mais com fichas.',
-    image: 'features/marketplace.png',
+    image: 'features/marketplace.webp',
     accentColor: '#10b981',
     link: '/marketplace',
   },
@@ -36,33 +41,9 @@ const features = [
     icon: Crown,
     title: 'Ostentação',
     description: 'Com 300+ fichas, ganhe o badge dourado, efeitos especiais e prioridade em tudo!',
-    image: 'features/ostentacao.png',
+    image: 'features/ostentacao.webp',
     accentColor: '#f59e0b',
     link: '/pricing',
-  },
-]
-
-const testimonials = [
-  {
-    name: 'Mariana S.',
-    city: 'São Paulo, SP',
-    text: 'A roleta é incrível! Já fiz amizades de verdade conversando com pessoas aleatórias.',
-    initials: 'MS',
-    rating: 5,
-  },
-  {
-    name: 'Carlos R.',
-    city: 'Rio de Janeiro, RJ',
-    text: 'As aulas de guitarra pelo marketplace são excelentes. Pagar com fichas é muito prático!',
-    initials: 'CR',
-    rating: 5,
-  },
-  {
-    name: 'Ana Paula M.',
-    city: 'Curitiba, PR',
-    text: 'O speed dating é viciante! 3 minutos de conversa e já consegui 3 matches.',
-    initials: 'AP',
-    rating: 4,
   },
 ]
 
@@ -71,7 +52,7 @@ const getWeeklyHeroImage = () => {
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const weekNumber = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)
-  return weekNumber % 2 === 0 ? 'hero-week-even.png' : 'hero-week-odd.png'
+  return weekNumber % 2 === 0 ? 'hero-week-even.webp' : 'hero-week-odd.webp'
 }
 
 /* ── CSS-only keyframes injected once ── */
@@ -172,6 +153,16 @@ if (!document.querySelector('#disque-home-styles')) {
 
 export const HomePage = () => {
   const heroImage = getWeeklyHeroImage()
+  const navigate = useNavigate()
+  const signInAsGuest = useAuthStore((s) => s.signInAsGuest)
+  const { verifyAge } = useAgeVerification()
+  useEffect(() => { track('home_view') }, [])
+
+  // Entrar agora, sem cadastro: confirma 18+, cria convidado e abre a sala principal.
+  const enterNow = () => {
+    track('cta_enter_click', { cta: 'hero_main' })
+    verifyAge(() => { signInAsGuest(); navigate('/room/geral-brasil') })
+  }
   const { rooms: dbRooms } = useRooms()
   const stats = useStats()
 
@@ -247,27 +238,28 @@ export const HomePage = () => {
           </h1>
 
           <p className="animate-slide-up-fade-d2 text-lg md:text-xl lg:text-2xl text-dark-300 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
-            Salas de vídeo com até 30 pessoas, chat 1:1 aleatório e máscaras virtuais
-            para quem quer conversar de forma anônima — tudo ao vivo.
+            Salas de vídeo ao vivo, roleta 1:1 e máscaras virtuais para conversar
+            de forma anônima. Entra pelo navegador, sem baixar nada e sem cadastro.
           </p>
 
           {/* CTAs */}
           <div className="animate-slide-up-fade-d3 flex flex-col sm:flex-row items-center justify-center gap-5 mb-16">
-            <Link
-              to="/rooms"
+            <button
+              onClick={enterNow}
               style={{
                 background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                minWidth: '230px',
+                minWidth: '260px',
                 boxShadow: '0 0 30px rgba(99,102,241,0.3), 0 10px 40px rgba(99,102,241,0.2)'
               }}
               className="flex items-center gap-3 justify-center text-white font-bold text-lg py-5 px-10 rounded-2xl hover:scale-105 transition-all duration-300 no-underline relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
               <Users className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Entrar nas Salas</span>
-            </Link>
+              <span className="relative z-10">Entrar agora, sem cadastro</span>
+            </button>
             <Link
               to="/roulette"
+              onClick={() => track('cta_enter_click', { cta: 'hero_roulette' })}
               style={{
                 background: 'linear-gradient(135deg, #ec4899, #d946ef)',
                 minWidth: '230px',
@@ -281,10 +273,9 @@ export const HomePage = () => {
             </Link>
           </div>
 
-          <Link to="/pricing" className="text-amber-400 hover:text-amber-300 text-sm font-medium flex items-center gap-2 justify-center mb-16 transition-colors">
-            <Coins className="w-4 h-4" />
-            Ver Fichas & Planos Premium
-          </Link>
+          <p className="text-dark-400 text-sm flex items-center gap-2 justify-center mb-16">
+            Grátis · 18+ · funciona no navegador
+          </p>
 
           {/* Stats bar */}
           <div className="glass-strong rounded-2xl py-6 px-8 max-w-3xl mx-auto">
@@ -313,6 +304,10 @@ export const HomePage = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 -mt-8 mb-8 w-full relative z-10">
+        <ProgramaAoVivo />
       </section>
 
       {/* ═══════════════════ FEATURES ═══════════════════ */}
@@ -508,7 +503,7 @@ export const HomePage = () => {
         {/* Banner background */}
         <div className="absolute inset-0">
           <img 
-            src={import.meta.env.BASE_URL + 'features/adult-banner.png'} 
+            src={import.meta.env.BASE_URL + 'features/adult-banner.webp'} 
             alt="" 
             className="w-full h-full object-cover opacity-20"
           />
@@ -611,40 +606,6 @@ export const HomePage = () => {
               </Link>
             )
           })}
-        </div>
-      </section>
-
-      {/* ═══════════════════ TESTIMONIALS ═══════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
-        <h2 className="text-3xl md:text-5xl font-black text-center text-gradient-section mb-14">
-          O que Dizem Nossos Usuários
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <div key={i} className="gradient-border rounded-2xl">
-              <div className="glass-strong rounded-2xl p-7 h-full hover:bg-white/[0.06] transition-colors duration-300">
-                <div className="flex items-center gap-1 mb-5">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star
-                      key={j}
-                      className={`w-5 h-5 ${j < t.rating ? 'text-amber-400 fill-amber-400' : 'text-dark-700'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-base text-dark-200 mb-6 leading-relaxed italic">"{t.text}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full ring-2 ring-primary-500/30 bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-base font-bold text-white">{t.name}</p>
-                    <p className="text-xs text-dark-400 mt-0.5">{t.city}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

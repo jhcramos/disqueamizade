@@ -34,7 +34,7 @@ function getCachedColdStart(): ColdStartConfig | null {
 
 export function useColdStartSettings() {
   const [settings, setSettings] = useState<ColdStartConfig>({
-    bots_presence: true, inflated_counters: true, auto_chat: true, lobby_mode: true,
+    bots_presence: false, inflated_counters: false, auto_chat: false, lobby_mode: true,
   })
   const [loading, setLoading] = useState(true)
 
@@ -219,10 +219,8 @@ export function useStats() {
     totalCreators: 0,
     totalLive: 0,
   })
-  const { settings: coldStart, loading: coldStartLoading } = useColdStartSettings()
-
   useEffect(() => {
-    if (!isSupabaseConfigured() || coldStartLoading) return
+    if (!isSupabaseConfigured()) return
 
     const fetchStats = async () => {
       try {
@@ -234,33 +232,17 @@ export function useStats() {
         const realOnline = participantsRes.count || 0
         const realCreators = creatorsRes.count || 0
         
-        let totalOnline = realOnline
-        let totalCreators = realCreators
-        let totalLive = 0
-
-        if (coldStart.inflated_counters) {
-          const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
-          let simOnline = 85
-          if (hourBR >= 19 && hourBR <= 23) simOnline = 180
-          else if (hourBR >= 14 && hourBR < 19) simOnline = 120
-          else if (hourBR >= 0 && hourBR < 3) simOnline = 140
-          else if (hourBR >= 9 && hourBR < 14) simOnline = 95
-          const variation = Math.abs(Math.sin(Date.now() / 600000)) * 30
-          totalOnline = realOnline + Math.round(simOnline + variation)
-          totalCreators = realCreators + 3
-          totalLive = Math.round(2 + variation / 10)
-        }
-        
+        // Plano V4 (0.5): somente números reais. Nada de contadores simulados.
         setStats({
           totalRooms: roomsRes.count || 0,
-          totalOnline,
-          totalCreators,
-          totalLive,
+          totalOnline: realOnline,
+          totalCreators: realCreators,
+          totalLive: 0,
         })
       } catch { /* ignore */ }
     }
     fetchStats()
-  }, [coldStartLoading, coldStart.inflated_counters])
+  }, [])
 
   return stats
 }

@@ -5,6 +5,43 @@ import { authService } from '@/services/supabase/auth.service'
 import { databaseService } from '@/services/supabase/database.service'
 import { presenceService } from '@/services/supabase/presence.service'
 
+// ─── Sessão de convidado persistente (Plano V4, Fase 4) ───
+// localStorage por 30 dias: o convidado mantém apelido e id ao voltar (D1),
+// e cai de novo na experiência sem virar "Convidado" genérico.
+const GUEST_KEY = 'guest_session'
+const GUEST_TTL = 30 * 24 * 60 * 60 * 1000
+const NICK_ADJ = ['Alegre', 'Tranquilo', 'Curioso', 'Gente-Boa', 'Sorridente', 'Animado', 'Zen', 'Fera', 'Nobre', 'Cheio-de-Vibe']
+
+function randomNick(): string {
+  const a = NICK_ADJ[Math.floor(Math.random() * NICK_ADJ.length)]
+  return `${a}${Math.floor(1000 + Math.random() * 9000)}`
+}
+
+function readGuest(): { user: any; profile: any } | null {
+  try {
+    const raw = localStorage.getItem(GUEST_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && (!parsed.ts || Date.now() - parsed.ts < GUEST_TTL)) return { user: parsed.user, profile: parsed.profile }
+    }
+  } catch { /* ignore */ }
+  try {
+    const legacy = sessionStorage.getItem(GUEST_KEY)
+    if (legacy) return JSON.parse(legacy)
+  } catch { /* ignore */ }
+  return null
+}
+
+function writeGuest(user: any, profile: any) {
+  try { localStorage.setItem(GUEST_KEY, JSON.stringify({ user, profile, ts: Date.now() })) } catch { /* ignore */ }
+}
+
+function clearGuest() {
+  try { localStorage.removeItem(GUEST_KEY) } catch { /* ignore */ }
+  try { sessionStorage.removeItem(GUEST_KEY) } catch { /* ignore */ }
+}
+
+
 interface AuthState {
   user: User | null
   profile: Profile | null
@@ -18,7 +55,8 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) => Promise<void>
   signInWithGoogle: () => Promise<void>
-  signInAsGuest: () => void
+  signInAsGuest: (nickname?: string) => void
+  setGuestNickname: (name: string) => void
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
@@ -39,7 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true })
     try {
       // Clear any guest session first
-      sessionStorage.removeItem('guest_session')
+      clearGuest()
       set({ isGuest: false })
 
       // Retry up to 2 times on network failures (mobile Safari flakiness)
@@ -92,7 +130,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true })
     try {
       // Clear any guest session first
-      sessionStorage.removeItem('guest_session')
+      clearGuest()
       set({ isGuest: false })
 
       const result = await authService.signUp(email, password, username, options)
@@ -144,20 +182,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInAsGuest: () => {
-    const guestId = `guest-${Date.now()}`
+  signInAsGuest: (nickname?: string) => {
+    // Reaproveita id/apelido de uma sessão de convidado ainda válida (D1).
+    const existing = readGuest()
+    const guestId = existing?.user?.id || `guest-${Date.now()}`
+    const nick = nickname?.trim() || existing?.profile?.username || randomNick()
     const guestUser = {
       id: guestId,
       email: 'guest@disqueamizade.com',
       app_metadata: {},
-      user_metadata: { username: 'Convidado', can_chat: false, can_video: false },
+      user_metadata: { username: nick, can_chat: false, can_video: false },
       aud: 'authenticated',
-      created_at: new Date().toISOString(),
+      created_at: existing?.user?.created_at || new Date().toISOString(),
     } as unknown as User
 
     const guestProfile: Profile = {
       id: guestId,
-      username: 'Convidado',
+      username: nick,
       subscription_tier: 'free',
       is_online: true,
       is_featured: false,
@@ -184,8 +225,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       updated_at: new Date().toISOString(),
     }
 
-    sessionStorage.setItem('guest_session', JSON.stringify({ user: guestUser, profile: guestProfile }))
+    writeGuest(guestUser, guestProfile)
     set({ user: guestUser, profile: guestProfile, isGuest: true })
+  },
+
+  setGuestNickname: (name: string) => {
+    const { user, profile, isGuest } = get()
+    if (!isGuest || !user || !profile) return
+    const nick = name.trim().slice(0, 24)
+    if (!nick) return
+    const u = { ...user, user_metadata: { ...(user as any).user_metadata, username: nick } } as any
+    const pr = { ...profile, username: nick }
+    writeGuest(u, pr)
+    set({ user: u, profile: pr })
   },
 
   signOut: async () => {
@@ -194,7 +246,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user, isGuest } = get()
 
       if (isGuest) {
-        sessionStorage.removeItem('guest_session')
+        clearGuest()
         set({ user: null, profile: null, isGuest: false, loading: false })
         return
       }
@@ -222,14 +274,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!state.initialized) {
         console.warn('Auth init timeout — forcing initialized')
         // Try restoring guest session as fallback
-        const guestData = sessionStorage.getItem('guest_session')
-        if (guestData) {
-          try {
-            const { user: gu, profile: gp } = JSON.parse(guestData)
-            set({ user: gu, profile: gp, isGuest: true, initialized: true, loading: false })
-            return
-          } catch { /* ignore */ }
-        }
+        const g = readGuest()
+        if (g) { set({ user: g.user, profile: g.profile, isGuest: true, initialized: true, loading: false }); return }
         set({ initialized: true, loading: false })
       }
     }, 5000)
@@ -245,14 +291,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (isPlaceholder) {
         console.warn('⚠️ Supabase not configured. Running in demo mode.')
-        const guestData = sessionStorage.getItem('guest_session')
-        if (guestData) {
-          try {
-            const { user, profile } = JSON.parse(guestData)
-            set({ user, profile, isGuest: true, initialized: true, loading: false })
-            return
-          } catch { /* ignore parse errors */ }
-        }
+        const g = readGuest()
+        if (g) { set({ user: g.user, profile: g.profile, isGuest: true, initialized: true, loading: false }); return }
         set({ initialized: true, loading: false })
         return
       }
@@ -262,7 +302,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (session?.user) {
         // Real user logged in — clear any stale guest session
-        sessionStorage.removeItem('guest_session')
+        clearGuest()
         let profile: Profile | null = null
         try {
           profile = await databaseService.getProfile(session.user.id)
@@ -284,20 +324,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         presenceService.setOnlineStatus(session.user.id, true).catch(() => {})
       } else {
         // No real session — restore guest if exists
-        const guestData = sessionStorage.getItem('guest_session')
-        if (guestData) {
-          try {
-            const { user: gu, profile: gp } = JSON.parse(guestData)
-            set({ user: gu, profile: gp, isGuest: true })
-          } catch { /* ignore */ }
-        }
+        const g = readGuest()
+        if (g) set({ user: g.user, profile: g.profile, isGuest: true })
       }
 
       // Listen to auth state changes
       authService.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Real auth — clear guest
-          sessionStorage.removeItem('guest_session')
+          clearGuest()
           set({ isGuest: false })
           let profile: Profile | null = null
           try {

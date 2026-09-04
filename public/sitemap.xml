@@ -2,33 +2,75 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://disqueamizade.com.br</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://disqueamizade.com.br/contato</loc>
-    <lastmod>2026-08-04</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://disqueamizade.com.br/sobre</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/filtros</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/pricing</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/geral-brasil</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/sao-paulo</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/rio-de-janeiro</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/belo-horizonte</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/paquera</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/30-mais</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://disqueamizade.com.br/sala/nordeste</loc>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-online-ferias-julho-inverno-brasil</loc>
@@ -1748,37 +1790,37 @@
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-online-gratis-2026-sem-pagar-nada</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-online-floripa-litoral-catarinense-verao</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-seguro-dicas-proteger-identidade-online</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-para-maiores-de-50-terceira-idade-online</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/futuro-chat-online-ia-realidade-virtual-2026</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://disqueamizade.com.br/blog/chat-para-solteiros-app-namoro-vs-bate-papo</loc>
-    <lastmod>2026-08-04</lastmod>
+    <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

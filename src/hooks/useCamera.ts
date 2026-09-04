@@ -38,10 +38,16 @@ export const useCamera = (): UseCameraResult => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  // Attach stream to video element whenever either changes
+  // Attach stream to video element whenever either changes.
+  // play() explícito: elementos usados só como fonte de canvas (ocultos) nem
+  // sempre disparam autoplay; sem play() o vídeo fica "paused" e o canvas
+  // composto sai preto. muted garante que o autoplay/play é permitido.
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream
+    const el = videoRef.current
+    if (el && stream) {
+      el.srcObject = stream
+      el.muted = true
+      el.play().catch(() => {})
     }
   }, [stream])
 
@@ -97,9 +103,11 @@ export const useCamera = (): UseCameraResult => {
       setIsMicOn(mediaStream.getAudioTracks().length > 0)
       setPermissionState('granted')
 
-      // Attach to video ref if available
+      // Attach to video ref if available (com play() explícito, ver acima)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
+        videoRef.current.muted = true
+        videoRef.current.play().catch(() => {})
       }
     } catch (err: unknown) {
       const e = err as DOMException
