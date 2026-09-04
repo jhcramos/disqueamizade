@@ -7,6 +7,18 @@ export default defineConfig({
   base: '/',
   build: {
     sourcemap: false,
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@mediapipe') || id.includes('face-api')) return 'media'
+          if (id.includes('livekit')) return 'livekit'
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('react-router') || id.includes('/react/') || id.includes('/react-dom/') || id.includes('scheduler')) return 'react'
+        },
+      },
+    },
   },
   plugins: [react()],
   resolve: {

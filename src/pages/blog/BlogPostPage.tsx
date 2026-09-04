@@ -174,7 +174,6 @@ export const BlogPostPage = () => {
     placeholders.forEach((el, i) => {
       const container = document.createElement('div')
       el.replaceWith(container)
-      const onlineCount = Math.floor(Math.random() * 66) + 15
       const gradients = ['from-pink-600/20 to-purple-600/20', 'from-cyan-600/20 to-blue-600/20', 'from-amber-600/20 to-orange-600/20']
       const categoryMap: Record<string, { label: string; emoji: string; link: string; desc: string }> = {
         chat: { label: 'Sala Geral', emoji: '💬', link: '/rooms', desc: 'Bate-papo ao vivo com pessoas de todo o Brasil' },
@@ -195,11 +194,6 @@ export const BlogPostPage = () => {
               <h4 class="text-lg font-bold text-white">${room.label}</h4>
               <p class="text-sm text-dark-400">${room.desc}</p>
             </div>
-          </div>
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-orange-400">🔥</span>
-            <span class="text-sm text-orange-300 font-medium">${onlineCount} pessoas online agora</span>
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
           </div>
           <a href="${room.link}" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-pink-500/25 no-underline">
             Entrar na Sala →

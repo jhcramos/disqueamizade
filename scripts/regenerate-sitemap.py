@@ -10,10 +10,18 @@ today = datetime.now().strftime("%Y-%m-%d")
 static_pages = [
     ("", 1.0, "weekly"),
     ("/blog", 0.8, "weekly"),
-    ("/contato", 0.7, "weekly"),
+    ("/sobre", 0.7, "monthly"),
     ("/filtros", 0.7, "weekly"),
     ("/pricing", 0.7, "weekly"),
 ]
+
+# Salas públicas indexáveis (/sala/:slug) — prioridade alta (transacional)
+sala_slugs = [
+    "geral-brasil", "sao-paulo", "rio-de-janeiro", "belo-horizonte",
+    "paquera", "30-mais", "nordeste",
+]
+for slug in sala_slugs:
+    static_pages.append((f"/sala/{slug}", 0.9, "daily"))
 
 with open("public/blog-posts/index.json", "r") as f:
     posts = json.load(f)
