@@ -15,43 +15,42 @@ comprova sincronização dessas tabelas com participantes LiveKit em produção.
 Validação local: npm run build passou (TypeScript, Vite, 498 páginas de prerender).
 Busca `rg -i "bots_presence|inflated|simulated|auto_chat" src` sem ocorrências.
 
-## B.2 — bloqueado pela confirmação do banco e autenticação
+## B.2 — implementação preparada; ativação remota pendente
 
-A alteração não foi publicada nem declarada concluída. O conector Supabase desta
-sessão só lista Urbix Agents, outro projeto. É necessário conectar o projeto
-Supabase do Disque Amizade para ler o schema, políticas e configuração de Auth.
+O projeto Supabase correto foi confirmado: DisqueAmizade. O schema remoto não
+possui chat_messages; a nova migration cria a tabela sem alterar mensagens legadas.
 
-A auditoria identificou divergências que tornam insegura uma troca mecânica:
+- Convidados usam Supabase Auth anônimo, com UUID/JWT real; cache antigo migra só
+  o apelido. Saída encerra a sessão remota. A biblioteca Supabase foi atualizada e
+  seu shim de tipos obsoleto removido.
+- Sala, DM e roleta enviam apenas pela edge send-chat e recebem linhas aprovadas
+  por Postgres Changes. Não há broadcast de conteúdo, insert direto ou mensagem
+  otimista. Histórico/eco usam o mesmo id para deduplicação.
+- O banco restringe leitura de DM/roleta ao par e escrita à service role. O limite
+  global 5/3s usa lock transacional por remetente, incluindo conexões concorrentes.
+- A edge valida JWT, corpo, tamanho, links/palavrões, apelido e banimento. Falhas
+  não liberam envio por outro caminho. O cliente mostra o erro e preserva o texto.
+- LiveKit também passa a validar JWT, identidade, banimento e acesso à sala/par.
+  Essa atualização deve ser coordenada com o frontend; clientes antigos usam
+  identidades locais e deixam de obter tokens após a troca.
+- Revisão do schema identificou que o perfil permitia alterar privilégios próprios.
+  Uma migration adicional protege esses campos antes de habilitar convidados.
 
-- roomChat usa broadcast público antes do insert; qualquer cliente adulterado
-  pode evitar o servidor. Leitura de mensagens precisa vir de registros aprovados,
-  removendo listener e envio de broadcast/chat (presença é separada).
-- Migrações versionadas usam UUID de sala e de perfil, UUID para mensagem e
-  message_type. O cliente envia slug, guest-*, msg-*, username e type.
-- Convidados são sessões locais, sem JWT Supabase. Sessão anônima real deve ser
-  habilitada e integrada preservando apelido, restauração e saída.
-- Chat da roleta usa roulette-<par>, sem correspondente garantido na tabela rooms.
-  Sua leitura precisa ser restrita aos participantes; não tornar conversas 1:1 públicas.
-- A edge livekit-token aceita identidade arbitrária. É necessário associá-la à
-  sessão validada ao integrar a autenticação de convidados.
-- Limite 5 mensagens/3 segundos precisa ser atômico no banco, por usuário, com
-  função de escrita exclusiva da service role. Um array em memória por worker
-  não garante limite diante de requisições concorrentes.
-- Revogar INSERT direto e conferir todas as políticas existentes. Uma política
-  permissiva com false não anula políticas permissivas anteriores.
-- RoomPage e RouletteCall devem aguardar confirmação, exibir falha real e
-  deduplicar eco; hoje inserem mensagem otimista não aprovada.
-- src/rooms/dm.ts também usa broadcast público. Não chamar todo o chat de seguro
-  sem tratar separadamente esse transporte.
+O painel confirmou que Anonymous Sign-Ins está desabilitado. Nenhuma configuração,
+função ou migration desta etapa foi aplicada em produção. A ativação exige aplicar
+as migrations revisadas, habilitar a opção e publicar as duas edges e o frontend
+coordenadamente. O preview anterior permanece disponível; não aponta para código
+que depende de infraestrutura ainda desabilitada.
 
-Critérios a verificar no projeto correto: convidados e contas enviam/recebem;
-links/palavrões de cliente adulterado não chegam; sexta mensagem em 3 segundos
-recusada inclusive sob concorrência; INSERT direto negado; não participante não
-lê chat 1:1; falha do servidor não publica mensagem por fallback.
+Validação local: testes de identidade/fluxo assíncrono, entrega aprovada e falhas;
+testes de moderação; RLS e limite em banco isolado. Seis conexões simultâneas em
+PostgreSQL 17 admitiram cinco mensagens e recusaram uma. Build gera 498 páginas.
+Falta teste integrado remoto com duas sessões e verificação do site após ativação.
+Ver docs/chat-servidor-backend.md para contratos e comandos de verificação.
 
 ## Itens condicionais
 
-- B.3: falta Project ID do Microsoft Clarity e validação de gravação no painel.
+- B.3: adiado para priorizar o chat; integração não ativada.
 - B.4: executado em branch separada, com relatório próprio.
 - B.5: política do proprietário registrada no guia: nudez somente nas futuras
   salas adultas, com configuração confiável e acesso adulto. Detector opcional

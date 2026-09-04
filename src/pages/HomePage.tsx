@@ -1,3 +1,4 @@
+import { useToastStore } from '@/components/common/ToastContainer'
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageCircle, Users, ChevronRight, Phone, Shuffle } from 'lucide-react'
@@ -144,7 +145,7 @@ export const HomePage = () => {
   // Entrar agora, sem cadastro: confirma 18+, cria convidado e abre a sala principal.
   const enterNow = () => {
     track('cta_enter_click', { cta: 'hero_main' })
-    verifyAge(() => { signInAsGuest(); navigate('/room/geral-brasil') })
+    verifyAge(() => { void signInAsGuest().then(() => navigate('/room/geral-brasil')).catch(() => useToastStore.getState().addToast({ type: 'error', title: 'Entrada indisponível', message: 'Não foi possível entrar. Tente novamente em instantes.' })) })
   }
   const { rooms: dbRooms } = useRooms()
   const stats = useStats()

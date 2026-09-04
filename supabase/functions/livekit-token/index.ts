@@ -9,7 +9,9 @@
 //   LIVEKIT_API_SECRET — from livekit.io dashboard
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { ChatError, readChatBody } from '../_shared/chat.ts'
+import { validateVideoRoom } from '../_shared/livekit.ts'
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -25,7 +27,7 @@ function base64url(data: Uint8Array): string {
     .replace(/=+$/, '')
 }
 
-function textToUint8Array(text: string): Uint8Array {
+function textToUint8Array(text: string) {
   return new TextEncoder().encode(text)
 }
 
@@ -34,12 +36,10 @@ async function createLiveKitToken(
   apiSecret: string,
   roomName: string,
   participantName: string,
-  ttlSeconds?: number
+  isGuest: boolean
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  // Convidado (identity guest-*) recebe token de vida mais curta.
-  const isGuest = participantName.startsWith('guest-')
-  const ttl = ttlSeconds ?? (isGuest ? 1800 : 3600)
+  const ttl = isGuest ? 1800 : 3600
 
   const header = {
     alg: 'HS256',
@@ -59,7 +59,7 @@ async function createLiveKitToken(
       room: roomName,
       canPublish: true,
       canSubscribe: true,
-      canPublishData: true,
+      canPublishData: false,
     },
   }
 
@@ -82,60 +82,37 @@ async function createLiveKitToken(
   return `${message}.${signatureB64}`
 }
 
-serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
+const json = (body: unknown, status: number) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+})
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method !== 'POST') return json({ error: 'invalid_request' }, 405)
   try {
-    const { roomId, participantName } = await req.json()
-
-    if (!roomId || !participantName) {
-      return new Response(
-        JSON.stringify({ error: 'roomId and participantName are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
+    const jwt = req.headers.get('authorization')?.match(/^Bearer ([^\s]+)$/i)?.[1]
+    if (!jwt) throw new ChatError('unauthorized', 401)
+    const url = Deno.env.get('SUPABASE_URL')
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const apiKey = Deno.env.get('LIVEKIT_API_KEY')
     const apiSecret = Deno.env.get('LIVEKIT_API_SECRET')
-
-    if (!apiKey || !apiSecret) {
-      return new Response(
-        JSON.stringify({ error: 'LiveKit credentials not configured on server' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (!url || !serviceKey || !apiKey || !apiSecret) throw new ChatError('unavailable', 503)
+    const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    const { data: auth, error } = await admin.auth.getUser(jwt)
+    if (error || !auth.user) throw new ChatError('unauthorized', 401)
+    const { roomId, privateRoom } = validateVideoRoom(await readChatBody(req), auth.user.id)
+    const bans = await admin.from('user_bans').select('id').eq('user_id', auth.user.id)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).limit(1)
+    if (bans.error) throw new ChatError('unavailable', 503)
+    if (bans.data?.length) throw new ChatError('banned', 403)
+    if (!privateRoom) {
+      const room = await admin.from('rooms').select('id').eq('slug', roomId)
+        .eq('is_active', true).eq('type', 'publica').eq('ficha_cost', 0).maybeSingle()
+      if (room.error) throw new ChatError('unavailable', 503)
+      if (!room.data) throw new ChatError('forbidden', 403)
     }
-
-    // Nega token a quem está banido (Plano V4, Fase 3, item 3.1). Best-effort:
-    // se as envs do Supabase não estiverem setadas, segue emitindo (degrada).
-    try {
-      const sbUrl = Deno.env.get('SUPABASE_URL')
-      const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-      const isUuid = /^[0-9a-f-]{36}$/i.test(participantName)
-      if (sbUrl && svc && isUuid) {
-        const r = await fetch(`${sbUrl}/rest/v1/user_bans?user_id=eq.${participantName}&or=(expires_at.is.null,expires_at.gt.${new Date().toISOString()})&select=id`, {
-          headers: { apikey: svc, Authorization: `Bearer ${svc}` },
-        })
-        const bans = await r.json()
-        if (Array.isArray(bans) && bans.length > 0) {
-          return new Response(JSON.stringify({ error: 'banned' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-        }
-      }
-    } catch (_e) { /* degrada: emite token */ }
-
-    const token = await createLiveKitToken(apiKey, apiSecret, roomId, participantName)
-
-    return new Response(
-      JSON.stringify({ token }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (err) {
-    console.error('Error generating token:', err)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    const token = await createLiveKitToken(apiKey, apiSecret, roomId, auth.user.id, !!auth.user.is_anonymous)
+    return json({ token }, 200)
+  } catch (error) {
+    return error instanceof ChatError ? json({ error: error.code }, error.status) : json({ error: 'unavailable' }, 503)
   }
 })

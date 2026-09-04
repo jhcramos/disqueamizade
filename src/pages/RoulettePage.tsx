@@ -48,7 +48,7 @@ function slug(s: string) {
 }
 
 export const RoulettePage = () => {
-  const { user, isGuest, signInAsGuest } = useAuthStore()
+  const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { addToast } = useToastStore()
 
   const [status, setStatus] = useState<Status>('idle')
@@ -58,16 +58,17 @@ export const RoulettePage = () => {
   const [searchTime, setSearchTime] = useState(0)
   const [noMatchMessage, setNoMatchMessage] = useState('')
 
-  const [match, setMatch] = useState<{ peerId: string; roomId: string; token: string } | null>(null)
+  const [match, setMatch] = useState<{ peerId: string; roomId: string; token: string; identity: string } | null>(null)
+  const searchRevision = useRef(0)
   const recentRef = useRef<Map<string, number>>(loadRecent())
 
   // Convidado automático: roleta é aberta a quem não tem conta.
   useEffect(() => {
-    if (!user && !isGuest) signInAsGuest()
-  }, [user, isGuest, signInAsGuest])
+    if (initialized && !user) void signInAsGuest().catch(() => { setStatus('no-match'); setNoMatchMessage('Não foi possível iniciar sua sessão. Tente novamente em instantes.') })
+  }, [user, initialized, signInAsGuest])
 
   const identity = user?.id || ''
-  const displayName = useAuthStore.getState().profile?.username || (user?.user_metadata?.username as string) || 'Convidado'
+  const displayName = profile?.username || (user?.user_metadata?.username as string) || 'Convidado'
 
   // Timer de busca
   useEffect(() => {
@@ -76,7 +77,14 @@ export const RoulettePage = () => {
     return () => clearInterval(t)
   }, [status])
 
-  useEffect(() => () => { matchmaking.leaveQueue(); roomChat.leave() }, [])
+  useEffect(() => {
+    ++searchRevision.current
+    matchmaking.leaveQueue()
+    roomChat.leave()
+    setMatch(null)
+    setStatus('idle')
+    return () => { ++searchRevision.current; matchmaking.leaveQueue(); roomChat.leave() }
+  }, [identity])
 
   const bucketKey = `${slug(city) || 'any'}:${age || 'any'}`
 
@@ -87,6 +95,7 @@ export const RoulettePage = () => {
       setNoMatchMessage('O vídeo ainda não está configurado neste ambiente.')
       return
     }
+    const revision = ++searchRevision.current
     setStatus('searching')
     setSearchTime(0)
     setNoMatchMessage('')
@@ -95,19 +104,23 @@ export const RoulettePage = () => {
     matchmaking.joinQueue(
       identity,
       async (peerId, roomId) => {
+        if (revision !== searchRevision.current) return
         // registra par recente (evita repetir por 24h)
         recentRef.current.set(peerId, Date.now())
         saveRecent(recentRef.current)
         try {
           const token = await fetchRoomToken(roomId, identity)
-          setMatch({ peerId, roomId, token })
+          if (revision !== searchRevision.current) return
+          setMatch({ peerId, roomId, token, identity })
           setStatus('matched')
         } catch {
+          if (revision !== searchRevision.current) return
           setStatus('no-match')
           setNoMatchMessage('Não foi possível conectar o vídeo. Tente de novo.')
         }
       },
       (s) => {
+        if (revision !== searchRevision.current) return
         setStatus(s)
         if (s === 'no-match') setNoMatchMessage('Ninguém disponível agora. Tente novamente!')
       },
@@ -116,6 +129,7 @@ export const RoulettePage = () => {
   }, [identity, bucketKey])
 
   const endSession = useCallback(() => {
+    ++searchRevision.current
     matchmaking.leaveQueue()
     roomChat.leave()
     setMatch(null)
@@ -139,7 +153,7 @@ export const RoulettePage = () => {
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
   // ─── Match ativo: chamada LiveKit ───
-  if (status === 'matched' && match) {
+  if (status === 'matched' && match && match.identity === identity) {
     return (
       <div className="min-h-screen bg-dark-950 text-white flex flex-col">
         <Header />

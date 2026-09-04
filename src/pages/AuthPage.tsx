@@ -160,7 +160,7 @@ export const AuthPage = () => {
 
         {/* Guest */}
         <button
-          onClick={() => { signInAsGuest(); navigate(redirectTo) }}
+          onClick={() => { void signInAsGuest().then(() => navigate(redirectTo)).catch(() => addToast({ type: 'error', title: 'Entrada indisponível', message: 'Não foi possível entrar. Tente novamente em instantes.' })) }}
           className="w-full mt-4 py-2.5 text-sm text-dark-500 hover:text-dark-300 transition-colors"
         >
           Entrar sem conta →

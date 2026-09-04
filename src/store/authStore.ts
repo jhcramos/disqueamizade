@@ -1,13 +1,12 @@
 import { create } from 'zustand'
+import { supabase } from '@/services/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 import { authService } from '@/services/supabase/auth.service'
 import { databaseService } from '@/services/supabase/database.service'
 import { presenceService } from '@/services/supabase/presence.service'
 
-// ─── Sessão de convidado persistente (Plano V4, Fase 4) ───
-// localStorage por 30 dias: o convidado mantém apelido e id ao voltar (D1),
-// e cai de novo na experiência sem virar "Convidado" genérico.
+// Apenas o apelido fica neste cache. A sessão e o UUID são geridos pelo Supabase Auth.
 const GUEST_KEY = 'guest_session'
 const GUEST_TTL = 30 * 24 * 60 * 60 * 1000
 const NICK_ADJ = ['Alegre', 'Tranquilo', 'Curioso', 'Gente-Boa', 'Sorridente', 'Animado', 'Zen', 'Fera', 'Nobre', 'Cheio-de-Vibe']
@@ -32,8 +31,8 @@ function readGuest(): { user: any; profile: any } | null {
   return null
 }
 
-function writeGuest(user: any, profile: any) {
-  try { localStorage.setItem(GUEST_KEY, JSON.stringify({ user, profile, ts: Date.now() })) } catch { /* ignore */ }
+function writeGuest(_user: User, profile: Profile) {
+  try { localStorage.setItem(GUEST_KEY, JSON.stringify({ profile: { username: profile.username }, ts: Date.now() })) } catch { /* ignore */ }
 }
 
 function clearGuest() {
@@ -41,6 +40,43 @@ function clearGuest() {
   try { sessionStorage.removeItem(GUEST_KEY) } catch { /* ignore */ }
 }
 
+
+let guestSignIn: Promise<void> | null = null
+let initialization: Promise<void> | null = null
+let authListenerInstalled = false
+
+function guestProfile(user: User): Profile {
+  const nick = String(user.user_metadata?.username || 'Convidado').trim().slice(0, 24)
+  return {
+    id: user.id,
+    username: nick,
+    subscription_tier: 'free',
+    is_online: true,
+    is_featured: false,
+    stars_balance: 0,
+    fichas_balance: 0,
+    saldo_fichas: 0,
+    is_ostentacao: false,
+    is_creator: false,
+    is_vip: false,
+    is_elite: false,
+    creator_verified: false,
+    is_service_provider: false,
+    total_earnings_stars: 0,
+    total_earnings_fichas: 0,
+    total_earned: 0,
+    total_spent_fichas: 0,
+    total_services_completed: 0,
+    rooms_visited: 0,
+    messages_sent: 0,
+    games_played: 0,
+    time_online_minutes: 0,
+    badges: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+
+}
 
 interface AuthState {
   user: User | null
@@ -55,8 +91,8 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, username: string, options?: { is_creator?: boolean; birth_date?: string }) => Promise<void>
   signInWithGoogle: () => Promise<void>
-  signInAsGuest: (nickname?: string) => void
-  setGuestNickname: (name: string) => void
+  signInAsGuest: (nickname?: string) => Promise<void>
+  setGuestNickname: (name: string) => Promise<void>
   signOut: () => Promise<void>
   initialize: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
@@ -182,71 +218,54 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInAsGuest: (nickname?: string) => {
-    // Reaproveita id/apelido de uma sessão de convidado ainda válida (D1).
-    const existing = readGuest()
-    const guestId = existing?.user?.id || `guest-${Date.now()}`
-    const nick = nickname?.trim() || existing?.profile?.username || randomNick()
-    const guestUser = {
-      id: guestId,
-      email: 'guest@disqueamizade.com',
-      app_metadata: {},
-      user_metadata: { username: nick, can_chat: false, can_video: false },
-      aud: 'authenticated',
-      created_at: existing?.user?.created_at || new Date().toISOString(),
-    } as unknown as User
-
-    const guestProfile: Profile = {
-      id: guestId,
-      username: nick,
-      subscription_tier: 'free',
-      is_online: true,
-      is_featured: false,
-      stars_balance: 50,
-      fichas_balance: 50,
-      saldo_fichas: 50,
-      is_ostentacao: false,
-      is_creator: false,
-      is_vip: false,
-      is_elite: false,
-      creator_verified: false,
-      is_service_provider: false,
-      total_earnings_stars: 0,
-      total_earnings_fichas: 0,
-      total_earned: 0,
-      total_spent_fichas: 0,
-      total_services_completed: 0,
-      rooms_visited: 0,
-      messages_sent: 0,
-      games_played: 0,
-      time_online_minutes: 0,
-      badges: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-
-    writeGuest(guestUser, guestProfile)
-    set({ user: guestUser, profile: guestProfile, isGuest: true })
+  signInAsGuest: async (nickname?: string) => {
+    if (guestSignIn) return guestSignIn
+    guestSignIn = (async () => {
+      set({ loading: true })
+      try {
+        const session = await authService.getSession()
+        let user = session?.user
+        if (!user) {
+          // Migra apenas o apelido antigo. A identidade é emitida pelo Supabase Auth.
+          const cached = readGuest()
+          const nick = (nickname?.trim() || cached?.profile?.username || randomNick()).slice(0, 24)
+          const { data, error } = await supabase.auth.signInAnonymously({ options: { data: { username: nick } } })
+          if (error || !data.user) throw new Error('Não foi possível entrar como convidado. Tente novamente em instantes.')
+          user = data.user
+        }
+        if (!user) throw new Error('Não foi possível iniciar sua sessão.')
+        if (user.is_anonymous) {
+          const profile = guestProfile(user)
+          writeGuest(user, profile)
+          set({ user, profile, isGuest: true })
+        } else {
+          set({ user, isGuest: false })
+        }
+      } finally { set({ loading: false }) }
+    })()
+    try { await guestSignIn } finally { guestSignIn = null }
   },
 
-  setGuestNickname: (name: string) => {
-    const { user, profile, isGuest } = get()
-    if (!isGuest || !user || !profile) return
+  setGuestNickname: async (name: string) => {
+    const { user, isGuest } = get()
     const nick = name.trim().slice(0, 24)
-    if (!nick) return
-    const u = { ...user, user_metadata: { ...(user as any).user_metadata, username: nick } } as any
-    const pr = { ...profile, username: nick }
-    writeGuest(u, pr)
-    set({ user: u, profile: pr })
+    if (!isGuest || !user || !nick) return
+    const { data, error } = await supabase.auth.updateUser({ data: { username: nick } })
+    if (error || !data.user) throw new Error('Não foi possível atualizar o apelido.')
+    const profile = guestProfile(data.user)
+    writeGuest(data.user, profile)
+    set({ user: data.user, profile })
   },
 
   signOut: async () => {
     set({ loading: true })
     try {
+      if (guestSignIn) await guestSignIn.catch(() => {})
       const { user, isGuest } = get()
 
       if (isGuest) {
         clearGuest()
+        await authService.signOut()
         set({ user: null, profile: null, isGuest: false, loading: false })
         return
       }
@@ -267,104 +286,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   initialize: async () => {
-    set({ loading: true })
-    // Safety timeout — never leave user stuck on loading
-    const safetyTimeout = setTimeout(() => {
-      const state = get()
-      if (!state.initialized) {
-        console.warn('Auth init timeout — forcing initialized')
-        // Try restoring guest session as fallback
-        const g = readGuest()
-        if (g) { set({ user: g.user, profile: g.profile, isGuest: true, initialized: true, loading: false }); return }
-        set({ initialized: true, loading: false })
-      }
-    }, 5000)
-    try {
-      // Check if Supabase is configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      const isPlaceholder = !supabaseUrl || !supabaseKey
-        || supabaseUrl.includes('placeholder')
-        || supabaseUrl.includes('your_')
-        || !supabaseUrl.startsWith('http')
-
-      if (isPlaceholder) {
-        console.warn('⚠️ Supabase not configured. Running in demo mode.')
-        const g = readGuest()
-        if (g) { set({ user: g.user, profile: g.profile, isGuest: true, initialized: true, loading: false }); return }
-        set({ initialized: true, loading: false })
-        return
-      }
-
-      // Check for real Supabase session first — always takes priority over guest
-      const session = await authService.getSession()
-
-      if (session?.user) {
-        // Real user logged in — clear any stale guest session
+    if (get().initialized) return
+    if (initialization) return initialization
+    initialization = (async () => {
+      set({ loading: true })
+      let revision = 0
+      const hydrate = async (user: User | null, currentRevision = ++revision) => {
+        if (currentRevision !== revision) return
+        if (!user) { set({ user: null, profile: null, isGuest: false }); return }
+        if (user.is_anonymous) {
+          const profile = guestProfile(user)
+          writeGuest(user, profile)
+          set({ user, profile, isGuest: true })
+          return
+        }
         clearGuest()
+        set({ user, profile: null, isGuest: false })
         let profile: Profile | null = null
-        try {
-          profile = await databaseService.getProfile(session.user.id)
-        } catch {
-          const meta = session.user.user_metadata || {}
-          profile = await databaseService.upsertProfile(session.user.id, {
-            username: meta.username || meta.display_name || session.user.email?.split('@')[0] || 'Usuário',
-            display_name: meta.display_name || meta.username || session.user.email?.split('@')[0] || 'Usuário',
-            is_creator: meta.is_creator ?? false,
-            is_vip: false,
-            is_elite: false,
-            saldo_fichas: 50,
-            total_earned: 0,
+        try { profile = await databaseService.getProfile(user.id) } catch {
+          const meta = user.user_metadata || {}
+          try {
+            profile = await databaseService.upsertProfile(user.id, {
+              username: meta.username || meta.display_name || user.email?.split('@')[0] || 'Usuário',
+              display_name: meta.display_name || meta.username || user.email?.split('@')[0] || 'Usuário',
+            })
+          } catch { /* A sessão continua válida mesmo se o perfil estiver indisponível. */ }
+        }
+        if (currentRevision === revision) set({ profile })
+      }
+      try {
+        if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) return
+        if (!authListenerInstalled) {
+          authListenerInstalled = true
+          authService.onAuthStateChange((_event, session) => {
+            // Não chama APIs de Auth dentro do callback, que mantém o lock da sessão.
+            const eventRevision = ++revision
+            setTimeout(() => { void hydrate(session?.user ?? null, eventRevision) }, 0)
           })
         }
-        set({ user: session.user, profile, isGuest: false })
-
-        // Set online status (non-blocking)
-        presenceService.setOnlineStatus(session.user.id, true).catch(() => {})
-      } else {
-        // No real session — restore guest if exists
-        const g = readGuest()
-        if (g) set({ user: g.user, profile: g.profile, isGuest: true })
-      }
-
-      // Listen to auth state changes
-      authService.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Real auth — clear guest
-          clearGuest()
-          set({ isGuest: false })
-          let profile: Profile | null = null
-          try {
-            profile = await databaseService.getProfile(session.user.id)
-          } catch {
-            const meta = session.user.user_metadata || {}
-            profile = await databaseService.upsertProfile(session.user.id, {
-              username: meta.username || meta.display_name || session.user.email?.split('@')[0] || 'Usuário',
-              display_name: meta.display_name || meta.username || session.user.email?.split('@')[0] || 'Usuário',
-              is_creator: meta.is_creator ?? false,
-              is_vip: false,
-              is_elite: false,
-              saldo_fichas: 50,
-              total_earned: 0,
-            })
-          }
-          set({ user: session.user, profile })
-          await presenceService.setOnlineStatus(session.user.id, true)
-        } else if (event === 'SIGNED_OUT') {
-          set({ user: null, profile: null })
-        }
-      })
-
-      clearTimeout(safetyTimeout)
-      set({ initialized: true })
-    } catch (error) {
-      console.error('Initialize error:', error)
-      clearTimeout(safetyTimeout)
-      set({ initialized: true })
-    } finally {
-      set({ loading: false })
-    }
+        const revisionBeforeRead = revision
+        const session = await authService.getSession()
+        if (revisionBeforeRead === revision) await hydrate(session?.user ?? null)
+      } catch {
+        set({ user: null, profile: null, isGuest: false })
+      } finally { set({ initialized: true, loading: false }) }
+    })()
+    try { await initialization } finally { initialization = null }
   },
 
   updateProfile: async (updates: Partial<Profile>) => {

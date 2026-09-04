@@ -28,6 +28,8 @@ file_size_limit = "50MiB"
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://localhost:3000"]
 jwt_expiry = 3600
+# Necessário para convidados com UUID/JWT reais no chat moderado.
+enable_anonymous_sign_ins = true
 enable_signup = true
 
 [auth.email]

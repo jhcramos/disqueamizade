@@ -1,3 +1,4 @@
+import { supabase } from '@/services/supabase/client'
 // ═══════════════════════════════════════════════════════════════════════════
 // LiveKit — helpers de configuração e token (Plano V4, Fase 1)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -22,11 +23,14 @@ export async function fetchRoomToken(roomId: string, identity: string): Promise<
   if (!supabaseUrl || supabaseUrl === 'your_supabase_url') {
     throw new Error('Supabase não configurado — não é possível obter token LiveKit')
   }
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session || session.user.id !== identity) throw new Error('Sua sessão expirou. Entre novamente.')
   const res = await fetch(`${supabaseUrl}/functions/v1/livekit-token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({ roomId, participantName: identity }),
   })

@@ -1,0 +1,44 @@
+{
+  "version": "5",
+  "remote": {
+    "https://esm.sh/@supabase/supabase-js@2.39.0": "f51aeb2dbf8f67c8fa396628af45793e3513067d45705f1ea158f5c678bb0cea"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@livekit/components-react@^2.9.19",
+        "npm:@mediapipe/tasks-vision@~0.10.21",
+        "npm:@supabase/supabase-js@2.115.0",
+        "npm:@tanstack/react-query@^5.17.0",
+        "npm:@types/node@^25.1.0",
+        "npm:@types/react-dom@^18.2.18",
+        "npm:@types/react@^18.2.48",
+        "npm:@typescript-eslint/eslint-plugin@^6.19.0",
+        "npm:@typescript-eslint/parser@^6.19.0",
+        "npm:@vercel/node@^5.8.2",
+        "npm:@vitejs/plugin-react@^4.2.1",
+        "npm:autoprefixer@^10.4.17",
+        "npm:clsx@^2.1.0",
+        "npm:eslint-plugin-react-hooks@^4.6.0",
+        "npm:eslint-plugin-react-refresh@~0.4.5",
+        "npm:eslint@^8.56.0",
+        "npm:gh-pages@^6.3.0",
+        "npm:livekit-client@^2.17.0",
+        "npm:livekit-server-sdk@^2.15.0",
+        "npm:lucide-react@0.563",
+        "npm:postcss@^8.4.33",
+        "npm:react-dom@19",
+        "npm:react-router-dom@^6.22.0",
+        "npm:react@19",
+        "npm:sharp@0.35.4",
+        "npm:tailwindcss@^3.4.1",
+        "npm:typescript@^5.3.3",
+        "npm:vite@^5.0.11",
+        "npm:zustand@^5.0.11"
+      ],
+      "overrides": {
+        "node-fetch": "^2.7.0"
+      }
+    }
+  }
+}

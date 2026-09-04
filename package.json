@@ -9,12 +9,13 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "predev": "node scripts/copy-mediapipe.mjs",
-    "optimize:blog-images": "node scripts/optimize-blog-images.mjs"
+    "optimize:blog-images": "node scripts/optimize-blog-images.mjs",
+    "test:chat": "node --test tests/chat-client.test.mjs supabase/functions/_shared/*.test.ts"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.19",
     "@mediapipe/tasks-vision": "^0.10.21",
-    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/supabase-js": "2.115.0",
     "@tanstack/react-query": "^5.17.0",
     "clsx": "^2.1.0",
     "livekit-client": "^2.17.0",

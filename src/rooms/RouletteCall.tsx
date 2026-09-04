@@ -1,3 +1,4 @@
+import { useToastStore } from '@/components/common/ToastContainer'
 // ═══════════════════════════════════════════════════════════════════════════
 // RouletteCall — chamada 1:1 da roleta em LiveKit (Plano V4, item 1.7)
 //
@@ -13,7 +14,7 @@ import {
 import { ConnectionState } from 'livekit-client'
 import { Video, VideoOff, Mic, MicOff, SkipForward, X, Send, Flag } from 'lucide-react'
 import { CameraMasksButton } from '@/components/camera/CameraMasks'
-import { roomChat } from '@/services/supabase/roomChat'
+import { roomChat, chatError } from '@/services/supabase/roomChat'
 import { track as analytics } from '@/services/analytics'
 import { LIVEKIT_URL } from './livekit'
 import { useStageCamera } from './useStageCamera'
@@ -56,6 +57,8 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
 
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const { addToast } = useToastStore()
   const endRef = useRef<HTMLDivElement>(null)
   const goneLiveRef = useRef(false)
 
@@ -75,25 +78,29 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
   // Chat 1:1
   useEffect(() => {
     if (connState !== ConnectionState.Connected) return
-    roomChat.join(
-      `roulette-${roomId}`, identity, displayName,
-      (msg) => setMessages((prev) => [...prev, msg as ChatMsg]),
-      () => {},
-    )
+    setMessages([])
+    const fail = (error: unknown) => addToast({ type: 'error', title: 'Chat indisponível', message: chatError(error) })
+    void roomChat.join(
+      `roulette-${[identity, peerId].sort().join('-')}`, identity, displayName,
+      (msg) => setMessages((prev) => [...prev, msg as ChatMsg].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())),
+      () => {}, fail,
+    ).catch(fail)
     return () => { roomChat.leave() }
-  }, [connState, roomId, identity, displayName])
+  }, [connState, roomId, identity, peerId, displayName, addToast])
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  const send = useCallback((e: React.FormEvent) => {
+  const send = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     const text = input.trim()
-    if (!text) return
-    if (roomChat.sendMessage(identity, displayName, text)) {
-      setMessages((prev) => [...prev, { id: `me-${Date.now()}`, userId: identity, username: displayName, content: text, type: 'text', timestamp: new Date() }])
-      setInput('')
-    }
-  }, [input, identity, displayName])
+    if (!text || sending) return
+    setSending(true)
+    try {
+      await roomChat.sendMessage(identity, displayName, text)
+      setInput((current) => current === input ? '' : current)
+    } catch (error) { addToast({ type: 'error', title: 'Mensagem não enviada', message: chatError(error) }) }
+    finally { setSending(false) }
+  }, [input, sending, identity, displayName, addToast])
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
@@ -152,7 +159,7 @@ const CallInner = ({ roomId, identity, displayName, peerId, isGuest, onNext, onE
         </div>
         <form onSubmit={send} className="p-3 border-t border-white/5 flex gap-2">
           <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Mensagem…" maxLength={500} className="flex-1 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm focus:outline-none focus:border-primary-500/40" />
-          <button type="submit" className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
+          <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
         </form>
       </div>
 

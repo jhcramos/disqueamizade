@@ -1,3 +1,4 @@
+import { useToastStore } from '@/components/common/ToastContainer'
 // ═══════════════════════════════════════════════════════════════════════════
 // ProgramaAoVivo — âncora de retenção: um horário fixo por dia (Plano V4, 4.3)
 //
@@ -48,7 +49,7 @@ export const ProgramaAoVivo = ({ compact = false }: { compact?: boolean }) => {
 
   const enter = () => {
     track('cta_enter_click', { cta: 'programa_21h' })
-    verifyAge(() => { signInAsGuest(); navigate('/room/geral-brasil') })
+    verifyAge(() => { void signInAsGuest().then(() => navigate('/room/geral-brasil')).catch(() => useToastStore.getState().addToast({ type: 'error', title: 'Entrada indisponível', message: 'Não foi possível entrar. Tente novamente em instantes.' })) })
   }
 
   return (

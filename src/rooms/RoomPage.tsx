@@ -22,7 +22,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useToastStore } from '@/components/common/ToastContainer'
 import { supabase } from '@/services/supabase/client'
-import { roomChat } from '@/services/supabase/roomChat'
+import { roomChat, chatError } from '@/services/supabase/roomChat'
 import { CameraMasksButton } from '@/components/camera/CameraMasks'
 import { track as analytics, startRoomSession } from '@/services/analytics'
 import { isLiveKitConfigured, fetchRoomToken, LIVEKIT_URL } from './livekit'
@@ -41,7 +41,7 @@ type Presence = { userId: string; username: string; joinedAt: number }
 export const RoomPage = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
-  const { user, profile, isGuest, signInAsGuest } = useAuthStore()
+  const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { verifyAge } = useAgeVerification()
   const { addToast } = useToastStore()
 
@@ -50,6 +50,7 @@ export const RoomPage = () => {
   const [roomName, setRoomName] = useState('Sala')
   const [roomSlug, setRoomSlug] = useState('')
   const [token, setToken] = useState<string | null>(null)
+  const [tokenIdentity, setTokenIdentity] = useState('')
   const [tokenError, setTokenError] = useState<string | null>(null)
 
   const identity = user?.id || 'anon'
@@ -57,8 +58,8 @@ export const RoomPage = () => {
 
   // Convidado automático: quem cai direto na sala sem sessão vira convidado.
   useEffect(() => {
-    if (!user && !isGuest) signInAsGuest()
-  }, [user, isGuest, signInAsGuest])
+    if (initialized && ageOk && !user) void signInAsGuest().catch(() => { setTokenError('Não foi possível iniciar sua sessão.'); setReady(true) })
+  }, [user, initialized, ageOk, signInAsGuest])
 
   // Verificação de idade
   useEffect(() => {
@@ -67,6 +68,7 @@ export const RoomPage = () => {
 
   // Carrega a sala e busca o token
   useEffect(() => {
+    setReady(false); setToken(null); setTokenError(null)
     if (!ageOk || !identity || identity === 'anon') return
     let cancelled = false
     ;(async () => {
@@ -82,7 +84,7 @@ export const RoomPage = () => {
       try {
         if (!isLiveKitConfigured()) throw new Error('LiveKit não configurado')
         const t = await fetchRoomToken(slug, identity)
-        if (!cancelled) setToken(t)
+        if (!cancelled) { setToken(t); setTokenIdentity(identity) }
       } catch (e) {
         if (!cancelled) setTokenError(e instanceof Error ? e.message : 'Erro ao conectar')
       }
@@ -91,7 +93,7 @@ export const RoomPage = () => {
     return () => { cancelled = true }
   }, [ageOk, identity, roomId])
 
-  if (!ready) {
+  if (!ready || (token && tokenIdentity !== identity)) {
     return (
       <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
         <div className="text-dark-400">Entrando na sala…</div>
@@ -119,6 +121,7 @@ export const RoomPage = () => {
 
   return (
     <LiveKitRoom
+      key={`${identity}:${roomSlug}`}
       serverUrl={LIVEKIT_URL}
       token={token}
       connect
@@ -158,6 +161,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [names, setNames] = useState<Map<string, string>>(new Map())
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
   const [showChat, setShowChat] = useState(true)
   const [blocked, setBlocked] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('blocked-users') || '[]')) } catch { return new Set() }
@@ -171,33 +175,35 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
   // Chat público + presença
   useEffect(() => {
     if (connState !== ConnectionState.Connected) return
-    roomChat.join(
+    setMessages([])
+    const fail = (error: unknown) => addToast({ type: 'error', title: 'Chat indisponível', message: chatError(error) })
+    void roomChat.join(
       roomId, identity, displayName,
       (msg) => {
-        setMessages((prev) => [...prev, msg as ChatMessage])
+        setMessages((prev) => [...prev, msg as ChatMessage].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()))
         if (msg.type !== 'system' && msg.userId !== identity) analytics('chat_msg_received_human', { room: roomId })
       },
       (users: Presence[]) => {
         setNames(new Map(users.map((u) => [u.userId, u.username])))
-      },
-    )
+      }, fail,
+    ).catch(fail)
     return () => { roomChat.leave() }
-  }, [connState, roomId, identity, displayName])
+  }, [connState, roomId, identity, displayName, addToast])
 
   useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  const sendMessage = useCallback((e: React.FormEvent) => {
+  const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     const text = input.trim()
-    if (!text) return
-    const ok = roomChat.sendMessage(identity, displayName, text)
-    if (ok) {
-      setMessages((prev) => [...prev, { id: `me-${Date.now()}`, userId: identity, username: displayName, content: text, timestamp: new Date(), type: 'text' }])
-      setInput('')
-    } else {
-      addToast({ type: 'info', title: 'Calma!', message: 'Você está enviando mensagens rápido demais.' })
-    }
-  }, [input, identity, displayName, addToast])
+    if (!text || sending) return
+    setSending(true)
+    try {
+      await roomChat.sendMessage(identity, displayName, text)
+      setInput((current) => current === input ? '' : current)
+    } catch (error) {
+      addToast({ type: 'error', title: 'Mensagem não enviada', message: chatError(error) })
+    } finally { setSending(false) }
+  }, [input, sending, identity, displayName, addToast])
 
   const handleBlock = useCallback((id: string, name: string) => {
     setBlocked(persistBlock(id))
@@ -238,9 +244,9 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
             </button>
           )}
           {isGuest && editingNick && (
-            <form onSubmit={(e) => { e.preventDefault(); setGuestNickname(nickInput); setEditingNick(false); addToast({ type: 'success', title: 'Apelido atualizado', message: `Agora você é ${nickInput.trim().slice(0, 24)}.` }) }} className="flex items-center gap-1">
+            <form onSubmit={(e) => { e.preventDefault(); void setGuestNickname(nickInput).then(() => { setEditingNick(false); addToast({ type: 'success', title: 'Apelido atualizado', message: `Agora você é ${nickInput.trim().slice(0, 24)}.` }) }).catch(() => addToast({ type: 'error', title: 'Apelido não atualizado', message: 'Tente novamente em instantes.' })) }} className="flex items-center gap-1">
               <input value={nickInput} onChange={(e) => setNickInput(e.target.value)} maxLength={24} autoFocus className="w-28 px-2 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs focus:outline-none focus:border-primary-500/40" />
-              <button type="submit" className="px-2 py-1.5 rounded-xl bg-primary-500 text-white text-xs font-bold">ok</button>
+              <button type="submit" disabled={sending} className="px-2 py-1.5 rounded-xl bg-primary-500 text-white text-xs font-bold">ok</button>
             </form>
           )}
           <button onClick={handleShare} title="Compartilhar" className="p-2 rounded-xl bg-white/5 hover:bg-white/10"><Share2 className="w-4 h-4" /></button>
@@ -343,7 +349,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
                 maxLength={500}
                 className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500/40"
               />
-              <button type="submit" className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
+              <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
             </form>
           </aside>
         )}
@@ -396,22 +402,32 @@ const SelfView = ({ stream, name, hint }: { stream: MediaStream; name: string; h
 const DMPanel = ({ myId, myName, peerId, peerName, onClose }: { myId: string; myName: string; peerId: string; peerName: string; onClose: () => void }) => {
   const [msgs, setMsgs] = useState<DMMessage[]>([])
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const { addToast } = useToastStore()
   const convRef = useRef<DMConversation | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const conv = new DMConversation(myId, myName, peerId)
     convRef.current = conv
-    conv.join((m) => setMsgs((prev) => [...prev, m]))
+    setMsgs([])
+    const fail = (error: unknown) => addToast({ type: 'error', title: 'Conversa indisponível', message: chatError(error) })
+    void conv.join((m) => setMsgs((prev) => [...prev, m].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())), fail).catch(fail)
     return () => conv.leave()
-  }, [myId, myName, peerId])
+  }, [myId, myName, peerId, addToast])
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
 
-  const send = (e: React.FormEvent) => {
+  const send = async (e: React.FormEvent) => {
     e.preventDefault()
-    const sent = convRef.current?.send(input)
-    if (sent) { setMsgs((prev) => [...prev, sent]); setInput('') }
+    const conversation = convRef.current
+    if (!conversation || !input.trim() || sending) return
+    setSending(true)
+    try {
+      await conversation.send(input)
+      setInput((current) => current === input ? '' : current)
+    } catch (error) { addToast({ type: 'error', title: 'Mensagem não enviada', message: chatError(error) }) }
+    finally { setSending(false) }
   }
 
   return (
@@ -431,7 +447,7 @@ const DMPanel = ({ myId, myName, peerId, peerName, onClose }: { myId: string; my
       </div>
       <form onSubmit={send} className="p-3 border-t border-white/5 flex gap-2">
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Mensagem privada…" maxLength={500} className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500/40" />
-        <button type="submit" className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
+        <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
       </form>
     </div>
   )

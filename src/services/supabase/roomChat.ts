@@ -2,211 +2,128 @@ import { supabase } from './client'
 import { filterMessage } from '@/services/moderation'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
-type ChatMessage = {
-  id: string
-  userId: string
-  username: string
-  content: string
-  timestamp: Date
-  type: 'text' | 'emoji' | 'system'
+export type ChatMessage = {
+  id: string; userId: string; username: string; content: string
+  timestamp: Date; type: 'text' | 'emoji' | 'system'
+}
+type PresenceState = { userId: string; username: string; joinedAt: number }
+type MessageRow = {
+  id: string; room_slug: string; user_id: string; username: string
+  content: string; created_at: string; type: 'text' | 'emoji'
+}
+const errors: Record<string, string> = {
+  unauthorized: 'Sua sessão expirou. Entre novamente.',
+  forbidden: 'Você não tem acesso a esta conversa.',
+  banned: 'O envio de mensagens está suspenso para esta conta.',
+  blocked_content: 'Links não são permitidos no chat.',
+  invalid_request: 'Escreva uma mensagem de até 500 caracteres.',
+  rate_limited: 'Aguarde alguns segundos antes de enviar outra mensagem.',
+  unavailable: 'O chat está indisponível. Tente novamente em instantes.',
+}
+export function chatError(error: unknown): string {
+  return error instanceof Error && Object.values(errors).includes(error.message)
+    ? error.message : errors.unavailable
 }
 
-type PresenceState = {
-  userId: string
-  username: string
-  joinedAt: number
-}
+const closingChannels = new Map<string, Promise<void>>()
 
-let channel: RealtimeChannel | null = null
-let currentRoomSlug: string | null = null
+/** Somente linhas autorizadas pelo servidor são entregues à interface. */
+export class ChatConversation {
+  private channel: RealtimeChannel | null = null
+  private roomSlug: string | null = null
+  private sender: string | null = null
+  private generation = 0
+  private seen = new Set<string>()
+  private onMessage: ((message: ChatMessage) => void) | null = null
 
-// Rate limiting: max 5 messages per 3 seconds
-const messageTimestamps: number[] = []
-const RATE_LIMIT_COUNT = 5
-const RATE_LIMIT_WINDOW_MS = 3000
+  private deliver(row: MessageRow, generation: number) {
+    if (generation !== this.generation || row.room_slug !== this.roomSlug || this.seen.has(row.id)) return
+    this.seen.add(row.id)
+    this.onMessage?.({ id: row.id, userId: row.user_id, username: row.username,
+      content: row.content, timestamp: new Date(row.created_at), type: row.type })
+  }
 
-export const roomChat = {
-  /**
-   * Join a room's realtime channel for chat + presence
-   */
-  async join(
-    roomSlug: string,
-    userId: string,
-    username: string,
-    onMessage: (msg: ChatMessage) => void,
-    onPresenceChange: (users: PresenceState[]) => void,
-  ) {
+  async join(roomSlug: string, userId: string, username: string,
+    onMessage: (message: ChatMessage) => void,
+    onPresenceChange: (users: PresenceState[]) => void = () => {},
+    onError: (error: Error) => void = () => {},
+  ): Promise<void> {
     this.leave()
-    currentRoomSlug = roomSlug
-
-    // Load persisted messages (last 50)
-    try {
-      const { data: rows } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('room_id', roomSlug)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (rows && rows.length > 0) {
-        // Deliver oldest first
-        for (const row of rows.reverse()) {
-          onMessage({
-            id: row.id,
-            userId: row.user_id,
-            username: row.username,
-            content: row.content,
-            timestamp: new Date(row.created_at),
-            type: (row.type as ChatMessage['type']) || 'text',
-          })
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load chat history:', e)
-    }
-
-    channel = supabase.channel(`room:${roomSlug}`, {
-      config: { presence: { key: userId } },
-    })
-
-    channel
-      .on('broadcast', { event: 'chat' }, ({ payload }) => {
-        const content = payload.content || ''
-        
-        // Handle DM messages — only deliver to the intended recipient
-        const dmMatch = content.match(/^\[DM:([a-f0-9-]+)\]\s*(.*)$/i)
-        if (dmMatch) {
-          const targetUserId = dmMatch[1]
-          const actualMessage = dmMatch[2]
-          // Only deliver to the target user (or sender for their own echo)
-          if (targetUserId !== userId && payload.userId !== userId) return
-          onMessage({
-            id: payload.id || Date.now().toString(),
-            userId: payload.userId,
-            username: payload.username,
-            content: actualMessage, // Strip the DM prefix
-            timestamp: new Date(payload.timestamp),
-            type: 'dm' as any,
-            _dmTarget: targetUserId,
-          } as any)
-          return
-        }
-        
-        onMessage({
-          id: payload.id || Date.now().toString(),
-          userId: payload.userId,
-          username: payload.username,
-          content,
-          timestamp: new Date(payload.timestamp),
-          type: payload.type || 'text',
-        })
-      })
+    const generation = this.generation
+    await closingChannels.get(roomSlug)
+    if (generation !== this.generation) return
+    const { data: { session }, error } = await supabase.auth.getSession()
+    if (generation !== this.generation) return
+    if (error || session?.user.id !== userId) throw new Error(errors.unauthorized)
+    this.roomSlug = roomSlug
+    this.sender = userId
+    this.onMessage = onMessage
+    const channel = supabase.channel(`moderated:${roomSlug}`, { config: { presence: { key: userId }, postgres_changes_options: { wait: true } } })
+    this.channel = channel
+    channel.on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_slug=eq.${roomSlug}`,
+    }, ({ new: row }) => this.deliver(row as MessageRow, generation))
       .on('presence', { event: 'sync' }, () => {
-        const state = channel!.presenceState()
-        const users: PresenceState[] = []
-        for (const [, presences] of Object.entries(state)) {
-          for (const p of presences as any[]) {
-            users.push({
-              userId: p.userId || p.user_id,
-              username: p.username,
-              joinedAt: p.joinedAt || p.joined_at,
-            })
-          }
-        }
+        if (generation !== this.generation) return
+        const users = Object.values(channel.presenceState()).flat().map((p: any) => ({
+          userId: String(p.userId || ''), username: String(p.username || 'Convidado').slice(0, 24),
+          joinedAt: Number(p.joinedAt) || 0,
+        }))
         onPresenceChange(users)
       })
-      .on('presence', { event: 'join' }, ({ newPresences }) => {
-        for (const p of newPresences as any[]) {
-          onMessage({
-            id: `join-${Date.now()}`,
-            userId: 'system',
-            username: 'Sistema',
-            content: `${p.username || 'Alguém'} entrou na sala 👋`,
-            timestamp: new Date(),
-            type: 'system',
-          })
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        for (const p of leftPresences as any[]) {
-          onMessage({
-            id: `leave-${Date.now()}`,
-            userId: 'system',
-            username: 'Sistema',
-            content: `${p.username || 'Alguém'} saiu da sala`,
-            timestamp: new Date(),
-            type: 'system',
-          })
-        }
-      })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
+        if (generation !== this.generation) return
         if (status === 'SUBSCRIBED') {
-          await channel!.track({
-            userId,
-            username,
-            joinedAt: Date.now(),
-          })
+          // Assina antes de ler o histórico; ids removem duplicatas durante reconexões.
+          void channel.track({ userId, username, joinedAt: Date.now() })
+          void (async () => {
+            try {
+              const { data, error } = await supabase.from('chat_messages')
+                .select('id,room_slug,user_id,username,content,type,created_at')
+                .eq('room_slug', roomSlug).order('created_at', { ascending: false }).limit(50)
+              if (error) throw error
+              for (const row of (data || []).reverse()) this.deliver(row as MessageRow, generation)
+            } catch {
+              if (generation === this.generation) onError(new Error(errors.unavailable))
+            }
+          })()
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          onError(new Error(errors.unavailable))
         }
       })
-  },
+  }
 
-  /**
-   * Send a chat message to the room
-   */
-  sendMessage(userId: string, username: string, content: string, type: 'text' | 'emoji' = 'text'): boolean {
-    if (!channel) return false
-
-    // Rate limiting
-    const now = Date.now()
-    // Remove timestamps outside the window
-    while (messageTimestamps.length > 0 && messageTimestamps[0] <= now - RATE_LIMIT_WINDOW_MS) {
-      messageTimestamps.shift()
-    }
-    if (messageTimestamps.length >= RATE_LIMIT_COUNT) {
-      return false // silently drop
-    }
-    messageTimestamps.push(now)
-
-    // Filtro de moderação (Plano V4, Fase 3): barra links, mascara palavrões.
-    const filtered = filterMessage(content)
-    if (!filtered.ok) return false
-    content = filtered.cleaned
-
-    const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-    const timestamp = new Date().toISOString()
-
-    // Broadcast for real-time delivery
-    channel.send({
-      type: 'broadcast',
-      event: 'chat',
-      payload: { id: msgId, userId, username, content, timestamp, type },
+  async sendMessage(userId: string, _username: string, content: string, type: 'text' | 'emoji' = 'text'): Promise<void> {
+    const generation = this.generation
+    if (!this.roomSlug || this.sender !== userId) throw new Error(errors.unauthorized)
+    if (!content.trim() || content.length > 500) throw new Error(errors.invalid_request)
+    if (!filterMessage(content).ok) throw new Error(errors.blocked_content)
+    // O servidor recebe o original e aplica sua própria moderação, mesmo sem o filtro local.
+    const { data, error } = await supabase.functions.invoke('send-chat', {
+      body: { roomSlug: this.roomSlug, text: content, type },
     })
-
-    // Persist to DB (fire and forget)
-    if (currentRoomSlug) {
-      supabase.from('chat_messages').insert({
-        id: msgId,
-        room_id: currentRoomSlug,
-        user_id: userId,
-        username,
-        content,
-        type,
-        created_at: timestamp,
-      }).then(({ error }) => {
-        if (error) console.warn('Failed to persist chat message:', error)
-      })
+    if (error) {
+      let code = 'unavailable'
+      try { code = (await error.context?.json())?.error || code } catch { /* erro de rede */ }
+      throw new Error(errors[code] || errors.unavailable)
     }
-
-    return true
-  },
+    if (!data?.message) throw new Error(errors.unavailable)
+    this.deliver(data.message, generation)
+  }
 
   leave() {
-    if (channel) {
-      channel.untrack()
-      supabase.removeChannel(channel)
-      channel = null
+    ++this.generation
+    if (this.channel && this.roomSlug) {
+      const slug = this.roomSlug
+      const closing = supabase.removeChannel(this.channel).then(() => {}, () => {})
+      closingChannels.set(slug, closing)
+      void closing.then(() => { if (closingChannels.get(slug) === closing) closingChannels.delete(slug) })
     }
-    currentRoomSlug = null
-    messageTimestamps.length = 0
-  },
+    this.channel = null
+    this.roomSlug = null
+    this.sender = null
+    this.onMessage = null
+    this.seen.clear()
+  }
 }
+export const roomChat = new ChatConversation()

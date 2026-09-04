@@ -223,38 +223,6 @@ export const databaseService = {
   },
 
   // ============================================================================
-  // CHAT MESSAGES
-  // ============================================================================
-
-  async getChatMessages(roomId: string, limit = 50) {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*, user:profiles(username, avatar_url)')
-      .eq('room_id', roomId)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (error) throw error
-    return data
-  },
-
-  async sendMessage(roomId: string, userId: string, content: string) {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert({
-        room_id: roomId,
-        user_id: userId,
-        content,
-        message_type: 'text',
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  // ============================================================================
   // USER SERVICES (Marketplace)
   // ============================================================================
 
