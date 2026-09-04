@@ -8,7 +8,8 @@
     "build": "node scripts/copy-mediapipe.mjs && tsc && vite build && node scripts/prerender.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "predev": "node scripts/copy-mediapipe.mjs"
+    "predev": "node scripts/copy-mediapipe.mjs",
+    "optimize:blog-images": "node scripts/optimize-blog-images.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.19",
@@ -38,6 +39,7 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "gh-pages": "^6.3.0",
     "postcss": "^8.4.33",
+    "sharp": "0.35.4",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.11"
