@@ -102,3 +102,29 @@ test('effect cleanup can be followed by a fresh approved publication without ena
   assert.equal(await replay.start({ getVideoTracks: () => [video] }, audio, true), true)
   assert.equal(video.enabled, true); assert.equal(audio.enabled, false)
 })
+test('reconnection waits for a cancelled publication to finish before reusing its track', async () => {
+  const exports = {}, effects = [], events = []
+  let resolveFirst, calls = 0, stops = 0
+  const video = { enabled: true, readyState: 'live' }, audio = { enabled: false }
+  const camera = { approved: true, previewStream: { getVideoTracks: () => [video] }, stream: { getAudioTracks: () => [audio] }, stop: () => { stops++ }, openPreview() {} }
+  const participant = {
+    publishTrack: async track => { events.push('publish'); if (++calls === 1) return new Promise(resolve => { resolveFirst = resolve }); return { track } },
+    unpublishTrack: () => { events.push('unpublish') },
+  }
+  const modules = {
+    react: { useRef: value => ({ current: value }), useCallback: f => f, useState: value => [value, () => {}], useEffect: f => { effects.push(f) } },
+    '@livekit/components-react': { useLocalParticipant: () => ({ localParticipant: participant }), useConnectionState: () => 'connected' },
+    'livekit-client': { ConnectionState: { Connected: 'connected' } },
+    './CameraSetup': { useCameraSetup: () => camera }, './stagePublication': { StagePublication: publicationClass() }, '@/services/analytics': { track() {} },
+  }
+  const code = ts.transpileModule(readFileSync(new URL('../src/rooms/useStageCamera.ts', import.meta.url), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+  runInNewContext(code, { exports, require: name => modules[name] })
+  exports.useStageCamera('test-room')
+  const firstCleanup = effects[0](); await new Promise(setImmediate)
+  firstCleanup(); const secondCleanup = effects[0](); await new Promise(setImmediate)
+  assert.equal(calls, 1)
+  resolveFirst({ track: video }); await new Promise(setImmediate)
+  assert.deepEqual(events, ['publish', 'unpublish', 'publish', 'publish'])
+  assert.equal(stops, 0)
+  secondCleanup()
+})

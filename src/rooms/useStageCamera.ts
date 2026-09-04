@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocalParticipant, useConnectionState } from '@livekit/components-react'
 import { ConnectionState } from 'livekit-client'
 import { useCameraSetup } from './CameraSetup'
@@ -12,6 +12,7 @@ export function useStageCamera(roomId: string) {
   const [isLive, setIsLive] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
+  const pendingPublication = useRef<Promise<unknown>>(Promise.resolve())
   const { approved, previewStream, stream, stop, openPreview } = camera
 
   useEffect(() => {
@@ -19,7 +20,11 @@ export function useStageCamera(roomId: string) {
     let cancelled = false
     const publisher = new StagePublication(localParticipant as any)
     setPublishing(true); setPublishError(null)
-    void publisher.start(previewStream, stream?.getAudioTracks()[0], approved).then(started => {
+    // Aguarda a limpeza da tentativa anterior antes de reutilizar a faixa.
+    // Evita que uma publicação antiga remova a nova após uma reconexão.
+    const operation = pendingPublication.current.then(() => cancelled ? false : publisher.start(previewStream, stream?.getAudioTracks()[0], approved))
+    pendingPublication.current = operation.catch(() => {})
+    void operation.then(started => {
       if (!cancelled) { setIsLive(started); if (started) analytics('camera_on', { room: roomId }) }
     }).catch(() => {
       if (!cancelled) { setPublishError('Não foi possível transmitir. Abra a prévia para tentar novamente.'); stop() }
