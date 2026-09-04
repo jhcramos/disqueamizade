@@ -5,9 +5,6 @@ import { supabase } from '@/services/supabase/client'
 
 // ─── Types ───
 type ColdStartSettings = {
-  bots_presence: boolean
-  inflated_counters: boolean
-  auto_chat: boolean
   lobby_mode: boolean
 }
 
@@ -224,7 +221,7 @@ export function AdminPage() {
 
   // Settings state
   const [coldStart, setColdStart] = useState<ColdStartSettings>({
-    bots_presence: true, inflated_counters: true, auto_chat: true, lobby_mode: true,
+    lobby_mode: true,
   })
   const [general, setGeneral] = useState<GeneralSettings>({
     maintenance_mode: false, registration_open: true, max_rooms: 100,
@@ -246,7 +243,7 @@ export function AdminPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [bans, setBans] = useState<UserBan[]>([])
   const [metrics, setMetrics] = useState({
-    totalUsers: 0, onlineReal: 0, onlineSimulated: 0, totalRooms: 0, revenue: 0, pendingReports: 0,
+    totalUsers: 0, onlineReal: 0, totalRooms: 0, revenue: 0, pendingReports: 0,
   })
 
   // ─── Auth Guard ───
@@ -294,7 +291,7 @@ export function AdminPage() {
     const { data } = await supabase.from('admin_settings').select('*')
     if (data) {
       for (const row of data) {
-        if (row.key === 'cold_start') setColdStart(row.value as ColdStartSettings)
+        if (row.key === 'cold_start') setColdStart({ lobby_mode: row.value?.lobby_mode !== false })
         if (row.key === 'general') setGeneral(row.value as GeneralSettings)
         if (row.key === 'moderation') setModeration(row.value as ModerationSettings)
       }
@@ -320,13 +317,9 @@ export function AdminPage() {
       supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('room_participants').select('id', { count: 'exact', head: true }),
     ])
-    const hourBR = (new Date().getUTCHours() - 3 + 24) % 24
-    let simBase = 85
-    if (hourBR >= 19 && hourBR <= 23) simBase = 180
-    else if (hourBR >= 14 && hourBR < 19) simBase = 120
     setMetrics({
       totalUsers: usersRes.count || 0, onlineReal: participantsRes.count || 0,
-      onlineSimulated: simBase + Math.round(Math.random() * 30), totalRooms: roomsRes.count || 0,
+      totalRooms: roomsRes.count || 0,
       revenue: 0, pendingReports: reportsRes.count || 0,
     })
   }, [])
@@ -456,11 +449,8 @@ export function AdminPage() {
         {activeTab === 'cold_start' && (
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">🎛️ Cold Start</h2>
-            <p className="text-noite-400 mb-6">Controles para fase inicial — simular atividade até ter massa crítica.</p>
+            <p className="text-noite-400 mb-6">Mensagem de boas-vindas para salas vazias. A presença exibida usa dados do banco.</p>
             <div className="space-y-3 max-w-2xl">
-              <Toggle label="Bots de Presença" description="Simular usuários online nas salas" enabled={coldStart.bots_presence} onChange={v => updateColdStart('bots_presence', v)} loading={saving} />
-              <Toggle label="Contadores Inflados" description="Adicionar offset aos contadores" enabled={coldStart.inflated_counters} onChange={v => updateColdStart('inflated_counters', v)} loading={saving} />
-              <Toggle label="Chat Automático" description="Gerar mensagens automáticas" enabled={coldStart.auto_chat} onChange={v => updateColdStart('auto_chat', v)} loading={saving} />
               <Toggle label="Modo Lobby" description="Mensagem amigável em salas vazias" enabled={coldStart.lobby_mode} onChange={v => updateColdStart('lobby_mode', v)} loading={saving} />
             </div>
           </div>
@@ -650,7 +640,6 @@ export function AdminPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl">
               <MetricCard icon="👥" label="Usuários (real)" value={metrics.totalUsers} />
               <MetricCard icon="🟢" label="Online (real)" value={metrics.onlineReal} />
-              <MetricCard icon="🤖" label="Online (simulado)" value={metrics.onlineSimulated} />
               <MetricCard icon="🏠" label="Salas ativas" value={metrics.totalRooms} />
               <MetricCard icon="💰" label="Revenue (fichas)" value={metrics.revenue} />
               <MetricCard icon="🚨" label="Denúncias" value={metrics.pendingReports} />
