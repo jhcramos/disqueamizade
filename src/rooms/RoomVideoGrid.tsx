@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useTracks, VideoTrack, useParticipants } from '@livekit/components-react'
 import { VideoOff, Eye } from 'lucide-react'
 import { track as analytics } from '@/services/analytics'
+import { siteUrl } from '@/config/site'
 
 interface Props {
   roomId: string
@@ -78,7 +79,7 @@ export const RoomVideoGrid = ({ roomId, names, localIdentity, onReport, onBlock,
 }
 
 const EmptyStage = ({ roomId, spectators }: { roomId: string; spectators: number }) => {
-  const shareUrl = `${window.location.origin}/sala/${roomId}`
+  const shareUrl = siteUrl(`/sala/${roomId}`)
   const wa = `https://wa.me/?text=${encodeURIComponent(`Bora conversar no Disque Amizade? ${shareUrl}`)}`
   return (
     <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center px-6">
