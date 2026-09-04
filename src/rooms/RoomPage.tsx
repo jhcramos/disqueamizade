@@ -262,7 +262,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
 
           {/* Autovisualização (você): mostra o vídeo com máscara que os outros veem */}
           {cam.isLive && cam.isCameraOn && cam.previewStream && (
-            <SelfView stream={cam.previewStream} name={displayName} />
+            <SelfView stream={cam.previewStream} name={displayName} hint={cam.activeMask ? TRACK_HINT[cam.trackingStatus] : undefined} />
           )}
 
           {/* Barra de controles */}
@@ -364,7 +364,13 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
 // Mostra o stream composto (com máscara) que os outros participantes veem.
 // Fica mudo (o próprio áudio não deve voltar) e espelhado, como toda self-view.
 
-const SelfView = ({ stream, name }: { stream: MediaStream; name: string }) => {
+const TRACK_HINT: Record<string, string | undefined> = {
+  loading: 'carregando máscara…',
+  'no-face': 'procurando seu rosto…',
+  error: 'máscara indisponível',
+}
+
+const SelfView = ({ stream, name, hint }: { stream: MediaStream; name: string; hint?: string }) => {
   const ref = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -377,7 +383,7 @@ const SelfView = ({ stream, name }: { stream: MediaStream; name: string }) => {
     <div className="absolute bottom-24 right-4 z-20 w-28 sm:w-40 rounded-xl overflow-hidden bg-dark-900 border border-white/15 shadow-2xl aspect-[4/3]">
       <video ref={ref} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1">
-        <span className="text-[10px] font-semibold text-white truncate">Você · {name}</span>
+        <span className="text-[10px] font-semibold text-white truncate">{hint ?? `Você · ${name}`}</span>
       </div>
     </div>
   )

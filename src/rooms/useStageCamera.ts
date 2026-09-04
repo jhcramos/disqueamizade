@@ -45,6 +45,8 @@ export interface StageCameraControls {
   beautyBrighten: boolean
   setBeautyBrighten: (v: boolean) => void
   faceBox: ReturnType<typeof useVideoFilter>['faceBox']
+  /** estado do rastreador facial (idle | loading | tracking | no-face | error) */
+  trackingStatus: ReturnType<typeof useVideoFilter>['trackingStatus']
 }
 
 export function useStageCamera(roomId: string): StageCameraControls {
@@ -62,7 +64,7 @@ export function useStageCamera(roomId: string): StageCameraControls {
   const [starting, setStarting] = useState(false)
 
   const {
-    activeMaskEmoji, faceBox, enableFilter, disableFilter,
+    faceBox, faceRef, enableFilter, disableFilter, trackingStatus,
   } = useVideoFilter(videoRef, stream)
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export function useStageCamera(roomId: string): StageCameraControls {
 
   const filterStyle = FILTER_CSS[activeFilter] || 'none'
   const { compositeStream } = useCompositeStream(
-    videoRef, stream, filterStyle, activeMaskEmoji, faceBox, beautySmooth, beautyBrighten,
+    videoRef, stream, filterStyle, activeMask, faceRef, beautySmooth, beautyBrighten,
   )
 
   const pubRef = useRef<LocalTrackPublication[]>([])
@@ -138,6 +140,6 @@ export function useStageCamera(roomId: string): StageCameraControls {
     videoRef, previewStream: compositeStream, isLive, isCameraOn, isMicOn, permissionState, error, starting,
     goLive, leaveStage, toggleCamera, toggleMic,
     activeFilter, setActiveFilter, activeMask, setActiveMask,
-    beautySmooth, setBeautySmooth, beautyBrighten, setBeautyBrighten, faceBox,
+    beautySmooth, setBeautySmooth, beautyBrighten, setBeautyBrighten, faceBox, trackingStatus,
   }
 }
