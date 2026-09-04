@@ -88,7 +88,8 @@ export const VideoFiltersPage = () => {
           {/* Prévia */}
           <div className="lg:col-span-3">
             <div className="relative rounded-2xl overflow-hidden bg-dark-900 border border-white/10 aspect-[4/3]">
-              <video ref={videoRef} autoPlay playsInline muted className="hidden" />
+              {/* fonte oculta (não display:none, senão o canvas sai preto) */}
+              <video ref={videoRef} autoPlay playsInline muted className="fixed top-0 left-0 w-px h-px opacity-[0.01] pointer-events-none -z-10" />
               <video ref={previewRef} autoPlay playsInline muted className={`w-full h-full object-cover ${stream ? '' : 'hidden'}`} style={{ transform: 'scaleX(-1)' }} />
               {!stream && (
                 <div className="absolute inset-0 flex items-center justify-center">

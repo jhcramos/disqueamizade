@@ -301,8 +301,10 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
                 </>
               )}
             </div>
-            {/* Preview local escondido (fonte do canvas de máscara) */}
-            <video ref={cam.videoRef} autoPlay playsInline muted className="hidden" />
+            {/* Fonte oculta do canvas (rastreador + máscara). NÃO usar
+                display:none: o navegador para de decodificar frames e o vídeo
+                composto sai preto. Fica 1px fora da vista, ainda renderizado. */}
+            <video ref={cam.videoRef} autoPlay playsInline muted className="fixed top-0 left-0 w-px h-px opacity-[0.01] pointer-events-none -z-10" />
           </div>
         </main>
 
