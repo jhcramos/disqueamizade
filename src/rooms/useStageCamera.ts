@@ -23,6 +23,8 @@ const SOURCE_MIC = 'microphone'
 
 export interface StageCameraControls {
   videoRef: React.RefObject<HTMLVideoElement>
+  /** Stream composto (com filtros/máscara) para a autovisualização local. */
+  previewStream: MediaStream | null
   isLive: boolean
   isCameraOn: boolean
   isMicOn: boolean
@@ -133,7 +135,7 @@ export function useStageCamera(roomId: string): StageCameraControls {
   }, [])
 
   return {
-    videoRef, isLive, isCameraOn, isMicOn, permissionState, error, starting,
+    videoRef, previewStream: compositeStream, isLive, isCameraOn, isMicOn, permissionState, error, starting,
     goLive, leaveStage, toggleCamera, toggleMic,
     activeFilter, setActiveFilter, activeMask, setActiveMask,
     beautySmooth, setBeautySmooth, beautyBrighten, setBeautyBrighten, faceBox,

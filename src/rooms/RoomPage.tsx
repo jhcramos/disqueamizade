@@ -30,6 +30,7 @@ import { useStageCamera } from './useStageCamera'
 import { RoomVideoGrid } from './RoomVideoGrid'
 import { DMConversation, type DMMessage } from './dm'
 import { reportUser, blockUser as persistBlock } from '@/services/moderation'
+import { siteUrl } from '@/config/site'
 
 type ChatMessage = {
   id: string; userId: string; username: string; content: string
@@ -210,7 +211,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
   }, [roomId, identity, onReport])
 
   const handleShare = useCallback(() => {
-    const url = `${window.location.origin}/sala/${roomId}`
+    const url = siteUrl(`/sala/${roomId}`)
     if (navigator.share) navigator.share({ title: roomName, url }).catch(() => {})
     else { navigator.clipboard?.writeText(url); addToast({ type: 'success', title: 'Link copiado', message: 'Cole no WhatsApp para chamar alguém.' }) }
   }, [roomId, roomName, addToast])
@@ -249,7 +250,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
 
       <div className="flex-1 flex min-h-0">
         {/* Vídeo */}
-        <main className={`flex-1 flex flex-col min-w-0 ${showChat ? 'hidden lg:flex' : 'flex'}`}>
+        <main className={`relative flex-1 flex flex-col min-w-0 ${showChat ? 'hidden lg:flex' : 'flex'}`}>
           <RoomVideoGrid
             roomId={roomId}
             names={names}
@@ -258,6 +259,11 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
             onBlock={handleBlock}
             blocked={blocked}
           />
+
+          {/* Autovisualização (você): mostra o vídeo com máscara que os outros veem */}
+          {cam.isLive && cam.isCameraOn && cam.previewStream && (
+            <SelfView stream={cam.previewStream} name={displayName} />
+          )}
 
           {/* Barra de controles */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur p-3">
@@ -350,6 +356,29 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
           onClose={() => setDm(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Autovisualização local (PiP) ───
+// Mostra o stream composto (com máscara) que os outros participantes veem.
+// Fica mudo (o próprio áudio não deve voltar) e espelhado, como toda self-view.
+
+const SelfView = ({ stream, name }: { stream: MediaStream; name: string }) => {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (el && el.srcObject !== stream) {
+      el.srcObject = stream
+      el.play().catch(() => {})
+    }
+  }, [stream])
+  return (
+    <div className="absolute bottom-24 right-4 z-20 w-28 sm:w-40 rounded-xl overflow-hidden bg-dark-900 border border-white/15 shadow-2xl aspect-[4/3]">
+      <video ref={ref} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1">
+        <span className="text-[10px] font-semibold text-white truncate">Você · {name}</span>
+      </div>
     </div>
   )
 }
