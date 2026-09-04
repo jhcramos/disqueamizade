@@ -138,6 +138,11 @@ Hoje o filtro (`filterMessage` em `src/services/moderation.ts`) roda só no clie
 - **Pronto quando:** `dist/` abaixo de ~40 MB; imagens do blog carregam em WebP.
 
 ### B.5 — (item 3.5) Detector de nudez no cliente (opcional, atrás de flag)
+- **Decisão do proprietário:** nudez permitida somente nas futuras salas adultas.
+  Salas atuais e roleta continuam sem exceção. Uma futura exceção deve depender
+  de configuração da sala validada no servidor e acesso restrito a adultos;
+  apelido, slug, parâmetro de URL ou toggle local não podem liberar nudez.
+  O detector opcional não cria nem ativa salas adultas.
 - `src/hooks/useNsfwGuard.ts` novo: 1 quadro/s da câmera local passa por `nsfwjs`
   (carregado sob demanda); acima do limiar, borra o stream publicado; 3 eventos em 5 min
   desligam a câmera e abrem denúncia automática. Integrar no pipeline de `useStageCamera`.
