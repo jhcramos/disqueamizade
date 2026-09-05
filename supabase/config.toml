@@ -53,3 +53,7 @@ verify_jwt = false
 
 [functions.livekit-token]
 verify_jwt = false
+
+# Custom JWT validation through auth.getUser, same as send-chat.
+[functions.icebreaker]
+verify_jwt = false

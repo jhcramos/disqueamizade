@@ -28,6 +28,7 @@ import { track as analytics, startRoomSession } from '@/services/analytics'
 import { isLiveKitConfigured, fetchRoomToken, LIVEKIT_URL } from './livekit'
 import { useStageCamera } from './useStageCamera'
 import { RoomVideoGrid } from './RoomVideoGrid'
+import { IcebreakerPanel } from './icebreakers/IcebreakerPanel'
 import { DMConversation, type DMMessage } from './dm'
 import { reportUser, blockUser as persistBlock } from '@/services/moderation'
 import { siteUrl } from '@/config/site'
@@ -279,6 +280,8 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
           {cam.isLive && cam.isCameraOn && cam.previewStream && (
             <SelfView stream={cam.previewStream} name={displayName} hint={cam.activeMask ? TRACK_HINT[cam.trackingStatus] : undefined} />
           )}
+
+          <IcebreakerPanel key={`${roomId}:${identity}`} roomId={roomId} identity={identity} connected={connState === ConnectionState.Connected} blocked={blocked} />
 
           {/* Barra de controles */}
           <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur p-3">
