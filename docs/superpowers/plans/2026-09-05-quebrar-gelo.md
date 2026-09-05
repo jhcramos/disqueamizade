@@ -25,7 +25,7 @@
 - [x] Edge: supabase/functions/icebreaker/index.ts valida JWT com auth.getUser, limita corpo, aplica moderação existente e chama RPC restrita a service_role. Catálogo e parser em _shared/icebreaker.ts. Nunca usa identidade enviada pelo cliente.
 - [x] Interface: src/rooms/icebreakers/IcebreakerPanel.tsx, api.ts e types.ts. Integrar em RoomPage.tsx. Tratar falha de rede, cliques duplicados, desconexão, troca de sala, retirada, zero/uma resposta, cooldown, acessibilidade e mobile. Filtrar respostas de bloqueados após revelação.
 - [x] Verificação: testes parser/catálogo; SQL transacional com usuários sintéticos para sigilo, RLS, prazos, rodada obsoleta, reação duplicada, banimento e sala indevida. Testes chat/câmera e build. Sem câmera real ou mensagens a usuários.
-- [ ] Publicação: scan de segredos, commit/push na origem autorizada; aplicar migration e Edge, verificar API, publicar frontend e conferir artefato remoto. Registrar resultados reais abaixo.
+- [x] Publicação: scan de segredos, commit/push na origem autorizada; aplicar migration e Edge, verificar API, publicar frontend e conferir artefato remoto. Registrar resultados reais abaixo.
 
 ## Próxima etapa, fora deste incremento
 
@@ -41,3 +41,6 @@ Amizades e reencontro por interesse mútuo. Medir com consentimento se a brincad
 - Consulta SQL transacional pelo conector remoto não executada porque a ferramenta opera em transação somente leitura. Cobertura funcional remota feita pela API autenticada, sem mudar essa restrição.
 - Advisor: tabelas novas têm RLS e nenhuma política de cliente intencionalmente, com privilégios revogados. Acesso exclusivamente pelo servidor. Aviso informativo explicado em https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy . Avisos existentes de auto_hide_on_reports e proteção de senhas ficam fora deste incremento.
 - Limites do piloto: até 24 respostas por rodada; atualizações a cada 5s com painel aberto/15s fechado e suspensas em aba oculta. Sem dados de respostas em analytics. Retenção física da última rodada até a próxima na mesma sala; após encerramento a API deixa de entregar respostas. Revisar custo de consultas e retenção com o uso real.
+
+- Publicação concluída: commit funcional `4b2ec5e`, deployment `https://disqueamizade-fzjhl7iwj-jhcramos-projects.vercel.app` Ready. Domínio público carregou `/assets/index-BCMWLkaT.js`, sem erros de JavaScript observados na página de entrada. Fluxo interno verificado no fixture, pois a sessão pública está na verificação de idade.
+- Painel conferido em largura de 390px: sem transbordamento horizontal (scrollWidth/clientWidth = 390). Build final gerou 498 páginas.
