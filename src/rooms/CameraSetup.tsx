@@ -84,8 +84,8 @@ export function CameraPreview({ onContinue, onSkip, onCancel }: { onContinue: ()
         <ProcessedPreview stream={camera.previewStream} className="w-full h-full object-contain" />
         {!camera.stream && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
           <span className="text-4xl">🎭</span>
-          <button onClick={camera.prepare} disabled={camera.starting} className="btn-primary disabled:opacity-50">{camera.starting ? 'Abrindo câmera…' : 'Ativar prévia privada'}</button>
-          <p className="text-xs text-dark-400">Isso ainda não transmite seu vídeo.</p>
+          <p className="text-sm font-semibold text-dark-200">Sua prévia aparecerá aqui</p>
+          <p className="text-xs text-dark-400">Ative pelo botão verde abaixo. Isso ainda não transmite seu vídeo.</p>
         </div>}
       </div>
       <div className="flex flex-wrap gap-2 mt-4" aria-label="Escolher máscara">
@@ -96,10 +96,34 @@ export function CameraPreview({ onContinue, onSkip, onCancel }: { onContinue: ()
       {camera.stream && !camera.previewReady && <p role="status" className="text-sm text-amber-200 mt-3">{camera.trackingStatus === 'error' ? 'Não foi possível preparar a máscara. Tente novamente ou entre sem câmera.' : 'Preparando a prévia. Posicione o rosto em frente à câmera.'}</p>}
       {camera.error && <p role="alert" className="text-sm text-red-300 mt-3">{camera.error}</p>}
       <p className="text-xs text-dark-400 mt-4">Máscaras decorativas e pixelização não garantem anonimato. Para não mostrar seu rosto nem o ambiente, entre sem câmera.</p>
-      <div className="flex flex-col sm:flex-row gap-3 mt-5">
-        <button disabled={!camera.previewReady || !camera.isCameraOn || camera.starting} onClick={() => { if (camera.confirm()) onContinue() }} className="btn-primary flex-1 disabled:opacity-40">Confirmar e entrar com {camera.activeMask ? 'máscara' : 'câmera'}</button>
-        <button onClick={() => { camera.stop(); onSkip() }} className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 font-semibold">Entrar sem câmera</button>
-        <button onClick={onCancel} className="px-3 py-2 text-dark-300">Voltar</button>
+      <div className="mt-5 space-y-3">
+        {!camera.stream ? (
+          <button
+            onClick={camera.prepare}
+            disabled={camera.starting}
+            className="group w-full min-h-16 rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-left text-white shadow-[0_0_0_4px_rgba(52,211,153,0.12),0_14px_35px_rgba(16,185,129,0.28)] transition hover:-translate-y-0.5 hover:from-emerald-400 hover:to-teal-400 hover:shadow-[0_0_0_5px_rgba(52,211,153,0.17),0_18px_40px_rgba(16,185,129,0.34)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/60 disabled:cursor-wait disabled:opacity-70"
+          >
+            <span className="flex items-center justify-between gap-4">
+              <span><span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-950/70">Etapa 1 · prévia privada</span><span className="mt-0.5 block text-base font-extrabold sm:text-lg">{camera.starting ? 'Abrindo sua câmera…' : 'Ativar câmera e ver minha máscara'}</span></span>
+              <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-xl text-emerald-700 shadow-md transition group-hover:translate-x-0.5">{camera.starting ? '…' : '→'}</span>
+            </span>
+          </button>
+        ) : (
+          <button
+            disabled={!camera.previewReady || !camera.isCameraOn || camera.starting}
+            onClick={() => { if (camera.confirm()) onContinue() }}
+            className="group w-full min-h-16 rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-left text-white shadow-[0_0_0_4px_rgba(52,211,153,0.12),0_14px_35px_rgba(16,185,129,0.28)] transition hover:-translate-y-0.5 hover:from-emerald-400 hover:to-teal-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/60 disabled:translate-y-0 disabled:cursor-wait disabled:border-white/20 disabled:from-dark-700 disabled:to-dark-700 disabled:text-dark-300 disabled:shadow-none"
+          >
+            <span className="flex items-center justify-between gap-4">
+              <span><span className="block text-[11px] font-bold uppercase tracking-[0.16em] opacity-75">Etapa 2 · entrar na sala</span><span className="mt-0.5 block text-base font-extrabold sm:text-lg">{camera.previewReady ? `Confirmar ${camera.activeMask ? 'máscara' : 'câmera'} e entrar` : 'Preparando sua máscara…'}</span></span>
+              <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-xl text-emerald-700 shadow-md">{camera.previewReady ? '✓' : '…'}</span>
+            </span>
+          </button>
+        )}
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <button onClick={() => { camera.stop(); onSkip() }} className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 font-semibold text-dark-100 transition hover:border-white/35 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Entrar sem câmera</button>
+          <button onClick={onCancel} className="rounded-xl px-5 py-3 text-dark-300 transition hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30">Voltar</button>
+        </div>
       </div>
     </section>
   </main>
