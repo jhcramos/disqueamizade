@@ -48,3 +48,6 @@ service-account*.json
 
 # MediaPipe WASM runtime (gerado por scripts/copy-mediapipe.mjs no build)
 public/mediapipe/
+
+# Pré-visualizações locais do fluxo de design
+.superpowers/
