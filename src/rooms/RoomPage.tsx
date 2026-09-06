@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
-  LiveKitRoom, RoomAudioRenderer, useConnectionState,
+  LiveKitRoom, RoomAudioRenderer, useConnectionState, useTracks,
 } from '@livekit/components-react'
 import { ConnectionState } from 'livekit-client'
 import {
@@ -22,14 +22,18 @@ import { useAuthStore } from '@/store/authStore'
 import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useToastStore } from '@/components/common/ToastContainer'
 import { supabase } from '@/services/supabase/client'
-import { roomChat, chatError } from '@/services/supabase/roomChat'
-import { CameraSetupProvider, CameraPreview } from './CameraSetup'
+import { roomChat, chatError, DEFAULT_CONTACT_PREFERENCES, type ContactPreferences, type RoomPresence } from '@/services/supabase/roomChat'
+import { CameraSetupProvider, CameraPreview, useCameraSetup } from './CameraSetup'
 import { track as analytics, startRoomSession } from '@/services/analytics'
 import { isLiveKitConfigured, fetchRoomToken, LIVEKIT_URL } from './livekit'
 import { useStageCamera } from './useStageCamera'
 import { RoomVideoGrid } from './RoomVideoGrid'
 import { IcebreakerPanel } from './icebreakers/IcebreakerPanel'
 import { DMConversation, type DMMessage } from './dm'
+import { PeoplePanel } from './PeoplePanel'
+import { PrivateInvitePrompt } from './PrivateInvitePrompt'
+import { privateContacts, privateContactError, type ContactMode, type PrivateInvite } from './privateContact'
+import { PrivateCall } from './PrivateCall'
 import { reportUser, blockUser as persistBlock } from '@/services/moderation'
 import { siteUrl } from '@/config/site'
 
@@ -37,7 +41,7 @@ type ChatMessage = {
   id: string; userId: string; username: string; content: string
   timestamp: Date; type: 'text' | 'emoji' | 'system'
 }
-type Presence = { userId: string; username: string; joinedAt: number }
+type ActiveCall = { invite: PrivateInvite; peerName: string; token: string | null; error?: string }
 
 export const RoomPage = () => {
   const { roomId } = useParams()
@@ -51,6 +55,7 @@ const RoomEntry = () => {
   const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { verifyAge } = useAgeVerification()
   const { addToast } = useToastStore()
+  const camera = useCameraSetup()
 
   const [ready, setReady] = useState(false)
   const [entryConfirmed, setEntryConfirmed] = useState(false)
@@ -60,9 +65,41 @@ const RoomEntry = () => {
   const [token, setToken] = useState<string | null>(null)
   const [tokenIdentity, setTokenIdentity] = useState('')
   const [tokenError, setTokenError] = useState<string | null>(null)
+  const [activeCall, setActiveCall] = useState<ActiveCall | null>(null)
 
   const identity = user?.id || 'anon'
   const displayName = profile?.username || (user?.user_metadata?.username as string) || 'Convidado'
+
+  const startPrivateCall = useCallback((invite: PrivateInvite, peerName: string) => {
+    if (invite.mode === 'message') return
+    camera.stop()
+    setActiveCall({ invite, peerName, token: null })
+    const privateRoom = [invite.fromUser, invite.toUser].sort().join('-')
+    void fetchRoomToken(privateRoom, identity, invite.id).then(privateToken => {
+      setActiveCall(current => current?.invite.id === invite.id ? { ...current, token: privateToken } : current)
+    }).catch(error => {
+      setActiveCall(current => current?.invite.id === invite.id ? { ...current, error: error instanceof Error ? error.message : 'Não foi possível iniciar a conversa.' } : current)
+    })
+  }, [camera.stop, identity])
+
+  const endPrivateCall = useCallback(async () => {
+    const invite = activeCall?.invite
+    camera.stop()
+    if (invite) await privateContacts.end(invite.id).catch(() => {})
+    setActiveCall(current => current?.invite.id === invite?.id ? null : current)
+  }, [activeCall?.invite, camera.stop])
+
+  useEffect(() => {
+    const inviteId = activeCall?.invite.id
+    if (!inviteId || identity === 'anon') return
+    void privateContacts.subscribe(identity, invite => {
+      if (invite.id === inviteId && (invite.status === 'ended' || invite.status === 'declined' || invite.status === 'expired')) {
+        camera.stop()
+        setActiveCall(current => current?.invite.id === inviteId ? null : current)
+      }
+    }).catch(() => {})
+    return () => privateContacts.leave()
+  }, [activeCall?.invite.id, identity, camera.stop])
 
   // Convidado automático: quem cai direto na sala sem sessão vira convidado.
   useEffect(() => {
@@ -129,6 +166,18 @@ const RoomEntry = () => {
 
   if (!entryConfirmed) return <CameraPreview onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
 
+  if (activeCall) {
+    if (!activeCall.token || activeCall.error) return <div className="min-h-screen bg-dark-950 text-white grid place-items-center px-4">
+      <div className="max-w-sm text-center">
+        <p className="text-4xl">{activeCall.error ? '📡' : '🔒'}</p>
+        <h1 className="mt-3 text-xl font-bold">{activeCall.error ? 'Conversa indisponível' : `Abrindo conversa com ${activeCall.peerName}…`}</h1>
+        {activeCall.error && <><p className="mt-2 text-sm text-dark-300">{activeCall.error}</p><button onClick={endPrivateCall} className="mt-5 rounded-xl bg-primary-500 px-5 py-3 font-bold">Voltar para a sala</button></>}
+      </div>
+    </div>
+    const privateRoom = [activeCall.invite.fromUser, activeCall.invite.toUser].sort().join('-')
+    return <PrivateCall token={activeCall.token} roomId={privateRoom} identity={identity} peerName={activeCall.peerName} mode={activeCall.invite.mode as 'audio' | 'video'} onEnd={endPrivateCall} />
+  }
+
   return (
     <LiveKitRoom
       key={`${identity}:${roomSlug}`}
@@ -137,7 +186,6 @@ const RoomEntry = () => {
       connect
       audio={false}
       video={false}
-      onDisconnected={() => navigate('/rooms')}
       className="min-h-screen bg-dark-950 text-white"
     >
       <RoomAudioRenderer />
@@ -147,6 +195,7 @@ const RoomEntry = () => {
         identity={identity}
         displayName={displayName}
         isGuest={isGuest}
+        onStartPrivateCall={startPrivateCall}
         onReport={(name) => addToast({ type: 'success', title: 'Denúncia enviada', message: `Obrigado. A equipe vai revisar ${name}.` })}
       />
     </LiveKitRoom>
@@ -158,26 +207,37 @@ const RoomEntry = () => {
 interface StageProps {
   roomId: string; roomName: string; identity: string; displayName: string
   isGuest: boolean; onReport: (name: string) => void
+  onStartPrivateCall: (invite: PrivateInvite, peerName: string) => void
 }
 
-const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport }: StageProps) => {
+const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport, onStartPrivateCall }: StageProps) => {
   const connState = useConnectionState()
   const { addToast } = useToastStore()
   const setGuestNickname = useAuthStore((s) => s.setGuestNickname)
   const [editingNick, setEditingNick] = useState(false)
   const [nickInput, setNickInput] = useState(displayName)
   const cam = useStageCamera(roomId)
+  const cameraTracks = useTracks(['camera' as any], { onlySubscribed: false })
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [names, setNames] = useState<Map<string, string>>(new Map())
+  const [presences, setPresences] = useState<RoomPresence[]>([])
+  const [preferences, setPreferences] = useState<ContactPreferences>({ ...DEFAULT_CONTACT_PREFERENCES })
+  const [savingPreferences, setSavingPreferences] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showChat, setShowChat] = useState(true)
+  const [activeSide, setActiveSide] = useState<'chat' | 'people'>('chat')
   const [blocked, setBlocked] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('blocked-users') || '[]')) } catch { return new Set() }
   })
-  const [dm, setDm] = useState<{ peerId: string; peerName: string } | null>(null)
+  const [dm, setDm] = useState<{ peerId: string; peerName: string; inviteId: string } | null>(null)
+  const [incomingInvite, setIncomingInvite] = useState<PrivateInvite | null>(null)
+  const [inviteWorking, setInviteWorking] = useState(false)
   const msgEndRef = useRef<HTMLDivElement>(null)
+  const namesRef = useRef(names)
+  const openedInvites = useRef(new Set<string>())
+  namesRef.current = names
 
   // Sessão de sala (analytics room_joined + room_5min)
   useEffect(() => startRoomSession(roomId), [roomId])
@@ -193,12 +253,80 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
         setMessages((prev) => [...prev, msg as ChatMessage].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()))
         if (msg.type !== 'system' && msg.userId !== identity) analytics('chat_msg_received_human', { room: roomId })
       },
-      (users: Presence[]) => {
+      (users: RoomPresence[]) => {
+        setPresences(users)
         setNames(new Map(users.map((u) => [u.userId, u.username])))
       }, fail,
-    ).catch(fail)
+    ).then(async () => {
+      try {
+        const saved = await privateContacts.setPreferences(roomId, preferences)
+        await roomChat.updatePresence({ preferences: saved })
+      } catch { /* presença já usa os padrões seguros */ }
+    }).catch(fail)
     return () => { roomChat.leave() }
+    // As preferências mudam pelo método dedicado; não devem recriar o canal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connState, roomId, identity, displayName, addToast])
+
+  const activateInvite = useCallback((invite: PrivateInvite) => {
+    if (invite.status !== 'accepted' || openedInvites.current.has(invite.id)) return
+    openedInvites.current.add(invite.id)
+    setIncomingInvite(current => current?.id === invite.id ? null : current)
+    const peerId = invite.fromUser === identity ? invite.toUser : invite.fromUser
+    const peerName = namesRef.current.get(peerId) || 'Pessoa'
+    if (invite.mode === 'message') setDm({ peerId, peerName, inviteId: invite.id })
+    else { cam.stop(); onStartPrivateCall(invite, peerName) }
+  }, [identity, cam.stop, onStartPrivateCall])
+
+  useEffect(() => {
+    if (connState !== ConnectionState.Connected) return
+    const fail = () => addToast({ type: 'error', title: 'Convites indisponíveis', message: 'Tente novamente em instantes.' })
+    void privateContacts.subscribe(identity, invite => {
+      if (invite.status === 'pending' && invite.toUser === identity) setIncomingInvite(invite)
+      else if (invite.status === 'accepted') activateInvite(invite)
+      else if (invite.status === 'declined' || invite.status === 'expired' || invite.status === 'ended') {
+        setIncomingInvite(current => current?.id === invite.id ? null : current)
+        setDm(current => current?.inviteId === invite.id ? null : current)
+        if (invite.status === 'declined' && invite.fromUser === identity) addToast({ type: 'error', title: 'Convite recusado', message: 'A pessoa preferiu não conversar agora.' })
+      }
+    }, fail).catch(fail)
+    return () => privateContacts.leave()
+  }, [connState, identity, activateInvite, addToast])
+
+  const changePreferences = useCallback(async (next: ContactPreferences) => {
+    if (savingPreferences) return
+    setSavingPreferences(true)
+    try {
+      const saved = await privateContacts.setPreferences(roomId, next)
+      setPreferences(saved)
+      await roomChat.updatePresence({ preferences: saved })
+    } catch (error) {
+      addToast({ type: 'error', title: 'Preferências não atualizadas', message: privateContactError(error) })
+    } finally { setSavingPreferences(false) }
+  }, [savingPreferences, roomId, addToast])
+
+  const sendInvite = useCallback(async (person: RoomPresence, mode: ContactMode) => {
+    try {
+      await privateContacts.invite(roomId, person.userId, mode)
+      addToast({ type: 'success', title: 'Convite enviado', message: `${person.username} pode aceitar pelos próximos 30 segundos.` })
+    } catch (error) {
+      addToast({ type: 'error', title: 'Convite não enviado', message: privateContactError(error) })
+    }
+  }, [roomId, addToast])
+
+  const respondToInvite = useCallback(async (response: 'accept' | 'decline') => {
+    const invite = incomingInvite
+    if (!invite || inviteWorking) return
+    setInviteWorking(true)
+    try {
+      const updated = await privateContacts.respond(invite.id, response)
+      setIncomingInvite(null)
+      if (response === 'accept') activateInvite(updated)
+    } catch (error) {
+      addToast({ type: 'error', title: 'Convite encerrado', message: privateContactError(error) })
+      setIncomingInvite(null)
+    } finally { setInviteWorking(false) }
+  }, [incomingInvite, inviteWorking, activateInvite, addToast])
 
   useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -233,6 +361,21 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
   }, [roomId, roomName, addToast])
 
   const connecting = connState !== ConnectionState.Connected
+  const visiblePeople = presences.some(person => person.userId === identity) ? presences : [{
+    userId: identity, username: displayName, joinedAt: 0, preferences, busy: false,
+  }, ...presences]
+  const cameraLiveIds = new Set(cameraTracks.map(track => track.participant.identity))
+
+  const requestMessageFromChat = (userId: string, username: string) => {
+    if (userId === identity) return
+    const person = presences.find(candidate => candidate.userId === userId)
+    if (!person?.preferences.message) {
+      setActiveSide('people')
+      addToast({ type: 'error', title: 'Mensagem privada indisponível', message: `${username} não aceita mensagens privadas agora.` })
+      return
+    }
+    void sendInvite(person, 'message')
+  }
 
   return (
     <div className="h-screen flex flex-col">
@@ -260,7 +403,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
             </form>
           )}
           <button onClick={handleShare} title="Compartilhar" className="p-2 rounded-xl bg-white/5 hover:bg-white/10"><Share2 className="w-4 h-4" /></button>
-          <button onClick={() => setShowChat((v) => !v)} title="Chat" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 lg:hidden"><Users className="w-4 h-4" /></button>
+          <button onClick={() => setShowChat((v) => !v)} title="Chat e pessoas na sala" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 lg:hidden"><Users className="w-4 h-4" /></button>
         </div>
       </header>
 
@@ -316,13 +459,15 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
           </div>
         </main>
 
-        {/* Chat */}
+        {/* Chat e pessoas presentes */}
         {showChat && (
           <aside className="w-full h-[42vh] border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l flex-shrink-0 flex flex-col border-white/5 bg-dark-950 min-h-0">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
-              <span className="font-bold text-sm">Chat</span>
+            <div className="flex items-center gap-1 border-b border-white/5 px-2 py-2">
+              <button type="button" onClick={() => setActiveSide('chat')} className={`flex-1 rounded-xl px-3 py-2 text-sm font-bold ${activeSide === 'chat' ? 'bg-white/10 text-white' : 'text-dark-400 hover:bg-white/5'}`}>Chat</button>
+              <button type="button" onClick={() => setActiveSide('people')} className={`flex-1 rounded-xl px-3 py-2 text-sm font-bold ${activeSide === 'people' ? 'bg-white/10 text-white' : 'text-dark-400 hover:bg-white/5'}`}>Na sala <span className="ml-1 text-[10px]">{visiblePeople.length}</span></button>
               <button onClick={() => setShowChat(false)} className="p-1.5 rounded-lg hover:bg-white/5 lg:hidden"><X className="w-4 h-4" /></button>
             </div>
+            {activeSide === 'chat' ? <>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {messages.map((m) => (
                 <div key={m.id} className={m.type === 'system' ? 'text-center' : ''}>
@@ -331,7 +476,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
                   ) : (
                     <div className="text-sm">
                       <button
-                        onClick={() => m.userId !== identity && setDm({ peerId: m.userId, peerName: m.username })}
+                        onClick={() => requestMessageFromChat(m.userId, m.username)}
                         className={`font-semibold ${m.userId === identity ? 'text-primary-400' : 'text-pink-400 hover:underline'}`}
                       >
                         {m.username}
@@ -353,6 +498,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
               />
               <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
             </form>
+            </> : <PeoplePanel people={visiblePeople} selfId={identity} cameraLiveIds={cameraLiveIds} preferences={preferences} saving={savingPreferences} onPreferences={changePreferences} onInvite={sendInvite} />}
           </aside>
         )}
       </div>
@@ -363,9 +509,17 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport 
           myName={displayName}
           peerId={dm.peerId}
           peerName={dm.peerName}
-          onClose={() => setDm(null)}
+          onClose={() => { const inviteId = dm.inviteId; setDm(null); openedInvites.current.delete(inviteId); void privateContacts.end(inviteId).catch(() => {}) }}
         />
       )}
+      {incomingInvite && <PrivateInvitePrompt
+        invite={incomingInvite}
+        fromName={names.get(incomingInvite.fromUser) || 'Alguém da sala'}
+        working={inviteWorking}
+        onAccept={() => { void respondToInvite('accept') }}
+        onDecline={() => { void respondToInvite('decline') }}
+        onExpire={() => setIncomingInvite(current => current?.id === incomingInvite.id ? null : current)}
+      />}
     </div>
   )
 }

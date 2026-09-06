@@ -20,7 +20,8 @@ const deferred = () => { let resolve; const promise = new Promise(r => { resolve
 const row = { id: 'msg-1', room_slug: 'geral-brasil', user_id: 'server-id', username: 'Servidor', content: 'p****', type: 'text', created_at: '2026-09-04T00:00:00Z' }
 
 function chatHarness() {
-  const channels = [], calls = [], messages = []
+  const channels = [], calls = [], messages = [], tracks = []
+  let presence = {}
   let result = { data: { message: row }, error: null }
   let removal = Promise.resolve('ok')
   const supabase = {
@@ -29,7 +30,7 @@ function chatHarness() {
       const channel = { name, config, handlers: [],
         on(event, filter, callback) { this.handlers.push({ event, filter, callback }); return this },
         subscribe(callback) { this.status = callback; return this },
-        track: async () => {}, presenceState: () => ({}),
+        track: async value => { tracks.push(value) }, presenceState: () => presence,
       }
       channels.push(channel); return channel
     },
@@ -41,11 +42,31 @@ function chatHarness() {
     './client': { supabase }, '@/services/moderation': { filterMessage: () => ({ ok: true }) },
   })
   const conversation = new ChatConversation()
-  return { channels, calls, messages, conversation, create: () => new ChatConversation(),
+  return { channels, calls, messages, tracks, conversation, create: () => new ChatConversation(),
+    setPresence: value => { presence = value },
     setResult: r => { result = r }, setRemoval: p => { removal = p },
     join: () => conversation.join('geral-brasil', 'user-id', 'Cliente', m => messages.push(m)),
   }
 }
+
+test('presence normalizes preferences, deduplicates users and updates without recreating the channel', async () => {
+  const h = chatHarness(); const snapshots = []
+  await h.conversation.join('geral-brasil', 'user-id', 'Cliente', () => {}, users => snapshots.push(users))
+  h.channels[0].status('SUBSCRIBED'); await pause()
+  assert.equal(JSON.stringify(h.tracks[0].preferences), JSON.stringify({ message: true, audio: false, video: false }))
+  h.setPresence({
+    first: [{ userId: 'other', username: 'Pessoa', joinedAt: 1, preferences: { message: false, audio: true, video: 'yes' } }],
+    duplicate: [{ userId: 'other', username: 'Pessoa nova', joinedAt: 2, preferences: { message: true, audio: false, video: true }, busy: true }],
+  })
+  h.channels[0].handlers.find(x => x.event === 'presence').callback()
+  assert.equal(snapshots[0].length, 1)
+  assert.equal(snapshots[0][0].username, 'Pessoa nova')
+  assert.equal(JSON.stringify(snapshots[0][0].preferences), JSON.stringify({ message: true, audio: false, video: true }))
+  assert.equal(snapshots[0][0].busy, true)
+  await h.conversation.updatePresence({ preferences: { message: false, audio: true, video: false }, busy: false })
+  assert.equal(h.channels.length, 1)
+  assert.equal(JSON.stringify(h.tracks.at(-1).preferences), JSON.stringify({ message: false, audio: true, video: false }))
+})
 
 test('server result alone is displayed; realtime/history echoes are deduplicated', async () => {
   const h = chatHarness(); await h.join()
@@ -78,6 +99,26 @@ test('new conversation waits for old instance to leave shared topic; late rows i
 test('leave during pending join cannot recreate a channel', async () => {
   const h = chatHarness(); const joining = h.join(); h.conversation.leave(); await joining
   assert.equal(h.channels.length, 0)
+})
+
+test('private contact client sends only action data and subscribes to both participant directions', async () => {
+  const invokes = [], channels = []
+  const supabase = {
+    functions: { invoke: async (name, options) => { invokes.push({ name, options }); return { data: options.body.action === 'invite' ? { invite: { id: 'invite-1' } } : { preferences: options.body.preferences }, error: null } } },
+    channel: name => { const channel = { name, handlers: [], on(event, filter, callback) { this.handlers.push({ event, filter, callback }); return this }, subscribe(callback) { callback('SUBSCRIBED'); return this } }; channels.push(channel); return channel },
+    removeChannel: async () => {},
+    from: () => { const query = { select: () => query, or: () => query, in: () => query, gt: () => query, limit: async () => ({ data: [], error: null }) }; return query },
+  }
+  const { PrivateContactClient } = load('src/rooms/privateContact.ts', { '@/services/supabase/client': { supabase } })
+  const client = new PrivateContactClient()
+  await client.setPreferences('geral-brasil', { message: true, audio: true, video: false })
+  await client.invite('geral-brasil', 'peer-id', 'audio')
+  await client.subscribe('user-id', () => {})
+  assert.equal(invokes[0].name, 'private-contact')
+  assert.equal(JSON.stringify(invokes[1].options.body), JSON.stringify({ action: 'invite', roomSlug: 'geral-brasil', toUser: 'peer-id', mode: 'audio' }))
+  assert.equal(channels[0].handlers.length, 2)
+  assert.equal(channels[0].handlers[0].filter.filter, 'to_user=eq.user-id')
+  assert.equal(channels[0].handlers[1].filter.filter, 'from_user=eq.user-id')
 })
 
 function authHarness({ session = null, cached = null } = {}) {

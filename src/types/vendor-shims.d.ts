@@ -52,9 +52,14 @@ declare module 'livekit-client' {
   }
 
   export interface LocalParticipant {
+    identity: string
+    sid: string
+    isCameraEnabled: boolean
+    isMicrophoneEnabled: boolean
     trackPublications: Map<string, LocalTrackPublication>
     publishTrack(track: LocalTrack): Promise<unknown>
     unpublishTrack(track: LocalTrack): unknown
+    setMicrophoneEnabled(enabled: boolean): Promise<unknown>
   }
 
   export class Room {

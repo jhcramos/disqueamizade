@@ -12,6 +12,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { ChatError, readChatBody } from '../_shared/chat.ts'
 import { validateVideoRoom } from '../_shared/livekit.ts'
+import { acceptedModeForPair, privateRoomMembers, type ContactMode } from '../_shared/private-contact.ts'
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -36,7 +37,8 @@ async function createLiveKitToken(
   apiSecret: string,
   roomName: string,
   participantName: string,
-  isGuest: boolean
+  isGuest: boolean,
+  privateMode: ContactMode | null = null,
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const ttl = isGuest ? 1800 : 3600
@@ -58,6 +60,7 @@ async function createLiveKitToken(
       roomJoin: true,
       room: roomName,
       canPublish: true,
+      ...(privateMode ? { canPublishSources: privateMode === 'audio' ? ['microphone'] : ['camera', 'microphone'] } : {}),
       canSubscribe: true,
       canPublishData: false,
     },
@@ -99,18 +102,29 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
     const { data: auth, error } = await admin.auth.getUser(jwt)
     if (error || !auth.user) throw new ChatError('unauthorized', 401)
-    const { roomId, privateRoom } = validateVideoRoom(await readChatBody(req), auth.user.id)
+    const { roomId, privateRoom, inviteId } = validateVideoRoom(await readChatBody(req), auth.user.id)
     const bans = await admin.from('user_bans').select('id').eq('user_id', auth.user.id)
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).limit(1)
     if (bans.error) throw new ChatError('unavailable', 503)
     if (bans.data?.length) throw new ChatError('banned', 403)
+    let privateMode: ContactMode | null = null
     if (!privateRoom) {
       const room = await admin.from('rooms').select('id').eq('slug', roomId)
         .eq('is_active', true).eq('type', 'publica').eq('ficha_cost', 0).maybeSingle()
       if (room.error) throw new ChatError('unavailable', 503)
       if (!room.data) throw new ChatError('forbidden', 403)
+    } else {
+      const members = privateRoomMembers(roomId)
+      if (!members || !members.includes(auth.user.id)) throw new ChatError('forbidden', 403)
+      const allowed = await admin.from('private_invites')
+        .select('from_user,to_user,mode,status,expires_at')
+        .eq('id', inviteId).eq('status', 'accepted').gt('expires_at', new Date().toISOString())
+        .in('mode', ['audio', 'video']).in('from_user', members).in('to_user', members)
+      if (allowed.error) throw new ChatError('unavailable', 503)
+      privateMode = acceptedModeForPair(allowed.data, members, ['video', 'audio'])
+      if (!privateMode) throw new ChatError('forbidden', 403)
     }
-    const token = await createLiveKitToken(apiKey, apiSecret, roomId, auth.user.id, !!auth.user.is_anonymous)
+    const token = await createLiveKitToken(apiKey, apiSecret, roomId, auth.user.id, !!auth.user.is_anonymous, privateMode)
     return json({ token }, 200)
   } catch (error) {
     return error instanceof ChatError ? json({ error: error.code }, error.status) : json({ error: 'unavailable' }, 503)

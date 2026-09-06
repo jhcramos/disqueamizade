@@ -6,7 +6,12 @@ export type ChatMessage = {
   id: string; userId: string; username: string; content: string
   timestamp: Date; type: 'text' | 'emoji' | 'system'
 }
-type PresenceState = { userId: string; username: string; joinedAt: number }
+export type ContactPreferences = { message: boolean; audio: boolean; video: boolean }
+export const DEFAULT_CONTACT_PREFERENCES: ContactPreferences = { message: true, audio: false, video: false }
+export type RoomPresence = {
+  userId: string; username: string; joinedAt: number
+  preferences: ContactPreferences; busy: boolean
+}
 type MessageRow = {
   id: string; room_slug: string; user_id: string; username: string
   content: string; created_at: string; type: 'text' | 'emoji'
@@ -35,6 +40,7 @@ export class ChatConversation {
   private generation = 0
   private seen = new Set<string>()
   private onMessage: ((message: ChatMessage) => void) | null = null
+  private presence: RoomPresence | null = null
 
   private deliver(row: MessageRow, generation: number) {
     if (generation !== this.generation || row.room_slug !== this.roomSlug || this.seen.has(row.id)) return
@@ -45,8 +51,9 @@ export class ChatConversation {
 
   async join(roomSlug: string, userId: string, username: string,
     onMessage: (message: ChatMessage) => void,
-    onPresenceChange: (users: PresenceState[]) => void = () => {},
+    onPresenceChange: (users: RoomPresence[]) => void = () => {},
     onError: (error: Error) => void = () => {},
+    trackPresence = true,
   ): Promise<void> {
     this.leave()
     const generation = this.generation
@@ -58,6 +65,9 @@ export class ChatConversation {
     this.roomSlug = roomSlug
     this.sender = userId
     this.onMessage = onMessage
+    this.presence = trackPresence
+      ? { userId, username, joinedAt: Date.now(), preferences: { ...DEFAULT_CONTACT_PREFERENCES }, busy: false }
+      : null
     const channel = supabase.channel(`moderated:${roomSlug}`, { config: { presence: { key: userId }, postgres_changes_options: { wait: true } } })
     this.channel = channel
     channel.on('postgres_changes', {
@@ -65,17 +75,31 @@ export class ChatConversation {
     }, ({ new: row }) => this.deliver(row as MessageRow, generation))
       .on('presence', { event: 'sync' }, () => {
         if (generation !== this.generation) return
-        const users = Object.values(channel.presenceState()).flat().map((p: any) => ({
-          userId: String(p.userId || ''), username: String(p.username || 'Convidado').slice(0, 24),
-          joinedAt: Number(p.joinedAt) || 0,
-        }))
-        onPresenceChange(users)
+        const byUser = new Map<string, RoomPresence>()
+        for (const raw of Object.values(channel.presenceState()).flat() as any[]) {
+          const userId = String(raw.userId || '')
+          if (!userId) continue
+          const candidate: RoomPresence = {
+            userId,
+            username: String(raw.username || 'Convidado').slice(0, 24),
+            joinedAt: Number(raw.joinedAt) || 0,
+            preferences: {
+              message: raw.preferences?.message === undefined ? true : raw.preferences.message === true,
+              audio: raw.preferences?.audio === true,
+              video: raw.preferences?.video === true,
+            },
+            busy: raw.busy === true,
+          }
+          const current = byUser.get(userId)
+          if (!current || candidate.joinedAt >= current.joinedAt) byUser.set(userId, candidate)
+        }
+        onPresenceChange([...byUser.values()])
       })
       .subscribe((status) => {
         if (generation !== this.generation) return
         if (status === 'SUBSCRIBED') {
           // Assina antes de ler o histórico; ids removem duplicatas durante reconexões.
-          void channel.track({ userId, username, joinedAt: Date.now() })
+          if (this.presence) void channel.track(this.presence)
           void (async () => {
             try {
               const { data, error } = await supabase.from('chat_messages')
@@ -91,6 +115,16 @@ export class ChatConversation {
           onError(new Error(errors.unavailable))
         }
       })
+  }
+
+  async updatePresence(update: { preferences?: ContactPreferences; busy?: boolean }): Promise<void> {
+    if (!this.channel || !this.presence) throw new Error(errors.unavailable)
+    this.presence = {
+      ...this.presence,
+      ...(update.preferences ? { preferences: { ...update.preferences } } : {}),
+      ...(typeof update.busy === 'boolean' ? { busy: update.busy } : {}),
+    }
+    await this.channel.track(this.presence)
   }
 
   async sendMessage(userId: string, _username: string, content: string, type: 'text' | 'emoji' = 'text'): Promise<void> {
@@ -123,6 +157,7 @@ export class ChatConversation {
     this.roomSlug = null
     this.sender = null
     this.onMessage = null
+    this.presence = null
     this.seen.clear()
   }
 }
