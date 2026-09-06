@@ -51,6 +51,34 @@ ou microfone nem envio de mensagens a usuários reais.
 
 Ver docs/publicacao-2026-09-04.md para a referência da publicação.
 
+## Presença e convites privados — publicado em 07/09/2026
+
+A sala agora exibe todos os participantes conectados na aba **Na sala**, mesmo
+quando não publicam câmera nem escrevem no chat. O ícone verde indica câmera
+publicada naquele momento; os ícones de mensagem, áudio e vídeo indicam somente
+as modalidades de convite aceitas pela pessoa naquela sessão.
+
+- Mensagem começa habilitada; áudio e vídeo começam desabilitados. Alterações são
+  efêmeras, gravadas pelo servidor e refletidas por Supabase Presence.
+- Cada contato exige convite com aceite explícito. Convites pendentes expiram em
+  30 segundos e uma conversa aceita vale por até 45 minutos.
+- Mensagens privadas são negadas em `send-chat` sem convite de mensagem aceito.
+  Tokens LiveKit privados exigem o ID do convite aceito e limitam as fontes a
+  microfone no áudio, ou câmera e microfone no vídeo.
+- A sala geral é desmontada durante chamadas privadas. O microfone começa
+  desligado; o vídeo abre a prévia privada e só publica após confirmação.
+- As novas tabelas negam escrita direta a clientes. RLS permite que apenas os
+  dois participantes leiam o convite, e a Edge Function deriva a identidade do
+  JWT validado com `auth.getUser`.
+
+A migration `20260906230111_private_contacts.sql` foi aplicada no projeto
+DisqueAmizade. `private-contact` v2, `send-chat` v2 e `livekit-token` v3 ficaram
+ativas. O lint remoto do banco não encontrou erros. Em produção, duas sessões
+anônimas de teste confirmaram preferências, recusa de INSERT direto e de aceite
+pelo remetente, mensagem privada autorizada e grants distintos para áudio e
+vídeo. A validação local passou em 38 testes, PGlite com RLS e build de produção
+com 498 páginas estáticas.
+
 ## Itens condicionais
 
 - B.3: adiado para priorizar o chat; integração não ativada.

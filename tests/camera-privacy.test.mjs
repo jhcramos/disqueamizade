@@ -128,3 +128,18 @@ test('reconnection waits for a cancelled publication to finish before reusing it
   assert.equal(stops, 0)
   secondCleanup()
 })
+
+test('private calls connect without automatic camera or microphone publication', () => {
+  const source = readFileSync(new URL('../src/rooms/PrivateCall.tsx', import.meta.url), 'utf8')
+  assert.match(source, /audio=\{false\}/)
+  assert.match(source, /video=\{false\}/)
+  assert.match(source, /onClick=\{toggleMicrophone\}/)
+  assert.match(source, /setMicrophoneEnabled\(!isMicrophoneEnabled\)/)
+  assert.match(source, /mode === 'video'.*cam\.goLive/s)
+})
+
+test('private LiveKit token request carries the accepted invitation id', () => {
+  const source = readFileSync(new URL('../src/rooms/livekit.ts', import.meta.url), 'utf8')
+  assert.match(source, /fetchRoomToken\(roomId: string, identity: string, inviteId\?: string\)/)
+  assert.match(source, /inviteId \? \{ inviteId \} : \{\}/)
+})

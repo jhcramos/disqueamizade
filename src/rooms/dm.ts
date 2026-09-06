@@ -11,7 +11,7 @@ export class DMConversation {
   join(onMessage: (message: DMMessage) => void, onError: (error: Error) => void) {
     return this.conversation.join(`dm-${[this.myId, this.peerId].sort().join('-')}`, this.myId, this.myName,
       (message) => onMessage({ id: message.id, fromId: message.userId, fromName: message.username,
-        content: message.content, timestamp: message.timestamp }), () => {}, onError)
+        content: message.content, timestamp: message.timestamp }), () => {}, onError, false)
   }
   send(content: string): Promise<void> { return this.conversation.sendMessage(this.myId, this.myName, content) }
   leave() { this.conversation.leave() }

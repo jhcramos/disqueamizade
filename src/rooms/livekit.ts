@@ -18,7 +18,7 @@ export const MAX_STAGE = 8
  * Busca um token LiveKit na edge function do Supabase.
  * `identity` deve ser único por participante (id do usuário ou do convidado).
  */
-export async function fetchRoomToken(roomId: string, identity: string): Promise<string> {
+export async function fetchRoomToken(roomId: string, identity: string, inviteId?: string): Promise<string> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   if (!supabaseUrl || supabaseUrl === 'your_supabase_url') {
     throw new Error('Supabase não configurado — não é possível obter token LiveKit')
@@ -32,7 +32,7 @@ export async function fetchRoomToken(roomId: string, identity: string): Promise<
       Authorization: `Bearer ${session.access_token}`,
       apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify({ roomId, participantName: identity }),
+    body: JSON.stringify({ roomId, participantName: identity, ...(inviteId ? { inviteId } : {}) }),
   })
   if (!res.ok) throw new Error(`Falha ao obter token LiveKit: ${res.statusText}`)
   const data = await res.json()

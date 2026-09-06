@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { ChatError, configuredWords, moderateText, parseChatInput, readChatBody, safeUsername } from '../_shared/chat.ts'
+import { acceptedModeForPair, privateRoomMembers } from '../_shared/private-contact.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -32,6 +33,16 @@ Deno.serve(async (req: Request) => {
     const words = configuredWords(settings.data?.value?.banned_words)
     const content = moderateText(input.text, words)
     const username = safeUsername(profile.data?.username || profile.data?.display_name || auth.user.user_metadata?.username, words)
+    if (input.roomSlug.startsWith('dm-')) {
+      const members = privateRoomMembers(input.roomSlug.slice(3))
+      if (!members || !members.includes(auth.user.id)) throw new ChatError('forbidden', 403)
+      const allowed = await admin.from('private_invites')
+        .select('from_user,to_user,mode,status,expires_at')
+        .eq('status', 'accepted').eq('mode', 'message').gt('expires_at', new Date().toISOString())
+        .in('from_user', members).in('to_user', members)
+      if (allowed.error) throw new ChatError('unavailable', 503)
+      if (!acceptedModeForPair(allowed.data, members, ['message'])) throw new ChatError('forbidden', 403)
+    }
     const { data, error } = await admin.rpc('send_chat_message', {
       p_sender: auth.user.id, p_room_slug: input.roomSlug, p_text: content, p_username: username, p_type: input.type,
     })
