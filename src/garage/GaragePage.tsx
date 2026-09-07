@@ -1,3 +1,5 @@
+import { RoomChat } from "./RoomChat";
+import { useRoomChat } from "./useRoomChat";
 import { CameraPreview } from "./CameraPreview";
 import { AVATAR_PRESETS, presetAppearance } from "./avatarPresets";
 import { BarPlay } from "./BarPlay";
@@ -346,6 +348,7 @@ function GarageRoom({
     room,
     busy: call,
   };
+  const roomChat = useRoomChat(room, mode, self, roomPeople);
   useEffect(() => {
     const overlap = roomPeople.some(
       (p) =>
@@ -522,6 +525,7 @@ function GarageRoom({
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           <GarageScene
+            chatBubbles={roomChat.bubbles}
             play={roomPlay.state}
             playControls={
               room === "bar" ? (
@@ -634,6 +638,12 @@ function GarageRoom({
               );
             })}
           </div>
+          <RoomChat
+            chat={roomChat}
+            room={room}
+            people={[self, ...roomPeople]}
+            inCall={!!call}
+          />
           <div className="garage-under">
             <span>
               <VideoOff size={15} /> Ao explorar, sua câmera fica desligada

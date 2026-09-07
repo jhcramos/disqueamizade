@@ -21,6 +21,7 @@ type Props = {
   playControls: ReactNode;
   destination: Point;
   bubble?: ReactNode;
+  chatBubbles?: Record<string, string>;
   bubbleOwner?: string;
   self: Person;
   people: Person[];
@@ -414,6 +415,14 @@ export function GarageScene(props: Props) {
               </span>
             </span>
           )}
+          {props.chatBubbles?.[p.id] &&
+            !(props.bubble && props.bubbleOwner === p.id) && (
+              <span className="room-speech" title={props.chatBubbles[p.id]}>
+                {props.chatBubbles[p.id].length > 90
+                  ? props.chatBubbles[p.id].slice(0, 90) + "…"
+                  : props.chatBubbles[p.id]}
+              </span>
+            )}
           {p.id === props.self.id ? "Você" : p.name}
           {p.busy ? " · em conversa" : ""}
         </button>
