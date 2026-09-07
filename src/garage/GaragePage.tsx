@@ -1,3 +1,4 @@
+import { BrandLogo } from "../components/common/BrandLogo";
 import { AccountModal } from "../social/AccountPanel";
 import { RoomChat } from "./RoomChat";
 import { useRoomChat } from "./useRoomChat";
@@ -106,12 +107,7 @@ export default function GaragePage() {
     <main className="garage-app garage-entry">
       <header className="garage-topbar">
         <Link to="/" className="garage-brand">
-          <House />
-          <span>
-            disque
-            <br />
-            amizade
-          </span>
+          <BrandLogo />
         </Link>
         <span className="garage-tag">LAB / PRIMEIRA VISITA</span>
         <Link to="/rooms">
@@ -462,12 +458,7 @@ function GarageRoom({
       )}
       <header className="garage-topbar">
         <Link to="/" className="garage-brand">
-          <House />
-          <span>
-            disque
-            <br />
-            amizade
-          </span>
+          <BrandLogo />
         </Link>
         <nav aria-label="Localização">
           <span>Casa</span>
