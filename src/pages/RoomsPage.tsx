@@ -7,6 +7,7 @@ import { CreateRoomModal } from '@/components/rooms/CreateRoomModal'
 import { AgeGate } from '@/components/common/AgeVerificationModal'
 import type { MockRoom } from '@/types'
 import { useRooms } from '@/hooks/useSupabaseData'
+import { lobbyRooms } from '@/rooms/lobbyRooms'
 
 // ══════════════════════════════════════════════════════════════
 // CATEGORY SYSTEM
@@ -155,17 +156,13 @@ export const RoomsPage = () => {
 
   const totalOnline = rooms.reduce((acc: number, r: any) => acc + (r.online_count || 0), 0)
 
-  // Sala principal única: com menos de 20 pessoas no total, concentramos todo
-  // mundo na "Geral Brasil" para a conversa começar. As demais só aparecem
-  // quando há gente suficiente para não parecerem vazias. (Plano V4, item 1.5)
+  // Low occupancy keeps the general lobby focused while exposing the adult
+  // lounge as a separate, clearly labeled choice.
   const MAIN_THRESHOLD = 20
-  const MAIN_SLUG = 'geral-brasil'
   const concentrated = totalOnline < MAIN_THRESHOLD
   const visibleRooms = useMemo(() => {
     if (!concentrated) return filteredRooms
-    const main = rooms.find((r: any) => r._slug === MAIN_SLUG)
-      || [...rooms].sort((a: any, b: any) => (b.online_count || 0) - (a.online_count || 0))[0]
-    return main ? [main] : []
+    return lobbyRooms(rooms)
   }, [concentrated, filteredRooms, rooms])
 
   return (
@@ -240,7 +237,7 @@ export const RoomsPage = () => {
 
         {concentrated && !loading && (
           <div className="mb-6 p-4 rounded-xl bg-primary-500/[0.06] border border-primary-500/15 text-sm text-dark-300">
-            👋 Começamos concentrando todo mundo na <b className="text-white">sala principal</b> para a conversa fluir. As outras salas abrem quando passar de 20 pessoas online.
+            Comece pela <b className="text-white">sala principal</b> ou escolha o <b className="text-white">Lounge Adulto · 18+</b>. As demais salas aparecem a partir de 20 pessoas online.
           </div>
         )}
 
@@ -261,7 +258,7 @@ export const RoomsPage = () => {
               {selectedCategory === 'adult' && <Heart className="w-5 h-5 text-pink-400" />}
               {selectedCategory === 'drinks' && <Beer className="w-5 h-5 text-amber-400" />}
               <h2 className="text-lg font-bold text-white">
-                {selectedCategory === 'all' ? 'Todas as Salas' :
+                {selectedCategory === 'all' ? 'Salas disponíveis' :
                  selectedCategory === 'hot' ? '🔥 Rolando Agora — As Mais Movimentadas' :
                  selectedCategory === 'adult' ? '🔞 Salas Adultas — Só pra Maiores' :
                  selectedCategory === 'drinks' ? '🍺 Tá Bebendo? Cola Aqui!' :
@@ -278,7 +275,7 @@ export const RoomsPage = () => {
 
             {/* Subtitle per category */}
             {selectedCategory === 'adult' && (
-              <p className="text-xs text-pink-400/60 mb-4 -mt-2">Conteúdo explícito. Verificação de idade obrigatória. 18+</p>
+              <p className="text-xs text-pink-400/60 mb-4 -mt-2">Espaço exclusivo para maiores de 18 anos. Respeito e consentimento são obrigatórios.</p>
             )}
             {selectedCategory === 'hot' && (
               <p className="text-xs text-orange-400/60 mb-4 -mt-2">Salas com mais gente agora — a festa tá rolando! 🎉</p>

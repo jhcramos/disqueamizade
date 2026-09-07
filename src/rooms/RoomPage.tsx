@@ -166,7 +166,7 @@ const RoomEntry = () => {
     )
   }
 
-  if (!entryConfirmed) return <CameraPreview onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
+  if (!entryConfirmed) return <CameraPreview adultRoomName={roomSlug.startsWith('adult-') ? roomName : undefined} onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
 
   if (activeCall) {
     if (!activeCall.token || activeCall.error) return <div className="min-h-screen bg-dark-950 text-white grid place-items-center px-4">
