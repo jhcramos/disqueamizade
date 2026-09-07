@@ -50,8 +50,8 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-xs">
+    <div className="site-auth min-h-screen bg-dark-950 text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary-500/20">
@@ -63,6 +63,8 @@ export const AuthPage = () => {
           </div>
         </Link>
 
+        <h1 className="mb-2 text-center">Bom ter você aqui.</h1>
+        <p className="mb-7 text-center text-sm text-dark-400">Seu próximo encontro começa com um oi.</p>
         {/* Toggle */}
         <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl mb-5 border border-white/[0.06]">
           <button

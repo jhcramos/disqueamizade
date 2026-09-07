@@ -71,18 +71,18 @@ export default {
         
         // Neutral — Azul Noturno (backgrounds)
         noite: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#1A1A2E',  // ← PRINCIPAL (background)
-          950: '#0f0f1a',
-        },
+          "50": "#f6f5ef",
+          "100": "#eeeee5",
+          "200": "#dce0d6",
+          "300": "#bdc5b8",
+          "400": "#a3ad9e",
+          "500": "#8b9785",
+          "600": "#626e5d",
+          "700": "#3c4737",
+          "800": "#293126",
+          "900": "#1c231d",
+          "950": "#151916"
+},
         
         // Ostentação — Dourado Elite
         elite: {
@@ -101,33 +101,33 @@ export default {
         
         // ─── Aliases (used by HomePage & shared components) ───
         dark: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#1A1A2E',
-          950: '#0f0f1a',
-        },
+          "50": "#f6f5ef",
+          "100": "#eeeee5",
+          "200": "#dce0d6",
+          "300": "#bdc5b8",
+          "400": "#a3ad9e",
+          "500": "#8b9785",
+          "600": "#626e5d",
+          "700": "#3c4737",
+          "800": "#293126",
+          "900": "#1c231d",
+          "950": "#151916"
+},
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          light: '#a5b4fc',
-          DEFAULT: '#6366f1',
-          dark: '#4f46e5',
-        },
+          "50": "#f0f5ec",
+          "100": "#e0ebd8",
+          "200": "#c5dbb4",
+          "300": "#b3cf9e",
+          "400": "#a0be89",
+          "500": "#506b42",
+          "600": "#405a34",
+          "700": "#344b2b",
+          "800": "#293c23",
+          "900": "#20301c",
+          "light": "#c5dbb4",
+          "DEFAULT": "#506b42",
+          "dark": "#405a34"
+},
         pink: {
           50: '#fdf2f8',
           100: '#fce7f3',
@@ -173,7 +173,7 @@ export default {
         // Moderno com peso (headlines)
         display: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         // Legível (body)
-        sans: ['Inter', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       

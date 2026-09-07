@@ -3,7 +3,7 @@ import { Heart, Phone } from 'lucide-react'
 
 export const Footer = () => {
   return (
-    <footer className="border-t border-white/5 bg-surface/50 mt-auto">
+    <footer className="site-footer border-t border-white/5 bg-surface/50 mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -13,16 +13,15 @@ export const Footer = () => {
                 DA
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white leading-none">DISQUE</h3>
-                <h3 className="text-lg font-bold text-primary-light leading-none">AMIZADE</h3>
+                <span className="site-wordmark"><span>disque</span><span>amizade.</span></span>
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              A evolução do clássico serviço de amizade por telefone. Agora com vídeo, salas temáticas e muito mais.
+              Um lugar para conhecer pessoas e deixar a conversa acontecer. Ao vivo, do seu jeito.
             </p>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Phone className="w-3 h-3" />
-              <span className="font-mono">145-AMIZADE — nostalgia.mode</span>
+              <span>Inspirado nas boas conversas do 145.</span>
             </div>
           </div>
 

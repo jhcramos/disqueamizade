@@ -93,7 +93,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
           <div className="flex items-center gap-3">
             {room.has_video && (
               <span className="flex items-center gap-1 text-[11px] text-primary-400 font-medium">
-                🎥 {Math.max(1, Math.floor((room.online_count || room.participants) * 0.4))}
+                <Video size={13} /> Vídeo disponível
               </span>
             )}
             <span className="flex items-center gap-1.5">

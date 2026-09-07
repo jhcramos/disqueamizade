@@ -28,7 +28,7 @@ export function PeoplePanel({ people, selfId, cameraLiveIds, preferences, saving
     return a.joinedAt - b.joinedAt
   }), [people, selfId])
 
-  return <div className="flex min-h-0 flex-1 flex-col">
+  return <div className="lounge-people flex min-h-0 flex-1 flex-col">
     <section className="border-b border-white/5 p-3">
       <h2 className="text-sm font-bold">Como podem falar comigo hoje?</h2>
       <p className="mt-1 text-[11px] leading-4 text-dark-400">Você sempre decide se aceita cada convite. Câmera e microfone começam desligados.</p>
@@ -52,7 +52,7 @@ export function PeoplePanel({ people, selfId, cameraLiveIds, preferences, saving
         const available = modes.filter(mode => person.preferences[mode.key])
         return <article key={person.userId} className="rounded-2xl border border-white/5 bg-white/[0.025] p-3">
           <div className="flex items-start gap-2.5">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-500/30 to-pink-500/30 font-bold">{person.username.slice(0, 1).toUpperCase()}</div>
+            <div className="lounge-avatar grid h-9 w-9 shrink-0 place-items-center rounded-full font-bold">{person.username.slice(0, 1).toUpperCase()}</div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-sm font-semibold">{person.username}</span>

@@ -172,11 +172,12 @@ export const RoomsPage = () => {
     <AgeGate>
     <div className="min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
+      <main className="rooms-directory flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Salas de Chat</h1>
+            <span className="site-eyebrow">SEU PRÓXIMO ENCONTRO</span>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Entre. A conversa é nossa.</h1>
             <p className="text-dark-500 mt-1 text-sm">
               {rooms.length} salas • {totalOnline} pessoas online agora 🟢
             </p>
@@ -187,7 +188,7 @@ export const RoomsPage = () => {
         </div>
 
         {/* Live stats bar */}
-        <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-gradient-to-r from-primary-500/[0.06] to-pink-500/[0.06] border border-white/5">
+        <div className="flex flex-wrap items-center gap-4 mb-6 p-3 rounded-xl bg-gradient-to-r from-primary-500/[0.06] to-pink-500/[0.06] border border-white/5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-sm font-semibold text-emerald-400">{totalOnline} online</span>

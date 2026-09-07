@@ -75,7 +75,7 @@ export function ProcessedPreview({ stream, className = '' }: { stream: MediaStre
 }
 export function CameraPreview({ onContinue, onSkip, onCancel }: { onContinue: () => void; onSkip: () => void; onCancel: () => void }) {
   const camera = useCameraSetup()
-  return <main className="min-h-screen bg-dark-950 text-white flex items-center justify-center px-4 py-8">
+  return <main className="site-camera-setup min-h-screen bg-dark-950 text-white flex items-center justify-center px-4 py-8">
     <section aria-label="Prévia privada da câmera" className="w-full max-w-2xl rounded-2xl border border-white/10 bg-dark-900 p-5 sm:p-7">
       <p className="text-xs font-semibold text-emerald-300 mb-2">PRÉVIA PRIVADA · SÓ VOCÊ VÊ</p>
       <h1 className="text-2xl font-bold">Escolha como quer aparecer</h1>

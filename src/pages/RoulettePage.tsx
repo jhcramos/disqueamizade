@@ -171,7 +171,7 @@ const RouletteEntry = () => {
   // ─── Match ativo: chamada LiveKit ───
   if (status === 'matched' && match && match.identity === identity) {
     return (
-      <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+      <div className="site-roulette min-h-screen bg-dark-950 text-white flex flex-col">
         <Header />
         <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full" style={{ height: 'calc(100vh - 140px)' }}>
           <RouletteCall
@@ -192,7 +192,7 @@ const RouletteEntry = () => {
 
   // ─── Idle / busca / sem match ───
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+    <div className="site-roulette min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
         <div className="flex items-center justify-between mb-6">

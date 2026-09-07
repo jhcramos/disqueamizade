@@ -45,17 +45,17 @@ export const Header = () => {
   const isLoggedIn = !!user || isGuest
 
   return (
-    <header className="border-b border-white/5 bg-surface/80 backdrop-blur-lg sticky top-0 z-50">
+    <header className="site-header border-b border-white/5 bg-surface/80 backdrop-blur-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" aria-label="Disque Amizade — início" className="site-brand flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg group-hover:shadow-card-hover transition-shadow">
               DA
             </div>
-            <div className="hidden xs:block">
-              <h1 className="text-lg font-bold text-white leading-none">DISQUE</h1>
-              <h1 className="text-lg font-bold text-primary-400 leading-none">AMIZADE</h1>
+            <div className="site-wordmark">
+              <span>disque</span>
+              <span>amizade.</span>
             </div>
           </Link>
 
@@ -81,6 +81,7 @@ export const Header = () => {
             {/* Notifications */}
             <div ref={notifRef} className="relative">
               <button
+                aria-label="Notificações"
                 onClick={() => setNotifOpen(!notifOpen)}
                 className="relative p-2 rounded-xl text-dark-400 hover:text-white hover:bg-white/5 transition-all"
               >
@@ -185,6 +186,8 @@ export const Header = () => {
 
             {/* Mobile menu toggle */}
             <button
+              aria-label={mobileOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
