@@ -73,7 +73,14 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
     h: number,
     d: number,
   ) {
-    return mesh(parent, new T.BoxGeometry(w, h, d), color, x, y, z);
+    return mesh(
+      parent,
+      new RoundedBoxGeometry(w, h, d, 1, Math.min(w, h, d) * 0.12),
+      color,
+      x,
+      y,
+      z,
+    );
   }
   function ring(
     parent: T.Object3D,
@@ -114,7 +121,7 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   ) {
     return mesh(
       parent,
-      new T.CapsuleGeometry(r, Math.max(0.001, length - 2 * r), 5, 12),
+      new RoundedBoxGeometry(r * 1.8, length, r * 1.8, 1, r * 0.22),
       color,
       x,
       y,
@@ -172,44 +179,52 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   const head = new T.Group();
   head.position.y = 1.567;
   root.add(head);
-  mesh(head, new RoundedBoxGeometry(0.275, 0.26, 0.235, 4, 0.075), skin);
-  ell(head, skin, 0, -0.051, 0.026, 0.105, 0.088, 0.09);
-  ell(head, skin, 0, -0.015, 0.113, 0.014, 0.019, 0.02);
+  head.name = "avatar-head";
+  mesh(head, new RoundedBoxGeometry(0.285, 0.27, 0.24, 1, 0.035), skin);
+  box(head, skin, 0, -0.018, 0.13, 0.035, 0.035, 0.035);
   for (const side of [-1, 1]) {
-    ell(head, skin, side * 0.124, -0.005, 0, 0.021, 0.035, 0.022);
-    ell(head, "#18191b", side * 0.055, 0.016, 0.111, 0.024, 0.027, 0.012);
-    const brow = ell(
+    box(head, skin, side * 0.154, -0.008, 0, 0.037, 0.073, 0.046);
+    box(head, skin, side * 0.157, -0.008, 0.025, 0.015, 0.038, 0.008);
+    const eye = new T.Group();
+    eye.name = side < 0 ? "eye-right" : "eye-left";
+    eye.position.set(side * 0.059, 0.014, 0.122);
+    head.add(eye);
+    mesh(eye, new RoundedBoxGeometry(0.044, 0.041, 0.009, 2, 0.014), "#fff1d2");
+    ell(eye, "#211d22", 0, -0.004, 0.007, 0.012, 0.017, 0.005);
+    const lid = box(head, skin, side * 0.059, 0.037, 0.132, 0.05, 0.012, 0.008);
+    lid.name = side < 0 ? "lid-right" : "lid-left";
+    const brow = box(
       head,
       hair,
-      side * 0.055,
-      0.064,
-      0.114,
-      0.026,
-      0.006,
-      0.005,
+      side * 0.059,
+      0.066,
+      0.127,
+      0.052,
+      0.014,
+      0.014,
     );
-    brow.rotation.z = side * -0.1;
-    ell(
-      head,
-      "#fff8e9",
-      side * 0.055 - 0.005,
-      0.025,
-      0.122,
-      0.0045,
-      0.005,
-      0.003,
-    );
+    brow.rotation.z = side * -0.12;
   }
-  const smile = mesh(
-    head,
-    new T.TorusGeometry(0.02, 0.003, 5, 16, Math.PI),
-    "#83534a",
-    0,
-    -0.054,
-    0.123,
-  );
-  smile.rotation.z = Math.PI;
-  smile.scale.y = 0.55;
+  const mouth = new T.Group();
+  mouth.name = "avatar-mouth";
+  mouth.position.set(0, -0.068, 0.124);
+  head.add(mouth);
+  mesh(mouth, new RoundedBoxGeometry(0.041, 0.013, 0.006, 2, 0.005), "#633b31");
+  if (!feminine && index === 0) {
+    for (const side of [-1, 1]) {
+      const moustache = box(
+        head,
+        hair,
+        side * 0.022,
+        -0.041,
+        0.137,
+        0.049,
+        0.012,
+        0.012,
+      );
+      moustache.rotation.z = side * 0.17;
+    }
+  }
   const headwear = ACCESSORIES.find(
     (a) => look.accessories.includes(a.id) && a.slot === "head",
   );
@@ -234,7 +249,7 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
     arms.push(arm);
     capsule(arm, skin, 0, -0.15, 0, 0.047, 0.32);
     capsule(arm, skin, 0, -0.43, 0.01, 0.036, 0.3);
-    ell(arm, skin, 0, -0.607, 0.015, 0.038, 0.053, 0.029);
+    box(arm, skin, 0, -0.607, 0.015, 0.077, 0.098, 0.062);
     ell(arm, skin, -side * 0.03, -0.591, 0.03, 0.014, 0.025, 0.017);
   }
   const outfit = OUTFITS.find(
@@ -435,6 +450,34 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
       }
     }
   }
+  if (outfit && ["m22", "f22"].includes(outfit.id)) {
+    const jacket = CLOTH_COLORS[look.shirt] || outfit.color;
+    const accent = outfit.id === "m22" ? "#338b89" : jacket;
+    box(torso, "#f1e4cc", 0, 1.28, 0.182, 0.1, 0.35, 0.03);
+    for (const side of [-1, 1]) {
+      box(torso, jacket, side * 0.111, 1.29, 0.18, 0.106, 0.38, 0.03);
+      box(torso, accent, side * 0.111, 1.165, 0.2, 0.106, 0.125, 0.016);
+      const collar = box(
+        torso,
+        jacket,
+        side * 0.079,
+        1.453,
+        0.131,
+        0.053,
+        0.077,
+        0.09,
+      );
+      collar.rotation.z = side * -0.18;
+      box(torso, "#dbbc75", side * 0.055, 1.25, 0.205, 0.008, 0.3, 0.008);
+    }
+    for (const arm of arms) {
+      box(arm, jacket, 0, -0.135, 0, 0.148, 0.28, 0.143);
+      box(arm, accent, 0, -0.385, 0, 0.141, 0.235, 0.138);
+      if (outfit.id === "m22")
+        box(arm, "#f1e4cc", 0, -0.255, 0, 0.15, 0.057, 0.147);
+      box(arm, jacket, 0, -0.52, 0, 0.123, 0.055, 0.12);
+    }
+  }
   const acc = look.accessories
     .map((id) => ACCESSORIES.find((a) => a.id === id)!)
     .filter(Boolean);
@@ -445,7 +488,17 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
       (["formal", "boots"].includes(shoe) ? "#4a3a33" : "#e7dfcd");
   if (shoe !== "bare")
     for (const leg of legs) {
-      ell(leg, shoeColor, 0, -0.806, 0.055, 0.065, 0.047, 0.119);
+      box(leg, shoeColor, 0, -0.806, 0.055, 0.13, 0.094, 0.225);
+      box(
+        leg,
+        outfit?.color || "#825573",
+        0,
+        -0.82,
+        -0.048,
+        0.135,
+        0.07,
+        0.027,
+      );
       box(leg, "#ddd2bc", 0, -0.843, 0.055, 0.126, 0.018, 0.205);
       if (["boots", "high"].includes(shoe))
         capsule(
@@ -615,16 +668,26 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   // Compact the body and enlarge the expressive head without distorting accessories.
   head.scale.setScalar(2.35);
   head.position.y = 1.56;
-  torso.scale.set(1.03, 0.85, 1.1);
+  torso.scale.set(1.4, 0.85, 1.2);
   torso.position.y = 0.03;
   const neckMesh = root.children.find((o) => o instanceof T.Mesh);
   if (neckMesh) neckMesh.position.y = 1.3;
   for (const arm of arms) {
     arm.position.y = 1.25;
-    arm.position.x *= 1.13;
-    arm.scale.set(1.32, 0.86, 1.3);
+    arm.position.x *= 1.5;
+    arm.scale.set(1.6, 0.86, 1.5);
   }
   for (const leg of legs) {
+    const foot = new T.Group();
+    foot.name = "avatar-shoe";
+    foot.position.set(0, -0.79, 0.04);
+    for (const child of [...leg.children])
+      if (child.position.y < -0.73) {
+        child.position.sub(foot.position);
+        foot.add(child);
+      }
+    foot.scale.set(1.15, 1.15, 1.4);
+    leg.add(foot);
     const knee = new T.Group();
     knee.name = leg.name + "-knee";
     knee.position.y = -0.4;
@@ -636,8 +699,8 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
         knee.add(child);
       }
     leg.add(knee);
-    leg.position.set(leg.position.x * 1.4, 0.79, 0);
-    leg.scale.set(1.38, 0.87, 1.4);
+    leg.position.set(leg.position.x * 1.8, 0.79, 0);
+    leg.scale.set(1.6, 0.87, 1.5);
     // A covered joint bridges the seam under pants while allowing a soft knee bend.
     ell(
       leg,

@@ -216,6 +216,24 @@ women.push([
   "boots",
   "safety",
 ]);
+men.push([
+  "Bloco Pop retrô",
+  "jacket",
+  "pants",
+  "#805798",
+  "#527895",
+  "high",
+  "blocks",
+]);
+women.push([
+  "Bloco Pop coral",
+  "jacket",
+  "pants",
+  "#c97560",
+  "#4f7492",
+  "high",
+  "pockets",
+]);
 export const OUTFITS: Outfit[] = [men, women].flatMap((rows, g) =>
   rows.map((r, i) => ({
     id: `${g ? "f" : "m"}${i + 1}`,

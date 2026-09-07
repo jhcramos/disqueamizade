@@ -5,14 +5,14 @@ import {
 } from "./avatarStyle.ts";
 export const AVATAR_PRESETS: { name: string; appearance: Appearance }[] = [
   [
-    "Caio · retrô",
+    "Caio · Bloco Pop",
     {
       body: "masculine",
-      skin: "warm",
-      hairstyle: "spiky",
-      hair: "copper",
-      outfit: "m15",
-      accessories: ["am14"],
+      skin: "golden",
+      hairstyle: "blockquiff",
+      hair: "black",
+      outfit: "m22",
+      accessories: [],
     },
   ],
   [
@@ -59,13 +59,13 @@ export const AVATAR_PRESETS: { name: string; appearance: Appearance }[] = [
     },
   ],
   [
-    "Lia · espacial",
+    "Lia · Bloco Pop",
     {
       body: "feminine",
-      skin: "warm",
-      hairstyle: "twinbuns",
-      hair: "pink",
-      outfit: "f11",
+      skin: "brown",
+      hairstyle: "blockcurls",
+      hair: "brown",
+      outfit: "f22",
       accessories: ["af7"],
     },
   ],

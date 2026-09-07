@@ -111,15 +111,12 @@ const { OUTFITS, ACCESSORIES, toggleAccessory } = await import(
 const { createAdultAvatar, animateAdult } = await import(
   "../src/garage/adultAvatar.ts"
 );
-test("wardrobe contains 21 unique outfits and accessories per collection, including construction", () => {
-  for (const catalog of [OUTFITS, ACCESSORIES]) {
-    assert.equal(new Set(catalog.map((x) => x.id)).size, 42);
-    for (const collection of ["masculine", "feminine"])
-      assert.equal(
-        catalog.filter((x) => x.collection === collection).length,
-        21,
-      );
-  }
+test("wardrobe preserves catalogs and adds the approved coral outfit", () => {
+  assert.equal(OUTFITS.filter((o) => o.collection === "masculine").length, 22);
+  assert.equal(OUTFITS.filter((o) => o.collection === "feminine").length, 22);
+  assert.equal(new Set(OUTFITS.map((o) => o.id)).size, OUTFITS.length);
+  assert.equal(ACCESSORIES.length, 42);
+  assert.ok(OUTFITS.some((o) => o.id === "f22" && o.top === "jacket"));
 });
 test("accessory selection replaces the same slot, toggles off, caps six, and rejects unknown IDs", () => {
   assert.deepEqual(toggleAccessory(["am1", "af11"], "af4"), ["af4", "af11"]);

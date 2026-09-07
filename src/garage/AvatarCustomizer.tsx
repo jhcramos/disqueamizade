@@ -147,7 +147,7 @@ export function AvatarCustomizer({
       >
         <header>
           <div>
-            <span className="eyebrow">VINYL CLUB · SEU AVATAR</span>
+            <span className="eyebrow">BLOCO POP · SEU AVATAR</span>
             <h2 id="avatar-title">Seu jeito de chegar.</h2>
           </div>
           <button aria-label="Fechar personalizador" onClick={onClose}>

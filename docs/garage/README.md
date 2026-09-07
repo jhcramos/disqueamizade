@@ -107,3 +107,14 @@ O transporte local usa BroadcastChannel v2 e WebRTC em malha (até três conexõ
 Validação atual: 40 testes de garagem/avatar/grupo, 13 de câmera e 22 de chat/autorização (75 no total), TypeScript e build. Cinco visitas isoladas de teste verificaram quatro vídeos sintéticos 640×360 e quatro trilhas de áudio por janela, pausa por mudança de público, exclusão da quinta visita, câmera individual desligada, saída e encerramento de todas as trilhas. Nenhum dispositivo físico foi acessado. Capturas atuais: `avatar-ten-presets.png`, `avatar-hardhat.png` e `four-cameras.png` (esta última identifica a mídia de teste).
 
 Para repetir o cenário de quatro câmeras, com Chrome e Playwright disponíveis, use `node tests/garage-group-browser.mjs` enquanto o servidor de desenvolvimento estiver em `localhost:3000`. Se o Playwright estiver instalado fora do projeto, `PLAYWRIGHT_MODULE` pode apontar para seu módulo. O roteiro recusa capturar mídia se não encontrar o aviso de fixture sintética.
+
+
+## Bloco Pop e câmera do avatar
+
+Os modelos 1 (Caio) e 6 (Lia) receberam a primeira interpretação 3D funcional da prancha Bloco Pop aprovada: cabeça chanfrada, olhos com esclera, topete/cachos em blocos, mãos geométricas e roupas próprias. Há 22 roupas por coleção, mantendo os acessórios e cortes anteriores. A caminhada continua articulada e vertical. A interpretação procedural ainda é mais simples que a ilustração aprovada; as capturas desta rodada mostram a qualidade real.
+
+Na conversa local, com a câmera desligada, marque **Usar meu avatar na câmera** e então **Ligar câmera**. O vídeo publicado será um canvas opaco com a mesma cabeça 3D, pele, cabelo e acessórios do avatar atual. O rastreador facial existente anima giro lateral, piscadas e abertura da boca. Sem rosto detectado, o fundo permanece opaco; nenhum frame original é publicado. Desligar a câmera, mudar o grupo ou sair encerra a captura e o renderizador. O modelo de rastreamento é carregado sob demanda do próprio site.
+
+O catálogo de máscaras das salas existentes também tem **Meu avatar**, usando o visual salvo na garagem. Essa opção utiliza o compositor de vídeo existente com fundo opaco. O rosto real e o fundo da webcam ficam ocultos neste modo; ele não é uma máscara transparente sobre o ambiente real. A troca exige câmera desligada na conversa local.
+
+Validação: build/TypeScript, 75 testes, quatro chamadas simultâneas preservadas, aproximação na garagem, render de expressões com poses de teste e teste de publicação entre duas abas sem rosto detectado. `tests/garage-avatar-camera-browser.mjs` usa somente mídia sintética; após compressão WebRTC, confirma saída opaca e encerramento remoto. O rastreamento com webcam física, a precisão em diferentes rostos/iluminação e a publicação online ainda precisam de avaliação. Não foi acessada uma câmera ou microfone físico nesta rodada.

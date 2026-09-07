@@ -58,7 +58,8 @@ export function useCompositeStream(
       if (!source) { cover(); return }
       const parts = [current.filterStyle !== 'none' ? current.filterStyle : '', current.beautySmooth ? 'blur(0.5px) contrast(1.05)' : '', current.beautyBrighten ? 'brightness(1.15) saturate(1.05)' : ''].filter(Boolean)
       ctx.filter = parts.join(' ') || 'none'
-      ctx.drawImage(source, 0, 0, canvas.width, canvas.height); ctx.filter = 'none'
+      if (mask?.opaqueBackground) { ctx.filter = 'none'; ctx.fillStyle = '#ede0ce'; ctx.fillRect(0, 0, canvas.width, canvas.height) }
+      else ctx.drawImage(source, 0, 0, canvas.width, canvas.height); ctx.filter = 'none'
       if (mask && face) {
         ctx.save()
         try { mask.render({ ctx, w: canvas.width, h: canvas.height, frame: face.frame, pose: face.pose, t: performance.now() }) }

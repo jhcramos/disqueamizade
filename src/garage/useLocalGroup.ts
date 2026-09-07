@@ -61,6 +61,7 @@ class LocalConversation {
   generation = 0;
   alive = true;
   capturing = new Set<string>();
+  pendingCaptures = new Set<MediaStream>();
   timer: ReturnType<typeof setInterval>;
   constructor(
     readonly id: string,
@@ -144,6 +145,8 @@ class LocalConversation {
   }
   stopMedia() {
     this.generation++;
+    this.pendingCaptures.forEach((s) => s.getTracks().forEach((t) => t.stop()));
+    this.pendingCaptures.clear();
     this.media?.getTracks().forEach((t) => t.stop());
     this.media = null;
     for (const { pc } of this.links.values()) pc.close();
@@ -543,6 +546,7 @@ class LocalConversation {
   publish = async (
     kind: "video" | "audio",
     enabled: boolean,
+    avatarMask = false,
   ): Promise<MediaStream | null> => {
     if (!this.group) throw new Error("Entre em uma conversa.");
     if (this.capturing.has(kind)) throw new Error("Aguarde o dispositivo.");
@@ -551,7 +555,28 @@ class LocalConversation {
     try {
       let track: MediaStreamTrack | null = null;
       if (enabled) {
-        const stream = await acquireGarageMedia(kind);
+        let stream = await acquireGarageMedia(kind);
+        if (!this.alive || generation !== this.generation || !this.group) {
+          stream.getTracks().forEach((t) => t.stop());
+          throw new Error("A conversa mudou.");
+        }
+        if (kind === "video" && avatarMask) {
+          const raw = stream;
+          this.pendingCaptures.add(raw);
+          try {
+            const { createAvatarCameraStream } = await import("./avatarCamera");
+            stream = await createAvatarCameraStream(
+              raw,
+              this.self.avatar,
+              this.self.appearance!,
+            );
+          } catch (e) {
+            raw.getTracks().forEach((t) => t.stop());
+            throw e;
+          } finally {
+            this.pendingCaptures.delete(raw);
+          }
+        }
         track = stream.getTracks()[0];
         if (!this.alive || generation !== this.generation || !this.group) {
           stream.getTracks().forEach((t) => t.stop());
@@ -655,7 +680,8 @@ export function useLocalGroup(
     respond: (accept: boolean) =>
       controller.current?.respond(accept) ?? Promise.resolve(),
     end: () => controller.current?.end() ?? Promise.resolve(),
-    publish: (kind: "video" | "audio", on: boolean) =>
-      controller.current?.publish(kind, on) ?? Promise.resolve(null),
+    publish: (kind: "video" | "audio", on: boolean, avatarMask = false) =>
+      controller.current?.publish(kind, on, avatarMask) ??
+      Promise.resolve(null),
   };
 }

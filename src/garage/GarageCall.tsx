@@ -59,11 +59,13 @@ export function LocalCall({
   publish: (
     kind: "audio" | "video",
     enabled: boolean,
+    avatarMask?: boolean,
   ) => Promise<MediaStream | null>;
   onEnd: () => void;
   onInvite: (person: import("./model").Person) => void;
   candidates: import("./model").Person[];
 }) {
+  const [avatarMask, setAvatarMask] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function toggle(kind: "audio" | "video") {
@@ -71,7 +73,7 @@ export function LocalCall({
     setBusy(true);
     setError("");
     try {
-      await publish(kind, kind === "video" ? !camera : !mic);
+      await publish(kind, kind === "video" ? !camera : !mic, avatarMask);
     } catch {
       setError(
         "Não foi possível ligar o dispositivo. Confira a permissão e tente novamente.",
@@ -131,6 +133,22 @@ export function LocalCall({
           {error}
         </p>
       )}
+      <label
+        className="garage-note"
+        style={{ display: "block", margin: "14px 0" }}
+      >
+        <input
+          type="checkbox"
+          checked={avatarMask}
+          disabled={camera || busy}
+          onChange={(e) => setAvatarMask(e.target.checked)}
+        />{" "}
+        Usar meu avatar na câmera
+        <small style={{ display: "block" }}>
+          Escolha com a câmera desligada. O avatar acompanha seu rosto sobre um
+          fundo liso.
+        </small>
+      </label>
       <div className="call-controls">
         <button disabled={busy} onClick={() => void toggle("video")}>
           {camera ? <Camera /> : <VideoOff />}

@@ -1,6 +1,9 @@
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import * as T from "three";
 export const HAIRSTYLES = {
   auto: "Do modelo",
+  blockquiff: "Topete Bloco Pop",
+  blockcurls: "Cachos Bloco Pop",
   bald: "Careca",
   afro: "Afro volumoso",
   twinbuns: "Coques espaciais",
@@ -34,6 +37,84 @@ export function createHair(
   const covered = !!headwear && !["band", "crown"].includes(headwear);
   root.userData.fitted = covered;
   const mat = new T.MeshStandardMaterial({ color, roughness: 0.52 });
+  if (chosen === "blockquiff" || chosen === "blockcurls") {
+    const add = (
+      x: number,
+      y: number,
+      z: number,
+      w: number,
+      h: number,
+      d: number,
+      tilt = 0,
+    ) => {
+      const geometry = new RoundedBoxGeometry(
+        w,
+        h,
+        d,
+        1,
+        Math.min(w, h, d) * 0.18,
+      );
+      if (covered) {
+        const pos = geometry.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          let px = pos.getX(i) + x,
+            py = pos.getY(i) + y,
+            pz = pos.getZ(i) + z;
+          const radius = Math.hypot(px / 0.156, (pz + 0.008) / 0.146);
+          if (radius > 1) {
+            px /= radius;
+            pz = (pz + 0.008) / radius - 0.008;
+          }
+          py = Math.min(
+            py,
+            0.065 +
+              0.085 * Math.sqrt(Math.max(0, 1 - Math.min(radius, 1) ** 2)),
+          );
+          pos.setXYZ(i, px, py, pz);
+        }
+        geometry.computeVertexNormals();
+      }
+      const m = new T.Mesh(geometry, mat);
+      if (!covered) {
+        m.position.set(x, y, z);
+        m.rotation.z = tilt;
+      }
+      root.add(m);
+    };
+    add(0, 0.106, -0.034, 0.29, 0.085, 0.235);
+    if (chosen === "blockquiff") {
+      for (let i = 0; i < 5; i++)
+        add(
+          (i - 2) * 0.059,
+          0.168 + Math.sin(i * 0.7) * 0.032,
+          0.053,
+          0.073,
+          0.096,
+          0.125,
+          (i - 2) * -0.13,
+        );
+      for (const side of [-1, 1])
+        add(side * 0.138, 0.038, -0.02, 0.046, 0.1, 0.16);
+    } else {
+      for (let row = 0; row < 3; row++)
+        for (let i = 0; i < 9; i++) {
+          const a = (i / 9) * Math.PI * 2;
+          if (row > 0 && Math.cos(a) > 0.6) continue;
+          add(
+            Math.sin(a) * 0.154,
+            0.15 - row * 0.083,
+            Math.cos(a) * 0.139 - 0.025,
+            0.087,
+            0.093,
+            0.084,
+            ((i % 3) - 1) * 0.17,
+          );
+        }
+      for (let i = 0; i < 3; i++)
+        add((i - 1) * 0.072, 0.197, 0, 0.095, 0.08, 0.13, (i - 1) * 0.12);
+    }
+    return root;
+  }
   // A continuous sculpted shell replaces separate tubes, beads and cones.
   function surface(
     fn: (u: number, v: number) => T.Vector3,

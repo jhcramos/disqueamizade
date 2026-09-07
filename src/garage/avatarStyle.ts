@@ -115,10 +115,11 @@ export function readSavedAvatar() {
         : normalizeAppearance({
             ...DEFAULT_APPEARANCE,
             body: "masculine",
-            skin: "warm",
-            hairstyle: "spiky",
-            hair: "copper",
-            accessories: ["am14"],
+            skin: "golden",
+            hairstyle: "blockquiff",
+            hair: "black",
+            outfit: "m22",
+            accessories: [],
           }),
     };
   } catch {
