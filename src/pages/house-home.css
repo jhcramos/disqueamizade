@@ -1192,3 +1192,82 @@
     max-width: 720px;
   }
 }
+
+/* Scroll-driven scenes use native scrolling; no wheel interception. */
+.house-home section[id] {
+  scroll-margin-top: 110px;
+}
+.house-nav {
+  position: sticky;
+  top: 16px;
+  z-index: 30;
+  backdrop-filter: blur(16px);
+}
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .house-scroll-motion .house-scroll-runway {
+    height: 165vh;
+    margin-top: 40px;
+    padding-top: 1px;
+  }
+  .house-scroll-motion .house-product-orbit {
+    position: sticky;
+    top: 110px;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .house-scroll-motion .house-stage-wrap {
+    transform: perspective(1600px) rotateY(var(--scene-turn, -5deg))
+      scale(var(--scene-scale, 1));
+    transition: none;
+    transform-origin: center top;
+  }
+  .house-scroll-motion .house-orbit-avatar,
+  .house-scroll-motion .house-orbit-chat,
+  .house-scroll-motion .house-orbit-camera,
+  .house-scroll-motion .house-orbit-sticker {
+    translate: 0 var(--orbit-shift, 0px);
+    opacity: var(--orbit-opacity, 1);
+    animation: none;
+  }
+  .house-scroll-motion .house-manifesto > p {
+    background: linear-gradient(
+      90deg,
+      #f5f5f0 var(--read-progress, 0%),
+      #51564d var(--read-progress, 0%)
+    );
+    background-clip: text;
+    color: transparent;
+  }
+  .house-scroll-motion .house-manifesto > p strong {
+    color: inherit;
+  }
+  .house-scroll-motion .house-places {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .house-scroll-motion .house-places .house-section-head {
+    position: sticky;
+    top: 150px;
+    display: block;
+  }
+  .house-scroll-motion .house-places-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+  }
+  .house-scroll-motion .house-place {
+    position: sticky;
+    top: 115px;
+    background: #0b0c0b;
+    padding-bottom: 24px;
+  }
+  .house-scroll-motion .house-place > div:first-child {
+    aspect-ratio: 1.5;
+  }
+  .house-scroll-motion .house-places.will-reveal {
+    transform: none;
+    opacity: 1;
+  }
+}

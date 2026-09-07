@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -41,6 +41,53 @@ export function HomePage() {
   const [roomIndex, setRoom] = useState(0),
     [look, setLook] = useState("caio");
   const room = rooms[roomIndex];
+  const homeRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const root = homeRef.current;
+    if (!root) return;
+    const media = matchMedia(
+      "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
+    );
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      root.classList.toggle("house-scroll-motion", media.matches);
+      if (!media.matches) return;
+      const runway = root.querySelector<HTMLElement>(".house-scroll-runway")!;
+      const rect = runway.getBoundingClientRect();
+      const progress = Math.max(
+        0,
+        Math.min(1, (110 - rect.top) / Math.max(1, rect.height - innerHeight)),
+      );
+      root.style.setProperty("--scene-scale", String(1 + progress * 0.27));
+      root.style.setProperty("--scene-turn", `${-5 * (1 - progress)}deg`);
+      root.style.setProperty("--orbit-shift", `${progress * -100}px`);
+      root.style.setProperty("--orbit-opacity", String(1 - progress));
+      const manifesto = root.querySelector<HTMLElement>(".house-manifesto")!;
+      const read = Math.max(
+        0,
+        Math.min(
+          1,
+          (innerHeight * 0.8 - manifesto.getBoundingClientRect().top) /
+            (innerHeight * 0.5),
+        ),
+      );
+      root.style.setProperty("--read-progress", `${read * 100}%`);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    media.addEventListener("change", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      media.removeEventListener("change", schedule);
+    };
+  }, []);
   useEffect(() => {
     if (
       matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -70,7 +117,7 @@ export function HomePage() {
     };
   }, []);
   return (
-    <main className="house-home">
+    <main className="house-home" ref={homeRef}>
       <header className="house-nav">
         <Link to="/" aria-label="Disque Amizade início">
           <BrandLogo />
@@ -114,81 +161,86 @@ export function HomePage() {
             Prévia explorável · encontros online em preparação
           </p>
         </div>
-        <div className="house-product-orbit">
-          <div className="house-orbit-avatar">
-            <span>100% seu jeito</span>
-            <img src="/garage/home-lia.png" alt="" />
-            <strong>
-              Seu primeiro oi
-              <br />
-              já tem personalidade.
-            </strong>
-          </div>
-          <div className="house-orbit-chat" aria-hidden="true">
-            <MessageCircle size={20} />
-            <span>Oi, pessoal! 👋</span>
-            <span>Chega mais.</span>
-          </div>
-          <div className="house-orbit-camera">
-            <CameraOff size={19} />
-            <span>
-              Câmera desligada.
-              <br />
-              <strong>Você decide quando ligar.</strong>
-            </span>
-          </div>
-          <div className="house-orbit-sticker" aria-hidden="true">
-            pode
-            <br />
-            <strong>chegar ↗</strong>
-          </div>
-          <div className="house-stage-wrap">
-            <div className="house-stage-top">
-              <span>DISQUE AMIZADE / A CASA</span>
-              <span>ESCOLHA UM CLIMA ↘</span>
+        <div className="house-scroll-runway">
+          <div className="house-product-orbit">
+            <div className="house-orbit-avatar">
+              <span>100% seu jeito</span>
+              <img src="/garage/home-lia.png" alt="" />
+              <strong>
+                Seu primeiro oi
+                <br />
+                já tem personalidade.
+              </strong>
             </div>
-            <div className="house-stage">
-              <img
-                className="house-stage-room"
-                src={`/garage/${room.id}-background.webp`}
-                alt={`Prévia do cenário ${room.name}`}
-                fetchPriority="high"
-              />
-              <span className="house-scene-label">
-                {String(roomIndex + 1).padStart(2, "0")} / {room.name}
-                {room.id === "bar" ? " · 18+" : ""}
+            <div className="house-orbit-chat" aria-hidden="true">
+              <MessageCircle size={20} />
+              <span>Oi, pessoal! 👋</span>
+              <span>Chega mais.</span>
+            </div>
+            <div className="house-orbit-camera">
+              <CameraOff size={19} />
+              <span>
+                Câmera desligada.
+                <br />
+                <strong>Você decide quando ligar.</strong>
               </span>
-              <div className="house-stage-person house-person-a">
-                <div className="house-speech">{room.speech}</div>
-                <img src="/garage/home-caio.png" alt="Avatar Caio Bloco Pop" />
-                <span>Caio</span>
-              </div>
-              <div className="house-stage-person house-person-b">
-                <div className="house-speech">{room.other}</div>
-                <img src="/garage/home-lia.png" alt="Avatar Lia Bloco Pop" />
-                <span>Lia</span>
-              </div>
-              <div className="house-stage-caption">
-                <strong>{room.tag}</strong>
-                <span>Cena ilustrativa com os avatares do produto</span>
-              </div>
             </div>
-            <div
-              className="house-room-tabs"
-              role="group"
-              aria-label="Prévia dos ambientes"
-            >
-              {rooms.map((r, i) => (
-                <button
-                  key={r.id}
-                  aria-pressed={i === roomIndex}
-                  onClick={() => setRoom(i)}
-                >
-                  <span>0{i + 1}</span>
-                  {r.name}
-                  <ArrowUpRight size={15} />
-                </button>
-              ))}
+            <div className="house-orbit-sticker" aria-hidden="true">
+              pode
+              <br />
+              <strong>chegar ↗</strong>
+            </div>
+            <div className="house-stage-wrap">
+              <div className="house-stage-top">
+                <span>DISQUE AMIZADE / A CASA</span>
+                <span>ESCOLHA UM CLIMA ↘</span>
+              </div>
+              <div className="house-stage">
+                <img
+                  className="house-stage-room"
+                  src={`/garage/${room.id}-background.webp`}
+                  alt={`Prévia do cenário ${room.name}`}
+                  fetchPriority="high"
+                />
+                <span className="house-scene-label">
+                  {String(roomIndex + 1).padStart(2, "0")} / {room.name}
+                  {room.id === "bar" ? " · 18+" : ""}
+                </span>
+                <div className="house-stage-person house-person-a">
+                  <div className="house-speech">{room.speech}</div>
+                  <img
+                    src="/garage/home-caio.png"
+                    alt="Avatar Caio Bloco Pop"
+                  />
+                  <span>Caio</span>
+                </div>
+                <div className="house-stage-person house-person-b">
+                  <div className="house-speech">{room.other}</div>
+                  <img src="/garage/home-lia.png" alt="Avatar Lia Bloco Pop" />
+                  <span>Lia</span>
+                </div>
+                <div className="house-stage-caption">
+                  <strong>{room.tag}</strong>
+                  <span>Cena ilustrativa com os avatares do produto</span>
+                </div>
+              </div>
+              <div
+                className="house-room-tabs"
+                role="group"
+                aria-label="Prévia dos ambientes"
+              >
+                {rooms.map((r, i) => (
+                  <button
+                    key={r.id}
+                    aria-pressed={i === roomIndex}
+                    onClick={() => setRoom(i)}
+                  >
+                    <span>0{i + 1}</span>
+                    {r.name}
+                    <ArrowUpRight size={15} />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
