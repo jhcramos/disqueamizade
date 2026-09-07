@@ -6,7 +6,15 @@ import {
 } from "@/rooms/privateContact";
 import { fetchRoomToken } from "@/rooms/livekit";
 import { acquireGarageMedia } from "./media";
-import { nearby, parsePerson, START, type Person, type Point } from "./model";
+import {
+  nearby,
+  sameRoom,
+  parsePerson,
+  START,
+  type RoomId,
+  type Person,
+  type Point,
+} from "./model";
 
 const GARAGE_ROOM = import.meta.env.VITE_GARAGE_ROOM_SLUG || "garage-prototype";
 export type Invite = {
@@ -50,13 +58,14 @@ export function useGarage(
     pendingAction = useRef(false);
   currentInvite.current = invite;
   peers.current = people;
-  const update = (point?: Point) => {
+  const update = (point?: Point, room?: RoomId) => {
     self.current = {
       ...self.current,
       id: identity,
       name,
       avatar,
       ...(point ? { position: point } : {}),
+      ...(room ? { room } : {}),
       busy: currentInvite.current?.status === "accepted",
     };
     send.current("person", self.current);
@@ -160,6 +169,7 @@ export function useGarage(
         if (
           i ||
           !p ||
+          !sameRoom(self.current, p) ||
           !nearby(self.current.position, p.position) ||
           typeof data.id !== "string" ||
           !Number.isFinite(data.expires) ||
@@ -296,6 +306,18 @@ export function useGarage(
       const receive = (raw: PrivateInvite) => {
         if (!alive || raw.roomSlug !== GARAGE_ROOM) return;
         const previous = currentInvite.current;
+        if (!previous && raw.status === "pending") {
+          const peer = peers.current.find(
+            (p) =>
+              p.id === (raw.fromUser === identity ? raw.toUser : raw.fromUser),
+          );
+          if (
+            !peer ||
+            !sameRoom(self.current, peer) ||
+            !nearby(self.current.position, peer.position)
+          )
+            return;
+        }
         if (previous && previous.id !== raw.id) return;
         if (
           raw.status === "expired" ||
@@ -408,6 +430,7 @@ export function useGarage(
       currentInvite.current ||
       pendingAction.current ||
       person.busy ||
+      !sameRoom(self.current, person) ||
       !nearby(self.current.position, person.position)
     )
       return;
@@ -452,6 +475,7 @@ export function useGarage(
     }
   };
   const respond = async (accept: boolean) => {
+    setError("");
     const i = currentInvite.current;
     if (
       !i ||
@@ -461,6 +485,16 @@ export function useGarage(
       pendingAction.current
     )
       return;
+    const peer = peers.current.find((p) => p.id === i.from);
+    if (
+      accept &&
+      (!peer ||
+        !sameRoom(self.current, peer) ||
+        !nearby(self.current.position, peer.position))
+    ) {
+      setError("A pessoa já saiu de perto. Você pode recusar este convite.");
+      return;
+    }
     pendingAction.current = true;
     try {
       if (mode === "online")

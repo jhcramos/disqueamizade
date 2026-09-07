@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import { completeClip } from "./animation";
-import { AVATARS, inside, step, type Person, type Point } from "./model";
+import {
+  AVATARS,
+  ROOMS,
+  inside,
+  safeStep,
+  type Person,
+  type Point,
+} from "./model";
 
 type Props = {
+  destination: Point;
+  bubble?: ReactNode;
+  bubbleOwner?: string;
   self: Person;
   people: Person[];
   onMove: (point: Point) => void;
@@ -18,17 +28,22 @@ export function GarageScene(props: Props) {
     live = useRef(props),
     target = useRef(props.self.position);
   const [failed, setFailed] = useState(false),
-    [loaded, setLoaded] = useState(false);
+    [loaded, setLoaded] = useState(false),
+    [blocked, setBlocked] = useState(false);
   live.current = props;
   useEffect(() => {
     target.current = props.self.position;
-  }, [props.self.id]);
+  }, [props.self.id, props.self.room]);
+  useEffect(() => {
+    target.current = props.destination;
+  }, [props.destination]);
   useEffect(() => {
     const el = host.current!;
     let active = true,
       frame = 0,
       last = performance.now(),
-      lastEmit = 0;
+      lastEmit = 0,
+      wasBlocked = false;
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -154,23 +169,28 @@ export function GarageScene(props: Props) {
         }
         const a = actors.get(person.id)!,
           isSelf = person.id === self.id;
-        if (
-          isSelf &&
-          Math.hypot(
-            person.position.x - a.position.x,
-            person.position.y - a.position.y,
-          ) > 0.035
-        )
-          target.current = person.position;
         const dest = isSelf
           ? frozen
             ? a.position
             : target.current
           : person.position;
-        const next = step(a.position, dest, dt),
+        const obstacles = all
+          .filter((p) => p.id !== person.id)
+          .map((p) => actors.get(p.id)?.position || p.position);
+        const next = safeStep(a.position, dest, dt, obstacles),
           dx = next.x - a.position.x,
           dy = next.y - a.position.y,
           moving = Math.abs(dx) + Math.abs(dy) > 0.00001;
+        if (isSelf) {
+          const blockedNow =
+            !frozen &&
+            !moving &&
+            Math.hypot(dest.x - a.position.x, dest.y - a.position.y) > 0.008;
+          if (blockedNow !== wasBlocked) {
+            wasBlocked = blockedNow;
+            setBlocked(blockedNow);
+          }
+        }
         if (moving) a.group.rotation.y = dx < 0 ? -0.5 : 0.5;
         a.walk?.setEffectiveWeight(moving ? 1 : 0);
         a.idle?.setEffectiveWeight(moving ? 0 : 1);
@@ -228,14 +248,14 @@ export function GarageScene(props: Props) {
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [props.self.id, props.low]);
+  }, [props.self.id, props.self.room, props.low]);
   return (
     <div
       className="garage-scene"
       ref={host}
       tabIndex={0}
       role="group"
-      aria-label="Garagem navegável. Clique no piso ou use as setas para andar."
+      aria-label={`${ROOMS[props.self.room || "garage"].name} navegável. Clique no piso ou use as setas para andar.`}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button") || props.frozen) return;
         e.currentTarget.focus();
@@ -249,8 +269,8 @@ export function GarageScene(props: Props) {
     >
       <img
         className="garage-backdrop"
-        src="/garage/garage-background.webp"
-        alt="Garagem anos 80 com aparelho de som, luzes coloridas e cadeiras de praia"
+        src={`/garage/${ROOMS[props.self.room || "garage"].image}`}
+        alt={`${ROOMS[props.self.room || "garage"].name} acolhedora em estilo anos 80 com piso livre para encontrar pessoas`}
       />
       {!loaded && !failed && (
         <span className="scene-loading">Preparando seus avatares…</span>
@@ -269,7 +289,33 @@ export function GarageScene(props: Props) {
           {p.busy ? " · em conversa" : ""}
         </button>
       ))}
-      <span className="scene-location">GARAGEM / LADO A</span>
+      {props.bubble &&
+        (() => {
+          const p = [props.self, ...props.people].find(
+            (p) => p.id === props.bubbleOwner,
+          );
+          return p ? (
+            <div
+              className="avatar-bubble"
+              role="status"
+              style={{
+                left: `${p.position.x * 100}%`,
+                top: `${p.position.y * 100 - 24}%`,
+              }}
+            >
+              {props.bubble}
+            </div>
+          ) : null;
+        })()}
+      <span className="scene-location">
+        {ROOMS[props.self.room || "garage"].name} /{" "}
+        {props.self.room === "living" ? "LADO B" : "LADO A"}
+      </span>
+      {blocked && (
+        <span className="scene-blocked" role="status">
+          Tem alguém no caminho. Tente passar pelo lado.
+        </span>
+      )}
       {failed && (
         <div className="scene-fallback" role="status">
           Seu dispositivo não carregou os avatares 3D. Você ainda pode escolher

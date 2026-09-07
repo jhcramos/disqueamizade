@@ -4,3 +4,4 @@
 - avatars/character-*.glb and avatars/Textures/colormap.png: Kenney Mini Characters (2024), CC0. https://kenney.nl/assets/mini-characters . Original license: avatars/LICENSE.txt. Provisional animated models, not the custom adult characters in the concept image.
 - Avatar thumbnails are rendered at runtime from those GLB models.
 - Interface icons: existing lucide-react dependency.
+- living-background.webp: generated with OpenAI ImageGen as a matching 1980s Brazilian living room, using the garage image as reference. Pre-rendered scene, no people baked into the asset.

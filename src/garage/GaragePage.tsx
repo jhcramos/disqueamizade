@@ -22,7 +22,19 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { GarageScene } from "./GarageScene";
-import { AVATARS, DEMO, inside, nearby, START, type Person } from "./model";
+import {
+  AVATARS,
+  DEMO,
+  ROOMS,
+  freeSpawn,
+  distance,
+  PERSONAL_SPACE,
+  inside,
+  nearby,
+  START,
+  type RoomId,
+  type Person,
+} from "./model";
 import { useGarage, type ConnectionMode } from "./useGarage";
 import { CloudCall, LocalCall, StreamVideo } from "./GarageCall";
 import "./garage.css";
@@ -221,6 +233,9 @@ function GarageRoom({
 }) {
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
+    [destination, setDestination] = useState(START),
+    [room, setRoom] = useState<RoomId>("garage"),
+    [arrival, setArrival] = useState(0),
     [selected, setSelected] = useState<string | null>(null),
     [settings, setSettings] = useState(false),
     [list, setList] = useState(false),
@@ -259,7 +274,8 @@ function GarageRoom({
     };
   }, [settings]);
   const guide = mode === "local" && net.people.length === 0;
-  const people = guide ? [DEMO] : net.people;
+  const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
+  const people = guide ? [{ ...DEMO, room }] : roomPeople;
   const person =
     people.find((p) => p.id === selected) ||
     people.find((p) => nearby(position, p.position));
@@ -273,11 +289,53 @@ function GarageRoom({
     : null;
   const peerName =
     net.people.find((p) => p.id === peerId)?.name || "seu convidado";
-  const self: Person = { id: net.identity, name, avatar, position, busy: call };
+  const self: Person = {
+    id: net.identity,
+    name,
+    avatar,
+    position,
+    room,
+    busy: call,
+  };
+  useEffect(() => {
+    const overlap = roomPeople.some(
+      (p) =>
+        p.id < net.identity && distance(position, p.position) < PERSONAL_SPACE,
+    );
+    if (!overlap || call) return;
+    const spawn = freeSpawn(
+      roomPeople.map((p) => p.position),
+      position,
+    );
+    if (spawn) {
+      setPosition(spawn);
+      setDestination(spawn);
+      net.update(spawn, room);
+      setArrival((n) => n + 1);
+    }
+  }, [net.people, room]);
+  function changeRoom(next: RoomId) {
+    if (next === room || net.invite) return;
+    const spawn = freeSpawn(
+      net.people
+        .filter((p) => (p.room || "garage") === next)
+        .map((p) => p.position),
+    );
+    if (!spawn) {
+      net.setError("Este ambiente está cheio. Aguarde um lugar ficar livre.");
+      return;
+    }
+    stopPreview();
+    setSelected(null);
+    setRoom(next);
+    setPosition(spawn);
+    setDestination(spawn);
+    net.update(spawn, next);
+  }
   const move = (p: typeof START) => {
     if (call) return;
     setPosition(p);
-    net.update(p);
+    net.update(p, room);
   };
   const stopPreview = () => {
     previewRef.current?.getTracks().forEach((t) => t.stop());
@@ -319,8 +377,24 @@ function GarageRoom({
   }
   function approach(p: Person) {
     setSelected(p.id);
-    const next = { x: p.position.x - 0.1, y: p.position.y + 0.1 };
-    if (inside(next)) move(next);
+    const candidates = Array.from({ length: 16 }, (_, i) => ({
+      x: p.position.x + Math.cos((i * Math.PI) / 8) * 0.125,
+      y: p.position.y + (Math.sin((i * Math.PI) / 8) * 0.125) / 0.8,
+    })).filter(
+      (point) =>
+        inside(point) &&
+        people.every(
+          (other) => distance(point, other.position) >= PERSONAL_SPACE,
+        ),
+    );
+    const next = candidates.sort(
+      (a, b) => distance(position, a) - distance(position, b),
+    )[0];
+    if (next) setDestination(next);
+    else
+      net.setError(
+        "Não há espaço perto dessa pessoa agora. Tente outro lado do ambiente.",
+      );
   }
   return (
     <main className="garage-app">
@@ -336,7 +410,7 @@ function GarageRoom({
         <nav aria-label="Localização">
           <span>Casa</span>
           <span>/</span>
-          <strong>Garagem</strong>
+          <strong>{ROOMS[room].name}</strong>
         </nav>
         <div className="topbar-actions">
           <button onClick={() => setSettings(!settings)}>
@@ -357,7 +431,7 @@ function GarageRoom({
       </header>
       <div className="garage-heading">
         <div>
-          <p className="eyebrow">FESTA DE GARAGEM · ANOS 80</p>
+          <p className="eyebrow">{ROOMS[room].label}</p>
           <h1>
             Um passo para um novo <em>oi.</em>
           </h1>
@@ -365,17 +439,63 @@ function GarageRoom({
         <span className="garage-status">
           <span className={net.connected ? "online-dot" : "offline-dot"} />
           {mode === "local" ? "Visita local" : "Garagem experimental"} ·{" "}
-          {net.people.length + 1} {net.people.length ? "pessoas" : "pessoa"}
+          {net.people.length + 1}{" "}
+          {net.people.length ? "pessoas na casa" : "pessoa na casa"}
         </span>
       </div>
+      <nav className="house-rooms" aria-label="Ambientes da casa">
+        {(Object.keys(ROOMS) as RoomId[]).map((id) => (
+          <button
+            key={id}
+            aria-pressed={room === id}
+            disabled={!!net.invite && room !== id}
+            onClick={() => changeRoom(id)}
+          >
+            <House size={18} />
+            <span>
+              {ROOMS[id].name}
+              <small>
+                {id === "garage"
+                  ? "Música e encontros"
+                  : "Papo leve e boas histórias"}
+              </small>
+            </span>
+            <span className="room-count">
+              {net.people.filter((p) => (p.room || "garage") === id).length +
+                (room === id ? 1 : 0)}
+            </span>
+          </button>
+        ))}
+        <p>
+          {net.invite
+            ? "Finalize o convite ou a conversa para trocar de ambiente."
+            : "A casa é sua. Escolha onde quer ficar."}
+        </p>
+      </nav>
       <div className="garage-layout">
         <section className="garage-world">
           <GarageScene
+            key={`${room}-${arrival}`}
+            destination={destination}
+            bubbleOwner={net.invite?.from}
+            bubble={
+              net.invite?.status === "pending" ? (
+                <>
+                  <MessageCircle size={16} />
+                  <strong>Vamos conversar?</strong>
+                  <small>
+                    {incoming
+                      ? "Responda ao convite ao lado"
+                      : "Aguardando um oi de volta…"}
+                  </small>
+                </>
+              ) : undefined
+            }
             self={self}
             people={people}
             onMove={move}
             onSelect={(id) => setSelected(id)}
-            frozen={call}
+            frozen={!!net.invite}
             low={low}
           />
           <footer className="world-footer">
@@ -402,13 +522,13 @@ function GarageRoom({
                 <button
                   key={String(label)}
                   aria-label={String(label)}
-                  disabled={call}
+                  disabled={!!net.invite}
                   onClick={() => {
                     const p = {
                       x: position.x + Number(x),
                       y: position.y + Number(y),
                     };
-                    if (inside(p)) move(p);
+                    if (inside(p)) setDestination(p);
                   }}
                 >
                   <I size={20} />
@@ -505,7 +625,7 @@ function GarageRoom({
                   ? "Avatar de demonstração · não é uma pessoa online"
                   : person
                     ? "Um novo encontro pode começar aqui."
-                    : "Convide alguém para conhecer a garagem com você."}
+                    : "Convide alguém para conhecer este ambiente com você."}
               </p>
               {person && (
                 <>
@@ -524,10 +644,7 @@ function GarageRoom({
                       </small>
                     </div>
                   </div>
-                  <p className="conversation-prompt">
-                    Qual música marcou
-                    <br />a sua vida?
-                  </p>
+                  <p className="conversation-prompt">{ROOMS[room].topic}</p>
                 </>
               )}
               {guide ? (
@@ -630,7 +747,7 @@ function GarageRoom({
       </div>
       {list && (
         <section className="garage-people">
-          <h2>Quem está na garagem</h2>
+          <h2>Quem está em {ROOMS[room].name.toLowerCase()}</h2>
           {people.map((p) => (
             <button
               key={p.id}

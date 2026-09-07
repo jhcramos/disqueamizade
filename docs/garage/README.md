@@ -42,3 +42,11 @@ A integração online não foi exercitada porque este checkout não tem ambiente
 ## Direção artística pendente
 
 Os modelos Kenney são provisórios e muito mais simples que os personagens adultos do desenho aprovado. O fundo preserva a atmosfera, mas esta versão não atinge a fidelidade de personagens da referência. A revisão visual completa está em `design-qa.md`.
+
+### Two-room visit and movement
+
+The room selector switches between garage and living room while retaining the visitor identity and avatar. Presence carries a room identifier; people in the other room are counted in the house but are not shown as nearby. Switching rooms is disabled during a pending invitation or call. A room with no safe arrival position rejects the transition.
+
+Walking stops before another avatar using a swept ground-space collision check. Choose another point on the floor to pass around them; automatic route planning is not implemented. The same movement path handles floor clicks, keyboard, mobile arrows and approach actions. Invitations show a speech bubble above the sender; cameras remain opt-in.
+
+This is a local prototype: simultaneous arrivals are resolved by client identity, not an authoritative game server. Real network latency, online room transitions and large-scale concurrency still require integration/load testing.

@@ -854,3 +854,108 @@
     scroll-behavior: auto !important;
   }
 }
+
+.house-rooms {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 4% 20px;
+  flex-wrap: wrap;
+}
+.house-rooms > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border: 1px solid #d9caba;
+  border-radius: 14px;
+  background: #faf6ef;
+  color: #51384d;
+  text-align: left;
+}
+.house-rooms > button[aria-pressed="true"] {
+  background: #eee3d5;
+  border-color: #b74d2b;
+}
+.house-rooms small {
+  display: block;
+  font-size: 11px;
+  color: #796e67;
+  margin-top: 3px;
+}
+.house-rooms p {
+  font-size: 12px;
+  color: #796e67;
+  margin-left: auto;
+}
+.room-count {
+  background: #fff8ed;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.avatar-bubble {
+  position: absolute;
+  z-index: 8;
+  transform: translate(-50%, -100%);
+  display: grid;
+  grid-template-columns: 18px auto;
+  gap: 4px 7px;
+  background: #fffaf2;
+  color: #533849;
+  padding: 12px 15px;
+  border: 1px solid #cfad94;
+  border-radius: 16px 16px 16px 3px;
+  box-shadow: 0 6px 22px #33221826;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 13px;
+}
+.avatar-bubble small {
+  grid-column: 1/-1;
+  color: #876c60;
+  font-size: 10px;
+}
+@media (max-width: 600px) {
+  .house-rooms {
+    gap: 8px;
+    margin: 0 20px 14px;
+  }
+  .house-rooms > button {
+    flex: 1;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .house-rooms small {
+    font-size: 9px;
+  }
+  .house-rooms p {
+    margin: 0;
+    width: 100%;
+    font-size: 11px;
+  }
+  .avatar-bubble {
+    font-size: 11px;
+    padding: 8px;
+  }
+  .avatar-bubble small {
+    font-size: 9px;
+  }
+}
+
+.scene-blocked {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 90%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff8edec;
+  color: #51384d;
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 7;
+}

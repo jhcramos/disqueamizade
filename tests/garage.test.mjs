@@ -60,3 +60,53 @@ test("idle restores sparse leg channels after a walking animation", () => {
   );
   assert.equal(completeClip([rest], "absent"), undefined);
 });
+
+import {
+  safeStep,
+  distance,
+  PERSONAL_SPACE,
+  freeSpawn,
+  sameRoom,
+} from "../src/garage/model.ts";
+test("swept collision prevents walking through someone even on a long frame", () => {
+  const a = { x: 0.45, y: 0.65 },
+    b = { x: 0.74, y: 0.65 },
+    obstacle = { x: 0.6, y: 0.65 };
+  assert.deepEqual(safeStep(a, b, 10, [obstacle]), a);
+  let current = a;
+  for (let i = 0; i < 300; i++) {
+    current = safeStep(current, b, 0.05, [obstacle]);
+    assert.ok(distance(current, obstacle) >= PERSONAL_SPACE);
+  }
+  assert.ok(current.x < obstacle.x);
+});
+test("head-on walkers stop with personal space and can back away", () => {
+  let a = { x: 0.45, y: 0.65 },
+    b = { x: 0.74, y: 0.65 };
+  for (let i = 0; i < 300; i++) {
+    a = safeStep(a, { x: 0.74, y: 0.65 }, 0.05, [b]);
+    b = safeStep(b, { x: 0.45, y: 0.65 }, 0.05, [a]);
+    assert.ok(distance(a, b) >= PERSONAL_SPACE);
+  }
+  assert.ok(safeStep(a, { x: 0.45, y: 0.65 }, 0.05, [b]).x < a.x);
+});
+test("arrivals choose free floor space and report a full floor", () => {
+  const positions = [];
+  for (let i = 0; i < 6; i++) {
+    const p = freeSpawn(positions);
+    assert.ok(p);
+    assert.ok(inside(p));
+    assert.ok(positions.every((q) => distance(p, q) >= PERSONAL_SPACE));
+    positions.push(p);
+  }
+  while (freeSpawn(positions)) positions.push(freeSpawn(positions));
+  assert.equal(freeSpawn(positions), null);
+});
+test("separate rooms cannot initiate proximity conversations", () => {
+  assert.equal(
+    sameRoom({ ...DEMO, room: "living" }, { ...DEMO, room: "garage" }),
+    false,
+  );
+  assert.equal(sameRoom(DEMO, { ...DEMO, room: "garage" }), true);
+  assert.equal(parsePerson({ ...DEMO, room: "living" }).room, "living");
+});
