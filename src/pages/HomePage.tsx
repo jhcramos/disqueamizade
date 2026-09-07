@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -41,6 +41,34 @@ export function HomePage() {
   const [roomIndex, setRoom] = useState(0),
     [look, setLook] = useState("caio");
   const room = rooms[roomIndex];
+  useEffect(() => {
+    if (
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !("IntersectionObserver" in window)
+    )
+      return;
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        }),
+      { threshold: 0.08 },
+    );
+    const elements = document.querySelectorAll(
+      ".house-places, .house-identity, .house-connect, .house-journal",
+    );
+    elements.forEach((el) => {
+      el.classList.add("will-reveal");
+      observer.observe(el);
+    });
+    return () => {
+      observer.disconnect();
+      elements.forEach((el) => el.classList.remove("will-reveal"));
+    };
+  }, []);
   return (
     <main className="house-home">
       <header className="house-nav">
@@ -59,18 +87,15 @@ export function HomePage() {
       <section className="house-hero">
         <div className="house-hero-copy">
           <p className="house-eyebrow">
-            <span /> A INTERNET PRECISA DE MAIS ENCONTROS.
+            <span /> Seu avatar. Sua turma. Seu lugar.
           </p>
           <h1>
-            Gente nova.
-            <br />
-            Um lugar
-            <br />
-            <em>para ser você.</em>
+            Seu próximo encontro <br />
+            começa com um <em>oi.</em>
           </h1>
           <p className="house-lead">
-            Monte seu avatar, encontre seu cantinho e puxe uma conversa. A casa
-            é virtual. A vontade de se conectar é real.
+            Uma casa virtual para chegar do seu jeito, explorar novos ambientes
+            e descobrir boas companhias.
           </p>
           <Link className="house-cta" to="/garagem">
             Quero conhecer a casa <ArrowUpRight size={22} />
@@ -89,61 +114,90 @@ export function HomePage() {
             Prévia explorável · encontros online em preparação
           </p>
         </div>
-        <div className="house-stage-wrap">
-          <div className="house-stage-top">
-            <span>DISQUE AMIZADE / A CASA</span>
-            <span>ESCOLHA UM CLIMA ↘</span>
+        <div className="house-product-orbit">
+          <div className="house-orbit-avatar">
+            <span>100% seu jeito</span>
+            <img src="/garage/home-lia.png" alt="" />
+            <strong>
+              Seu primeiro oi
+              <br />
+              já tem personalidade.
+            </strong>
           </div>
-          <div className="house-stage">
-            <img
-              className="house-stage-room"
-              src={`/garage/${room.id}-background.webp`}
-              alt={`Prévia do cenário ${room.name}`}
-              fetchPriority="high"
-            />
-            <span className="house-scene-label">
-              {String(roomIndex + 1).padStart(2, "0")} / {room.name}
-              {room.id === "bar" ? " · 18+" : ""}
+          <div className="house-orbit-chat" aria-hidden="true">
+            <MessageCircle size={20} />
+            <span>Oi, pessoal! 👋</span>
+            <span>Chega mais.</span>
+          </div>
+          <div className="house-orbit-camera">
+            <CameraOff size={19} />
+            <span>
+              Câmera desligada.
+              <br />
+              <strong>Você decide quando ligar.</strong>
             </span>
-            <div className="house-stage-person house-person-a">
-              <div className="house-speech">{room.speech}</div>
-              <img src="/garage/home-caio.png" alt="Avatar Caio Bloco Pop" />
-              <span>Caio</span>
-            </div>
-            <div className="house-stage-person house-person-b">
-              <div className="house-speech">{room.other}</div>
-              <img src="/garage/home-lia.png" alt="Avatar Lia Bloco Pop" />
-              <span>Lia</span>
-            </div>
-            <div className="house-stage-caption">
-              <strong>{room.tag}</strong>
-              <span>Cena ilustrativa com os avatares do produto</span>
-            </div>
           </div>
-          <div
-            className="house-room-tabs"
-            role="group"
-            aria-label="Prévia dos ambientes"
-          >
-            {rooms.map((r, i) => (
-              <button
-                key={r.id}
-                aria-pressed={i === roomIndex}
-                onClick={() => setRoom(i)}
-              >
-                <span>0{i + 1}</span>
-                {r.name}
-                <ArrowUpRight size={15} />
-              </button>
-            ))}
+          <div className="house-orbit-sticker" aria-hidden="true">
+            pode
+            <br />
+            <strong>chegar ↗</strong>
+          </div>
+          <div className="house-stage-wrap">
+            <div className="house-stage-top">
+              <span>DISQUE AMIZADE / A CASA</span>
+              <span>ESCOLHA UM CLIMA ↘</span>
+            </div>
+            <div className="house-stage">
+              <img
+                className="house-stage-room"
+                src={`/garage/${room.id}-background.webp`}
+                alt={`Prévia do cenário ${room.name}`}
+                fetchPriority="high"
+              />
+              <span className="house-scene-label">
+                {String(roomIndex + 1).padStart(2, "0")} / {room.name}
+                {room.id === "bar" ? " · 18+" : ""}
+              </span>
+              <div className="house-stage-person house-person-a">
+                <div className="house-speech">{room.speech}</div>
+                <img src="/garage/home-caio.png" alt="Avatar Caio Bloco Pop" />
+                <span>Caio</span>
+              </div>
+              <div className="house-stage-person house-person-b">
+                <div className="house-speech">{room.other}</div>
+                <img src="/garage/home-lia.png" alt="Avatar Lia Bloco Pop" />
+                <span>Lia</span>
+              </div>
+              <div className="house-stage-caption">
+                <strong>{room.tag}</strong>
+                <span>Cena ilustrativa com os avatares do produto</span>
+              </div>
+            </div>
+            <div
+              className="house-room-tabs"
+              role="group"
+              aria-label="Prévia dos ambientes"
+            >
+              {rooms.map((r, i) => (
+                <button
+                  key={r.id}
+                  aria-pressed={i === roomIndex}
+                  onClick={() => setRoom(i)}
+                >
+                  <span>0{i + 1}</span>
+                  {r.name}
+                  <ArrowUpRight size={15} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
       <section className="house-manifesto">
         <p>
-          Menos perfis passando.
+          Uma casa. Muitos jeitos
           <br />
-          <strong>Mais histórias começando.</strong>
+          <strong>de se conectar.</strong>
         </p>
         <div>
           Uma casa para circular, brincar e conversar.
@@ -156,7 +210,7 @@ export function HomePage() {
       <section className="house-places" id="a-casa">
         <div className="house-section-head">
           <div>
-            <p className="house-eyebrow">NÃO É SÓ ENTRAR NUM CHAT.</p>
+            <p className="house-eyebrow">ENCONTRE O CLIMA DA SUA CONVERSA.</p>
             <h2>
               É chegar
               <br />
