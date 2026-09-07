@@ -22,7 +22,14 @@ try {
   }
   const [a, b] = pages;
   await a.waitForTimeout(1800);
-  await a.locator(".room-chat-toggle").click();
+  if (await a.getByText("Abrir segunda aba", { exact: true }).count())
+    throw Error("Test UI leaked");
+  const inputBox = await a
+    .getByRole("textbox", { name: "Mensagem pública" })
+    .boundingBox();
+  if (!inputBox || inputBox.y + inputBox.height > 1000)
+    throw Error("Composer below fold");
+  await b.locator(".room-chat-toggle").click();
   await a
     .getByRole("textbox", { name: "Mensagem pública" })
     .fill("Olá, sala! <b>texto seguro</b>");
@@ -45,7 +52,6 @@ try {
     .getByRole("button", { name: /Sala de estar/ })
     .first()
     .click();
-  await b.locator(".room-chat-toggle").click();
   if (await b.locator(".room-chat-message").count())
     throw Error("Room history leaked");
   await a

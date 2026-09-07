@@ -35,7 +35,6 @@ import { useAuthStore } from "@/store/authStore";
 import { GarageScene } from "./GarageScene";
 import {
   AVATARS,
-  DEMO,
   ROOMS,
   freeSpawn,
   distance,
@@ -330,17 +329,8 @@ function GarageRoom({
     [previewOpen, setPreviewOpen] = useState(false);
   const net = useGarage(name, avatar, mode, userId, appearance, seat);
   const roomPlay = useRoomPlay(room, mode);
-  const guide = mode === "local" && net.people.length === 0;
   const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
-  const people = guide
-    ? [
-        {
-          ...DEMO,
-          room,
-          ...(room === "bar" ? { position: { x: 0.55, y: 0.55 } } : {}),
-        },
-      ]
-    : roomPeople;
+  const people = roomPeople;
   const person =
     people.find((p) => p.id === selected) ||
     people.find((p) => nearby(position, p.position));
@@ -664,12 +654,6 @@ function GarageRoom({
               );
             })}
           </div>
-          <RoomChat
-            chat={roomChat}
-            room={room}
-            people={[self, ...roomPeople]}
-            inCall={!!call}
-          />
           <div className="garage-under">
             <span>
               <VideoOff size={15} /> Ao explorar, sua câmera fica desligada
@@ -681,6 +665,13 @@ function GarageRoom({
           </div>
         </section>
         <aside className="garage-sidebar">
+          <RoomChat
+            chat={roomChat}
+            room={room}
+            people={[self, ...roomPeople]}
+            inCall={!!call}
+          />
+
           {call ? (
             mode === "local" ? (
               <LocalCall
@@ -772,11 +763,9 @@ function GarageRoom({
               </p>
               <h2>{person ? person.name : "A casa também é sua."}</h2>
               <p className="sidebar-subtitle">
-                {guide
-                  ? "Avatar de demonstração · não é uma pessoa online"
-                  : person
-                    ? "Um novo encontro pode começar aqui."
-                    : "Convide alguém para conhecer este ambiente com você."}
+                {person
+                  ? "Um novo encontro pode começar aqui."
+                  : "Explore o ambiente e personalize seu avatar. Os encontros online na casa estarão disponíveis em breve."}
               </p>
               {person && (
                 <>
@@ -788,47 +777,18 @@ function GarageRoom({
                     <div>
                       <strong>{person.name}</strong>
                       <small>
-                        {guide
-                          ? "Guia da visita local"
-                          : person.busy
-                            ? "Em conversa"
-                            : nearby(position, person.position)
-                              ? "Ao seu alcance"
-                              : "Um pouco mais adiante"}
+                        {person.busy
+                          ? "Em conversa"
+                          : nearby(position, person.position)
+                            ? "Ao seu alcance"
+                            : "Um pouco mais adiante"}
                       </small>
                     </div>
                   </div>
                   <p className="conversation-prompt">{ROOMS[room].topic}</p>
                 </>
               )}
-              {guide ? (
-                <>
-                  <button
-                    className="garage-primary"
-                    onClick={() => approach(DEMO)}
-                  >
-                    Chegar perto da Bia
-                    <Footprints />
-                  </button>
-                  <div className="local-help">
-                    <strong>Vamos testar com alguém real?</strong>
-                    <p>
-                      Abra uma segunda aba neste navegador, escolha outro nome e
-                      aproxime os avatares. O convite e a webcam funcionam entre
-                      as abas.
-                    </p>
-                    <a
-                      className="garage-secondary"
-                      href="/garagem"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Abrir segunda aba
-                      <ArrowRight size={16} />
-                    </a>
-                  </div>
-                </>
-              ) : person ? (
+              {person ? (
                 <button
                   className="garage-primary"
                   disabled={person.busy}
@@ -845,18 +805,8 @@ function GarageRoom({
                       : "Aproximar meu avatar"}
                   <MessageCircle />
                 </button>
-              ) : (
-                <a
-                  className="garage-primary"
-                  href="/garagem"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Abrir outra visita
-                  <ArrowRight />
-                </a>
-              )}
-              {!guide && (
+              ) : null}
+              {person && (
                 <p className="garage-note">
                   A conversa começa quando a outra pessoa aceitar.
                 </p>
@@ -904,11 +854,7 @@ function GarageRoom({
               <UserRound />
               {p.name}
               <span>
-                {p.id === DEMO.id
-                  ? "Demonstração"
-                  : p.busy
-                    ? "Em conversa"
-                    : "Aproximar"}
+                {p.busy ? "Em conversa" : "Aproximar"}
                 <ArrowRight size={15} />
               </span>
             </button>

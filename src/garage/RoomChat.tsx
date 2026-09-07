@@ -14,20 +14,21 @@ export function RoomChat({
   people: Person[];
   inCall: boolean;
 }) {
-  const [open, setOpen] = useState(false),
+  const [open, setOpen] = useState(true),
     [text, setText] = useState("");
   const [seen, setSeen] = useState<string | undefined>();
   const end = useRef<HTMLDivElement>(null);
   const latest = chat.messages[chat.messages.length - 1]?.id;
   useEffect(() => {
-    setOpen(false);
+    setOpen(!inCall);
     setText("");
     setSeen(undefined);
   }, [room, inCall]);
   useEffect(() => {
     if (open) {
       setSeen(latest);
-      end.current?.scrollIntoView({ block: "nearest" });
+      const history = end.current?.parentElement;
+      if (history) history.scrollTop = history.scrollHeight;
     }
   }, [latest, open]);
   const seenIndex = chat.messages.findIndex((m) => m.id === seen);
