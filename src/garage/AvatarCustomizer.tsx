@@ -1,9 +1,11 @@
+import { HAIRSTYLES } from "./avatarHair";
 import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronLeft,
   ChevronRight,
   Glasses,
+  Scissors,
   Palette,
   RotateCcw,
   Shirt,
@@ -64,9 +66,9 @@ export function AvatarCustomizer({
 }: Props) {
   const [model, setModel] = useState(avatar),
     [look, setLook] = useState(() => normalizeAppearance(appearance)),
-    [tab, setTab] = useState<"model" | "colors" | "outfit" | "accessories">(
-      "outfit",
-    ),
+    [tab, setTab] = useState<
+      "model" | "colors" | "outfit" | "accessories" | "hair"
+    >("outfit"),
     [angle, setAngle] = useState(0);
   const [collection, setCollection] = useState<Collection>("masculine");
   const [page, setPage] = useState(0);
@@ -188,6 +190,7 @@ export function AvatarCustomizer({
               {(
                 [
                   ["model", "Modelo", UserRound],
+                  ["hair", "Cabelos", Scissors],
                   ["colors", "Cores", Palette],
                   ["outfit", "Roupas", Shirt],
                   ["accessories", "Acessórios", Glasses],
@@ -247,6 +250,59 @@ export function AvatarCustomizer({
                 </div>
               </>
             )}
+            {tab === "hair" && (
+              <>
+                <h3>Um corte com a sua cara.</h3>
+                <p>
+                  Escolha o comprimento e o estilo, sem trocar seu personagem.
+                </p>
+                <div className="avatar-hair-catalog">
+                  {Object.entries(HAIRSTYLES).map(([id, label]) => (
+                    <button
+                      key={id}
+                      aria-label={`Corte: ${label}`}
+                      aria-pressed={look.hairstyle === id}
+                      onClick={() =>
+                        setLook({
+                          ...look,
+                          hairstyle: id as Appearance["hairstyle"],
+                        })
+                      }
+                    >
+                      <div>
+                        <AvatarPortrait
+                          index={model}
+                          appearance={{
+                            ...look,
+                            hairstyle: id as Appearance["hairstyle"],
+                            accessories: look.accessories.filter(
+                              (x) =>
+                                ![
+                                  "am1",
+                                  "am2",
+                                  "am3",
+                                  "am4",
+                                  "af1",
+                                  "af2",
+                                  "af3",
+                                  "af4",
+                                ].includes(x),
+                            ),
+                          }}
+                        />
+                      </div>
+                      <span>{label}</span>
+                      {look.hairstyle === id && <Check size={13} />}
+                    </button>
+                  ))}
+                </div>
+                {palette("Cabelo", "hair", HAIR_COLORS)}
+                <p className="avatar-hair-note">
+                  As miniaturas mostram o corte sem chapéu. Seu acessório
+                  continua guardado.
+                </p>
+              </>
+            )}
             {tab === "colors" && (
               <>
                 <h3>Encontre suas cores.</h3>
@@ -300,7 +356,9 @@ export function AvatarCustomizer({
                       )
                     }
                   >
-                    {tab === "outfit" ? "Usar roupa básica" : "Remover acessórios"}
+                    {tab === "outfit"
+                      ? "Usar roupa básica"
+                      : "Remover acessórios"}
                   </button>
                 </div>
                 <div className="avatar-catalog">

@@ -1,3 +1,4 @@
+import { HAIRSTYLES, type HairStyle } from "./avatarHair.ts";
 import { OUTFITS, cleanAccessories } from "./wardrobe.ts";
 export const SKIN_COLORS = {
   original: "",
@@ -34,6 +35,7 @@ export const INTENTIONS = {
   open: { symbol: "🌿", label: "Deixar acontecer" },
 };
 export type Appearance = {
+  hairstyle: HairStyle;
   intention: keyof typeof INTENTIONS;
   body: "auto" | "masculine" | "feminine";
   outfit: string;
@@ -46,6 +48,7 @@ export type Appearance = {
   accessory: "none" | "glasses" | "crown";
 };
 export const DEFAULT_APPEARANCE: Appearance = {
+  hairstyle: "auto",
   intention: "hidden",
   body: "auto",
   outfit: "m15",
@@ -62,6 +65,7 @@ export function normalizeAppearance(raw: unknown): Appearance {
   const own = (map: object, key: unknown) =>
     typeof key === "string" && Object.prototype.hasOwnProperty.call(map, key);
   return {
+    hairstyle: own(HAIRSTYLES, p.hairstyle) ? p.hairstyle! : "auto",
     intention: own(INTENTIONS, p.intention) ? p.intention! : "hidden",
     body: p.body === "masculine" || p.body === "feminine" ? p.body : "auto",
     outfit:

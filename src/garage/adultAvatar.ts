@@ -1,3 +1,4 @@
+import { createHair } from "./avatarHair.ts";
 import * as T from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import {
@@ -169,15 +170,15 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   );
   capsule(root, skin, 0, 1.49, 0, 0.059, 0.16);
   const head = new T.Group();
-  head.position.y = 1.67;
+  head.position.y = 1.567;
   root.add(head);
-  mesh(head, new RoundedBoxGeometry(0.245, 0.285, 0.225, 3, 0.09), skin);
+  mesh(head, new RoundedBoxGeometry(0.275, 0.26, 0.235, 4, 0.075), skin);
   ell(head, skin, 0, -0.051, 0.026, 0.105, 0.088, 0.09);
-  ell(head, skin, 0, -0.015, 0.113, 0.022, 0.035, 0.027);
+  ell(head, skin, 0, -0.015, 0.113, 0.014, 0.019, 0.02);
   for (const side of [-1, 1]) {
     ell(head, skin, side * 0.124, -0.005, 0, 0.021, 0.035, 0.022);
-    ell(head, "#332b2a", side * 0.045, 0.016, 0.111, 0.016, 0.021, 0.009);
-    box(head, hair, side * 0.046, 0.06, 0.109, 0.046, 0.012, 0.01);
+    ell(head, "#18191b", side * 0.055, 0.016, 0.111, 0.024, 0.027, 0.012);
+    box(head, hair, side * 0.055, 0.065, 0.109, 0.046, 0.012, 0.01);
   }
   const smile = mesh(
     head,
@@ -188,86 +189,7 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
     0.102,
   );
   smile.rotation.z = Math.PI;
-  // Hair is separate from facial features and remains recolorable without touching eyes.
-  const cap = mesh(
-    head,
-    new T.SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.48),
-    hair,
-    0,
-    0.065,
-    -0.004,
-  );
-  cap.scale.set(0.148, 0.13, 0.143);
-  const style = index % 5;
-  for (let i = 0; i < 5; i++) {
-    const curl = ell(
-      head,
-      hair,
-      (i - 2) * 0.052,
-      0.155 + Math.sin(i) * 0.014,
-      0.083,
-      0.048,
-      0.047,
-      0.05,
-    );
-    curl.rotation.z = 0.25;
-  }
-
-  if (style === 1 || style === 4) {
-    ell(
-      head,
-      hair,
-      -0.105,
-      -0.07,
-      -0.025,
-      0.042,
-      style === 4 ? 0.22 : 0.12,
-      0.084,
-    );
-    ell(
-      head,
-      hair,
-      0.105,
-      -0.07,
-      -0.025,
-      0.042,
-      style === 4 ? 0.22 : 0.12,
-      0.084,
-    );
-    ell(head, hair, 0, -0.075, -0.08, 0.11, style === 4 ? 0.23 : 0.12, 0.05);
-  }
-  if (style === 2)
-    for (let i = 0; i < 10; i++) {
-      const a = (i * Math.PI * 2) / 10;
-      ell(
-        head,
-        hair,
-        Math.cos(a) * 0.094,
-        0.105 + Math.sin(i) * 0.016,
-        Math.sin(a) * 0.084,
-        0.048,
-        0.055,
-        0.048,
-      );
-    }
-  if (index < 5 && style === 0)
-    for (const side of [-1, 1]) {
-      const moustache = ell(
-        head,
-        hair,
-        side * 0.02,
-        -0.04,
-        0.115,
-        0.026,
-        0.009,
-        0.009,
-      );
-      moustache.rotation.z = side * 0.2;
-    }
-  if (style === 3) {
-    const bang = ell(head, hair, -0.03, 0.1, 0.07, 0.1, 0.045, 0.07);
-    bang.rotation.z = 0.3;
-  }
+  head.add(createHair(look.hairstyle, hair, index));
   const legs: T.Group[] = [],
     arms: T.Group[] = [];
   for (const side of [-1, 1]) {
@@ -640,8 +562,8 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
     }
   }
   // Compact the body and enlarge the expressive head without distorting accessories.
-  head.scale.setScalar(1.8);
-  head.position.y = 1.6;
+  head.scale.setScalar(2.35);
+  head.position.y = 1.56;
   torso.scale.set(1.03, 0.85, 1.1);
   torso.position.y = 0.03;
   const neckMesh = root.children.find((o) => o instanceof T.Mesh);
@@ -718,9 +640,7 @@ export function animateAdult(
         blend,
       );
   }
-  model.rotation.z = T.MathUtils.lerp(
-    model.rotation.z,
-    moving && !seated ? Math.sin(phase) * 0.025 : 0,
-    blend,
-  );
+  // Keep the body's up axis fixed. Only the articulated limbs move.
+  model.rotation.x = 0;
+  model.rotation.z = 0;
 }

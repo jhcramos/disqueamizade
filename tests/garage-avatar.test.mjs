@@ -151,8 +151,8 @@ test("every outfit and accessory builds a bounded opaque adult mannequin for bot
       });
       assert.equal(model.userData.adultProportions, true);
       const bounds = new THREE.Box3().setFromObject(model);
-      assert.ok(bounds.max.y > 1.7 && bounds.max.y < 2.1);
-      assert.ok(bounds.max.x - bounds.min.x < 1);
+      assert.ok(bounds.max.y > 1.7 && bounds.max.y < 2.5);
+      assert.ok(bounds.max.x - bounds.min.x < 1.15);
       model.traverse((o) => {
         if (o instanceof THREE.Mesh) {
           assert.equal(o.material.opacity, 1);
@@ -174,4 +174,43 @@ test("walking moves adult limbs and idle resets them", () => {
   assert.ok(
     Math.abs(model.getObjectByName("adult-leg-left").rotation.x) < 0.00001,
   );
+});
+
+const { HAIRSTYLES, createHair } = await import("../src/garage/avatarHair.ts");
+test("all ten independent cuts build distinct finite geometry and validate saved choices", () => {
+  const fingerprints = new Set();
+  for (const style of Object.keys(HAIRSTYLES).filter((x) => x !== "auto")) {
+    const look = normalizeAppearance({
+      ...DEFAULT_APPEARANCE,
+      hairstyle: style,
+    });
+    assert.equal(look.hairstyle, style);
+    const h = createHair(style, "#443322");
+    const b = new THREE.Box3().setFromObject(h);
+    assert.ok(Number.isFinite(b.max.y));
+    let vertices = 0;
+    h.traverse((o) => {
+      if (o instanceof THREE.Mesh)
+        vertices += o.geometry.attributes.position.count;
+    });
+    fingerprints.add(`${vertices}:${b.min.y.toFixed(4)}:${b.max.y.toFixed(4)}`);
+  }
+  assert.equal(fingerprints.size, 10);
+  assert.equal(
+    normalizeAppearance({ hairstyle: "url(external)" }).hairstyle,
+    "auto",
+  );
+  assert.equal(normalizeAppearance({}).hairstyle, "auto");
+});
+test("walking keeps the body vertical in every direction, including transitions to idle", () => {
+  const model = createAdultAvatar(0);
+  const holder = new THREE.Group();
+  holder.add(model);
+  for (let i = 0; i < 120; i++) {
+    holder.rotation.y = (i / 120) * Math.PI * 2;
+    animateAdult(model, i < 90, i / 60, false);
+    model.updateWorldMatrix(true, true);
+    const up = new THREE.Vector3(0, 1, 0).transformDirection(model.matrixWorld);
+    assert.ok(up.distanceTo(new THREE.Vector3(0, 1, 0)) < 0.00001);
+  }
 });

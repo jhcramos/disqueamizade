@@ -1874,3 +1874,100 @@
     align-items: start;
   }
 }
+.avatar-hair-catalog {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+.avatar-hair-catalog > button {
+  position: relative;
+  background: #f2e9dc;
+  border: 1px solid #decdb6;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 0 0 9px;
+  min-width: 0;
+}
+.avatar-hair-catalog > button[aria-pressed="true"] {
+  border: 2px solid #ab593a;
+  background: #eee0cc;
+}
+.avatar-hair-catalog > button > div {
+  height: 100px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+.avatar-hair-catalog img {
+  height: 210px;
+  max-width: none;
+  width: 185px;
+  object-fit: contain;
+  margin-top: -5px;
+}
+.avatar-hair-catalog > button > span {
+  font-size: 11px;
+}
+.avatar-hair-catalog > button > svg {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: #97482c;
+}
+.avatar-hair-note {
+  font-size: 10px !important;
+}
+.avatar-editor-options > nav {
+  flex-wrap: wrap;
+}
+@media (max-width: 650px) {
+  .avatar-hair-catalog {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .avatar-editor-options > nav button {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+}
+.garage-settings.avatar-editor {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.avatar-editor > header,
+.avatar-editor-footer {
+  flex-shrink: 0;
+}
+.avatar-editor-layout {
+  min-height: 0;
+  overflow: auto;
+  align-items: start;
+  flex: 1 1 auto;
+  padding: 2px 3px 8px;
+}
+.avatar-mirror {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+.avatar-editor-footer {
+  background: #faf5ec;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+@media (max-width: 650px) {
+  .avatar-mirror {
+    position: static;
+  }
+  .avatar-editor-layout {
+    display: block;
+  }
+  .avatar-editor-options {
+    margin-top: 18px;
+  }
+  .avatar-editor-footer {
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+}

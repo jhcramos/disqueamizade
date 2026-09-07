@@ -122,7 +122,7 @@ export function GarageScene(props: Props) {
         const actorHeight = props.self.room === "bar" ? 1.04 : 1.2;
         model.scale.setScalar(actorHeight / height);
         model.position.y = (-box.min.y * actorHeight) / height;
-        model.rotation.x = 0.18;
+        model.rotation.x = 0;
         group.add(model);
         const shadow = new THREE.Mesh(
           new THREE.CircleGeometry(0.24, 24),
