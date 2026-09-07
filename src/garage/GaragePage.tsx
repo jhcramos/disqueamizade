@@ -306,6 +306,7 @@ function GarageRoom({
     const spawn = freeSpawn(
       roomPeople.map((p) => p.position),
       position,
+      room,
     );
     if (spawn) {
       setPosition(spawn);
@@ -320,6 +321,8 @@ function GarageRoom({
       net.people
         .filter((p) => (p.room || "garage") === next)
         .map((p) => p.position),
+      START,
+      next,
     );
     if (!spawn) {
       net.setError("Este ambiente está cheio. Aguarde um lugar ficar livre.");
@@ -382,7 +385,7 @@ function GarageRoom({
       y: p.position.y + (Math.sin((i * Math.PI) / 8) * 0.125) / 0.8,
     })).filter(
       (point) =>
-        inside(point) &&
+        inside(point, room) &&
         people.every(
           (other) => distance(point, other.position) >= PERSONAL_SPACE,
         ),
@@ -485,9 +488,34 @@ function GarageRoom({
                   <strong>Vamos conversar?</strong>
                   <small>
                     {incoming
-                      ? "Responda ao convite ao lado"
+                      ? "Câmera e microfone ficam desligados"
                       : "Aguardando um oi de volta…"}
                   </small>
+                  <div className="bubble-actions">
+                    {incoming ? (
+                      <>
+                        <button
+                          onClick={() => void net.respond(true)}
+                          aria-label="Aceitar convite no balão"
+                        >
+                          Aceitar
+                        </button>
+                        <button
+                          onClick={() => void net.respond(false)}
+                          aria-label="Recusar convite no balão"
+                        >
+                          Agora não
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => void net.end()}
+                        aria-label="Cancelar convite no balão"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
                 </>
               ) : undefined
             }
@@ -528,7 +556,7 @@ function GarageRoom({
                       x: position.x + Number(x),
                       y: position.y + Number(y),
                     };
-                    if (inside(p)) setDestination(p);
+                    if (inside(p, room)) setDestination(p);
                   }}
                 >
                   <I size={20} />

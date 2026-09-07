@@ -8,6 +8,8 @@ import {
   ROOMS,
   inside,
   safeStep,
+  planRoute,
+  distance,
   type Person,
   type Point,
 } from "./model";
@@ -43,7 +45,10 @@ export function GarageScene(props: Props) {
       frame = 0,
       last = performance.now(),
       lastEmit = 0,
-      wasBlocked = false;
+      wasBlocked = false,
+      lastPlan = 0;
+    let route: Point[] = [],
+      plannedTarget: Point | null = null;
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -177,7 +182,20 @@ export function GarageScene(props: Props) {
         const obstacles = all
           .filter((p) => p.id !== person.id)
           .map((p) => actors.get(p.id)?.position || p.position);
-        const next = safeStep(a.position, dest, dt, obstacles),
+        if (isSelf && !frozen) {
+          if (
+            plannedTarget !== target.current ||
+            (wasBlocked && now - lastPlan > 500)
+          ) {
+            route = planRoute(a.position, target.current, obstacles, self.room);
+            plannedTarget = target.current;
+            lastPlan = now;
+          }
+          while (route.length && distance(a.position, route[0]) < 0.002)
+            route.shift();
+        }
+        const waypoint = isSelf && !frozen ? route[0] || a.position : dest;
+        const next = safeStep(a.position, waypoint, dt, obstacles, self.room),
           dx = next.x - a.position.x,
           dy = next.y - a.position.y,
           moving = Math.abs(dx) + Math.abs(dy) > 0.00001;
@@ -220,11 +238,14 @@ export function GarageScene(props: Props) {
       };
       if (!delta[e.key]) return;
       e.preventDefault();
+      const current =
+        actors.get(live.current.self.id)?.position ||
+        live.current.self.position;
       const p = {
-        x: target.current.x + delta[e.key].x,
-        y: target.current.y + delta[e.key].y,
+        x: current.x + delta[e.key].x,
+        y: current.y + delta[e.key].y,
       };
-      if (inside(p)) target.current = p;
+      if (inside(p, live.current.self.room)) target.current = p;
     };
     el.addEventListener("keydown", key);
     const lost = (e: Event) => {
@@ -264,7 +285,7 @@ export function GarageScene(props: Props) {
             x: (e.clientX - r.left) / r.width,
             y: (e.clientY - r.top) / r.height,
           };
-        if (inside(p)) target.current = p;
+        if (inside(p, live.current.self.room)) target.current = p;
       }}
     >
       <img
@@ -299,8 +320,8 @@ export function GarageScene(props: Props) {
               className="avatar-bubble"
               role="status"
               style={{
-                left: `${p.position.x * 100}%`,
-                top: `${p.position.y * 100 - 24}%`,
+                left: `clamp(125px, ${p.position.x * 100}%, calc(100% - 125px))`,
+                top: `max(145px, ${p.position.y * 100 - 20}%)`,
               }}
             >
               {props.bubble}
@@ -313,7 +334,7 @@ export function GarageScene(props: Props) {
       </span>
       {blocked && (
         <span className="scene-blocked" role="status">
-          Tem alguém no caminho. Tente passar pelo lado.
+          Não há passagem livre agora. Escolha outro ponto do piso.
         </span>
       )}
       {failed && (

@@ -110,3 +110,63 @@ test("separate rooms cannot initiate proximity conversations", () => {
   assert.equal(sameRoom(DEMO, { ...DEMO, room: "garage" }), true);
   assert.equal(parsePerson({ ...DEMO, room: "living" }).room, "living");
 });
+
+test("visible side, back and front floor is walkable in both rooms", () => {
+  for (const room of ["garage", "living"]) {
+    for (const point of [
+      { x: 0.28, y: 0.6 },
+      { x: 0.6, y: 0.34 },
+      { x: 0.65, y: 0.93 },
+    ])
+      assert.equal(
+        inside(point, room),
+        true,
+        `${room}: ${JSON.stringify(point)}`,
+      );
+  }
+  assert.equal(
+    inside({ x: 0.76, y: 0.4 }, "living"),
+    false,
+    "sofa stays blocked",
+  );
+});
+
+import { planRoute, clearPath } from "../src/garage/model.ts";
+test("route goes around another avatar instead of stopping on a direct line", () => {
+  const from = { x: 0.34, y: 0.6 },
+    to = { x: 0.7, y: 0.6 },
+    obstacles = [{ x: 0.52, y: 0.6 }];
+  for (const room of ["garage", "living"]) {
+    const path = planRoute(from, to, obstacles, room);
+    assert.ok(path.length > 1);
+    let previous = from;
+    for (const next of path) {
+      assert.ok(clearPath(previous, next, obstacles, room));
+      previous = next;
+    }
+    assert.deepEqual(path.at(-1), to);
+  }
+});
+test("route around living room furniture stays on the floor", () => {
+  const from = { x: 0.6, y: 0.34 },
+    to = { x: 0.84, y: 0.61 };
+  const path = planRoute(from, to, [], "living");
+  assert.ok(path.length > 1);
+  let previous = from;
+  for (const next of path) {
+    assert.ok(clearPath(previous, next, [], "living"));
+    previous = next;
+  }
+  assert.deepEqual(path.at(-1), to);
+  assert.deepEqual(planRoute(from, { x: 0.76, y: 0.4 }, [], "living"), []);
+});
+test("room arrivals can accommodate twelve initial visitors without overlap", () => {
+  for (const room of ["garage", "living"]) {
+    const people = [];
+    for (let i = 0; i < 12; i++) {
+      const p = freeSpawn(people, START, room);
+      assert.ok(p);
+      people.push(p);
+    }
+  }
+});

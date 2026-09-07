@@ -50,3 +50,9 @@ The room selector switches between garage and living room while retaining the vi
 Walking stops before another avatar using a swept ground-space collision check. Choose another point on the floor to pass around them; automatic route planning is not implemented. The same movement path handles floor clicks, keyboard, mobile arrows and approach actions. Invitations show a speech bubble above the sender; cameras remain opt-in.
 
 This is a local prototype: simultaneous arrivals are resolved by client identity, not an authoritative game server. Real network latency, online room transitions and large-scale concurrency still require integration/load testing.
+
+### Walking correction and group proposal
+
+Each room now uses its own larger floor outline, excluding furniture. Click walking uses a small A* route to pass around people, with swept collision checks throughout; blocked routes retry at most twice per second. Keyboard movement starts from the current position. Pending invitation bubbles offer the same accept/decline/cancel actions as the sidebar.
+
+See GROUP-CONVERSATIONS.md for the proposed 12-visitor room and 4-person conversation rules. These are proposed limits requiring server-side membership and media authorization work. Current calls remain private pairs. This supersedes the earlier note that automatic route planning is absent.

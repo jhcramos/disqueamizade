@@ -959,3 +959,43 @@
   pointer-events: none;
   z-index: 7;
 }
+
+.avatar-bubble {
+  pointer-events: auto;
+  white-space: normal;
+  width: max-content;
+  max-width: min(240px, 80%);
+}
+.bubble-actions {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+}
+.bubble-actions button {
+  border: 1px solid #cfad94;
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  background: #fffaf2;
+  color: #533849;
+}
+.bubble-actions button:first-child {
+  background: #ac4c30;
+  color: white;
+  border-color: #ac4c30;
+}
+.bubble-actions button:focus-visible {
+  outline: 3px solid #51384d;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .avatar-bubble {
+    max-width: 220px;
+  }
+  .bubble-actions button {
+    min-height: 40px;
+  }
+}

@@ -50,3 +50,13 @@ Movement commands now share continuous movement and swept personal-space collisi
 Validation: 10 garage tests, 13 camera tests and 22 chat tests pass, plus TypeScript and production build. This iteration's visual browser checks used desktop; the viewport override did not apply, so a new mobile screenshot was not claimed. Existing mobile styles remain, with responsive room selectors. Cloud room transitions and production load remain unverified.
 
 Final browser check: approaching a participant in the living room enabled the invitation; the receiver accepted and saw the private-call panel with camera and microphone off.
+
+## Walking-area and actionable-bubble iteration — 2026-09-07
+
+The shared center-only floor polygon rejected visible floor at the sides, back and front. Replaced it with separate polygons traced against each room's furniture footprint. Added a bounded A* walking route around people and concave furniture boundaries, with the existing swept collision checks retained for each movement step. Keyboard destinations now start at the current avatar position, so a previous distant click does not pull arrow movement away.
+
+The speech bubble now contains Accept / Not now for the recipient and Cancel for the sender. Buttons share the existing invitation state and media consent flow with the sidebar. Bubble position is clamped to remain inside the scene near its edges. Screenshot: docs/garage/bubble-actions.png.
+
+Verification: 14 garage tests include the previously rejected visible-floor points in both rooms, a path around a person, a path around the living-room sofa, invalid furniture destinations, and twelve non-overlapping initial spawn locations. Browser checks confirmed movement to a floor destination, continuous approach, acceptance from the bubble with camera/microphone off, and refusal from the bubble. Camera and chat test suites remain passing (13 and 22). Production build passes. Twelve spawn positions are a geometry check, not a multiplayer load/capacity claim.
+
+Product proposal is documented separately in docs/garage/GROUP-CONVERSATIONS.md: 12 visitors per room instance and 4 members per conversation, with consent for admitting a third person. Group calls and a server-enforced 12-person cap are not implemented. Existing provisional-avatar art, mobile verification and online-load limitations still apply. This entry supersedes the earlier statement that no automatic route planning exists.
