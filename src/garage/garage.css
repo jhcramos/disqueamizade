@@ -2447,3 +2447,206 @@
     background: #fffaf3;
   }
 }
+
+.surprise-station {
+  position: absolute;
+  right: 8%;
+  top: 24%;
+  width: clamp(85px, 13%, 160px);
+  border: 0;
+  background: transparent;
+  color: #fff2bd;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 8px 10px #0008);
+}
+.surprise-sign {
+  font: 700 clamp(8px, 1vw, 14px) / 1.2 sans-serif;
+  letter-spacing: 0.15em;
+  padding: 9px 8px;
+  border: 2px solid #ffd681;
+  border-radius: 12px;
+  background: #3a123b;
+  box-shadow:
+    0 0 12px #ff9054,
+    inset 0 0 12px #ef935444;
+  text-shadow: 0 0 8px #ff9c54;
+  transform: rotate(-5deg);
+}
+.surprise-sign strong {
+  font-size: 1.15em;
+}
+.surprise-phone {
+  width: 72%;
+  aspect-ratio: 1;
+  margin-top: 10px;
+  border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(135deg, #ffdb78, #f77539 70%, #b93933);
+  border: 3px solid #ffd083;
+  box-shadow:
+    inset -8px -7px 0 #ac372f66,
+    0 0 20px #fb844950;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.surprise-phone svg {
+  width: 57%;
+  height: 40%;
+  color: #471e3e;
+  transform: rotate(-30deg);
+}
+.surprise-dial {
+  display: grid;
+  place-items: center;
+  width: 40%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 5px dotted #fce2a0;
+  background: #54223d;
+  color: #ffdc90;
+  font-size: 16px;
+}
+.surprise-plinth {
+  height: 22px;
+  width: 58%;
+  background: linear-gradient(90deg, #592640, #983750, #592640);
+  border-bottom: 5px solid #fa9c61;
+  border-radius: 0 0 9px 9px;
+}
+.surprise-invite {
+  font: 700 clamp(8px, 0.8vw, 11px) / 1.3 sans-serif;
+  background: #fff1c9;
+  color: #54233e;
+  border-radius: 20px;
+  padding: 7px 10px;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+.surprise-station.is-near .surprise-sign {
+  box-shadow: 0 0 26px #ffbc66;
+}
+.surprise-station:hover .surprise-phone {
+  transform: rotate(-7deg);
+}
+.house-rooms .surprise-menu {
+  background: #3a1837;
+  color: #ffe3a3;
+  border-color: #e38b52;
+  box-shadow: 0 0 12px #ff99452b;
+}
+.house-rooms .surprise-menu small {
+  color: #efd0b9;
+}
+.surprise-dialog {
+  width: min(460px, calc(100% - 32px));
+  max-height: 90dvh;
+  overflow-y: auto;
+  margin: auto;
+  padding: 36px;
+  border: 1px solid #eea461;
+  border-radius: 26px;
+  background: radial-gradient(ellipse at top, #682c4a, #211623 65%);
+  color: #fff0d3;
+  text-align: center;
+  box-shadow: 0 0 80px #f4793333;
+}
+.surprise-dialog::backdrop {
+  background: #100914c9;
+  backdrop-filter: blur(5px);
+}
+.surprise-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  border: 0;
+  background: transparent;
+  color: #fff0d3;
+  padding: 5px;
+}
+.surprise-dialog-icon {
+  width: 90px;
+  height: 90px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 22px;
+  background: #f5904e;
+  color: #3b183b;
+  border-radius: 25px;
+  transform: rotate(-8deg);
+  box-shadow: 0 0 40px #ffa34740;
+}
+.surprise-kicker {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+.garage-app .surprise-dialog h2 {
+  font-size: 46px;
+  line-height: 1.05;
+  margin: 16px 0;
+  color: #fff0d3;
+}
+.surprise-dialog p {
+  line-height: 1.6;
+}
+.surprise-details {
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+  margin: 24px 0;
+}
+.surprise-details span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffbe80;
+}
+.surprise-start {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  background: #ffac63;
+  color: #30152e;
+  border-radius: 12px;
+  padding: 16px;
+  font-weight: bold;
+  text-decoration: none;
+}
+.surprise-dialog small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #cfbdcb;
+  margin: 16px 0;
+}
+.surprise-stay {
+  background: transparent;
+  border: 0;
+  color: #fff0d3;
+  padding: 8px;
+  text-decoration: underline;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .surprise-phone {
+    animation: surprise-ring 4s ease-in-out infinite;
+  }
+  @keyframes surprise-ring {
+    0%,
+    80%,
+    100% {
+      transform: rotate(0);
+    }
+    84%,
+    92% {
+      transform: rotate(-6deg);
+    }
+    88%,
+    96% {
+      transform: rotate(6deg);
+    }
+  }
+}

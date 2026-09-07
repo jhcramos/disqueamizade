@@ -1,3 +1,4 @@
+import { SurpriseDialog } from "./SurpriseStation";
 import { useSocialChat } from "./useSocialChat";
 import { SocialChat } from "./SocialChat";
 import { BrandLogo } from "../components/common/BrandLogo";
@@ -318,6 +319,7 @@ function GarageRoom({
   const [seat, setSeat] = useState<string>();
   const [barGate, setBarGate] = useState(false),
     [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [rouletteOpen, setRouletteOpen] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
     [destination, setDestination] = useState(START),
@@ -519,6 +521,16 @@ function GarageRoom({
             </span>
           </button>
         ))}
+        <button
+          className="surprise-menu"
+          disabled={!!net.invite || !!social.session}
+          onClick={() => setRouletteOpen(true)}
+        >
+          <Sparkles size={20} />
+          <span>
+            Disque Surpresa<small>Roleta · encontro 1 a 1</small>
+          </span>
+        </button>
         <p>
           {net.invite
             ? "Finalize o convite ou a conversa para trocar de ambiente."
@@ -528,6 +540,10 @@ function GarageRoom({
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           <GarageScene
+            rouletteDisabled={!!social.session}
+            onRoulette={() => {
+              if (!net.invite && !social.session) setRouletteOpen(true);
+            }}
             preferences={social.preferences}
             chatBubbles={{
               ...roomChat.bubbles,
@@ -878,6 +894,9 @@ function GarageRoom({
             </button>
           ))}
         </section>
+      )}
+      {rouletteOpen && (
+        <SurpriseDialog onClose={() => setRouletteOpen(false)} />
       )}
       {barGate && (
         <div className="avatar-editor-backdrop">

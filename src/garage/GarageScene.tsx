@@ -1,3 +1,4 @@
+import { SurpriseStation } from "./SurpriseStation";
 import type { SocialPreference } from "./useSocialChat";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
@@ -18,6 +19,8 @@ import {
 } from "./model";
 
 type Props = {
+  onRoulette?: () => void;
+  rouletteDisabled?: boolean;
   preferences?: Record<string, SocialPreference>;
   play: PlayState;
   playControls: ReactNode;
@@ -464,6 +467,13 @@ export function GarageScene(props: Props) {
             </div>
           ) : null;
         })()}
+      {(props.self.room || "garage") === "garage" && props.onRoulette && (
+        <SurpriseStation
+          near={distance(props.self.position, { x: 0.78, y: 0.5 }) < 0.18}
+          disabled={props.frozen || props.rouletteDisabled}
+          onOpen={props.onRoulette}
+        />
+      )}
       {props.playControls}
       <span className="scene-location">
         {ROOMS[props.self.room || "garage"].name} /{" "}

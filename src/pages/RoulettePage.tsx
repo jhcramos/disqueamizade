@@ -1,3 +1,4 @@
+import { Link, useSearchParams } from 'react-router-dom'
 import { CameraSetupProvider, CameraPreview, useCameraSetup } from '@/rooms/CameraSetup'
 // ═══════════════════════════════════════════════════════════════════════════
 // RoulettePage — roleta 1:1 em LiveKit (Plano V4, item 1.7)
@@ -54,6 +55,7 @@ export const RoulettePage = () => {
 }
 const RouletteEntry = () => {
   const camera = useCameraSetup()
+  const [searchParams] = useSearchParams()
   const [showPreview, setShowPreview] = useState(false)
   const { user, profile, isGuest, initialized, signInAsGuest } = useAuthStore()
   const { addToast } = useToastStore()
@@ -233,6 +235,7 @@ const RouletteEntry = () => {
           </div>
         )}
 
+        {searchParams.get('from') === 'house' && status !== 'matched' && <Link to="/garagem" onClick={endSession} className="inline-flex mb-5 text-primary-400">← Voltar para a casa</Link>}
         <div className="rounded-2xl bg-dark-900 border border-white/10 min-h-[360px] flex items-center justify-center p-6">
           {status === 'idle' && (
             <div className="text-center max-w-xs">
