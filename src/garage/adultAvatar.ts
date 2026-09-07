@@ -178,17 +178,38 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   for (const side of [-1, 1]) {
     ell(head, skin, side * 0.124, -0.005, 0, 0.021, 0.035, 0.022);
     ell(head, "#18191b", side * 0.055, 0.016, 0.111, 0.024, 0.027, 0.012);
-    box(head, hair, side * 0.055, 0.065, 0.109, 0.046, 0.012, 0.01);
+    const brow = ell(
+      head,
+      hair,
+      side * 0.055,
+      0.064,
+      0.114,
+      0.026,
+      0.006,
+      0.005,
+    );
+    brow.rotation.z = side * -0.1;
+    ell(
+      head,
+      "#fff8e9",
+      side * 0.055 - 0.005,
+      0.025,
+      0.122,
+      0.0045,
+      0.005,
+      0.003,
+    );
   }
   const smile = mesh(
     head,
-    new T.TorusGeometry(0.027, 0.0035, 5, 16, Math.PI),
+    new T.TorusGeometry(0.02, 0.003, 5, 16, Math.PI),
     "#83534a",
     0,
     -0.054,
-    0.102,
+    0.123,
   );
   smile.rotation.z = Math.PI;
+  smile.scale.y = 0.55;
   head.add(createHair(look.hairstyle, hair, index));
   const legs: T.Group[] = [],
     arms: T.Group[] = [];
@@ -209,7 +230,8 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
     arms.push(arm);
     capsule(arm, skin, 0, -0.15, 0, 0.047, 0.32);
     capsule(arm, skin, 0, -0.43, 0.01, 0.036, 0.3);
-    ell(arm, skin, 0, -0.607, 0.015, 0.038, 0.063, 0.026);
+    ell(arm, skin, 0, -0.607, 0.015, 0.038, 0.053, 0.029);
+    ell(arm, skin, -side * 0.03, -0.591, 0.03, 0.014, 0.025, 0.017);
   }
   const outfit = OUTFITS.find(
     (o) =>

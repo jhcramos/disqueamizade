@@ -170,3 +170,22 @@ test("room arrivals can accommodate twelve initial visitors without overlap", ()
     }
   }
 });
+
+const { approachRadius, personalSpace } = await import(
+  "../src/garage/model.ts"
+);
+test("close conversation approach is reachable while bodies still cannot overlap", () => {
+  for (const room of ["garage", "living", "bar"]) {
+    const other = { x: 0.55, y: 0.6 },
+      goal = { x: other.x - approachRadius(room), y: other.y };
+    assert.ok(approachRadius(room) <= 0.061);
+    assert.ok(approachRadius(room) > personalSpace(room));
+    assert.ok(nearby(goal, other));
+    assert.ok(planRoute({ x: 0.4, y: 0.65 }, goal, [other], room).length);
+    let current = goal;
+    for (let i = 0; i < 100; i++) {
+      current = safeStep(current, other, 0.016, [other], room);
+      assert.ok(distance(current, other) >= personalSpace(room) - 0.00001);
+    }
+  }
+});

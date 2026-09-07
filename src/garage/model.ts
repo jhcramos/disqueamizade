@@ -171,9 +171,11 @@ export function parsePerson(raw: unknown): Person | null {
 }
 
 // Ground-space personal radius, shared by walking, arrival and interpolation.
-export const PERSONAL_SPACE = 0.105;
+export const PERSONAL_SPACE = 0.052;
 export const personalSpace = (room: RoomId = "garage") =>
-  room === "bar" ? 0.06 : PERSONAL_SPACE;
+  room === "bar" ? 0.048 : PERSONAL_SPACE;
+export const approachRadius = (room: RoomId = "garage") =>
+  personalSpace(room) + 0.008;
 export function sameRoom(a: Person, b: Person) {
   return (a.room || "garage") === (b.room || "garage");
 }

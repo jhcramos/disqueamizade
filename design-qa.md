@@ -82,3 +82,9 @@ Latest checks: 68 tests in total (33 garage/avatar/bar, 13 camera, 22 chat/auth)
 Removed the fixed whole-model X tilt and animated body Z sway. The model's up axis stays vertical while the heading turns; walking is confined to limbs. Enlarged rounded collectible-style heads and eyes, and replaced index-coupled hair lumps with independent scalp/lock meshes for ten styles plus automatic defaults. Editor thumbnails emphasize the head and preserve accessory selection; action buttons stay visible while content scrolls. The delivered quality is shown in docs/garage/avatar-hair-editor.png, not asserted to equal the generated concept.
 
 Seventy tests pass, including all ten independent hair geometries and body-upright orientation across walking/idle/heading changes. Browser checks passed saved mohawk, canceled draft preservation, long hair, moving avatar screenshot, mobile editor overflow, and the existing two-visit bar scenarios. No page errors. Avatar art still requires subjective user review; no claim of identical fidelity to the approved illustration.
+
+## Close encounters and hair surface rebuild
+
+Responded to the user's remaining distance/art feedback by halving the body collision spacing and using a single room-aware automatic approach radius. The existing swept collision/pathfinding protections remain. Live browser check confirmed arrival within 0.063 ground units of the demo avatar; new tests cover reachability and collision stopping in all three rooms.
+
+Hair is now built from continuous sculpted meshes rather than visibly separate tube/bead/cone primitives. Face changes add soft brows, small eye highlights and a restrained smile. The long-hair preview and actual closer encounter are recorded in docs/garage/hair-sculpted.png and close-conversation.png. Art quality remains a subjective user-review item; no multiplier or exact-reference fidelity is claimed. Latest suites total 71 passing tests plus production build and local browser checks.

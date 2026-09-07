@@ -33,7 +33,7 @@ import {
   ROOMS,
   freeSpawn,
   distance,
-  PERSONAL_SPACE,
+  approachRadius,
   inside,
   nearby,
   START,
@@ -432,13 +432,15 @@ function GarageRoom({
   function approach(p: Person) {
     setSelected(p.id);
     const candidates = Array.from({ length: 16 }, (_, i) => ({
-      x: p.position.x + Math.cos((i * Math.PI) / 8) * 0.125,
-      y: p.position.y + (Math.sin((i * Math.PI) / 8) * 0.125) / 0.8,
+      x: p.position.x + Math.cos((i * Math.PI) / 8) * approachRadius(room),
+      y:
+        p.position.y +
+        (Math.sin((i * Math.PI) / 8) * approachRadius(room)) / 0.8,
     })).filter(
       (point) =>
         inside(point, room) &&
         people.every(
-          (other) => distance(point, other.position) >= PERSONAL_SPACE,
+          (other) => distance(point, other.position) >= personalSpace(room),
         ),
     );
     const next = candidates.sort(
