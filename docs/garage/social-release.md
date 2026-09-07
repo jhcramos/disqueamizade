@@ -23,3 +23,7 @@ Implementado: home em tons creme/terracota com imagens dos três cenários e ret
 A home é publicada como prévia da casa, com limitação local explícita e acesso às salas tradicionais preservado. O lançamento do novo serviço online completo requer as validações acima. A migração foi aplicada apenas no projeto DisqueAmizade e não foram criadas cobranças.
 
 Também foi removida da rota legada `api/update-profile.ts` a aceitação de campos de VIP, saldo e ganhos vindos do navegador; eram incompatíveis com o isolamento de perfil e os futuros itens pagos.
+
+## Publicação confirmada
+
+Em 7 de setembro de 2026, publicado em https://disqueamizade.com.br a partir do commit `b0638bc` (deployment `disqueamizade-pz7tsgkjb-jhcramos-projects.vercel.app`). Verificação no domínio público: HTTP 200, nova home, botão de autenticação configurado, entrada de visitante, modal de perfil e ausência de overflow em celular. Nenhum e-mail foi enviado nos testes. A verificação de email e a recuperação em outro dispositivo continuam pendentes.
