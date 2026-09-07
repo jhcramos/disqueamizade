@@ -50,6 +50,10 @@ export function createPlayObjects(scene: THREE.Scene) {
   for (const mesh of [ballShadow, cushionShadow]) mesh.scale.y = 0.28;
   scene.add(ball, cushion, ballShadow, cushionShadow);
   return {
+    setVisible(visible: boolean) {
+      for (const m of [ball, cushion, ballShadow, cushionShadow])
+        m.visible = visible;
+    },
     update(
       state: PlayState,
       actors: Map<string, { group: THREE.Group }>,

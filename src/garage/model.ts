@@ -1,6 +1,14 @@
+import { normalizeSeat } from "./seats.ts";
+import { normalizeAppearance, type Appearance } from "./avatarStyle.ts";
 export type Point = { x: number; y: number };
-export type RoomId = "garage" | "living";
+export type RoomId = "garage" | "living" | "bar";
 export const ROOMS = {
+  bar: {
+    name: "Bar Vinyl",
+    image: "bar-background.webp",
+    label: "BAR VINYL · ENCONTROS 18+",
+    topic: "Qual seria a trilha sonora de um encontro perfeito?",
+  },
   garage: {
     name: "Garagem",
     image: "garage-background.webp",
@@ -15,6 +23,8 @@ export const ROOMS = {
   },
 };
 export type Person = {
+  seat?: string;
+  appearance?: Appearance;
   room?: RoomId;
   id: string;
   name: string;
@@ -44,6 +54,19 @@ export const DEMO: Person = {
 };
 // Foot positions traced against each rendered room, excluding furniture and walls.
 export const FLOORS: Record<RoomId, Point[]> = {
+  bar: [
+    [0.14, 0.51],
+    [0.3, 0.46],
+    [0.51, 0.31],
+    [0.68, 0.41],
+    [0.81, 0.46],
+    [0.9, 0.55],
+    [0.84, 0.69],
+    [0.77, 0.8],
+    [0.9, 0.94],
+    [0.46, 0.97],
+    [0.14, 0.65],
+  ].map(([x, y]) => ({ x, y })),
   garage: [
     [0.14, 0.55],
     [0.25, 0.49],
@@ -85,6 +108,15 @@ export const FLOORS: Record<RoomId, Point[]> = {
 export const FLOOR = FLOORS.garage;
 export function inside(p: Point, room: RoomId = "garage") {
   const FLOOR = FLOORS[room];
+  if (
+    room === "bar" &&
+    [
+      [0.664, 0.51, 0.045, 0.032],
+      [0.325, 0.67, 0.047, 0.032],
+      [0.683, 0.773, 0.045, 0.032],
+    ].some(([x, y, rx, ry]) => Math.hypot((p.x - x) / rx, (p.y - y) / ry) < 1)
+  )
+    return false;
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return false;
   let result = false;
   for (let i = 0, j = FLOOR.length - 1; i < FLOOR.length; j = i++) {
@@ -117,11 +149,16 @@ export function parsePerson(raw: unknown): Person | null {
     p.id.length > 80 ||
     typeof p.name !== "string" ||
     !p.position ||
-    !inside(p.position, p.room === "living" ? "living" : "garage")
+    !inside(
+      p.position,
+      p.room === "bar" ? "bar" : p.room === "living" ? "living" : "garage",
+    )
   )
     return null;
   return {
-    room: p.room === "living" ? "living" : "garage",
+    seat: normalizeSeat(p.seat, p.room),
+    appearance: normalizeAppearance(p.appearance),
+    room: p.room === "bar" ? "bar" : p.room === "living" ? "living" : "garage",
     id: p.id,
     name: p.name.slice(0, 24),
     avatar:
@@ -135,6 +172,8 @@ export function parsePerson(raw: unknown): Person | null {
 
 // Ground-space personal radius, shared by walking, arrival and interpolation.
 export const PERSONAL_SPACE = 0.105;
+export const personalSpace = (room: RoomId = "garage") =>
+  room === "bar" ? 0.06 : PERSONAL_SPACE;
 export function sameRoom(a: Person, b: Person) {
   return (a.room || "garage") === (b.room || "garage");
 }
@@ -145,6 +184,7 @@ export function safeStep(
   obstacles: Point[],
   room: RoomId = "garage",
 ): Point {
+  const PERSONAL_SPACE = personalSpace(room);
   const next = step(a, b, dt);
   if (!clearPath(a, next, [], room)) return a;
   const vx = next.x - a.x,
@@ -174,6 +214,7 @@ export function freeSpawn(
   preferred: Point = START,
   room: RoomId = "garage",
 ): Point | null {
+  const PERSONAL_SPACE = personalSpace(room);
   if (
     inside(preferred, room) &&
     people.every((p) => distance(p, preferred) >= PERSONAL_SPACE + 0.012)
@@ -201,7 +242,7 @@ export function clearPath(
   b: Point,
   obstacles: Point[],
   room: RoomId = "garage",
-  gap = PERSONAL_SPACE,
+  gap = personalSpace(room),
 ): boolean {
   const n = Math.max(1, Math.ceil(distance(a, b) / 0.006));
   for (let i = 0; i <= n; i++)
@@ -233,7 +274,7 @@ export function planRoute(
   room: RoomId = "garage",
 ): Point[] {
   if (!inside(goal, room)) return [];
-  const gap = PERSONAL_SPACE + 0.006;
+  const gap = personalSpace(room) + 0.006;
   if (clearPath(a, goal, obstacles, room, gap)) return [goal];
   const grid = 0.025,
     width = 41;

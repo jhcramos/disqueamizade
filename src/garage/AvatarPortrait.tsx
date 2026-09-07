@@ -1,40 +1,38 @@
 import { useEffect, useState } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { completeClip } from "./animation";
-import { AVATARS } from "./model";
-const cache = new Map<number, Promise<string>>();
+import { createAdultAvatar } from "./adultAvatar";
+import { appearanceKey, type Appearance } from "./avatarStyle";
+const cache = new Map<string, Promise<string>>();
 let queue = Promise.resolve();
-function portrait(index: number): Promise<string> {
-  const cached = cache.get(index);
+function portrait(
+  index: number,
+  appearance?: Appearance,
+  rotation = 0.12,
+): Promise<string> {
+  const key = `${index}:${appearanceKey(appearance)}:${rotation}`;
+  const cached = cache.get(key);
   if (cached) return cached;
   const promise = new Promise<string>((resolve, reject) => {
     queue = queue
       .then(async () => {
         let renderer: THREE.WebGLRenderer | undefined;
         try {
-          const gltf = await new GLTFLoader().loadAsync(
-            `/garage/avatars/character-${AVATARS[index]}.glb`,
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
           );
           renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-          renderer.setSize(160, 180);
+          renderer.setSize(320, 360);
           renderer.setPixelRatio(1);
           renderer.toneMapping = THREE.ACESFilmicToneMapping;
           renderer.toneMappingExposure = 0.85;
           const scene = new THREE.Scene(),
-            model = gltf.scene;
-          const mixer = new THREE.AnimationMixer(model),
-            clip = completeClip(gltf.animations, "idle");
-          if (clip) {
-            mixer.clipAction(clip).play();
-            mixer.update(0.5);
-          }
+            model = createAdultAvatar(index, appearance);
           model.updateMatrixWorld(true);
           const box = new THREE.Box3().setFromObject(model),
             height = box.max.y - box.min.y;
           model.scale.setScalar(2 / height);
           model.position.y = (-box.min.y * 2) / height;
-          model.rotation.y = 0.12;
+          model.rotation.y = rotation;
           scene.add(model);
 
           scene.add(new THREE.HemisphereLight(0xfff2de, 0x686061, 3));
@@ -67,14 +65,25 @@ function portrait(index: number): Promise<string> {
       })
       .catch(() => {});
   });
-  cache.set(index, promise);
+  if (cache.size >= 100) cache.delete(cache.keys().next().value!);
+  cache.set(key, promise);
+  void promise.catch(() => cache.delete(key));
   return promise;
 }
-export function AvatarPortrait({ index }: { index: number }) {
+export function AvatarPortrait({
+  index,
+  appearance,
+  rotation = 0.12,
+}: {
+  index: number;
+  appearance?: Appearance;
+  rotation?: number;
+}) {
+  const key = appearanceKey(appearance);
   const [src, setSrc] = useState("");
   useEffect(() => {
     let active = true;
-    void portrait(index)
+    void portrait(index, appearance, rotation)
       .then((s) => {
         if (active) setSrc(s);
       })
@@ -82,7 +91,7 @@ export function AvatarPortrait({ index }: { index: number }) {
     return () => {
       active = false;
     };
-  }, [index]);
+  }, [index, key, rotation]);
   return src ? (
     <img src={src} alt="" />
   ) : (

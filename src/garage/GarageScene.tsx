@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { clone } from "three/addons/utils/SkeletonUtils.js";
+import { createAdultAvatar, animateAdult } from "./adultAvatar";
+import { BAR_SEATS } from "./seats";
+import { INTENTIONS } from "./avatarStyle";
+import { appearanceKey } from "./avatarStyle";
 import { createPlayObjects } from "./playObjects";
 import type { PlayState } from "./play";
-import { completeClip } from "./animation";
 import {
-  AVATARS,
   ROOMS,
   inside,
   safeStep,
@@ -77,14 +77,12 @@ export function GarageScene(props: Props) {
     const reducedMotion = matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const loader = new GLTFLoader();
     type Actor = {
       group: THREE.Group;
-      mixer: THREE.AnimationMixer;
-      idle?: THREE.AnimationAction;
-      walk?: THREE.AnimationAction;
+      model: THREE.Group;
       position: Point;
       avatar: number;
+      appearance: string;
     };
     const actors = new Map<string, Actor>(),
       pending = new Set<string>();
@@ -93,7 +91,18 @@ export function GarageScene(props: Props) {
     function remove(id: string) {
       const a = actors.get(id);
       if (a) {
-        a.mixer.stopAllAction();
+        a.group.traverse((o) => {
+          if (o instanceof THREE.Mesh) {
+            o.geometry.dispose();
+            geometries.delete(o.geometry);
+            for (const m of Array.isArray(o.material)
+              ? o.material
+              : [o.material]) {
+              m.dispose();
+              materials.delete(m);
+            }
+          }
+        });
         scene.remove(a.group);
         actors.delete(id);
       }
@@ -104,67 +113,52 @@ export function GarageScene(props: Props) {
     resize.observe(el);
     function add(person: Person) {
       pending.add(person.id);
-      loader.load(
-        `/garage/avatars/character-${AVATARS[person.avatar]}.glb`,
-        (gltf) => {
-          pending.delete(person.id);
-          if (!active) return;
-          const model = clone(gltf.scene),
-            group = new THREE.Group();
-          const mixer = new THREE.AnimationMixer(model),
-            idleClip = completeClip(gltf.animations, "idle"),
-            walkClip = completeClip(gltf.animations, "walk");
-          const idle = idleClip ? mixer.clipAction(idleClip) : undefined,
-            walk = walkClip ? mixer.clipAction(walkClip) : undefined;
-          idle?.play();
-          mixer.update(0.01);
-          model.updateMatrixWorld(true);
-          const box = new THREE.Box3().setFromObject(model),
-            height = box.max.y - box.min.y;
-          model.scale.setScalar(1.1 / height);
-          model.position.y = (-box.min.y * 1.1) / height;
-          model.rotation.x = 0.18;
-          group.add(model);
-          const shadow = new THREE.Mesh(
-            new THREE.CircleGeometry(0.24, 24),
-            new THREE.MeshBasicMaterial({
-              color: 0x1f1913,
-              transparent: true,
-              opacity: 0.28,
-              depthWrite: false,
-            }),
-          );
-          shadow.scale.y = 0.26;
-          shadow.position.set(0, 0.025, -0.15);
-          group.add(shadow);
-          group.traverse((o) => {
-            if (o instanceof THREE.Mesh) {
-              geometries.add(o.geometry);
-              for (const m of Array.isArray(o.material)
-                ? o.material
-                : [o.material])
-                materials.add(m);
-            }
-          });
-          walk?.play();
-          walk?.setEffectiveWeight(0);
-          actors.set(person.id, {
-            group,
-            mixer,
-            idle,
-            walk,
-            position: { ...person.position },
-            avatar: person.avatar,
-          });
-          scene.add(group);
-          setLoaded(true);
-        },
-        undefined,
-        () => {
-          pending.delete(person.id);
-          setFailed(true);
-        },
-      );
+      try {
+        const model = createAdultAvatar(person.avatar, person.appearance),
+          group = new THREE.Group();
+        model.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(model),
+          height = box.max.y - box.min.y;
+        const actorHeight = props.self.room === "bar" ? 1.04 : 1.2;
+        model.scale.setScalar(actorHeight / height);
+        model.position.y = (-box.min.y * actorHeight) / height;
+        model.rotation.x = 0.18;
+        group.add(model);
+        const shadow = new THREE.Mesh(
+          new THREE.CircleGeometry(0.24, 24),
+          new THREE.MeshBasicMaterial({
+            color: 0x1f1913,
+            transparent: true,
+            opacity: 0.28,
+            depthWrite: false,
+          }),
+        );
+        shadow.scale.y = 0.26;
+        shadow.position.set(0, 0.025, -0.15);
+        group.add(shadow);
+        group.traverse((o) => {
+          if (o instanceof THREE.Mesh) {
+            geometries.add(o.geometry);
+            for (const m of Array.isArray(o.material)
+              ? o.material
+              : [o.material])
+              materials.add(m);
+          }
+        });
+        actors.set(person.id, {
+          group,
+          model,
+          position: { ...person.position },
+          avatar: person.avatar,
+          appearance: appearanceKey(person.appearance),
+        });
+        scene.add(group);
+        setLoaded(true);
+      } catch {
+        setFailed(true);
+      } finally {
+        pending.delete(person.id);
+      }
     }
     const render = (now: number) => {
       if (!active) return;
@@ -177,7 +171,12 @@ export function GarageScene(props: Props) {
         all = [self, ...people];
       for (const [id, a] of actors) {
         const p = all.find((p) => p.id === id);
-        if (!p || p.avatar !== a.avatar) remove(id);
+        if (
+          !p ||
+          p.avatar !== a.avatar ||
+          appearanceKey(p.appearance) !== a.appearance
+        )
+          remove(id);
       }
       for (const person of all) {
         if (!actors.has(person.id)) {
@@ -186,15 +185,22 @@ export function GarageScene(props: Props) {
         }
         const a = actors.get(person.id)!,
           isSelf = person.id === self.id;
-        const dest = isSelf
-          ? frozen
-            ? a.position
-            : target.current
-          : person.position;
+        const seat =
+          person.room === "bar"
+            ? BAR_SEATS.find((s) => s.id === person.seat)
+            : undefined;
+        if (seat) a.position = { ...seat.point };
+        const dest = seat
+          ? a.position
+          : isSelf
+            ? frozen
+              ? a.position
+              : target.current
+            : person.position;
         const obstacles = all
           .filter((p) => p.id !== person.id)
           .map((p) => actors.get(p.id)?.position || p.position);
-        if (isSelf && !frozen) {
+        if (isSelf && !frozen && !seat) {
           if (
             plannedTarget !== target.current ||
             (wasBlocked && now - lastPlan > 500)
@@ -206,7 +212,8 @@ export function GarageScene(props: Props) {
           while (route.length && distance(a.position, route[0]) < 0.002)
             route.shift();
         }
-        const waypoint = isSelf && !frozen ? route[0] || a.position : dest;
+        const waypoint =
+          isSelf && !frozen && !seat ? route[0] || a.position : dest;
         const next = safeStep(a.position, waypoint, dt, obstacles, self.room),
           dx = next.x - a.position.x,
           dy = next.y - a.position.y,
@@ -221,14 +228,26 @@ export function GarageScene(props: Props) {
             setBlocked(blockedNow);
           }
         }
-        if (moving) a.group.rotation.y = dx < 0 ? -0.5 : 0.5;
-        a.walk?.setEffectiveWeight(moving ? 1 : 0);
-        a.idle?.setEffectiveWeight(moving ? 0 : 1);
+        if (seat) a.group.rotation.y = seat.rotation;
+        else if (moving) {
+          const angle = Math.atan2(dx, dy * 0.8);
+          const delta = Math.atan2(
+            Math.sin(angle - a.group.rotation.y),
+            Math.cos(angle - a.group.rotation.y),
+          );
+          a.group.rotation.y += delta * (1 - Math.exp(-dt * 12));
+        }
         a.position = next;
         let drawX = next.x,
           drawY = next.y,
-          lift = 0;
-        if (action?.actor === person.id && !person.busy) {
+          lift = seat
+            ? ((seat.point.y - seat.seatY) * 20) / 3 - 0.79 * a.model.scale.y
+            : 0;
+        if (
+          self.room !== "bar" &&
+          action?.actor === person.id &&
+          !person.busy
+        ) {
           const progress = Math.max(0, (Date.now() - action.at) / 2800);
           if (progress < 1 && !reducedMotion) {
             if (self.room === "living") {
@@ -254,25 +273,44 @@ export function GarageScene(props: Props) {
         const label = labels.current.get(person.id);
         if (label) {
           label.style.left = `${drawX * 100}%`;
-          label.style.top = `${drawY * 100 - 18 - lift * 15}%`;
+          label.style.top = `${drawY * 100 - (self.room === "bar" ? 17 : 20) - lift * 15}%`;
         }
-        a.mixer.update(dt);
-        if (isSelf && moving && now - lastEmit > 80) {
+        animateAdult(
+          a.model,
+          moving && !reducedMotion,
+          now / 1000,
+          !!seat,
+          reducedMotion ? 1 : dt,
+        );
+        if (
+          isSelf &&
+          !frozen &&
+          !seat &&
+          ((moving && now - lastEmit > 80) ||
+            (!moving && distance(self.position, next) > 0.0001))
+        ) {
           lastEmit = now;
           live.current.onMove({ ...next });
         }
       }
-      toys.update(
-        live.current.play,
-        actors,
-        Date.now() + (reducedMotion ? 3000 : 0),
-      );
+      toys.setVisible(self.room !== "bar");
+      if (self.room !== "bar")
+        toys.update(
+          live.current.play,
+          actors,
+          Date.now() + (reducedMotion ? 3000 : 0),
+        );
       renderer.render(scene, camera);
       frame = requestAnimationFrame(render);
     };
     frame = requestAnimationFrame(render);
     const key = (e: KeyboardEvent) => {
-      if (!el.contains(document.activeElement) || live.current.frozen) return;
+      if (
+        !el.contains(document.activeElement) ||
+        live.current.frozen ||
+        live.current.self.seat
+      )
+        return;
       const delta: Record<string, Point> = {
         ArrowLeft: { x: -0.05, y: 0 },
         ArrowRight: { x: 0.05, y: 0 },
@@ -306,7 +344,6 @@ export function GarageScene(props: Props) {
       resize.disconnect();
       el.removeEventListener("keydown", key);
       renderer.domElement.removeEventListener("webglcontextlost", lost);
-      actors.forEach((a) => a.mixer.stopAllAction());
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => {
         for (const value of Object.values(m))
@@ -326,7 +363,12 @@ export function GarageScene(props: Props) {
       role="group"
       aria-label={`${ROOMS[props.self.room || "garage"].name} navegável. Clique no piso ou use as setas para andar.`}
       onPointerDown={(e) => {
-        if ((e.target as HTMLElement).closest("button") || props.frozen) return;
+        if (
+          (e.target as HTMLElement).closest("button") ||
+          props.frozen ||
+          props.self.seat
+        )
+          return;
         e.currentTarget.focus();
         const r = e.currentTarget.getBoundingClientRect(),
           p = {
@@ -354,10 +396,24 @@ export function GarageScene(props: Props) {
           className={`avatar-name ${p.id === props.self.id ? "is-self" : ""}`}
           style={{
             left: `${p.position.x * 100}%`,
-            top: `${p.position.y * 100 - 18}%`,
+            top: `${p.position.y * 100 - 22}%`,
           }}
           onClick={() => props.onSelect(p.id)}
         >
+          {p.appearance?.intention && p.appearance.intention !== "hidden" && (
+            <span
+              className="avatar-intention"
+              title={INTENTIONS[p.appearance.intention].label}
+              aria-label={`Procura: ${INTENTIONS[p.appearance.intention].label}`}
+            >
+              <span aria-hidden="true">
+                {INTENTIONS[p.appearance.intention].symbol}
+              </span>
+              <span className="intention-tooltip">
+                {INTENTIONS[p.appearance.intention].label}
+              </span>
+            </span>
+          )}
           {p.id === props.self.id ? "Você" : p.name}
           {p.busy ? " · em conversa" : ""}
         </button>
@@ -383,7 +439,11 @@ export function GarageScene(props: Props) {
       {props.playControls}
       <span className="scene-location">
         {ROOMS[props.self.room || "garage"].name} /{" "}
-        {props.self.room === "living" ? "LADO B" : "LADO A"}
+        {props.self.room === "bar"
+          ? "18+"
+          : props.self.room === "living"
+            ? "LADO B"
+            : "LADO A"}
       </span>
       {blocked && (
         <span className="scene-blocked" role="status">

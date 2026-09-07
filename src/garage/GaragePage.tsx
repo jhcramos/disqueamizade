@@ -1,3 +1,8 @@
+import { BarPlay } from "./BarPlay";
+import { BAR_SEATS, seatWinner } from "./seats";
+import { personalSpace } from "./model";
+import { AvatarCustomizer } from "./AvatarCustomizer";
+import { readSavedAvatar, saveAvatar, type Appearance } from "./avatarStyle";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -45,9 +50,12 @@ import { useRoomPlay } from "./useRoomPlay";
 import { AvatarPortrait } from "./AvatarPortrait";
 
 export default function GaragePage() {
+  const [saved] = useState(readSavedAvatar);
+  const [customizing, setCustomizing] = useState(false),
+    [appearance, setAppearance] = useState(saved.appearance);
   const [entered, setEntered] = useState(false),
     [name, setName] = useState(""),
-    [avatar, setAvatar] = useState(0),
+    [avatar, setAvatar] = useState(saved.avatar),
     [mode, setMode] = useState<ConnectionMode>("local"),
     [entryError, setEntryError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -77,6 +85,11 @@ export default function GaragePage() {
     return (
       <GarageRoom
         name={name.trim().slice(0, 24)}
+        initialAppearance={appearance}
+        onAvatarSaved={(id, look) => {
+          setAvatar(id);
+          setAppearance(look);
+        }}
         initialAvatar={avatar}
         mode={mode}
         userId={user?.id}
@@ -143,6 +156,13 @@ export default function GaragePage() {
             Escolha seu avatar <span>Você pode trocar depois</span>
           </p>
           <AvatarPicker value={avatar} onChange={setAvatar} />
+          <button
+            className="garage-secondary entry-customize"
+            onClick={() => setCustomizing(true)}
+          >
+            <Settings2 size={16} />
+            Personalizar este avatar
+          </button>
           <label className="mode-option">
             <input
               type="radio"
@@ -192,6 +212,19 @@ export default function GaragePage() {
           </p>
         </section>
       </div>
+      {customizing && (
+        <AvatarCustomizer
+          avatar={avatar}
+          appearance={appearance}
+          onClose={() => setCustomizing(false)}
+          onApply={(id, look) => {
+            setAvatar(id);
+            setAppearance(look);
+            saveAvatar(id, look);
+            setCustomizing(false);
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -223,16 +256,24 @@ function AvatarPicker({
 function GarageRoom({
   name,
   initialAvatar,
+  initialAppearance,
+  onAvatarSaved,
   mode,
   userId,
   onLeave,
 }: {
   name: string;
   initialAvatar: number;
+  initialAppearance: Appearance;
+  onAvatarSaved: (id: number, look: Appearance) => void;
   mode: ConnectionMode;
   userId?: string;
   onLeave: () => void;
 }) {
+  const [appearance, setAppearance] = useState(initialAppearance);
+  const [seat, setSeat] = useState<string>();
+  const [barGate, setBarGate] = useState(false),
+    [adultConfirmed, setAdultConfirmed] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
     [destination, setDestination] = useState(START),
@@ -246,39 +287,19 @@ function GarageRoom({
     [previewBusy, setPreviewBusy] = useState(false);
   const previewRef = useRef<MediaStream | null>(null),
     mounted = useRef(true);
-  const net = useGarage(name, avatar, mode, userId);
+  const net = useGarage(name, avatar, mode, userId, appearance, seat);
   const roomPlay = useRoomPlay(room, mode);
-  useEffect(() => {
-    if (!settings) return;
-    const previous = document.activeElement as HTMLElement | null;
-    const dialog = document.querySelector<HTMLElement>(".garage-settings");
-    const controls = () =>
-      Array.from(
-        dialog?.querySelectorAll<HTMLElement>("button,input") || [],
-      ).filter((el) => !(el as HTMLButtonElement).disabled);
-    controls()[0]?.focus();
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-      const list = controls(),
-        first = list[0],
-        last = list[list.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last?.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first?.focus();
-      }
-    };
-    document.addEventListener("keydown", trap);
-    return () => {
-      document.removeEventListener("keydown", trap);
-      previous?.focus();
-    };
-  }, [settings]);
   const guide = mode === "local" && net.people.length === 0;
   const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
-  const people = guide ? [{ ...DEMO, room }] : roomPeople;
+  const people = guide
+    ? [
+        {
+          ...DEMO,
+          room,
+          ...(room === "bar" ? { position: { x: 0.55, y: 0.55 } } : {}),
+        },
+      ]
+    : roomPeople;
   const person =
     people.find((p) => p.id === selected) ||
     people.find((p) => nearby(position, p.position));
@@ -296,6 +317,8 @@ function GarageRoom({
     id: net.identity,
     name,
     avatar,
+    appearance,
+    seat,
     position,
     room,
     busy: call,
@@ -303,9 +326,10 @@ function GarageRoom({
   useEffect(() => {
     const overlap = roomPeople.some(
       (p) =>
-        p.id < net.identity && distance(position, p.position) < PERSONAL_SPACE,
+        p.id < net.identity &&
+        distance(position, p.position) < personalSpace(room),
     );
-    if (!overlap || call) return;
+    if (!overlap || call || seat) return;
     const spawn = freeSpawn(
       roomPeople.map((p) => p.position),
       position,
@@ -318,8 +342,31 @@ function GarageRoom({
       setArrival((n) => n + 1);
     }
   }, [net.people, room]);
-  function changeRoom(next: RoomId) {
+  useEffect(() => {
+    if (seat && seatWinner([self, ...roomPeople], seat) !== net.identity) {
+      setSeat(undefined);
+      net.setError(
+        "Outra pessoa ocupou esse lugar. Escolha uma cadeira livre.",
+      );
+    }
+  }, [seat, net.people]);
+  function chooseSeat(id?: string) {
+    if (net.invite) return;
+    const target = BAR_SEATS.find((s) => s.id === id);
+    if (target && roomPeople.some((p) => p.seat === id)) return;
+    setSeat(id);
+    if (target) {
+      setPosition(target.point);
+      setDestination(target.point);
+      net.update(target.point);
+    }
+  }
+  function changeRoom(next: RoomId, confirmed = false) {
     if (next === room || net.invite) return;
+    if (next === "bar" && !adultConfirmed && !confirmed) {
+      setBarGate(true);
+      return;
+    }
     const spawn = freeSpawn(
       net.people
         .filter((p) => (p.room || "garage") === next)
@@ -333,13 +380,14 @@ function GarageRoom({
     }
     stopPreview();
     setSelected(null);
+    setSeat(undefined);
     setRoom(next);
     setPosition(spawn);
     setDestination(spawn);
     net.update(spawn, next);
   }
   const move = (p: typeof START) => {
-    if (call) return;
+    if (call || seat) return;
     setPosition(p);
     net.update(p, room);
   };
@@ -450,7 +498,7 @@ function GarageRoom({
         </span>
       </div>
       <nav className="house-rooms" aria-label="Ambientes da casa">
-        {(Object.keys(ROOMS) as RoomId[]).map((id) => (
+        {(["garage", "living", "bar"] as RoomId[]).map((id) => (
           <button
             key={id}
             aria-pressed={room === id}
@@ -463,7 +511,9 @@ function GarageRoom({
               <small>
                 {id === "garage"
                   ? "Música e encontros"
-                  : "Papo leve e boas histórias"}
+                  : id === "bar"
+                    ? "18+ · mesas, música e encontros"
+                    : "Papo leve e boas histórias"}
               </small>
             </span>
             <span className="room-count">
@@ -483,16 +533,29 @@ function GarageRoom({
           <GarageScene
             play={roomPlay.state}
             playControls={
-              <RoomPlay
-                key={room}
-                self={self}
-                people={people}
-                state={roomPlay.state}
-                act={roomPlay.act}
-                onApproach={setDestination}
-                frozen={!!net.invite}
-                connected={roomPlay.connected}
-              />
+              room === "bar" ? (
+                <BarPlay
+                  self={self}
+                  people={people}
+                  state={roomPlay.state}
+                  act={roomPlay.act}
+                  onApproach={setDestination}
+                  onSeat={chooseSeat}
+                  frozen={!!net.invite || settings || barGate}
+                  connected={roomPlay.connected}
+                />
+              ) : (
+                <RoomPlay
+                  key={room}
+                  self={self}
+                  people={people}
+                  state={roomPlay.state}
+                  act={roomPlay.act}
+                  onApproach={setDestination}
+                  frozen={!!net.invite || settings || barGate}
+                  connected={roomPlay.connected}
+                />
+              )
             }
             key={`${room}-${arrival}`}
             destination={destination}
@@ -539,7 +602,7 @@ function GarageRoom({
             people={people}
             onMove={move}
             onSelect={(id) => setSelected(id)}
-            frozen={!!net.invite}
+            frozen={!!net.invite || settings || barGate}
             low={low}
           />
           <footer className="world-footer">
@@ -674,7 +737,10 @@ function GarageRoom({
               {person && (
                 <>
                   <div className="person-profile">
-                    <AvatarPortrait index={person.avatar} />
+                    <AvatarPortrait
+                      index={person.avatar}
+                      appearance={person.appearance}
+                    />
                     <div>
                       <strong>{person.name}</strong>
                       <small>
@@ -814,42 +880,76 @@ function GarageRoom({
           ))}
         </section>
       )}
+      {barGate && (
+        <div className="avatar-editor-backdrop">
+          <section
+            className="bar-entry-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bar-entry-title"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setBarGate(false);
+              if (e.key === "Tab") {
+                const buttons = e.currentTarget.querySelectorAll("button");
+                if (e.shiftKey && document.activeElement === buttons[0]) {
+                  e.preventDefault();
+                  buttons[1].focus();
+                } else if (
+                  !e.shiftKey &&
+                  document.activeElement === buttons[1]
+                ) {
+                  e.preventDefault();
+                  buttons[0].focus();
+                }
+              }
+            }}
+          >
+            <span className="eyebrow">BAR VINYL · 18+</span>
+            <h2 id="bar-entry-title">Uma mesa para novos encontros.</h2>
+            <p>
+              Este ambiente é destinado a adultos. Confirme que você tem 18 anos
+              ou mais para entrar.
+            </p>
+            <div>
+              <button
+                autoFocus
+                className="garage-secondary"
+                onClick={() => setBarGate(false)}
+              >
+                Voltar para a casa
+              </button>
+              <button
+                className="garage-primary"
+                onClick={() => {
+                  setAdultConfirmed(true);
+                  setBarGate(false);
+                  changeRoom("bar", true);
+                }}
+              >
+                Tenho 18 anos ou mais
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {settings && (
-        <section
-          className="garage-settings"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="avatar-title"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setSettings(false);
+        <AvatarCustomizer
+          avatar={avatar}
+          appearance={appearance}
+          low={low}
+          onLow={setLow}
+          onClose={() => setSettings(false)}
+          onApply={(id, look) => {
+            setAvatar(id);
+            setAppearance(look);
+            onAvatarSaved(id, look);
+            if (!saveAvatar(id, look))
+              net.setError(
+                "Visual aplicado nesta visita. O navegador não permitiu guardar sua escolha.",
+              );
+            setSettings(false);
           }}
-        >
-          <header>
-            <h2 id="avatar-title">Seu jeito de chegar.</h2>
-            <button
-              aria-label="Fechar personalização"
-              onClick={() => setSettings(false)}
-            >
-              <X />
-            </button>
-          </header>
-          <p>Escolha um dos dez avatares 3D de teste.</p>
-          <AvatarPicker value={avatar} onChange={setAvatar} />
-          <label className="mode-option">
-            <input
-              type="checkbox"
-              checked={low}
-              onChange={(e) => setLow(e.target.checked)}
-            />
-            <span>
-              Modo gráfico leve<small>Reduz a resolução dos avatares.</small>
-            </span>
-          </label>
-          <button className="garage-primary" onClick={() => setSettings(false)}>
-            Pronto
-            <Check />
-          </button>
-        </section>
+        />
       )}
       <footer className="garage-bottom">
         <span>

@@ -1,3 +1,4 @@
+import { DEFAULT_APPEARANCE, type Appearance } from "./avatarStyle";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/services/supabase/client";
 import {
@@ -30,6 +31,8 @@ export function useGarage(
   avatar: number,
   mode: ConnectionMode,
   userId?: string,
+  appearance: Appearance = DEFAULT_APPEARANCE,
+  seat?: string,
 ) {
   const [id] = useState(() => crypto.randomUUID()),
     identity = mode === "online" && userId ? userId : id;
@@ -39,6 +42,8 @@ export function useGarage(
     [connected, setConnected] = useState(false);
   const [token, setToken] = useState<string | null>(null),
     [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const profile = useRef({ name, avatar, appearance, seat });
+  profile.current = { name, avatar, appearance, seat };
   const self = useRef<Person>({
       id: identity,
       name,
@@ -62,10 +67,11 @@ export function useGarage(
     self.current = {
       ...self.current,
       id: identity,
-      name,
-      avatar,
+      ...profile.current,
       ...(point ? { position: point } : {}),
-      ...(room ? { room } : {}),
+      ...(room
+        ? { room, ...(room !== self.current.room ? { seat: undefined } : {}) }
+        : {}),
       busy: currentInvite.current?.status === "accepted",
     };
     send.current("person", self.current);
@@ -424,7 +430,7 @@ export function useGarage(
   }, [identity, mode, userId]);
   useEffect(() => {
     update();
-  }, [name, avatar, invite?.status]);
+  }, [name, avatar, appearance, seat, invite?.status]);
   const request = async (person: Person) => {
     if (
       currentInvite.current ||
