@@ -13,7 +13,7 @@ await db.exec(
 await db.exec(
   await readFile(
     new URL(
-      "../supabase/migrations/20260907103957_garage_social_identity.sql",
+      "../supabase/migrations/20260907105556_garage_social_identity.sql",
       import.meta.url,
     ),
     "utf8",
@@ -128,17 +128,23 @@ assert.equal(
   (await db.query("SELECT * FROM public.garage_avatars")).rows.length,
   0,
 );
-await db.exec('RESET ROLE');
+await db.exec("RESET ROLE");
 for (let i = 100; i <= 120; i++) {
- const uid = '00000000-0000-4000-8000-' + String(i).padStart(12, '0');
- await db.exec(`INSERT INTO auth.users VALUES ('${uid}'); INSERT INTO public.garage_profiles(id,handle,display_name) VALUES ('${uid}','test_${i}','Test');`);
+  const uid = "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
+  await db.exec(
+    `INSERT INTO auth.users VALUES ('${uid}'); INSERT INTO public.garage_profiles(id,handle,display_name) VALUES ('${uid}','test_${i}','Test');`,
+  );
 }
 await as(a);
 for (let i = 100; i < 120; i++) {
- const uid = '00000000-0000-4000-8000-' + String(i).padStart(12, '0');
- await db.exec(`INSERT INTO public.garage_friendships(requester,recipient) VALUES ('${a}','${uid}')`);
+  const uid = "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
+  await db.exec(
+    `INSERT INTO public.garage_friendships(requester,recipient) VALUES ('${a}','${uid}')`,
+  );
 }
-await rejected(`INSERT INTO public.garage_friendships(requester,recipient) VALUES ('${a}','00000000-0000-4000-8000-000000000120')`);
+await rejected(
+  `INSERT INTO public.garage_friendships(requester,recipient) VALUES ('${a}','00000000-0000-4000-8000-000000000120')`,
+);
 await db.close();
 console.log(
   "PASS real PostgreSQL RLS: guest denial, owner-only avatars, private relationships, recipient-only acceptance, immutable participants, duplicate prevention, blocking cleanup, request preferences and unique handles",
