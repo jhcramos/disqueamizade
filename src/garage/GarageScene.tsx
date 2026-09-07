@@ -470,7 +470,7 @@ export function GarageScene(props: Props) {
       {(props.self.room || "garage") === "garage" && props.onRoulette && (
         <SurpriseStation
           near={distance(props.self.position, { x: 0.78, y: 0.5 }) < 0.18}
-          disabled={props.frozen || props.rouletteDisabled}
+          disabled={props.frozen || !!props.rouletteDisabled}
           onOpen={props.onRoulette}
         />
       )}
