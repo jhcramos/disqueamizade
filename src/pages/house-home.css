@@ -437,7 +437,7 @@
   .house-brand {
     font-size: 21px;
   }
-  .house-nav nav a:not(:last-child) {
+  .house-nav nav a:not(:last-child):not(.house-blog-nav) {
     display: none;
   }
   .house-nav nav a {
@@ -553,4 +553,41 @@
 .house-hero-people img:last-child {
   margin-left: -10%;
   transform: translateY(18px);
+}
+
+.house-blog {
+  max-width: 1360px;
+  margin: auto;
+  padding: 70px 42px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 65px;
+  border-bottom: 1px solid #dfd3c2;
+}
+.house-blog > div:last-child {
+  align-self: center;
+}
+.house-blog > div > p:not(.house-eyebrow) {
+  color: #817169;
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 420px;
+  margin: 0 0 24px;
+}
+@media (max-width: 600px) {
+  .house-nav {
+    flex-wrap: wrap;
+  }
+  .house-nav nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid #dfd3c2;
+  }
+  .house-blog {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 45px 24px;
+  }
 }

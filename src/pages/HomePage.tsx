@@ -24,6 +24,9 @@ export function HomePage() {
         <nav aria-label="Navegação principal">
           <a href="#ambientes">A casa</a>
           <a href="#como-funciona">Como funciona</a>
+          <Link className="house-blog-nav" to="/blog">
+            Blog
+          </Link>
           <Link to="/minha-conta">
             Meu perfil <UserRound size={15} />
           </Link>
@@ -210,6 +213,25 @@ export function HomePage() {
         <Link to="/diretrizes">
           Respeito é regra da casa <ArrowUpRight size={17} />
         </Link>
+      </section>
+      <section className="house-blog" aria-labelledby="house-blog-title">
+        <div>
+          <p className="house-eyebrow">LEITURAS PARA PUXAR ASSUNTO</p>
+          <h2 id="house-blog-title">
+            A conversa continua
+            <br />
+            <em>no nosso blog.</em>
+          </h2>
+        </div>
+        <div>
+          <p>
+            Dicas para conhecer pessoas, fazer amizades e conversar online com
+            mais segurança. Os artigos que você já conhece continuam aqui.
+          </p>
+          <Link className="house-cta" to="/blog">
+            Explorar o blog <ArrowRight size={20} />
+          </Link>
+        </div>
       </section>
       <section className="house-invite">
         <p className="house-eyebrow">A CAMPAINHA JÁ TOCOU.</p>
