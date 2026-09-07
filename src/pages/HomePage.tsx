@@ -9,6 +9,7 @@ import { useAgeVerification } from '@/components/common/AgeVerificationModal'
 import { useAuthStore } from '@/store/authStore'
 import { useRooms } from '@/hooks/useSupabaseData'
 import { track } from '@/services/analytics'
+import { lobbyRooms } from '@/rooms/lobbyRooms'
 
 export const HomePage = () => {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export const HomePage = () => {
     track('cta_enter_click', { cta: 'hero_main' })
     verifyAge(() => { void signInAsGuest().then(() => navigate('/room/geral-brasil')).catch(() => useToastStore.getState().addToast({ type: 'error', title: 'Entrada indisponível', message: 'Não foi possível entrar. Tente novamente em instantes.' })) })
   }
-  const featured = [...rooms].filter(room => !room.slug?.startsWith('adult-')).sort((a, b) => Number(b.slug === 'geral-brasil') - Number(a.slug === 'geral-brasil') || (b.current_participants || 0) - (a.current_participants || 0)).slice(0, 3)
+  const featured = lobbyRooms(rooms.map(room => ({ ...room, online_count: room.current_participants || 0 })))
 
   return <div className="home-editorial min-h-screen flex flex-col">
     <Header />

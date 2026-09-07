@@ -16,3 +16,8 @@ test('empty and adult-only lists do not duplicate rooms', () => {
   const adult = { _slug: 'adult-lounge' }
   assert.deepEqual(lobbyRooms([adult]), [adult])
 })
+test('home page room objects can use their database slug', () => {
+  const main = { slug: 'geral-brasil' }
+  const adult = { slug: 'adult-lounge' }
+  assert.deepEqual(lobbyRooms([{ slug: 'roleta-chat' }, main, { slug: 'paquera-hetero' }, adult]), [main, adult])
+})
