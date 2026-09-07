@@ -19,6 +19,7 @@ declare module 'livekit-client' {
   }
 
   export namespace Track {
+    export enum Source { Camera = 'camera' }
     export enum Kind {
       Audio = 'audio',
       Video = 'video',
@@ -60,6 +61,7 @@ declare module 'livekit-client' {
     publishTrack(track: LocalTrack): Promise<unknown>
     unpublishTrack(track: LocalTrack): unknown
     setMicrophoneEnabled(enabled: boolean): Promise<unknown>
+    setCameraEnabled(enabled: boolean, options?: { resolution?: { width: number; height: number } }): Promise<unknown>
   }
 
   export class Room {

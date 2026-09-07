@@ -1,0 +1,712 @@
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Camera,
+  Check,
+  DoorOpen,
+  Footprints,
+  House,
+  List,
+  MessageCircle,
+  MicOff,
+  Settings2,
+  Sparkles,
+  UserRound,
+  Users,
+  VideoOff,
+  X,
+} from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { GarageScene } from "./GarageScene";
+import { AVATARS, DEMO, inside, nearby, START, type Person } from "./model";
+import { useGarage, type ConnectionMode } from "./useGarage";
+import { CloudCall, LocalCall, StreamVideo } from "./GarageCall";
+import "./garage.css";
+import { useAgeVerification } from "@/components/common/AgeVerificationModal";
+import { acquireGarageMedia } from "./media";
+import { AvatarPortrait } from "./AvatarPortrait";
+
+export default function GaragePage() {
+  const [entered, setEntered] = useState(false),
+    [name, setName] = useState(""),
+    [avatar, setAvatar] = useState(0),
+    [mode, setMode] = useState<ConnectionMode>("local"),
+    [entryError, setEntryError] = useState(""),
+    [busy, setBusy] = useState(false);
+  const { user, signInAsGuest } = useAuthStore();
+  const { verifyAge } = useAgeVerification();
+  const configured = Boolean(
+    import.meta.env.VITE_SUPABASE_URL &&
+      import.meta.env.VITE_SUPABASE_ANON_KEY &&
+      import.meta.env.VITE_LIVEKIT_URL &&
+      import.meta.env.VITE_GARAGE_ROOM_SLUG,
+  );
+  async function enter() {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      if (mode === "online" && !user) await signInAsGuest();
+      setEntered(true);
+    } catch {
+      setEntryError(
+        "Não foi possível iniciar sua sessão. Você pode experimentar a visita local.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (entered)
+    return (
+      <GarageRoom
+        name={name.trim().slice(0, 24)}
+        initialAvatar={avatar}
+        mode={mode}
+        userId={user?.id}
+        onLeave={() => setEntered(false)}
+      />
+    );
+  return (
+    <main className="garage-app garage-entry">
+      <header className="garage-topbar">
+        <Link to="/" className="garage-brand">
+          <House />
+          <span>
+            disque
+            <br />
+            amizade
+          </span>
+        </Link>
+        <span className="garage-tag">LAB / PRIMEIRA VISITA</span>
+        <Link to="/rooms">
+          Voltar às salas <ArrowRight size={16} />
+        </Link>
+      </header>
+      <div className="entry-layout">
+        <section className="entry-picture">
+          <img
+            src="/garage/garage-background.webp"
+            alt="Uma garagem brasileira com luzes de festa e som dos anos 80"
+          />
+          <div className="entry-story">
+            <span className="eyebrow">A CASA ESTÁ ABERTA</span>
+            <h1>
+              Chegue como você é.
+              <br />
+              <em>Encontre sua turma.</em>
+            </h1>
+            <p>
+              Escolha um avatar, entre na garagem e deixe a conversa acontecer.
+            </p>
+          </div>
+        </section>
+        <section className="entry-form">
+          <span className="eyebrow">ANTES DE TOCAR A CAMPAINHA</span>
+          <h2>
+            Quem está
+            <br />
+            chegando?
+          </h2>
+          <label htmlFor="garage-name">Como podemos chamar você?</label>
+          <input
+            id="garage-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={24}
+            placeholder="Seu nome ou apelido"
+            autoComplete="nickname"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (mode === "online") verifyAge(() => void enter());
+                else void enter();
+              }
+            }}
+          />
+          <p className="field-label">
+            Escolha seu avatar <span>Você pode trocar depois</span>
+          </p>
+          <AvatarPicker value={avatar} onChange={setAvatar} />
+          <label className="mode-option">
+            <input
+              type="radio"
+              name="mode"
+              checked={mode === "local"}
+              onChange={() => setMode("local")}
+            />
+            <span>
+              Visita local
+              <small>Explore e teste com outra aba deste navegador.</small>
+            </span>
+          </label>
+          <label className={`mode-option ${!configured ? "unavailable" : ""}`}>
+            <input
+              type="radio"
+              name="mode"
+              checked={mode === "online"}
+              disabled={!configured}
+              onChange={() => setMode("online")}
+            />
+            <span>
+              Entrar online
+              <small>
+                {configured
+                  ? "Encontre outros participantes da garagem experimental."
+                  : "Disponível no ambiente com Supabase e LiveKit configurados."}
+              </small>
+            </span>
+          </label>
+          {entryError && <p role="alert">{entryError}</p>}
+          <button
+            className="garage-primary"
+            disabled={!name.trim() || busy}
+            onClick={() =>
+              mode === "online" ? verifyAge(() => void enter()) : void enter()
+            }
+          >
+            {busy ? "Entrando…" : "Entrar na garagem"}
+            <ArrowRight />
+          </button>
+          <p className="garage-note">
+            <VideoOff size={15} /> Câmera e microfone começam desligados.
+          </p>
+          <p className="prototype-note">
+            Protótipo: cenário pré-renderizado e avatares 3D de teste. As
+            chamadas mostram vídeo real.
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
+function AvatarPicker({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="avatar-picker" role="group" aria-label="Escolha seu avatar">
+      {AVATARS.map((_, i) => (
+        <button
+          key={i}
+          aria-label={`Avatar ${i + 1}`}
+          aria-pressed={value === i}
+          className={value === i ? "selected" : ""}
+          onClick={() => onChange(i)}
+        >
+          <AvatarPortrait index={i} />
+          <span>{String(i + 1).padStart(2, "0")}</span>
+          {value === i && <Check size={12} />}
+        </button>
+      ))}
+    </div>
+  );
+}
+function GarageRoom({
+  name,
+  initialAvatar,
+  mode,
+  userId,
+  onLeave,
+}: {
+  name: string;
+  initialAvatar: number;
+  mode: ConnectionMode;
+  userId?: string;
+  onLeave: () => void;
+}) {
+  const [avatar, setAvatar] = useState(initialAvatar),
+    [position, setPosition] = useState(START),
+    [selected, setSelected] = useState<string | null>(null),
+    [settings, setSettings] = useState(false),
+    [list, setList] = useState(false),
+    [low, setLow] = useState(false),
+    [preview, setPreview] = useState<MediaStream | null>(null),
+    [previewBusy, setPreviewBusy] = useState(false);
+  const previewRef = useRef<MediaStream | null>(null),
+    mounted = useRef(true);
+  const net = useGarage(name, avatar, mode, userId);
+  useEffect(() => {
+    if (!settings) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = document.querySelector<HTMLElement>(".garage-settings");
+    const controls = () =>
+      Array.from(
+        dialog?.querySelectorAll<HTMLElement>("button,input") || [],
+      ).filter((el) => !(el as HTMLButtonElement).disabled);
+    controls()[0]?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const list = controls(),
+        first = list[0],
+        last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", trap);
+    return () => {
+      document.removeEventListener("keydown", trap);
+      previous?.focus();
+    };
+  }, [settings]);
+  const guide = mode === "local" && net.people.length === 0;
+  const people = guide ? [DEMO] : net.people;
+  const person =
+    people.find((p) => p.id === selected) ||
+    people.find((p) => nearby(position, p.position));
+  const call = net.invite?.status === "accepted",
+    incoming =
+      net.invite?.status === "pending" && net.invite.to === net.identity;
+  const peerId = net.invite
+    ? net.invite.from === net.identity
+      ? net.invite.to
+      : net.invite.from
+    : null;
+  const peerName =
+    net.people.find((p) => p.id === peerId)?.name || "seu convidado";
+  const self: Person = { id: net.identity, name, avatar, position, busy: call };
+  const move = (p: typeof START) => {
+    if (call) return;
+    setPosition(p);
+    net.update(p);
+  };
+  const stopPreview = () => {
+    previewRef.current?.getTracks().forEach((t) => t.stop());
+    previewRef.current = null;
+    setPreview(null);
+  };
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      previewRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+  useEffect(() => {
+    if (call) stopPreview();
+  }, [call]);
+  async function cameraPreview() {
+    if (preview) {
+      stopPreview();
+      return;
+    }
+    setPreviewBusy(true);
+    net.setError("");
+    try {
+      const stream = await acquireGarageMedia("video");
+      if (!mounted.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      previewRef.current = stream;
+      setPreview(stream);
+    } catch {
+      net.setError(
+        "A câmera não foi liberada. Confira as permissões do navegador.",
+      );
+    } finally {
+      setPreviewBusy(false);
+    }
+  }
+  function approach(p: Person) {
+    setSelected(p.id);
+    const next = { x: p.position.x - 0.1, y: p.position.y + 0.1 };
+    if (inside(next)) move(next);
+  }
+  return (
+    <main className="garage-app">
+      <header className="garage-topbar">
+        <Link to="/" className="garage-brand">
+          <House />
+          <span>
+            disque
+            <br />
+            amizade
+          </span>
+        </Link>
+        <nav aria-label="Localização">
+          <span>Casa</span>
+          <span>/</span>
+          <strong>Garagem</strong>
+        </nav>
+        <div className="topbar-actions">
+          <button onClick={() => setSettings(!settings)}>
+            <UserRound size={18} />
+            Meu avatar
+          </button>
+          <button
+            onClick={() => {
+              void net.end();
+              stopPreview();
+              onLeave();
+            }}
+          >
+            <DoorOpen size={18} />
+            Sair da casa
+          </button>
+        </div>
+      </header>
+      <div className="garage-heading">
+        <div>
+          <p className="eyebrow">FESTA DE GARAGEM · ANOS 80</p>
+          <h1>
+            Um passo para um novo <em>oi.</em>
+          </h1>
+        </div>
+        <span className="garage-status">
+          <span className={net.connected ? "online-dot" : "offline-dot"} />
+          {mode === "local" ? "Visita local" : "Garagem experimental"} ·{" "}
+          {net.people.length + 1} {net.people.length ? "pessoas" : "pessoa"}
+        </span>
+      </div>
+      <div className="garage-layout">
+        <section className="garage-world">
+          <GarageScene
+            self={self}
+            people={people}
+            onMove={move}
+            onSelect={(id) => setSelected(id)}
+            frozen={call}
+            low={low}
+          />
+          <footer className="world-footer">
+            <span>
+              <Footprints size={17} />
+              {call
+                ? "Sua conversa está aberta"
+                : "Clique no piso ou use as setas para andar"}
+            </span>
+            <button onClick={() => setList(!list)}>
+              <List size={17} />
+              {list ? "Ver ambiente" : "Ver pessoas em lista"}
+            </button>
+          </footer>
+          <div className="mobile-walk" aria-label="Controles de movimento">
+            {[
+              [ArrowLeft, -0.045, 0, "Andar à esquerda"],
+              [ArrowUp, 0, -0.045, "Andar para cima"],
+              [ArrowDown, 0, 0.045, "Andar para baixo"],
+              [ArrowRight, 0.045, 0, "Andar à direita"],
+            ].map(([Icon, x, y, label]) => {
+              const I = Icon as typeof ArrowLeft;
+              return (
+                <button
+                  key={String(label)}
+                  aria-label={String(label)}
+                  disabled={call}
+                  onClick={() => {
+                    const p = {
+                      x: position.x + Number(x),
+                      y: position.y + Number(y),
+                    };
+                    if (inside(p)) move(p);
+                  }}
+                >
+                  <I size={20} />
+                </button>
+              );
+            })}
+          </div>
+          <div className="garage-under">
+            <span>
+              <VideoOff size={15} /> Ao explorar, sua câmera fica desligada
+            </span>
+            <span>
+              <MicOff size={15} /> Sua voz só entra na conversa quando você
+              quiser
+            </span>
+          </div>
+        </section>
+        <aside className="garage-sidebar">
+          {call ? (
+            mode === "local" ? (
+              <LocalCall
+                peer={peerName}
+                remote={net.remoteStream}
+                publish={net.publish}
+                onEnd={() => void net.end()}
+              />
+            ) : net.token ? (
+              <CloudCall
+                token={net.token}
+                peer={peerName}
+                onEnd={() => void net.end()}
+              />
+            ) : (
+              <>
+                <h2>Conectando vocês…</h2>
+                <button onClick={() => void net.end()}>Cancelar</button>
+              </>
+            )
+          ) : incoming ? (
+            <section
+              className="invite-panel"
+              role="dialog"
+              aria-labelledby="invite-title"
+            >
+              <span className="sidebar-icon">
+                <MessageCircle />
+              </span>
+              <p className="eyebrow">UM NOVO ENCONTRO</p>
+              <h2 id="invite-title">{peerName} quer conversar.</h2>
+              <p>
+                Você decide. Sua câmera e seu microfone continuam desligados.
+              </p>
+              <button
+                className="garage-primary"
+                onClick={() => void net.respond(true)}
+              >
+                Aceitar convite
+                <Check />
+              </button>
+              <button
+                className="garage-secondary"
+                onClick={() => void net.respond(false)}
+              >
+                Agora não
+              </button>
+            </section>
+          ) : net.invite ? (
+            <section>
+              <span className="sidebar-icon">
+                <MessageCircle />
+              </span>
+              <h2>Convite enviado.</h2>
+              <p>
+                Aguardando {peerName} aceitar. Você ainda não está transmitindo.
+              </p>
+              <button
+                className="garage-secondary"
+                onClick={() => void net.end()}
+              >
+                Cancelar convite
+              </button>
+            </section>
+          ) : (
+            <section>
+              <span className="sidebar-icon">
+                <Users />
+              </span>
+              <p className="eyebrow">
+                {person ? "PERTO DE VOCÊ" : "PODE CHEGAR"}
+              </p>
+              <h2>{person ? person.name : "A casa também é sua."}</h2>
+              <p className="sidebar-subtitle">
+                {guide
+                  ? "Avatar de demonstração · não é uma pessoa online"
+                  : person
+                    ? "Um novo encontro pode começar aqui."
+                    : "Convide alguém para conhecer a garagem com você."}
+              </p>
+              {person && (
+                <>
+                  <div className="person-profile">
+                    <AvatarPortrait index={person.avatar} />
+                    <div>
+                      <strong>{person.name}</strong>
+                      <small>
+                        {guide
+                          ? "Guia da visita local"
+                          : person.busy
+                            ? "Em conversa"
+                            : nearby(position, person.position)
+                              ? "Ao seu alcance"
+                              : "Um pouco mais adiante"}
+                      </small>
+                    </div>
+                  </div>
+                  <p className="conversation-prompt">
+                    Qual música marcou
+                    <br />a sua vida?
+                  </p>
+                </>
+              )}
+              {guide ? (
+                <>
+                  <button
+                    className="garage-primary"
+                    onClick={() => approach(DEMO)}
+                  >
+                    Chegar perto da Bia
+                    <Footprints />
+                  </button>
+                  <div className="local-help">
+                    <strong>Vamos testar com alguém real?</strong>
+                    <p>
+                      Abra uma segunda aba neste navegador, escolha outro nome e
+                      aproxime os avatares. O convite e a webcam funcionam entre
+                      as abas.
+                    </p>
+                    <a
+                      className="garage-secondary"
+                      href="/garagem"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Abrir segunda aba
+                      <ArrowRight size={16} />
+                    </a>
+                  </div>
+                </>
+              ) : person ? (
+                <button
+                  className="garage-primary"
+                  disabled={person.busy}
+                  onClick={() =>
+                    nearby(position, person.position)
+                      ? void net.request(person)
+                      : approach(person)
+                  }
+                >
+                  {person.busy
+                    ? "Em conversa"
+                    : nearby(position, person.position)
+                      ? "Pedir para conversar"
+                      : "Aproximar meu avatar"}
+                  <MessageCircle />
+                </button>
+              ) : (
+                <a
+                  className="garage-primary"
+                  href="/garagem"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir outra visita
+                  <ArrowRight />
+                </a>
+              )}
+              {!guide && (
+                <p className="garage-note">
+                  A conversa começa quando a outra pessoa aceitar.
+                </p>
+              )}
+            </section>
+          )}
+          {net.error && (
+            <div className="garage-error" role="alert">
+              {net.error}
+              <button
+                aria-label="Fechar aviso"
+                onClick={() => net.setError("")}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+          {!call && (
+            <div className="preview-area">
+              {preview && (
+                <div className="call-video">
+                  <StreamVideo stream={preview} muted />
+                  <small>Prévia privada · não transmitida</small>
+                </div>
+              )}
+              <button
+                className="preview-toggle"
+                disabled={previewBusy}
+                onClick={() => void cameraPreview()}
+              >
+                <Camera size={17} />
+                {preview
+                  ? "Fechar minha prévia"
+                  : previewBusy
+                    ? "Abrindo câmera…"
+                    : "Testar minha câmera"}
+              </button>
+              <small>Só você vê esta prévia.</small>
+            </div>
+          )}
+        </aside>
+      </div>
+      {list && (
+        <section className="garage-people">
+          <h2>Quem está na garagem</h2>
+          {people.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => {
+                approach(p);
+                setList(false);
+              }}
+            >
+              <UserRound />
+              {p.name}
+              <span>
+                {p.id === DEMO.id
+                  ? "Demonstração"
+                  : p.busy
+                    ? "Em conversa"
+                    : "Aproximar"}
+                <ArrowRight size={15} />
+              </span>
+            </button>
+          ))}
+        </section>
+      )}
+      {settings && (
+        <section
+          className="garage-settings"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="avatar-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setSettings(false);
+          }}
+        >
+          <header>
+            <h2 id="avatar-title">Seu jeito de chegar.</h2>
+            <button
+              aria-label="Fechar personalização"
+              onClick={() => setSettings(false)}
+            >
+              <X />
+            </button>
+          </header>
+          <p>Escolha um dos dez avatares 3D de teste.</p>
+          <AvatarPicker value={avatar} onChange={setAvatar} />
+          <label className="mode-option">
+            <input
+              type="checkbox"
+              checked={low}
+              onChange={(e) => setLow(e.target.checked)}
+            />
+            <span>
+              Modo gráfico leve<small>Reduz a resolução dos avatares.</small>
+            </span>
+          </label>
+          <button className="garage-primary" onClick={() => setSettings(false)}>
+            Pronto
+            <Check />
+          </button>
+        </section>
+      )}
+      <footer className="garage-bottom">
+        <span>
+          <Sparkles size={14} /> Um lugar para encontrar pessoas, no seu ritmo.
+        </span>
+        <span>
+          Protótipo · cenário fixo + avatares 3D{" "}
+          {import.meta.env.DEV && location.search.includes("testMedia=1")
+            ? " · MÍDIA SINTÉTICA DE TESTE"
+            : ""}{" "}
+          <button
+            onClick={() => setSettings(true)}
+            aria-label="Preferências gráficas"
+          >
+            <Settings2 size={15} />
+          </button>
+        </span>
+      </footer>
+    </main>
+  );
+}
