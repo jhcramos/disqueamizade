@@ -1,10 +1,11 @@
+import { CameraPreview } from "./CameraPreview";
 import { AVATAR_PRESETS, presetAppearance } from "./avatarPresets";
 import { BarPlay } from "./BarPlay";
 import { BAR_SEATS, seatWinner } from "./seats";
 import { personalSpace } from "./model";
 import { AvatarCustomizer } from "./AvatarCustomizer";
 import { readSavedAvatar, saveAvatar, type Appearance } from "./avatarStyle";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown,
@@ -43,16 +44,16 @@ import {
   type Person,
 } from "./model";
 import { useGarage, type ConnectionMode } from "./useGarage";
-import { CloudCall, LocalCall, StreamVideo } from "./GarageCall";
+import { CloudCall, LocalCall } from "./GarageCall";
 import "./garage.css";
 import { useAgeVerification } from "@/components/common/AgeVerificationModal";
-import { acquireGarageMedia } from "./media";
 import { RoomPlay } from "./RoomPlay";
 import { useRoomPlay } from "./useRoomPlay";
 import { AvatarPortrait } from "./AvatarPortrait";
 
 export default function GaragePage() {
   const [saved] = useState(readSavedAvatar);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false),
     [appearance, setAppearance] = useState(saved.appearance);
   const [entered, setEntered] = useState(false),
@@ -203,6 +204,13 @@ export default function GaragePage() {
               </small>
             </span>
           </label>
+          <button
+            className="garage-secondary"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Camera size={18} />
+            Testar câmera e máscara antes de entrar
+          </button>
           {entryError && <p role="alert">{entryError}</p>}
           <button
             className="garage-primary"
@@ -223,6 +231,13 @@ export default function GaragePage() {
           </p>
         </section>
       </div>
+      {previewOpen && (
+        <CameraPreview
+          avatar={avatar}
+          appearance={appearance}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
       {customizing && (
         <AvatarCustomizer
           avatar={avatar}
@@ -294,10 +309,7 @@ function GarageRoom({
     [settings, setSettings] = useState(false),
     [list, setList] = useState(false),
     [low, setLow] = useState(false),
-    [preview, setPreview] = useState<MediaStream | null>(null),
-    [previewBusy, setPreviewBusy] = useState(false);
-  const previewRef = useRef<MediaStream | null>(null),
-    mounted = useRef(true);
+    [previewOpen, setPreviewOpen] = useState(false);
   const net = useGarage(name, avatar, mode, userId, appearance, seat);
   const roomPlay = useRoomPlay(room, mode);
   const guide = mode === "local" && net.people.length === 0;
@@ -402,44 +414,10 @@ function GarageRoom({
     setPosition(p);
     net.update(p, room);
   };
-  const stopPreview = () => {
-    previewRef.current?.getTracks().forEach((t) => t.stop());
-    previewRef.current = null;
-    setPreview(null);
-  };
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-      previewRef.current?.getTracks().forEach((t) => t.stop());
-    };
-  }, []);
+  const stopPreview = () => setPreviewOpen(false);
   useEffect(() => {
     if (call) stopPreview();
   }, [call]);
-  async function cameraPreview() {
-    if (preview) {
-      stopPreview();
-      return;
-    }
-    setPreviewBusy(true);
-    net.setError("");
-    try {
-      const stream = await acquireGarageMedia("video");
-      if (!mounted.current) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-      previewRef.current = stream;
-      setPreview(stream);
-    } catch {
-      net.setError(
-        "A câmera não foi liberada. Confira as permissões do navegador.",
-      );
-    } finally {
-      setPreviewBusy(false);
-    }
-  }
   function approach(p: Person) {
     setSelected(p.id);
     const candidates = Array.from({ length: 16 }, (_, i) => ({
@@ -862,25 +840,16 @@ function GarageRoom({
           )}
           {!call && (
             <div className="preview-area">
-              {preview && (
-                <div className="call-video">
-                  <StreamVideo stream={preview} muted />
-                  <small>Prévia privada · não transmitida</small>
-                </div>
-              )}
               <button
                 className="preview-toggle"
-                disabled={previewBusy}
-                onClick={() => void cameraPreview()}
+                onClick={() => setPreviewOpen(true)}
               >
                 <Camera size={17} />
-                {preview
-                  ? "Fechar minha prévia"
-                  : previewBusy
-                    ? "Abrindo câmera…"
-                    : "Testar minha câmera"}
+                Testar minha câmera e máscara
               </button>
-              <small>Só você vê esta prévia.</small>
+              <small>
+                Prévia privada, antes de aceitar ou enviar o convite.
+              </small>
             </div>
           )}
         </aside>
@@ -961,6 +930,13 @@ function GarageRoom({
             </div>
           </section>
         </div>
+      )}
+      {previewOpen && !call && (
+        <CameraPreview
+          avatar={avatar}
+          appearance={appearance}
+          onClose={stopPreview}
+        />
       )}
       {settings && (
         <AvatarCustomizer

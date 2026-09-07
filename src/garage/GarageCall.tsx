@@ -1,3 +1,4 @@
+import { readCameraMaskChoice, saveCameraMaskChoice } from "./cameraPreference";
 import { useEffect, useRef, useState } from "react";
 import {
   LiveKitRoom,
@@ -60,12 +61,13 @@ export function LocalCall({
     kind: "audio" | "video",
     enabled: boolean,
     avatarMask?: boolean,
+    expectedGroup?: { id: string; revision: number },
   ) => Promise<MediaStream | null>;
   onEnd: () => void;
   onInvite: (person: import("./model").Person) => void;
   candidates: import("./model").Person[];
 }) {
-  const [avatarMask, setAvatarMask] = useState(false);
+  const [avatarMask, setAvatarMask] = useState(readCameraMaskChoice);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   async function toggle(kind: "audio" | "video") {
@@ -73,10 +75,27 @@ export function LocalCall({
     setBusy(true);
     setError("");
     try {
-      await publish(kind, kind === "video" ? !camera : !mic, avatarMask);
+      await publish(kind, kind === "video" ? !camera : !mic, avatarMask, group);
     } catch {
       setError(
         "Não foi possível ligar o dispositivo. Confira a permissão e tente novamente.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function changeMask(next: boolean) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      if (camera) await publish("video", false, avatarMask, group);
+      setAvatarMask(next);
+      saveCameraMaskChoice(next);
+      if (camera) await publish("video", true, next, group);
+    } catch {
+      setError(
+        "A câmera foi pausada. Tente ligá-la novamente com a escolha desejada.",
       );
     } finally {
       setBusy(false);
@@ -133,22 +152,20 @@ export function LocalCall({
           {error}
         </p>
       )}
-      <label
-        className="garage-note"
-        style={{ display: "block", margin: "14px 0" }}
-      >
-        <input
-          type="checkbox"
-          checked={avatarMask}
-          disabled={camera || busy}
-          onChange={(e) => setAvatarMask(e.target.checked)}
-        />{" "}
-        Usar meu avatar na câmera
-        <small style={{ display: "block" }}>
-          Escolha com a câmera desligada. O avatar acompanha seu rosto sobre um
-          fundo liso.
-        </small>
-      </label>
+      <div className="garage-note" style={{ margin: "14px 0" }}>
+        <p>
+          {avatarMask
+            ? "Capacete do avatar selecionado"
+            : "Sem máscara · seu rosto real será mostrado"}
+        </p>
+        <button
+          className="garage-secondary"
+          disabled={busy}
+          onClick={() => void changeMask(!avatarMask)}
+        >
+          {avatarMask ? "Mostrar meu rosto" : "Colocar capacete do avatar"}
+        </button>
+      </div>
       <div className="call-controls">
         <button disabled={busy} onClick={() => void toggle("video")}>
           {camera ? <Camera /> : <VideoOff />}
@@ -213,6 +230,12 @@ function CloudCallInner({ peer, onEnd }: { peer: string; onEnd: () => void }) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   async function toggle(kind: "video" | "audio") {
+    if (kind === "video" && !isCameraEnabled && readCameraMaskChoice()) {
+      setError(
+        "O capacete na garagem está disponível na visita local. Não ligamos seu vídeo sem a máscara escolhida.",
+      );
+      return;
+    }
     setBusy(true);
     setError("");
     try {

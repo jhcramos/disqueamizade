@@ -15,8 +15,8 @@ export const avatarMask: MaskDef = {
   id: "meu-avatar",
   name: "Meu avatar",
   icon: "🧑‍🎨",
-  description: "Seu Bloco Pop · salve o visual na garagem",
-  opaqueBackground: true,
+  description: "Capacete Bloco Pop · corpo e ambiente reais",
+  opaqueBackground: false,
   preload: () => {
     if (renderer) {
       keepAlive();

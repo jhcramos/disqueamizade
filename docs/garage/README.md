@@ -1,5 +1,7 @@
 # Garagem experimental
 
+**Versão atual da câmera:** capacete do avatar sobre corpo e ambiente reais, com prévia privada antes de entrar. A descrição de fundo liso mais abaixo documenta a iteração anterior.
+
 Rota: `/garagem`. A home e as salas existentes permanecem acessíveis; nenhuma implantação é feita por esta alteração.
 
 ## O que esta versão entrega
@@ -118,3 +120,16 @@ Na conversa local, com a câmera desligada, marque **Usar meu avatar na câmera*
 O catálogo de máscaras das salas existentes também tem **Meu avatar**, usando o visual salvo na garagem. Essa opção utiliza o compositor de vídeo existente com fundo opaco. O rosto real e o fundo da webcam ficam ocultos neste modo; ele não é uma máscara transparente sobre o ambiente real. A troca exige câmera desligada na conversa local.
 
 Validação: build/TypeScript, 75 testes, quatro chamadas simultâneas preservadas, aproximação na garagem, render de expressões com poses de teste e teste de publicação entre duas abas sem rosto detectado. `tests/garage-avatar-camera-browser.mjs` usa somente mídia sintética; após compressão WebRTC, confirma saída opaca e encerramento remoto. O rastreamento com webcam física, a precisão em diferentes rostos/iluminação e a publicação online ainda precisam de avaliação. Não foi acessada uma câmera ou microfone físico nesta rodada.
+
+
+## Capacete sobre a câmera real e prévia antes da conversa
+
+Na entrada, **Testar câmera e máscara antes de entrar** abre uma prévia privada. Ela também está disponível dentro da garagem antes de enviar ou aceitar um convite. A captura começa somente em **Ativar prévia privada**, sem conexão com participantes e sem microfone. Escolha **Capacete do avatar** ou **Rosto real**, confira a imagem e use **Usar esta escolha**. Fechar, trocar a opção ou sair da página encerra as capturas. A escolha fica nesta aba, mas entrar no chat nunca liga a câmera automaticamente.
+
+O capacete substitui apenas a região do rosto. Um fundo opaco conservador cobre os pontos faciais sob a cabeça 3D; o resto do frame original continua visível. A detecção e o desenho usam exatamente o mesmo snapshot, sem suavização posicional atrasada para esta máscara. No fluxo local, o canvas só envia frames explicitamente depois da composição completa. Rosto ausente, muito pequeno, parcialmente fora da imagem, giro excessivo ou erro bloqueiam a imagem inteira. Não há fallback automático para vídeo sem máscara.
+
+Durante a conversa local, **Mostrar meu rosto** e **Colocar capacete do avatar** trocam o modo. A transmissão anterior é pausada antes da preparação do novo modo. A opção de capacete é o padrão. A troca não pode reabrir mídia se a composição do grupo tiver mudado entre as etapas. O adaptador online da garagem não transmite vídeo bruto quando o capacete foi escolhido e avisa que esse caminho ainda depende de integração; o catálogo de máscaras das salas existentes usa o compositor próprio.
+
+A máscara não garante anonimato: voz, corpo e ambiente podem identificar uma pessoa, e o rastreamento físico ainda requer avaliação em diferentes rostos, movimentos e iluminação.
+
+Validação atual: TypeScript/build, 41 testes de garagem + 13 de câmera + 22 de chat (76), teste entre duas abas de prévia sem peer connection, retenção da escolha e troca ao vivo nos dois sentidos, encerramento da prévia, bloqueio sem rosto, teste geométrico de cobertura facial com preservação do fundo e layout de 390px sem overflow. Regressão de quatro vídeos/áudios passou. O roteiro é `tests/garage-helmet-browser.mjs`; usa mídia e pose sintéticas, sem câmera física. Capturas: `helmet-private-preview.png` e `helmet-mobile.png`.

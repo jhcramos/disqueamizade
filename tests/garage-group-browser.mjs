@@ -41,8 +41,17 @@ try {
     .click();
   for (const p of pages.slice(0, 2))
     await p.getByRole("heading", { name: "Nossa roda" }).waitFor();
-  for (const p of pages.slice(0, 2))
+  for (const p of pages.slice(0, 2)) {
+    if (
+      await p
+        .getByRole("button", { name: "Mostrar meu rosto", exact: true })
+        .count()
+    )
+      await p
+        .getByRole("button", { name: "Mostrar meu rosto", exact: true })
+        .click();
     await p.getByRole("button", { name: "Ligar câmera", exact: true }).click();
+  }
   await host.waitForFunction(
     () =>
       [...document.querySelectorAll(".group-video video")].every(
@@ -73,8 +82,17 @@ try {
     }
     console.log("PASS audience change cameras paused", i + 1);
   }
-  for (const p of pages.slice(0, 4))
+  for (const p of pages.slice(0, 4)) {
+    if (
+      await p
+        .getByRole("button", { name: "Mostrar meu rosto", exact: true })
+        .count()
+    )
+      await p
+        .getByRole("button", { name: "Mostrar meu rosto", exact: true })
+        .click();
     await p.getByRole("button", { name: "Ligar câmera", exact: true }).click();
+  }
   for (const p of pages.slice(0, 4))
     await p.waitForFunction(
       () =>

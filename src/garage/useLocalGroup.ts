@@ -547,7 +547,16 @@ class LocalConversation {
     kind: "video" | "audio",
     enabled: boolean,
     avatarMask = false,
+    expectedGroup?: { id: string; revision: number },
   ): Promise<MediaStream | null> => {
+    if (
+      expectedGroup &&
+      (this.group?.id !== expectedGroup.id ||
+        this.group?.revision !== expectedGroup.revision)
+    )
+      throw new Error(
+        "O grupo mudou. Confira os participantes antes de ligar a câmera.",
+      );
     if (!this.group) throw new Error("Entre em uma conversa.");
     if (this.capturing.has(kind)) throw new Error("Aguarde o dispositivo.");
     this.capturing.add(kind);
@@ -680,8 +689,13 @@ export function useLocalGroup(
     respond: (accept: boolean) =>
       controller.current?.respond(accept) ?? Promise.resolve(),
     end: () => controller.current?.end() ?? Promise.resolve(),
-    publish: (kind: "video" | "audio", on: boolean, avatarMask = false) =>
-      controller.current?.publish(kind, on, avatarMask) ??
+    publish: (
+      kind: "video" | "audio",
+      on: boolean,
+      avatarMask = false,
+      expectedGroup?: { id: string; revision: number },
+    ) =>
+      controller.current?.publish(kind, on, avatarMask, expectedGroup) ??
       Promise.resolve(null),
   };
 }

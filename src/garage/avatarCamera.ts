@@ -1,12 +1,8 @@
-import {
-  getFaceLandmarker,
-  detectFrame,
-  FaceSmoother,
-} from "@/vision/faceTracker";
+import { getFaceLandmarker, detectFrame } from "@/vision/faceTracker";
 import { computePose } from "@/vision/facePose";
 import { AvatarMaskRenderer } from "./AvatarMaskRenderer";
 import type { Appearance } from "./avatarStyle";
-/** Full opaque avatar output. Raw capture is never returned to publication. */
+/** Composites a tracked opaque helmet over a frozen camera frame. */
 export async function createAvatarCameraStream(
   raw: MediaStream,
   index: number,
@@ -40,11 +36,18 @@ export async function createAvatarCameraStream(
     if (raw.getVideoTracks()[0]?.readyState !== "live")
       throw Error("Câmera encerrada");
     renderer = new AvatarMaskRenderer(index, appearance);
-    const smoother = new FaceSmoother();
+    const source = document.createElement("canvas");
+    source.width = 640;
+    source.height = 360;
+    const sourceCtx = source.getContext("2d")!;
     let last = 0;
     const cover = () => {
       ctx.fillStyle = "#ede0ce";
       ctx.fillRect(0, 0, 640, 360);
+      ctx.fillStyle = "#66505f";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Ajuste o rosto · imagem protegida", 320, 180);
     };
     cover();
     const render = (time: number) => {
@@ -54,23 +57,19 @@ export async function createAvatarCameraStream(
       last = time;
       cover();
       try {
-        const frame = detectFrame(tracker, video, time);
+        sourceCtx.drawImage(video, 0, 0, 640, 360);
+        const frame = detectFrame(tracker, source, time);
         if (frame) {
-          const smoothed = smoother.push(frame)!;
-          renderer!.draw(ctx, computePose(smoothed, 640, 360));
-        } else {
-          smoother.reset();
-          ctx.fillStyle = "#66505f";
-          ctx.font = "16px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("Posicione o rosto para usar seu avatar", 320, 180);
+          ctx.drawImage(source, 0, 0);
+          renderer!.draw(ctx, computePose(frame, 640, 360));
         }
       } catch {
         cover();
       }
+      (track as CanvasCaptureMediaStreamTrack).requestFrame();
     };
     raf = requestAnimationFrame(render);
-    const output = canvas.captureStream(20),
+    const output = canvas.captureStream(0),
       track = output.getVideoTracks()[0],
       stop = track.stop.bind(track);
     track.stop = () => {

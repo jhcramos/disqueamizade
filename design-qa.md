@@ -106,3 +106,12 @@ Implemented a first procedural block interpretation, especially presets 1 and 6,
 Local calls offer an opt-in avatar-camera checkbox before capture. The existing face tracker drives yaw, independent blinking and mouth opening. The entire output frame is opaque; missing detection never falls back to a raw frame. Raw pending captures are stopped on conversation generation changes, and stopping the returned output also stops raw capture and disposes WebGL. The existing rooms mask catalog adds Meu avatar through a lazy renderer and the established compositor, also with an opaque background.
 
 Validated production build and 75 tests; head rendering with synthetic expressions; four-person video/audio regression; close approach; standalone no-face stream with ended raw/output tracks; and two-page masked publication of an opaque no-face frame. No hardware webcam test or end-to-end online broadcast was performed. These remain explicit verification limits.
+
+
+## Helmet overlay and private preflight
+
+Replaced the full-frame avatar background with a conservative opaque helmet backing plus the shared 3D head over the same camera snapshot used for detection. The measured face remains covered under geometry gaps; unsupported face size, framing, tilt/yaw and missing detection block the full output. Local canvas tracks use manual requestFrame only after completed composition. Position smoothing is disabled for this helmet to avoid exposing a moving face through lag.
+
+A reusable private camera dialog is available before entering and before chat acceptance. It captures only after activation, never opens a peer connection, stores only the selected mode in session storage, and stops raw/output tracks on close, replacement and page exit. Local live mode switches pause transmission first and carry an expected group revision to prevent automatic capture after an audience change. Explicit labels distinguish revealing the real face from applying the helmet. Privacy copy correctly states that this is not an anonymity guarantee.
+
+76 tests/build pass; headless browser coverage verified preview isolation, persisted mode, live toggles received by a second participant, blocked no-face output, frame background preservation, synthetic facial-region coverage, capture cleanup and mobile overflow. Four-person transport regression passed. Physical-face tracking, adverse lighting and online garage helmet publication remain unverified.

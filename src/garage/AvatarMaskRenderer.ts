@@ -1,3 +1,4 @@
+import { safeHelmetPose } from "./helmetCoverage";
 import * as T from "three";
 import { createAdultAvatar } from "./adultAvatar";
 import { readSavedAvatar, type Appearance } from "./avatarStyle";
@@ -31,6 +32,8 @@ export class AvatarMaskRenderer {
     this.renderer.toneMappingExposure = 0.85;
   }
   draw(ctx: CanvasRenderingContext2D, pose: FacePose) {
+    if (!safeHelmetPose(pose, ctx.canvas.width, ctx.canvas.height))
+      throw Error("Mantenha o rosto de frente e inteiro na imagem");
     this.head.rotation.y = Math.max(-0.8, Math.min(0.8, pose.yaw)) * 1.1;
     for (const [side, blink] of [
       ["left", pose.blinkL],
@@ -42,8 +45,20 @@ export class AvatarMaskRenderer {
     const mouth = this.head.getObjectByName("avatar-mouth");
     if (mouth) mouth.scale.y = 1 + Math.max(0, Math.min(1, pose.mouthOpen)) * 4;
     this.renderer.render(this.scene, this.camera);
-    const scaleX = pose.faceW / 0.285,
-      scaleY = pose.faceH / 0.27;
+    const scaleX = (pose.faceW * 1.3) / 0.285,
+      scaleY = (pose.faceH * 1.25) / 0.27;
+    // Opaque backing covers the measured face even through mesh gaps or turns.
+    ctx.save();
+    ctx.translate(
+      (pose.forehead.x + pose.chin.x) / 2,
+      (pose.forehead.y + pose.chin.y) / 2,
+    );
+    ctx.rotate(pose.roll);
+    ctx.fillStyle = "#54404c";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, pose.faceW * 0.73, pose.faceH * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
     ctx.save();
     ctx.translate(pose.cx, pose.cy);
     ctx.rotate(pose.roll);
