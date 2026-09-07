@@ -11,18 +11,14 @@ try {
   p.on("pageerror", (e) => errors.push(e.message));
   await p.goto("http://localhost:3000/");
   await p
-    .getByRole("link", { name: "Entrar sem cadastro", exact: true })
+    .getByRole("link", { name: "Quero conhecer a casa", exact: true })
     .click();
   await p
     .getByRole("textbox", { name: "Como podemos chamar você?" })
     .fill("Ana");
-  await p
-    .getByRole("button", { name: "Entrar na casa", exact: true })
-    .click();
+  await p.getByRole("button", { name: "Entrar na casa", exact: true }).click();
   await p.getByRole("button", { name: "Perfil e amigos" }).click();
-  await p
-    .getByRole("heading", { name: "Leve essa amizade com você." })
-    .waitFor();
+  await p.getByRole("heading", { name: "Seu avatar. Sua turma." }).waitFor();
   await p.getByRole("button", { name: "Fechar perfil" }).click();
   let profile = null,
     avatar = null,
@@ -37,7 +33,7 @@ try {
     interests: [],
     accepts_requests: true,
   };
-  await p.route("https://placeholder.supabase.co/rest/v1/**", async (route) => {
+  await p.route("**/rest/v1/**", async (route) => {
     const req = route.request(),
       url = new URL(req.url()),
       table = url.pathname.split("/").pop(),
@@ -101,7 +97,7 @@ try {
     });
   }, id);
   await p.getByRole("button", { name: "Perfil e amigos" }).click();
-  await p.getByRole("heading", { name: "Meu perfil e amigos" }).waitFor();
+  await p.getByRole("heading", { name: "Seu canto na casa." }).waitFor();
   await p.getByRole("textbox", { name: "Apelido", exact: true }).fill("Ana");
   await p.getByRole("textbox", { name: "Seu @identificador" }).fill("ana");
   await p.getByRole("button", { name: "Salvar perfil e avatar" }).click();
@@ -112,10 +108,15 @@ try {
   assert.equal(profile.handle, "ana");
   assert.equal(avatar.user_id, id);
   await p
+    .getByRole("navigation", { name: "Minha conta" })
+    .getByRole("button", { name: /Amigos/ })
+    .click();
+  await p
     .getByRole("textbox", { name: "Buscar pelo @identificador" })
     .fill("@bruno");
   await p.getByRole("button", { name: "Buscar", exact: true }).click();
   await p.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await p.getByRole("button", { name: /Enviados/ }).click();
   await p.getByText("Aguardando aceite", { exact: false }).waitFor();
   await p.getByRole("button", { name: "Cancelar pedido" }).click();
   await p.getByText("Ainda não há pedidos", { exact: false }).waitFor();
@@ -124,7 +125,16 @@ try {
   ];
   await p.getByRole("button", { name: "Fechar perfil" }).click();
   await p.getByRole("button", { name: "Perfil e amigos" }).click();
+  await p
+    .getByRole("navigation", { name: "Minha conta" })
+    .getByRole("button", { name: /Amigos/ })
+    .click();
+  await p.getByRole("button", { name: /Recebidos/ }).click();
   await p.getByRole("button", { name: "Aceitar", exact: true }).click();
+  await p
+    .getByRole("navigation", { name: "Listas de amizade" })
+    .getByRole("button", { name: /Amigos/ })
+    .click();
   assert.equal(friends[0].status, "accepted");
   await p.getByRole("button", { name: "Bloquear", exact: true }).click();
   await p.getByText("Perfis bloqueados (1)").waitFor();
@@ -133,6 +143,7 @@ try {
   await p.getByRole("button", { name: "Desbloquear", exact: true }).click();
   assert.equal(blocks.length, 0);
   failSave = true;
+  await p.getByRole("button", { name: "Meu perfil", exact: true }).click();
   await p.getByRole("button", { name: "Salvar perfil e avatar" }).click();
   await p.getByRole("alert").waitFor();
   assert.equal(
