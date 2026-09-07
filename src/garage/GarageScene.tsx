@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
+import { createPlayObjects } from "./playObjects";
+import type { PlayState } from "./play";
 import { completeClip } from "./animation";
 import {
   AVATARS,
@@ -15,6 +17,8 @@ import {
 } from "./model";
 
 type Props = {
+  play: PlayState;
+  playControls: ReactNode;
   destination: Point;
   bubble?: ReactNode;
   bubbleOwner?: string;
@@ -28,7 +32,8 @@ type Props = {
 export function GarageScene(props: Props) {
   const host = useRef<HTMLDivElement>(null),
     live = useRef(props),
-    target = useRef(props.self.position);
+    target = useRef(props.self.position),
+    labels = useRef(new Map<string, HTMLButtonElement>());
   const [failed, setFailed] = useState(false),
     [loaded, setLoaded] = useState(false),
     [blocked, setBlocked] = useState(false);
@@ -68,6 +73,10 @@ export function GarageScene(props: Props) {
     const light = new THREE.DirectionalLight(0xffe1b2, 3);
     light.position.set(-3, 7, 6);
     scene.add(light);
+    const toys = createPlayObjects(scene);
+    const reducedMotion = matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const loader = new GLTFLoader();
     type Actor = {
       group: THREE.Group;
@@ -161,7 +170,10 @@ export function GarageScene(props: Props) {
       if (!active) return;
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
-      const { self, people, frozen } = live.current,
+      const { self, people } = live.current,
+        action = live.current.play.perform,
+        performing = action?.actor === self.id && Date.now() - action.at < 2800,
+        frozen = live.current.frozen || performing,
         all = [self, ...people];
       for (const [id, a] of actors) {
         const p = all.find((p) => p.id === id);
@@ -213,13 +225,48 @@ export function GarageScene(props: Props) {
         a.walk?.setEffectiveWeight(moving ? 1 : 0);
         a.idle?.setEffectiveWeight(moving ? 0 : 1);
         a.position = next;
-        a.group.position.set(next.x * 10, ((1 - next.y) * 20) / 3, 2 - next.y);
+        let drawX = next.x,
+          drawY = next.y,
+          lift = 0;
+        if (action?.actor === person.id && !person.busy) {
+          const progress = Math.max(0, (Date.now() - action.at) / 2800);
+          if (progress < 1 && !reducedMotion) {
+            if (self.room === "living") {
+              const travel = Math.sin(
+                (Math.min(1, progress / 0.25, (1 - progress) / 0.25) *
+                  Math.PI) /
+                  2,
+              );
+              drawX += (0.735 - drawX) * travel;
+              drawY += (0.445 - drawY) * travel;
+              lift = Math.abs(Math.sin(progress * Math.PI * 4)) * 0.2;
+            } else {
+              lift = Math.abs(Math.sin(progress * Math.PI * 8)) * 0.16;
+              a.group.rotation.y = Math.sin(progress * Math.PI * 8) * 0.65;
+            }
+          }
+        }
+        a.group.position.set(
+          drawX * 10,
+          ((1 - drawY) * 20) / 3 + lift,
+          2 - drawY,
+        );
+        const label = labels.current.get(person.id);
+        if (label) {
+          label.style.left = `${drawX * 100}%`;
+          label.style.top = `${drawY * 100 - 18 - lift * 15}%`;
+        }
         a.mixer.update(dt);
         if (isSelf && moving && now - lastEmit > 80) {
           lastEmit = now;
           live.current.onMove({ ...next });
         }
       }
+      toys.update(
+        live.current.play,
+        actors,
+        Date.now() + (reducedMotion ? 3000 : 0),
+      );
       renderer.render(scene, camera);
       frame = requestAnimationFrame(render);
     };
@@ -266,13 +313,14 @@ export function GarageScene(props: Props) {
           if (value instanceof THREE.Texture) value.dispose();
         m.dispose();
       });
+      toys.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
   }, [props.self.id, props.self.room, props.low]);
   return (
     <div
-      className="garage-scene"
+      className={`garage-scene ${props.play.lights?.on === false ? "room-dim" : ""}`}
       ref={host}
       tabIndex={0}
       role="group"
@@ -299,6 +347,10 @@ export function GarageScene(props: Props) {
       {[props.self, ...props.people].map((p) => (
         <button
           key={p.id}
+          ref={(el) => {
+            if (el) labels.current.set(p.id, el);
+            else labels.current.delete(p.id);
+          }}
           className={`avatar-name ${p.id === props.self.id ? "is-self" : ""}`}
           style={{
             left: `${p.position.x * 100}%`,
@@ -328,6 +380,7 @@ export function GarageScene(props: Props) {
             </div>
           ) : null;
         })()}
+      {props.playControls}
       <span className="scene-location">
         {ROOMS[props.self.room || "garage"].name} /{" "}
         {props.self.room === "living" ? "LADO B" : "LADO A"}

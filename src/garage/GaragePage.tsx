@@ -40,6 +40,8 @@ import { CloudCall, LocalCall, StreamVideo } from "./GarageCall";
 import "./garage.css";
 import { useAgeVerification } from "@/components/common/AgeVerificationModal";
 import { acquireGarageMedia } from "./media";
+import { RoomPlay } from "./RoomPlay";
+import { useRoomPlay } from "./useRoomPlay";
 import { AvatarPortrait } from "./AvatarPortrait";
 
 export default function GaragePage() {
@@ -245,6 +247,7 @@ function GarageRoom({
   const previewRef = useRef<MediaStream | null>(null),
     mounted = useRef(true);
   const net = useGarage(name, avatar, mode, userId);
+  const roomPlay = useRoomPlay(room, mode);
   useEffect(() => {
     if (!settings) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -478,6 +481,19 @@ function GarageRoom({
       <div className="garage-layout">
         <section className="garage-world">
           <GarageScene
+            play={roomPlay.state}
+            playControls={
+              <RoomPlay
+                key={room}
+                self={self}
+                people={people}
+                state={roomPlay.state}
+                act={roomPlay.act}
+                onApproach={setDestination}
+                frozen={!!net.invite}
+                connected={roomPlay.connected}
+              />
+            }
             key={`${room}-${arrival}`}
             destination={destination}
             bubbleOwner={net.invite?.from}

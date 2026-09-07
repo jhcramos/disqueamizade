@@ -56,3 +56,13 @@ This is a local prototype: simultaneous arrivals are resolved by client identity
 Each room now uses its own larger floor outline, excluding furniture. Click walking uses a small A* route to pass around people, with swept collision checks throughout; blocked routes retry at most twice per second. Keyboard movement starts from the current position. Pending invitation bubbles offer the same accept/decline/cancel actions as the sidebar.
 
 See GROUP-CONVERSATIONS.md for the proposed 12-visitor room and 4-person conversation rules. These are proposed limits requiring server-side membership and media authorization work. Current calls remain private pairs. This supersedes the earlier note that automatic route planning is absent.
+
+### Playful objects
+
+Both rooms now have a kickable low-poly 3D ball, an extra rounded 3D cushion that can be carried/thrown, and dimmable scenery. The garage stereo has an optional original synthesized rhythm and a short dance animation. The living room TV shows a retro test card; the sofa triggers a short staged jump and return to the walkable floor, not persistent free climbing. Buttons on objects and the tray trigger the same actions and automatically approach before interacting.
+
+Cosmetic state uses a separate room-scoped BroadcastChannel in local mode and Supabase Broadcast in configured online mode. Per-object timestamp/id ordering resolves simultaneous updates; snapshots initialize newcomers without replaying old throws. No database migrations were needed. This is ephemeral client-coordinated state, not a server-authoritative physics/ownership system. Room changes drop the local subscription, and the last visitor leaving resets the room on a future visit.
+
+Sound is opt-in per visitor and stops when powered off, when an invitation/call pauses play, or when leaving the component. No camera or microphone access is used by these interactions. Reduced-motion preferences suppress 3D toy flight/performer motion and lighting transitions. Object trajectories stay on the floor map; they do not simulate physical collisions with people.
+
+Verified locally with two visits: ball kick, cushion pickup/throw, shared dimming, stereo power/optional audio controls, dance, TV power restored for a newcomer, and sofa action. The online cosmetic-state adapter was not exercised against a configured deployment. Tests: 19 movement/object tests, 13 camera tests, 22 chat/auth tests; production build passes.
