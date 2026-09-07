@@ -58,7 +58,7 @@ export function HomePage() {
       { threshold: 0.08 },
     );
     const elements = document.querySelectorAll(
-      ".house-places, .house-identity, .house-connect, .house-journal",
+      ".house-places, .house-identity, .house-masks, .house-connect, .house-journal",
     );
     elements.forEach((el) => {
       el.classList.add("will-reveal");
@@ -307,6 +307,70 @@ export function HomePage() {
             Criar meu personagem <ArrowRight size={19} />
           </Link>
         </div>
+      </section>
+      <section
+        className="house-masks"
+        id="mascaras"
+        aria-labelledby="masks-title"
+      >
+        <div className="house-mask-copy">
+          <p className="house-eyebrow">SEU AVATAR TAMBÉM ENTRA NA CÂMERA.</p>
+          <h2 id="masks-title">
+            O papo é real.
+            <br />
+            <em>O rosto pode ser do avatar.</em>
+          </h2>
+          <p>
+            Seu personagem vira uma máscara 3D que envolve o rosto como um
+            capacete. Na câmera, seu corpo e o ambiente continuam reais. Quem
+            aparece no lugar do seu rosto é o avatar que você escolheu.
+          </p>
+          <ul>
+            <li>
+              <span>01</span>
+              <div>
+                <strong>Experimente antes de entrar.</strong>
+                <p>
+                  Veja a câmera e a máscara numa prévia só sua, antes de
+                  compartilhar o vídeo.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span>02</span>
+              <div>
+                <strong>Com máscara ou sem. Você decide.</strong>
+                <p>
+                  Ative ou desative o efeito quando quiser. A câmera começa
+                  desligada.
+                </p>
+              </div>
+            </li>
+          </ul>
+          <Link className="house-cta" to="/garagem">
+            Conhecer minha máscara <ArrowUpRight size={20} />
+          </Link>
+          <p className="house-mask-hint">
+            Na entrada da casa, escolha “Testar câmera e máscara antes de
+            entrar”.
+          </p>
+        </div>
+        <figure className="house-mask-visual">
+          <div className="house-mask-caption">
+            <span /> Corpo real. Rosto de avatar.
+          </div>
+          <img
+            src="/garage/avatar-camera-helmets.webp"
+            width="1536"
+            height="1024"
+            loading="lazy"
+            alt="Ilustração de quatro pessoas em câmeras: corpos e roupas reais, com cabeças de avatares Bloco Pop cobrindo os rostos como capacetes."
+          />
+          <figcaption>
+            Ilustração do efeito. Experimente a máscara disponível na prévia da
+            casa.
+          </figcaption>
+        </figure>
       </section>
       <section className="house-connect">
         <div className="house-section-head">
