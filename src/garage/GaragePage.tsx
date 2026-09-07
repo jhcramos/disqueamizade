@@ -1,3 +1,4 @@
+import { AccountModal } from "../social/AccountPanel";
 import { RoomChat } from "./RoomChat";
 import { useRoomChat } from "./useRoomChat";
 import { CameraPreview } from "./CameraPreview";
@@ -298,6 +299,7 @@ function GarageRoom({
   userId?: string;
   onLeave: () => void;
 }) {
+  const [accountOpen, setAccountOpen] = useState(false);
   const [appearance, setAppearance] = useState(initialAppearance);
   const [seat, setSeat] = useState<string>();
   const [barGate, setBarGate] = useState(false),
@@ -446,6 +448,18 @@ function GarageRoom({
   }
   return (
     <main className="garage-app">
+      {accountOpen && (
+        <AccountModal
+          nickname={name}
+          look={{ avatar, appearance }}
+          onClose={() => setAccountOpen(false)}
+          onRestore={(look) => {
+            setAvatar(look.avatar);
+            setAppearance(look.appearance);
+            onAvatarSaved(look.avatar, look.appearance);
+          }}
+        />
+      )}
       <header className="garage-topbar">
         <Link to="/" className="garage-brand">
           <House />
@@ -461,6 +475,9 @@ function GarageRoom({
           <strong>{ROOMS[room].name}</strong>
         </nav>
         <div className="topbar-actions">
+          <button onClick={() => setAccountOpen(true)}>
+            <UserRound size={17} /> Perfil e amigos
+          </button>
           <button onClick={() => setSettings(!settings)}>
             <UserRound size={18} />
             Meu avatar
