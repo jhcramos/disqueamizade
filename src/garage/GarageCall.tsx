@@ -31,85 +31,100 @@ export function StreamVideo({
   return <video ref={ref} autoPlay playsInline muted={muted} />;
 }
 export function LocalCall({
-  peer,
-  remote,
+  identity,
+  selfName,
+  members,
+  people,
+  group,
+  localMedia,
+  remoteStreams,
+  remoteFlags,
+  camera,
+  mic,
   publish,
   onEnd,
+  onInvite,
+  candidates,
 }: {
-  peer: string;
-  remote: MediaStream | null;
+  identity: string;
+  selfName: string;
+  members: string[];
+  people: { id: string; name: string }[];
+  group: import("./useLocalGroup").GroupView;
+  localMedia: MediaStream | null;
+  remoteStreams: Record<string, MediaStream>;
+  remoteFlags: Record<string, { video: boolean; audio: boolean }>;
+  camera: boolean;
+  mic: boolean;
   publish: (
     kind: "audio" | "video",
     enabled: boolean,
   ) => Promise<MediaStream | null>;
   onEnd: () => void;
+  onInvite: (person: import("./model").Person) => void;
+  candidates: import("./model").Person[];
 }) {
-  const [remoteVisible, setRemoteVisible] = useState(false);
-  useEffect(() => {
-    const tracks = remote?.getVideoTracks() || [];
-    const check = () =>
-      setRemoteVisible(tracks.some((t) => !t.muted && t.readyState === "live"));
-    check();
-    for (const t of tracks) {
-      t.addEventListener("mute", check);
-      t.addEventListener("unmute", check);
-      t.addEventListener("ended", check);
-    }
-    return () => {
-      for (const t of tracks) {
-        t.removeEventListener("mute", check);
-        t.removeEventListener("unmute", check);
-        t.removeEventListener("ended", check);
-      }
-    };
-  }, [remote]);
-  const [stream, setStream] = useState<MediaStream | null>(null),
-    [camera, setCamera] = useState(false),
-    [mic, setMic] = useState(false),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const toggle = async (kind: "audio" | "video") => {
+  async function toggle(kind: "audio" | "video") {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      const enabled = kind === "video" ? !camera : !mic;
-      const s = await publish(kind, enabled);
-      setStream(s ? new MediaStream(s.getTracks()) : null);
-      if (kind === "video") setCamera(enabled);
-      else setMic(enabled);
+      await publish(kind, kind === "video" ? !camera : !mic);
     } catch {
       setError(
-        "Não foi possível acessar o dispositivo. Confira a permissão de câmera ou microfone do navegador.",
+        "Não foi possível ligar o dispositivo. Confira a permissão e tente novamente.",
       );
     } finally {
       setBusy(false);
     }
-  };
+  }
   return (
-    <section className="garage-call" aria-label="Conversa privada">
-      <p className="eyebrow">CONVERSA PRIVADA</p>
-      <h2>Você e {peer}</h2>
-      <div className="call-video">
-        <StreamVideo stream={remote} />
-        {!remoteVisible && (
-          <span>
-            <VideoOff />
-            Aguardando a câmera de {peer}
-          </span>
-        )}
-        <small>{peer}</small>
-      </div>
-      <div className="call-video self-video">
-        {camera ? (
-          <StreamVideo stream={stream} muted />
-        ) : (
-          <span>
-            <VideoOff />
-            Sua câmera está desligada
-          </span>
-        )}
-        <small>Você</small>
+    <section className="garage-call" aria-label="Conversa em grupo">
+      <p className="eyebrow">VÍDEO REAL · ATÉ 4 PESSOAS</p>
+      <h2>
+        Nossa roda <small>{members.length}/4</small>
+      </h2>
+      <p className="garage-note" role="status">
+        {group.notice}
+      </p>
+      <div className="group-video-grid">
+        {[identity, ...members.filter((id) => id !== identity)].map((id) => {
+          const self = id === identity,
+            name = self
+              ? `${selfName} · você`
+              : people.find((p) => p.id === id)?.name || "Visita";
+          const visible = self ? camera : remoteFlags[id]?.video;
+          return (
+            <div
+              className="call-video group-video"
+              key={id}
+              data-participant={name}
+            >
+              <StreamVideo
+                stream={self ? localMedia : remoteStreams[id] || null}
+                muted={self}
+              />
+              {!visible && (
+                <span>
+                  <VideoOff size={22} />
+                  Câmera desligada
+                </span>
+              )}
+              <small>
+                {name}{" "}
+                {(self ? mic : remoteFlags[id]?.audio) ? "" : "· mic off"}
+              </small>
+            </div>
+          );
+        })}
+        {Array.from({ length: 4 - members.length }, (_, i) => (
+          <div className="group-empty" key={`empty-${i}`}>
+            <Camera size={22} />
+            <span>Lugar livre</span>
+          </div>
+        ))}
       </div>
       {error && (
         <p role="alert" className="garage-error">
@@ -126,13 +141,50 @@ export function LocalCall({
           {mic ? "Desligar microfone" : "Ligar microfone"}
         </button>
       </div>
+      {group.host === identity && (
+        <div className="group-invitations">
+          {members.length === 4 ? (
+            <p>Roda completa · quatro pessoas.</p>
+          ) : group.pendingName ? (
+            <p role="status">Aguardando {group.pendingName} aceitar…</p>
+          ) : (
+            <>
+              <p>
+                Convide quem está perto · {4 - members.length}{" "}
+                {members.length === 3 ? "lugar livre" : "lugares livres"}
+              </p>
+              {candidates.map((person) => (
+                <button
+                  className="garage-secondary"
+                  key={person.id}
+                  onClick={() => onInvite(person)}
+                >
+                  Convidar {person.name}
+                </button>
+              ))}
+              {!candidates.length && (
+                <small>
+                  Uma visita precisa se aproximar para receber o convite.
+                </small>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      {group.host !== identity && members.length < 4 && (
+        <p className="garage-note">
+          Quem iniciou pode convidar outras pessoas próximas.
+        </p>
+      )}
       <button className="garage-primary" onClick={onEnd}>
         <PhoneOff />
         Sair da conversa
       </button>
-      <p className="garage-note">
-        Vídeo real, transmitido somente após você ligar a câmera.
-      </p>
+      {group.host === identity && (
+        <p className="garage-note">
+          Ao sair, você encerra esta roda para todos.
+        </p>
+      )}
     </section>
   );
 }

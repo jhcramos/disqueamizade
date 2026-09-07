@@ -1,3 +1,4 @@
+import { useLocalGroup } from "./useLocalGroup";
 import { DEFAULT_APPEARANCE, type Appearance } from "./avatarStyle";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/services/supabase/client";
@@ -34,6 +35,7 @@ export function useGarage(
   appearance: Appearance = DEFAULT_APPEARANCE,
   seat?: string,
 ) {
+  const local = useLocalGroup(name, avatar, mode === "local", appearance, seat);
   const [id] = useState(() => crypto.randomUUID()),
     identity = mode === "online" && userId ? userId : id;
   const [people, setPeople] = useState<Person[]>([]),
@@ -138,6 +140,7 @@ export function useGarage(
     return pc;
   };
   useEffect(() => {
+    if ([mode].includes("local")) return;
     let alive = true;
     const seen = new Map<string, { person: Person; time: number }>();
     setConnected(false);
@@ -553,19 +556,27 @@ export function useGarage(
     localStream.current.addTrack(track);
     return new MediaStream(localStream.current.getTracks());
   };
-  return {
-    identity,
-    people,
-    invite,
-    error,
-    setError,
-    connected,
-    token,
-    remoteStream,
-    update,
-    request,
-    respond,
-    end,
-    publish,
-  };
+  return mode === "local"
+    ? local
+    : {
+        group: null,
+        localMedia: null,
+        remoteStreams: {},
+        remoteFlags: {},
+        camera: false,
+        mic: false,
+        identity,
+        people,
+        invite,
+        error,
+        setError,
+        connected,
+        token,
+        remoteStream,
+        update,
+        request,
+        respond,
+        end,
+        publish,
+      };
 }

@@ -16,6 +16,9 @@ export const HAIR_COLORS = {
   copper: "#ae5734",
   silver: "#c9c4bb",
   pink: "#c97194",
+  violet: "#8053bd",
+  turquoise: "#299b9b",
+  lime: "#9bbd3e",
 };
 export const CLOTH_COLORS = {
   original: "",
@@ -107,7 +110,16 @@ export function readSavedAvatar() {
         Number.isInteger(raw.avatar) && raw.avatar >= 0 && raw.avatar < 10
           ? raw.avatar
           : 0,
-      appearance: normalizeAppearance(raw.appearance),
+      appearance: raw.appearance
+        ? normalizeAppearance(raw.appearance)
+        : normalizeAppearance({
+            ...DEFAULT_APPEARANCE,
+            body: "masculine",
+            skin: "warm",
+            hairstyle: "spiky",
+            hair: "copper",
+            accessories: ["am14"],
+          }),
     };
   } catch {
     return { avatar: 0, appearance: { ...DEFAULT_APPEARANCE } };

@@ -1,3 +1,4 @@
+import { presetAppearance } from "./avatarPresets";
 import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { createAdultAvatar } from "./adultAvatar";
@@ -79,6 +80,7 @@ export function AvatarPortrait({
   appearance?: Appearance;
   rotation?: number;
 }) {
+  appearance = appearance ?? presetAppearance(index);
   const key = appearanceKey(appearance);
   const [src, setSrc] = useState("");
   useEffect(() => {

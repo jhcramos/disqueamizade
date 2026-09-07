@@ -111,13 +111,13 @@ const { OUTFITS, ACCESSORIES, toggleAccessory } = await import(
 const { createAdultAvatar, animateAdult } = await import(
   "../src/garage/adultAvatar.ts"
 );
-test("wardrobe contains exactly 20 unique outfits and accessories per collection", () => {
+test("wardrobe contains 21 unique outfits and accessories per collection, including construction", () => {
   for (const catalog of [OUTFITS, ACCESSORIES]) {
-    assert.equal(new Set(catalog.map((x) => x.id)).size, 40);
+    assert.equal(new Set(catalog.map((x) => x.id)).size, 42);
     for (const collection of ["masculine", "feminine"])
       assert.equal(
         catalog.filter((x) => x.collection === collection).length,
-        20,
+        21,
       );
   }
 });
@@ -177,7 +177,7 @@ test("walking moves adult limbs and idle resets them", () => {
 });
 
 const { HAIRSTYLES, createHair } = await import("../src/garage/avatarHair.ts");
-test("all ten independent cuts build distinct finite geometry and validate saved choices", () => {
+test("all haircuts build distinct finite geometry; bald is an empty scalp", () => {
   const fingerprints = new Set();
   for (const style of Object.keys(HAIRSTYLES).filter((x) => x !== "auto")) {
     const look = normalizeAppearance({
@@ -186,6 +186,10 @@ test("all ten independent cuts build distinct finite geometry and validate saved
     });
     assert.equal(look.hairstyle, style);
     const h = createHair(style, "#443322");
+    if (style === "bald") {
+      assert.equal(h.children.length, 0);
+      continue;
+    }
     const b = new THREE.Box3().setFromObject(h);
     assert.ok(Number.isFinite(b.max.y));
     let vertices = 0;
@@ -195,7 +199,7 @@ test("all ten independent cuts build distinct finite geometry and validate saved
     });
     fingerprints.add(`${vertices}:${b.min.y.toFixed(4)}:${b.max.y.toFixed(4)}`);
   }
-  assert.equal(fingerprints.size, 10);
+  assert.equal(fingerprints.size, Object.keys(HAIRSTYLES).length - 2);
   assert.equal(
     normalizeAppearance({ hairstyle: "url(external)" }).hairstyle,
     "auto",
@@ -213,4 +217,50 @@ test("walking keeps the body vertical in every direction, including transitions 
     const up = new THREE.Vector3(0, 1, 0).transformDirection(model.matrixWorld);
     assert.ok(up.distanceTo(new THREE.Vector3(0, 1, 0)) < 0.00001);
   }
+});
+
+test("ten presets include five of each silhouette and ten distinct full looks", async () => {
+  const { AVATAR_PRESETS, presetAppearance } = await import(
+    "../src/garage/avatarPresets.ts"
+  );
+  assert.equal(AVATAR_PRESETS.length, 10);
+  for (const body of ["masculine", "feminine"])
+    assert.equal(
+      AVATAR_PRESETS.filter((p) => p.appearance.body === body).length,
+      5,
+    );
+  assert.equal(
+    new Set(AVATAR_PRESETS.map((p) => appearanceKey(p.appearance))).size,
+    10,
+  );
+  assert.equal(
+    AVATAR_PRESETS.filter((p) => p.appearance.hairstyle === "bald").length,
+    2,
+  );
+  const copy = presetAppearance(0);
+  copy.accessories.push("af21");
+  assert.ok(!presetAppearance(0).accessories.includes("af21"));
+});
+test("all voluminous hair fits beneath every covered head accessory without changing the saved cut", () => {
+  for (const style of Object.keys(HAIRSTYLES))
+    for (const hat of ACCESSORIES.filter(
+      (a) => a.slot === "head" && !["band", "crown"].includes(a.shape),
+    )) {
+      const hair = createHair(style, "#443322", 0, hat.shape);
+      hair.traverse((o) => {
+        if (!(o instanceof THREE.Mesh)) return;
+        const pos = o.geometry.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i),
+            y = pos.getY(i),
+            z = pos.getZ(i);
+          assert.ok(y <= 0.15001, `${style} / ${hat.shape}: crown above hat`);
+          assert.ok(
+            Math.hypot(x / 0.156, (z + 0.008) / 0.146) <= 1.00001,
+            `${style}: wider than hat`,
+          );
+        }
+      });
+      assert.equal(hair.userData.style, style === "auto" ? "short" : style);
+    }
 });

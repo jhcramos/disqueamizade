@@ -4,11 +4,11 @@ Rota: `/garagem`. A home e as salas existentes permanecem acessíveis; nenhuma i
 
 ## O que esta versão entrega
 
-- Entrada com apelido e dez modelos 3D licenciados CC0.
+- Entrada com apelido e dez modelos procedurais Vinyl Club: cinco masculinos e cinco femininos, com visuais completos distintos.
 - Cenário raster pré-renderizado com câmera fixa e avatares WebGL animados (composição 2.5D, não uma casa toda modelada).
 - Movimento por clique, setas/WASD e controles de toque, limitado ao piso navegável.
 - Seleção acessível por lista, modo gráfico leve, tratamento de falha WebGL.
-- Convites com aceite/recusa/cancelamento/expiração e chamada individual.
+- Convites com aceite/recusa/cancelamento/expiração; conversa local com até quatro pessoas e vídeo real. A integração online existente continua individual.
 - Câmera e microfone desligados ao entrar. Prévia privada separada da publicação.
 - Mídia real via getUserMedia; o avatar nunca substitui a imagem da webcam.
 
@@ -41,7 +41,7 @@ A integração online não foi exercitada porque este checkout não tem ambiente
 
 ## Direção artística pendente
 
-Os modelos Kenney são provisórios e muito mais simples que os personagens adultos do desenho aprovado. O fundo preserva a atmosfera, mas esta versão não atinge a fidelidade de personagens da referência. A revisão visual completa está em `design-qa.md`.
+Os modelos procedurais Vinyl Club são provisórios e mais simples que os personagens do desenho aprovado. O fundo preserva a atmosfera, mas esta versão não atinge a fidelidade de personagens da referência. A revisão visual completa está em `design-qa.md`.
 
 ### Two-room visit and movement
 
@@ -94,3 +94,16 @@ Reduced the garage/living collision spacing from 0.105 to 0.052 normalized groun
 Replaced separate hair tubes, beads and cones with continuous parametric scalp surfaces, sculpted grooves, continuous long/bob curtains and integrated crest/ponytail/bun forms. Revised eyebrows, subtle eye highlights, smile and hands. This is a live procedural-art refinement; its quality is represented by hair-sculpted.png, not by a promise to equal a generated reference. close-conversation.png shows the actual shorter approach distance.
 
 Validation: 36 garage/avatar/bar tests, 13 camera tests, 22 chat tests (71 total), TypeScript/build, saved/canceled hairstyles and desktop/mobile editor checks. New regression verifies a reachable close approach and non-overlap in each room. Browser QA measured the close encounter from the rendered avatar labels and captured the result. Two-visit bar seating/occupancy and shared interactions rechecked after collision changes.
+
+
+## Atualização: modelos, acessórios e quatro vídeos locais
+
+A seleção inicial aplica o visual completo de cada um dos dez modelos (cinco masculinos e cinco femininos). O editor mantém todas as combinações disponíveis para qualquer silhueta. Há agora careca, afro volumoso, coques espaciais e punk explosivo, além dos cortes anteriores e cores violeta/turquesa/lima. Cada coleção tem 21 roupas e 21 acessórios, incluindo roupa de obra com faixas refletivas, botas e capacete. Chapéus acomodam o volume do cabelo; remover a peça restaura o corte salvo.
+
+Na Visita local, quem inicia a roda pode convidar mais pessoas próximas até atingir quatro participantes. Os convites têm reserva de vaga e expiram em 30 segundos. Cada participante tem vídeo real e controles independentes; a entrada de uma nova pessoa pausa as câmeras e microfones existentes, exigindo nova escolha para publicar. A saída de quem iniciou encerra a roda. Desconexões, cancelamento e saída liberam os dispositivos e conexões. Mudanças de integrantes também reiniciam a mídia para manter uma única revisão do grupo.
+
+O transporte local usa BroadcastChannel v2 e WebRTC em malha (até três conexões por participante). Teste em até quatro abas da mesma origem/perfil de navegador. Esse modo **não conecta computadores pela internet**. O adaptador online Supabase/LiveKit continua limitado ao contrato existente de convite individual; grupos online exigem autorização e integração de servidor próprias. Não foi realizado teste de carga ou de dispositivos físicos.
+
+Validação atual: 40 testes de garagem/avatar/grupo, 13 de câmera e 22 de chat/autorização (75 no total), TypeScript e build. Cinco visitas isoladas de teste verificaram quatro vídeos sintéticos 640×360 e quatro trilhas de áudio por janela, pausa por mudança de público, exclusão da quinta visita, câmera individual desligada, saída e encerramento de todas as trilhas. Nenhum dispositivo físico foi acessado. Capturas atuais: `avatar-ten-presets.png`, `avatar-hardhat.png` e `four-cameras.png` (esta última identifica a mídia de teste).
+
+Para repetir o cenário de quatro câmeras, com Chrome e Playwright disponíveis, use `node tests/garage-group-browser.mjs` enquanto o servidor de desenvolvimento estiver em `localhost:3000`. Se o Playwright estiver instalado fora do projeto, `PLAYWRIGHT_MODULE` pode apontar para seu módulo. O roteiro recusa capturar mídia se não encontrar o aviso de fixture sintética.

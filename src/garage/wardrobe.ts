@@ -198,6 +198,24 @@ const women = [
   ],
   ["Eva · folhas", "leaf-bikini", "leaf", "#518345", "#437139", "bare", "leaf"],
 ];
+men.push([
+  "Equipe de obra",
+  "jacket",
+  "cargo",
+  "#efb92d",
+  "#485867",
+  "boots",
+  "safety",
+]);
+women.push([
+  "Mestre de obras",
+  "jacket",
+  "cargo",
+  "#ef8437",
+  "#3d5367",
+  "boots",
+  "safety",
+]);
 export const OUTFITS: Outfit[] = [men, women].flatMap((rows, g) =>
   rows.map((r, i) => ({
     id: `${g ? "f" : "m"}${i + 1}`,
@@ -273,6 +291,18 @@ const femaleAccessories = [
   ["Pulseira Pride", "wrist", "pride", "#ddaf59"],
   ["Pin não binário", "badge", "nonbinary", "#c3a155"],
 ];
+maleAccessories.push([
+  "Capacete de obra amarelo",
+  "head",
+  "hardhat",
+  "#f2bd28",
+]);
+femaleAccessories.push([
+  "Capacete de obra branco",
+  "head",
+  "hardhat",
+  "#f0eee3",
+]);
 export const ACCESSORIES: Accessory[] = [
   maleAccessories,
   femaleAccessories,

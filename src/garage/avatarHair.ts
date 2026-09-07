@@ -1,6 +1,10 @@
 import * as T from "three";
 export const HAIRSTYLES = {
   auto: "Do modelo",
+  bald: "Careca",
+  afro: "Afro volumoso",
+  twinbuns: "Coques espaciais",
+  liberty: "Punk explosivo",
   shaved: "Raspado",
   short: "Curto",
   medium: "Médio ondulado",
@@ -13,7 +17,12 @@ export const HAIRSTYLES = {
   bun: "Coque",
 };
 export type HairStyle = keyof typeof HAIRSTYLES;
-export function createHair(style: HairStyle, color: string, index = 0) {
+export function createHair(
+  style: HairStyle,
+  color: string,
+  index = 0,
+  headwear?: string,
+) {
   const root = new T.Group();
   root.name = "hairstyle";
   const chosen =
@@ -21,6 +30,9 @@ export function createHair(style: HairStyle, color: string, index = 0) {
       ? (["short", "bob", "curls", "medium", "long"] as HairStyle[])[index % 5]
       : style;
   root.userData.style = chosen;
+  if (chosen === "bald") return root;
+  const covered = !!headwear && !["band", "crown"].includes(headwear);
+  root.userData.fitted = covered;
   const mat = new T.MeshStandardMaterial({ color, roughness: 0.52 });
   // A continuous sculpted shell replaces separate tubes, beads and cones.
   function surface(
@@ -33,6 +45,19 @@ export function createHair(style: HairStyle, color: string, index = 0) {
     for (let y = 0; y <= rows; y++)
       for (let x = 0; x <= cols; x++) {
         const p = fn(x / cols, y / rows);
+        // Tuck the crown beneath the hat while keeping the lower lengths.
+        if (covered) {
+          const radius = Math.hypot(p.x / 0.156, (p.z + 0.008) / 0.146);
+          if (radius > 1) {
+            p.x /= radius;
+            p.z = (p.z + 0.008) / radius - 0.008;
+          }
+          p.y = Math.min(
+            p.y,
+            0.065 +
+              0.085 * Math.sqrt(Math.max(0, 1 - Math.min(radius, 1) ** 2)),
+          );
+        }
         pos.push(p.x, p.y, p.z);
       }
     for (let y = 0; y < rows; y++)
@@ -54,7 +79,7 @@ export function createHair(style: HairStyle, color: string, index = 0) {
   const height =
     chosen === "shaved"
       ? 0.125
-      : chosen === "curls"
+      : ["curls", "afro"].includes(chosen)
         ? 0.185
         : chosen === "short"
           ? 0.145
@@ -77,6 +102,14 @@ export function createHair(style: HairStyle, color: string, index = 0) {
       y += 0.028 * Math.sin(t) * Math.max(0, Math.cos(a - 0.8));
       x += 0.009 * Math.sin(t) * Math.cos(t);
     }
+    if (chosen === "afro") {
+      const puff = 1.28 + 0.035 * Math.sin(a * 17 + t * 8) * Math.sin(t * 19);
+      x *= puff;
+      z = (z + 0.008) * puff - 0.008;
+      y = 0.05 + (y - 0.05) * 1.26;
+    }
+    if (chosen === "liberty")
+      y += 0.15 * Math.max(0, Math.sin(a * 5 + t * 3)) ** 8 * Math.sin(t);
     if (chosen === "spiky")
       y += 0.064 * Math.max(0, Math.sin(a * 7 + t * 5)) ** 5 * Math.sin(t);
     if (chosen === "punk")
@@ -99,7 +132,24 @@ export function createHair(style: HairStyle, color: string, index = 0) {
       );
     });
   }
-  if (chosen === "ponytail" || chosen === "bun") {
+  if (chosen === "twinbuns" && !covered) {
+    for (const side of [-1, 1])
+      surface(
+        (u, v) => {
+          const a = u * Math.PI * 2,
+            t = v * Math.PI;
+          const r = 0.077 * (1 + 0.025 * Math.sin(a * 12 + t * 5));
+          return new T.Vector3(
+            side * 0.128 + r * Math.cos(a) * Math.sin(t),
+            0.19 + r * Math.cos(t),
+            -0.04 + r * Math.sin(a) * Math.sin(t),
+          );
+        },
+        32,
+        20,
+      );
+  }
+  if ((chosen === "ponytail" || chosen === "bun") && !covered) {
     surface(
       (u, v) => {
         const a = u * Math.PI * 2,

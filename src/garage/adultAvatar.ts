@@ -210,7 +210,11 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   );
   smile.rotation.z = Math.PI;
   smile.scale.y = 0.55;
-  head.add(createHair(look.hairstyle, hair, index));
+  const headwear = ACCESSORIES.find(
+    (a) => look.accessories.includes(a.id) && a.slot === "head",
+  );
+  const hairModel = createHair(look.hairstyle, hair, index, headwear?.shape);
+  head.add(hairModel);
   const legs: T.Group[] = [],
     arms: T.Group[] = [];
   for (const side of [-1, 1]) {
@@ -365,6 +369,12 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
       for (let i = 0; i < 4; i++)
         ell(torso, "#d2b788", 0, 1.12 + i * 0.066, 0.145, 0.008, 0.008, 0.006);
     }
+    if (outfit.detail === "safety") {
+      for (const side of [-1, 1])
+        box(torso, "#e9ecd8", side * 0.085, 1.29, 0.116, 0.027, 0.24, 0.014);
+      box(torso, "#e9ecd8", 0, 1.12, 0.122, 0.31, 0.025, 0.014);
+      box(torso, "#697886", 0.09, 1.21, 0.13, 0.054, 0.05, 0.018);
+    }
     if (outfit.detail === "hood")
       ell(torso, top, 0, 1.435, -0.1, 0.12, 0.075, 0.075);
     if (outfit.detail === "pockets")
@@ -496,10 +506,25 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
       if (a.shape === "crown")
         for (let i = 0; i < 10; i++) {
           const t = (i / 10) * Math.PI * 2;
-          leaf(head, Math.cos(t) * 0.13, 0.1, Math.sin(t) * 0.123, 0.046, t);
+          leaf(
+            head,
+            Math.cos(t) * (look.hairstyle === "afro" ? 0.213 : 0.175),
+            0.115,
+            Math.sin(t) * (look.hairstyle === "afro" ? 0.205 : 0.163),
+            0.046,
+            t,
+          );
         }
       else if (a.shape === "band") {
-        const band = ring(head, c, 0, 0.022, 0, 0.133, 0.015);
+        const band = ring(
+          head,
+          c,
+          0,
+          0.065,
+          -0.008,
+          look.hairstyle === "afro" ? 0.214 : 0.175,
+          0.012,
+        );
         band.rotation.x = Math.PI / 2;
         band.scale.y = 0.94;
       } else {
@@ -511,7 +536,7 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
           0.075,
           -0.002,
         );
-        h.scale.set(a.shape === "beret" ? 0.164 : 0.143, 0.11, 0.142);
+        h.scale.set(a.shape === "beret" ? 0.195 : 0.177, 0.14, 0.167);
         if (a.shape !== "beanie" && a.shape !== "beret") {
           const brim = mesh(
             head,
@@ -527,6 +552,10 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
             0,
           );
           brim.scale.z = 0.91;
+        }
+        if (a.shape === "hardhat") {
+          box(head, "#ffe17e", 0, 0.184, -0.003, 0.025, 0.05, 0.18);
+          box(head, "#fff4ba", 0, 0.112, 0.155, 0.07, 0.025, 0.013);
         }
         if (a.shape === "cap") ell(head, c, 0, 0.08, 0.125, 0.12, 0.009, 0.09);
       }

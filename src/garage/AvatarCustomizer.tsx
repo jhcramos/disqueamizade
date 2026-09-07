@@ -1,3 +1,4 @@
+import { AVATAR_PRESETS, presetAppearance } from "./avatarPresets";
 import { HAIRSTYLES } from "./avatarHair";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -23,7 +24,6 @@ import { AVATARS } from "./model";
 import {
   INTENTIONS,
   CLOTH_COLORS,
-  DEFAULT_APPEARANCE,
   HAIR_COLORS,
   normalizeAppearance,
   SKIN_COLORS,
@@ -31,6 +31,9 @@ import {
 } from "./avatarStyle";
 const LABELS: Record<string, string> = {
   original: "Original",
+  violet: "Violeta",
+  turquoise: "Turquesa",
+  lime: "Lima",
   porcelain: "Clara",
   warm: "Quente",
   golden: "Dourada",
@@ -73,6 +76,9 @@ export function AvatarCustomizer({
   const [collection, setCollection] = useState<Collection>("masculine");
   const [page, setPage] = useState(0);
   const root = useRef<HTMLElement>(null);
+  const catalogCount = (tab === "outfit" ? OUTFITS : ACCESSORIES).filter(
+    (item) => item.collection === collection,
+  ).length;
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     root.current?.querySelector<HTMLButtonElement>("button")?.focus();
@@ -213,8 +219,8 @@ export function AvatarCustomizer({
               <>
                 <h3>Escolha sua base.</h3>
                 <p>
-                  Dez bases adultas. Todas as peças combinam com qualquer
-                  modelo.
+                  Cinco modelos masculinos e cinco femininos. Todas as peças
+                  combinam com qualquer modelo.
                 </p>
                 <div className="avatar-collections" aria-label="Silhueta">
                   {(
@@ -240,10 +246,16 @@ export function AvatarCustomizer({
                       aria-label={`Modelo ${i + 1}`}
                       aria-pressed={model === i}
                       className={model === i ? "selected" : ""}
-                      onClick={() => setModel(i)}
+                      onClick={() => {
+                        setModel(i);
+                        setLook({
+                          ...presetAppearance(i),
+                          intention: look.intention,
+                        });
+                      }}
                     >
                       <AvatarPortrait index={i} />
-                      <span>{String(i + 1).padStart(2, "0")}</span>
+                      <span>{AVATAR_PRESETS[i].name}</span>
                       {model === i && <Check size={12} />}
                     </button>
                   ))}
@@ -277,16 +289,8 @@ export function AvatarCustomizer({
                             hairstyle: id as Appearance["hairstyle"],
                             accessories: look.accessories.filter(
                               (x) =>
-                                ![
-                                  "am1",
-                                  "am2",
-                                  "am3",
-                                  "am4",
-                                  "af1",
-                                  "af2",
-                                  "af3",
-                                  "af4",
-                                ].includes(x),
+                                ACCESSORIES.find((a) => a.id === x)?.slot !==
+                                "head",
                             ),
                           }}
                         />
@@ -322,7 +326,7 @@ export function AvatarCustomizer({
                       ? "Vista sua personalidade."
                       : "Os detalhes são seus."}
                   </h3>
-                  <span>20 por coleção</span>
+                  <span>{catalogCount} por coleção</span>
                 </div>
                 <p>
                   {tab === "outfit"
@@ -424,17 +428,18 @@ export function AvatarCustomizer({
                   <button
                     disabled={page === 0}
                     aria-label="Página anterior de peças"
-                    onClick={() => setPage(0)}
+                    onClick={() => setPage(Math.max(0, page - 1))}
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <span>
-                    {page * 10 + 1}–{page * 10 + 10} de 20
+                    {page * 10 + 1}–{Math.min(page * 10 + 10, catalogCount)} de{" "}
+                    {catalogCount}
                   </span>
                   <button
-                    disabled={page === 1}
+                    disabled={(page + 1) * 10 >= catalogCount}
                     aria-label="Próxima página de peças"
-                    onClick={() => setPage(1)}
+                    onClick={() => setPage(page + 1)}
                   >
                     <ChevronRight size={16} />
                   </button>
@@ -495,7 +500,7 @@ export function AvatarCustomizer({
             <button
               className="avatar-reset"
               onClick={() => {
-                setLook({ ...DEFAULT_APPEARANCE });
+                setLook(presetAppearance(model));
                 setAngle(0);
               }}
             >

@@ -1,3 +1,4 @@
+import { AVATAR_PRESETS, presetAppearance } from "./avatarPresets";
 import { BarPlay } from "./BarPlay";
 import { BAR_SEATS, seatWinner } from "./seats";
 import { personalSpace } from "./model";
@@ -36,6 +37,7 @@ import {
   approachRadius,
   inside,
   nearby,
+  sameRoom,
   START,
   type RoomId,
   type Person,
@@ -153,9 +155,18 @@ export default function GaragePage() {
             }}
           />
           <p className="field-label">
-            Escolha seu avatar <span>Você pode trocar depois</span>
+            Escolha seu avatar <span>5 masculinos · 5 femininos</span>
           </p>
-          <AvatarPicker value={avatar} onChange={setAvatar} />
+          <AvatarPicker
+            value={avatar}
+            onChange={(index) => {
+              setAvatar(index);
+              setAppearance({
+                ...presetAppearance(index),
+                intention: appearance.intention,
+              });
+            }}
+          />
           <button
             className="garage-secondary entry-customize"
             onClick={() => setCustomizing(true)}
@@ -246,7 +257,7 @@ function AvatarPicker({
           onClick={() => onChange(i)}
         >
           <AvatarPortrait index={i} />
-          <span>{String(i + 1).padStart(2, "0")}</span>
+          <span>{AVATAR_PRESETS[i].name}</span>
           {value === i && <Check size={12} />}
         </button>
       ))}
@@ -659,8 +670,24 @@ function GarageRoom({
           {call ? (
             mode === "local" ? (
               <LocalCall
-                peer={peerName}
-                remote={net.remoteStream}
+                identity={net.identity}
+                selfName={name}
+                members={net.group!.members}
+                people={net.people}
+                group={net.group!}
+                localMedia={net.localMedia}
+                remoteStreams={net.remoteStreams}
+                remoteFlags={net.remoteFlags}
+                camera={net.camera}
+                mic={net.mic}
+                candidates={net.people.filter(
+                  (p) =>
+                    !p.busy &&
+                    !net.group!.members.includes(p.id) &&
+                    sameRoom(self, p) &&
+                    nearby(position, p.position),
+                )}
+                onInvite={(p) => void net.request(p)}
                 publish={net.publish}
                 onEnd={() => void net.end()}
               />
@@ -688,7 +715,8 @@ function GarageRoom({
               <p className="eyebrow">UM NOVO ENCONTRO</p>
               <h2 id="invite-title">{peerName} quer conversar.</h2>
               <p>
-                Você decide. Sua câmera e seu microfone continuam desligados.
+                Conversa com até quatro pessoas. Você decide: sua câmera e seu
+                microfone continuam desligados.
               </p>
               <button
                 className="garage-primary"
