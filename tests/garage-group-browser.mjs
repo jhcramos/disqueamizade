@@ -60,6 +60,38 @@ try {
     {},
     { timeout: 20000 },
   );
+  async function checkVideoLayout(count) {
+    const result = await host.evaluate(() => {
+      const sidebar = document
+        .querySelector(".garage-sidebar")
+        .getBoundingClientRect();
+      const world = document
+        .querySelector(".garage-world")
+        .getBoundingClientRect();
+      const cards = [...document.querySelectorAll(".group-video")].map(
+        (el) => el.getBoundingClientRect().width,
+      );
+      return {
+        cards,
+        sidebarTop: sidebar.top,
+        worldTop: world.top,
+        overflow: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    const mobile = host.viewportSize().width < 540;
+    if (
+      result.cards.length !== count ||
+      result.cards.some((w) => w < (mobile ? 280 : 350)) ||
+      result.overflow
+    )
+      throw Error(
+        "Camera layout is too small or overflowing: " + JSON.stringify(result),
+      );
+    if (mobile && result.sidebarTop >= result.worldTop)
+      throw Error("Mobile conversation must precede room");
+    console.log("PASS spacious camera layout", count, result.cards);
+  }
+  await checkVideoLayout(2);
   console.log("PASS pair real video");
   for (const [i, name] of [
     [2, "Cris"],
@@ -80,8 +112,16 @@ try {
         i + 1,
       );
     }
+    await checkVideoLayout(i + 1);
     console.log("PASS audience change cameras paused", i + 1);
   }
+  await host.setViewportSize({ width: 390, height: 844 });
+  await checkVideoLayout(4);
+  await host.screenshot({
+    path: "/tmp/garage-chat-mobile.png",
+    fullPage: true,
+  });
+  await host.setViewportSize({ width: 1440, height: 1100 });
   for (const p of pages.slice(0, 4)) {
     if (
       await p

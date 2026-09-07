@@ -2062,3 +2062,60 @@
   font-size: 11px;
   line-height: 1.5;
 }
+
+/* During a conversation, faces take priority over the room. */
+.garage-layout.is-chatting {
+  grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.35fr);
+  align-items: start;
+}
+.is-chatting .garage-sidebar {
+  padding: 24px;
+  min-height: 100%;
+}
+.is-chatting .group-video-grid {
+  gap: 12px;
+}
+.is-chatting .group-video {
+  border-radius: 16px;
+}
+.is-chatting .group-video small {
+  font-size: 13px;
+  padding: 7px 10px;
+}
+.is-chatting .group-video span {
+  font-size: 14px;
+}
+.is-chatting .call-controls {
+  flex-wrap: wrap;
+}
+.is-chatting .call-controls button {
+  flex: 1 1 160px;
+}
+@media (max-width: 1000px) {
+  .garage-layout.is-chatting {
+    display: flex;
+    flex-direction: column;
+  }
+  .is-chatting .garage-sidebar {
+    order: -1;
+    width: 100%;
+    box-sizing: border-box;
+    border-left: 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .is-chatting .garage-world {
+    width: 100%;
+  }
+}
+@media (max-width: 540px) {
+  .is-chatting .garage-sidebar {
+    padding: 16px;
+  }
+  .is-chatting .group-video-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .is-chatting .group-video {
+    aspect-ratio: 4 / 3;
+  }
+}

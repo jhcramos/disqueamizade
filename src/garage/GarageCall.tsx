@@ -140,12 +140,6 @@ export function LocalCall({
             </div>
           );
         })}
-        {Array.from({ length: 4 - members.length }, (_, i) => (
-          <div className="group-empty" key={`empty-${i}`}>
-            <Camera size={22} />
-            <span>Lugar livre</span>
-          </div>
-        ))}
       </div>
       {error && (
         <p role="alert" className="garage-error">

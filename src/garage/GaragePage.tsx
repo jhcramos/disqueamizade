@@ -519,7 +519,7 @@ function GarageRoom({
             : "A casa é sua. Escolha onde quer ficar."}
         </p>
       </nav>
-      <div className="garage-layout">
+      <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           <GarageScene
             play={roomPlay.state}
