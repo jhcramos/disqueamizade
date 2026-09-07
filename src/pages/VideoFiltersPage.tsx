@@ -73,7 +73,7 @@ export const VideoFiltersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+    <div className="site-editorial min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full pb-24 md:pb-10">
         <div className="mb-6">

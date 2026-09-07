@@ -352,7 +352,7 @@ export const ProfilePage = () => {
   const tierColor = profile.subscription_tier === 'premium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : profile.subscription_tier === 'basic' ? 'text-primary-400 bg-primary-500/10 border-primary-500/20' : 'text-dark-400 bg-dark-800 border-dark-700'
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+    <div className="site-profile min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 md:pb-8">
         {/* Back + Logout */}

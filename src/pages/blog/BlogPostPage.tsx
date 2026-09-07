@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowUp, Calendar, Clock, Tag, ChevronRight, Copy, Check } from 'lucide-react'
 import { Header } from '@/components/common/Header'
+import { Footer } from '@/components/common/Footer'
+import { BlogCover } from '@/components/blog/BlogCover'
 import { FloatingRoomPicker } from '@/components/blog/FloatingRoomPicker'
 import type { BlogPost } from './BlogPage'
 
@@ -265,7 +267,7 @@ export const BlogPostPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+      <div className="site-editorial min-h-screen bg-dark-950 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -273,7 +275,7 @@ export const BlogPostPage = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-dark-950 text-white flex items-center justify-center">
+      <div className="site-editorial min-h-screen bg-dark-950 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📝</div>
           <h2 className="text-2xl font-bold mb-2">Artigo não encontrado</h2>
@@ -298,7 +300,7 @@ export const BlogPostPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className="site-editorial min-h-screen bg-dark-950">
       {/* Reading progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-dark-900">
         <div
@@ -323,8 +325,8 @@ export const BlogPostPage = () => {
       {/* Cover image */}
       {coverImg && (
         <div className="max-w-5xl mx-auto px-4 mt-6">
-          <div className="rounded-2xl overflow-hidden">
-            <img src={coverImg} alt={post.title} className="w-full h-64 md:h-96 object-cover" loading="eager" />
+          <div className="rounded-2xl overflow-hidden h-64 md:h-96">
+            <BlogCover key={coverImg} src={coverImg} alt={post.title} />
           </div>
         </div>
       )}
@@ -466,7 +468,7 @@ export const BlogPostPage = () => {
                   <Link key={r.slug} to={`/blog/${r.slug}`} className="group">
                     <div className="bg-dark-900 rounded-xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all">
                       {(r.coverImage || r.image) && (
-                        <img src={r.coverImage || r.image} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
+                        <div className="h-32"><BlogCover key={r.coverImage || r.image} src={r.coverImage || r.image} alt={r.title} /></div>
                       )}
                       <div className="p-4">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[r.category] || 'bg-dark-700 text-dark-300'}`}>
@@ -593,6 +595,7 @@ export const BlogPostPage = () => {
         }}
       />
 
+      <Footer />
       {/* JSON-LD: FAQPage (if questions detected) */}
       {faqItems.length >= 2 && (
         <script

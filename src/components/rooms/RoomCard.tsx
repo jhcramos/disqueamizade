@@ -33,6 +33,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
                 </span>
               )}
               {room.is_private && <Lock className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />}
+              {(room as any)._category === 'adult' && <span className="shrink-0 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-1 text-xs font-bold text-amber-200">18+</span>}
             </div>
             <p className="text-xs text-dark-500 line-clamp-1">{room.description}</p>
           </div>
@@ -93,7 +94,7 @@ export const RoomCard = ({ room }: RoomCardProps) => {
           <div className="flex items-center gap-3">
             {room.has_video && (
               <span className="flex items-center gap-1 text-[11px] text-primary-400 font-medium">
-                🎥 {Math.max(1, Math.floor((room.online_count || room.participants) * 0.4))}
+                <Video size={13} /> Vídeo disponível
               </span>
             )}
             <span className="flex items-center gap-1.5">

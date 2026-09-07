@@ -39,7 +39,7 @@ export const AboutPage = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#0D0D1A] text-white">
+    <div className="site-editorial min-h-screen bg-dark-950 text-white">
       <Header />
 
       <main className="pt-24 pb-20 px-4">
@@ -50,7 +50,7 @@ export const AboutPage = () => {
               Sobre o Disque Amizade
             </span>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight mt-3 mb-6">
-              A balada que nunca fecha 🎪
+              Um lugar para se encontrar.
             </h1>
             <p className="text-lg text-white/70 leading-relaxed max-w-2xl mx-auto">
               O Disque Amizade é a evolução do chat online brasileiro. Uma plataforma de

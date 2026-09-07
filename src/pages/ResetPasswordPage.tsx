@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { supabase } from '@/services/supabase/client'
 import { ArrowLeft, Mail, KeyRound, CheckCircle } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const isReset = searchParams.get('type') === 'recovery'
   
   if (isReset) {
-    return <NewPasswordForm />
+    return <><Link to="/" className="recovery-brand"><BrandLogo /></Link><NewPasswordForm /></>
   }
-  return <RequestResetForm />
+  return <><Link to="/" className="recovery-brand"><BrandLogo /></Link><RequestResetForm /></>
 }
 
 function RequestResetForm() {
@@ -56,7 +57,7 @@ function RequestResetForm() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-gray-900 to-black flex items-center justify-center p-4">
+      <div className="site-auth min-h-screen bg-dark-950 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-lg rounded-2xl border border-purple-500/20 p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Email enviado! 📧</h2>
@@ -73,7 +74,7 @@ function RequestResetForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-gray-900 to-black flex items-center justify-center p-4">
+    <div className="site-auth min-h-screen bg-dark-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-lg rounded-2xl border border-purple-500/20 p-8">
         <Link to="/auth" className="flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm mb-6">
           <ArrowLeft className="w-4 h-4" /> Voltar ao login
@@ -148,7 +149,7 @@ function NewPasswordForm() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-gray-900 to-black flex items-center justify-center p-4">
+      <div className="site-auth min-h-screen bg-dark-950 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-lg rounded-2xl border border-purple-500/20 p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Senha redefinida! 🎉</h2>
@@ -162,7 +163,7 @@ function NewPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-gray-900 to-black flex items-center justify-center p-4">
+    <div className="site-auth min-h-screen bg-dark-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-gray-900/80 backdrop-blur-lg rounded-2xl border border-purple-500/20 p-8">
         <div className="text-center mb-6">
           <KeyRound className="w-12 h-12 text-purple-400 mx-auto mb-3" />

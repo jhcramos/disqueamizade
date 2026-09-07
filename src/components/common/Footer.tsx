@@ -1,28 +1,21 @@
 import { Link } from 'react-router-dom'
 import { Heart, Phone } from 'lucide-react'
+import { BrandLogo } from './BrandLogo'
 
 export const Footer = () => {
   return (
-    <footer className="border-t border-white/5 bg-surface/50 mt-auto">
+    <footer className="site-footer border-t border-white/5 bg-surface/50 mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-lg">
-                DA
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white leading-none">DISQUE</h3>
-                <h3 className="text-lg font-bold text-primary-light leading-none">AMIZADE</h3>
-              </div>
-            </div>
+            <Link to="/" className="inline-flex mb-4" aria-label="Disque Amizade — início"><BrandLogo /></Link>
             <p className="text-sm text-gray-500 mb-4">
-              A evolução do clássico serviço de amizade por telefone. Agora com vídeo, salas temáticas e muito mais.
+              Um lugar para conhecer pessoas e deixar a conversa acontecer. Ao vivo, do seu jeito.
             </p>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Phone className="w-3 h-3" />
-              <span className="font-mono">145-AMIZADE — nostalgia.mode</span>
+              <span>Inspirado nas boas conversas do 145.</span>
             </div>
           </div>
 

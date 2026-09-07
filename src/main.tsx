@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import App from './App'
 import './styles/index.css'
+import './styles/site-design.css'
 import { initAnalytics } from './services/analytics'
 
 console.log('🚀 Disque Amizade starting...')

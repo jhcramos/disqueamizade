@@ -33,7 +33,7 @@ function App() {
 
   return (
     <AgeVerificationProvider>
-    <div className="min-h-screen bg-noite-900 text-white">
+    <div className="site-design min-h-screen bg-noite-900 text-white">
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-dark-400">Carregando…</div>}>
       <Routes>
         {/* Home principal - design original */}

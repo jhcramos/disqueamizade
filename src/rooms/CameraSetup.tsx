@@ -4,6 +4,7 @@ import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { FILTER_CSS, CameraMasksButton } from '@/components/camera/CameraMasks'
 import { MASKS } from '@/masks'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 function useSetup() {
   const media = useCamera({ startMuted: true })
@@ -73,10 +74,12 @@ export function ProcessedPreview({ stream, className = '' }: { stream: MediaStre
   }, [stream])
   return <video ref={ref} autoPlay playsInline muted className={className} />
 }
-export function CameraPreview({ onContinue, onSkip, onCancel }: { onContinue: () => void; onSkip: () => void; onCancel: () => void }) {
+export function CameraPreview({ onContinue, onSkip, onCancel, adultRoomName }: { onContinue: () => void; onSkip: () => void; onCancel: () => void; adultRoomName?: string }) {
   const camera = useCameraSetup()
-  return <main className="min-h-screen bg-dark-950 text-white flex items-center justify-center px-4 py-8">
+  return <main className="site-camera-setup min-h-screen bg-dark-950 text-white flex items-center justify-center px-4 py-8">
     <section aria-label="Prévia privada da câmera" className="w-full max-w-2xl rounded-2xl border border-white/10 bg-dark-900 p-5 sm:p-7">
+      <div className="mb-6"><BrandLogo /></div>
+      {adultRoomName && <div className="mb-5 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4"><p className="font-semibold text-amber-100">{adultRoomName}</p><p className="mt-1 text-sm text-dark-200">Você está entrando em uma sala adulta, exclusiva para maiores de 18 anos. Respeito e consentimento são obrigatórios.</p></div>}
       <p className="text-xs font-semibold text-emerald-300 mb-2">PRÉVIA PRIVADA · SÓ VOCÊ VÊ</p>
       <h1 className="text-2xl font-bold">Escolha como quer aparecer</h1>
       <p className="text-sm text-dark-300 mt-2 mb-5">Teste sua máscara antes de entrar. Câmera e microfone só serão compartilhados após sua escolha; o microfone começa desligado.</p>

@@ -98,7 +98,7 @@ export const LegalPage = ({ type }: LegalPageProps) => {
   const page = content[type]
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+    <div className="site-editorial min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-14">
         <p className="text-sm text-primary-400 font-semibold mb-3">Legal</p>

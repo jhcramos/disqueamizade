@@ -66,7 +66,7 @@ export const AgeVerificationProvider = ({ children }: { children: React.ReactNod
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={handleConfirm}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold hover:from-pink-600 hover:to-pink-700 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-pink-500/25"
+                    className="w-full py-3.5 rounded-xl bg-primary-200 text-dark-950 font-bold hover:bg-primary-100 transition-colors"
                   >
                     ✅ Sim, tenho 18 anos ou mais
                   </button>

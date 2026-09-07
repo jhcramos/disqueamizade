@@ -1,0 +1,93 @@
+.room-lounge {
+  --lounge-ink: #f1eee6;
+  --lounge-muted: #aaaFA9;
+  --lounge-line: #ffffff12;
+  --lounge-sage: #c5dbb4;
+  background: #151916;
+  color: var(--lounge-ink);
+  height: 100dvh;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -.015em;
+}
+.room-lounge button, .room-lounge a { transition: background-color .18s, color .18s, border-color .18s; }
+.room-lounge :is(button,a,input):focus-visible { outline: 2px solid var(--lounge-sage); outline-offset: 4px; }
+.room-lounge > header { min-height: 88px; padding: 16px 28px; background: #151916; border-color: var(--lounge-line); }
+.room-lounge > header h1 { font-size: 20px; letter-spacing: -.035em; margin-top: 3px; }
+.room-lounge > header p { color: var(--lounge-muted); font-size: 12px; }
+.lounge-eyebrow { display: block; font-size: 9px; font-weight: 650; letter-spacing: .2em; color: #b4c4a9; }
+.lounge-workspace { padding: 18px 24px 16px; gap: 18px; }
+.lounge-stage { border: 1px solid var(--lounge-line); border-radius: 22px; background: radial-gradient(ellipse at 50% 45%, #2b342b 0%, #202720 42%, #1b211c 85%); }
+.lounge-empty { position: relative; min-height: 460px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 48px 20px 38px; }
+.lounge-stage-caption { position: absolute; top: 8px; left: 10px; display: flex; align-items: center; gap: 8px; font-size: 9px; letter-spacing: .14em; color: #acb6a9; }
+.lounge-dot { width: 6px; height: 6px; border-radius: 50%; background: #c5dbb4; box-shadow: 0 0 0 4px #c5dbb40a; }
+.lounge-conversation-art { position: relative; width: 190px; height: 122px; margin: 0 0 22px; }
+.lounge-orbit { position: absolute; inset: -1px -10px; border: 1px solid #d3ddc514; border-radius: 50%; transform: rotate(-22deg); }
+.lounge-bubble { position: absolute; display: grid; place-items: center; width: 82px; height: 72px; border-radius: 24px 24px 24px 6px; box-shadow: 0 15px 28px #0002; }
+.lounge-bubble-one { left: 12px; top: 10px; background: #b9c9aa; color: #3a4e37; transform: rotate(-12deg); }
+.lounge-bubble-one svg { width: 36px; height: 36px; stroke-width: 1.3; }
+.lounge-bubble-two { right: 5px; bottom: 8px; background: #c8987b; color: #392e25; transform: rotate(9deg); border-radius: 24px 24px 6px 24px; }
+.lounge-bubble-two span { font: italic 42px Georgia, serif; }
+.lounge-art-star { position: absolute; right: 17px; top: -3px; font-size: 24px; color: #e9d8a8; }
+.lounge-empty h3 { font: 400 clamp(34px, 4vw, 60px)/1.08 Georgia, 'Times New Roman', serif; letter-spacing: -.055em; margin: 14px 0 17px; }
+.lounge-empty h3 em { color: #c7d7b7; font-weight: 400; }
+.lounge-empty > p { color: #abb4a8; font-size: 13px; line-height: 1.8; }
+.lounge-people-cta { display: flex; gap: 10px; align-items: center; background: #c5dbb4; color: #23321f; font-size: 12px; font-weight: 700; padding: 13px 18px; border-radius: 10px; margin-top: 23px; box-shadow: 0 4px 12px #0002; }
+.lounge-people-cta:hover, .room-lounge .lounge-primary:hover { background: #d8e9cc; }
+.lounge-invite-link { display: flex; gap: 5px; align-items: center; margin-top: 17px; color: #bbc4b6; font-size: 11px; }
+.lounge-invite-link:hover { color: white; }
+.lounge-stage-footnote { font-size: 10px; color: #9ba796; margin-top: 28px; }
+.room-lounge [aria-label="Quebrar o gelo"] { background: #20251f; border: 1px solid var(--lounge-line); border-radius: 12px; margin-top: 12px; color: #dddcd2; }
+.room-lounge [aria-label="Quebrar o gelo"] > button { padding: 15px 18px; font-size: 12px; }
+.room-lounge [aria-label="Quebrar o gelo"] .text-primary-300 { color: #c5dbb4; }
+.room-lounge .lounge-controls { background: transparent; border: 0; padding: 14px 0 0; }
+.room-lounge .lounge-controls button { min-height: 46px; border-radius: 12px; }
+.room-lounge .lounge-primary { background: var(--lounge-sage); color: #23321f; font-size: 13px; }
+.room-lounge .lounge-sidebar { background: #1c211d; border: 1px solid var(--lounge-line); border-radius: 20px; overflow: hidden; width: 350px; }
+.lounge-tabs { margin: 14px 14px 0; padding: 4px; background: #131814; border: 1px solid var(--lounge-line); border-radius: 12px; }
+.lounge-tabs > button { font-size: 12px; padding: 10px; border-radius: 8px; }
+.lounge-tabs > button.bg-white\/10 { background: #354030; color: #e0edcf; }
+.lounge-tabs > button span { display: inline-grid; place-items: center; min-width: 19px; height: 19px; background: #ffffff0d; border-radius: 5px; }
+.lounge-messages { padding: 18px; scrollbar-width: thin; scrollbar-color: #3d473a transparent; }
+.lounge-message { background: #ffffff03; border: 1px solid #ffffff05; border-radius: 0 12px 12px 12px; padding: 10px 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.lounge-message button { font-size: 11px; color: #bdcfae; }
+.lounge-message > span { display: block; font-size: 13px; color: #dedfd7; margin-top: 3px; }
+.lounge-chat-welcome { padding: 28px 8px; }
+.lounge-chat-welcome > span { font: 25px/1.2 Georgia, serif; color: #e5e6dc; }
+.lounge-chat-welcome p { font-size: 12px; line-height: 1.7; margin-top: 12px; color: #9ea999; }
+.lounge-composer { padding: 14px; border-color: var(--lounge-line); }
+.lounge-composer input { min-width: 0; background: #141a15; border-color: #ffffff14; padding: 12px; font-size: 12px; }
+.lounge-composer button { width: 42px; display: grid; place-items: center; flex-shrink: 0; }
+.lounge-people > section { padding: 20px 16px; }
+.lounge-people h2 { font-size: 13px; color: #e6e9df; }
+.lounge-people p { color: #a5afa0; line-height: 1.7; }
+.lounge-people [role="switch"] { min-height: 65px; font-size: 11px; border-color: #ffffff14; color: #abb3a5; }
+.lounge-people [role="switch"][aria-checked="true"] { background: #c5dbb419; border-color: #a8c09170; color: #d7e8c8; }
+.lounge-people [role="switch"]::after { content: 'Desativado'; font-size: 9px; font-weight: 400; }
+.lounge-people [role="switch"][aria-checked="true"]::after { content: 'Ativado'; }
+.lounge-people article { background: #ffffff03; border-color: #ffffff0d; border-radius: 12px; padding: 14px 10px; }
+.lounge-avatar { background: #3c4735; color: #dce9cd; font-family: Georgia, serif; font-weight: 400; }
+.lounge-people article:nth-child(2n) .lounge-avatar { background: #4a3c32; color: #eed6bf; }
+.lounge-people article button.bg-primary-500 { background: #c5dbb4; color: #23321f; }
+.lounge-people article button:disabled { opacity: .4; }
+.room-lounge .text-dark-400, .room-lounge .text-dark-500 { color: #a3ad9e; }
+@media (min-width: 1024px) and (max-height: 850px) {
+  .room-lounge > header { min-height: 72px; padding-top: 10px; padding-bottom: 10px; }
+  .lounge-empty { min-height: 380px; padding: 32px 15px 15px; }
+  .lounge-conversation-art { transform: scale(.8); height: 94px; margin-bottom: 5px; }
+  .lounge-empty h3 { font-size: 44px; margin: 10px 0; }
+  .lounge-stage-footnote { margin-top: 16px; }
+}
+@media (max-width: 1023px) {
+  .room-lounge { height: auto; min-height: 100dvh; }
+  .room-lounge > header { min-height: 72px; padding: 12px; }
+  .room-lounge > header h1 { font-size: 17px; }
+  .lounge-workspace { padding: 10px; gap: 16px; flex: none; }
+  .lounge-stage { min-height: 440px; border-radius: 16px; }
+  .lounge-empty { min-height: 420px; padding: 38px 10px 18px; }
+  .lounge-empty h3 { font-size: 42px; }
+  .lounge-conversation-art { transform: scale(.8); height: 94px; margin-bottom: 8px; }
+  .lounge-stage-caption { font-size: 8px; letter-spacing: .08em; }
+  .room-lounge .lounge-sidebar { width: 100%; height: 480px; border-radius: 16px; }
+  .lounge-stage-footnote { margin-top: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .room-lounge button, .room-lounge a { transition: none; } }

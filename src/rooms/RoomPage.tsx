@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // RoomPage (nova) — sala de vídeo em LiveKit (SFU), modelo espectador+palco.
+import './room-lounge.css'
+import { BrandLogo } from '@/components/common/BrandLogo'
 //
 // Entra sem câmera (espectador). Botão "Ligar câmera" publica o stream com
 // máscaras. Vídeo em SFU (banda constante), chat via Supabase realtime, DM em
@@ -164,7 +166,7 @@ const RoomEntry = () => {
     )
   }
 
-  if (!entryConfirmed) return <CameraPreview onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
+  if (!entryConfirmed) return <CameraPreview adultRoomName={roomSlug.startsWith('adult-') ? roomName : undefined} onContinue={() => setEntryConfirmed(true)} onSkip={() => setEntryConfirmed(true)} onCancel={() => navigate('/rooms')} />
 
   if (activeCall) {
     if (!activeCall.token || activeCall.error) return <div className="min-h-screen bg-dark-950 text-white grid place-items-center px-4">
@@ -378,12 +380,13 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="room-lounge h-screen flex flex-col">
       {/* Topo */}
       <header className="flex-shrink-0 flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5 bg-dark-950/80 backdrop-blur">
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/rooms" className="p-2 rounded-xl hover:bg-white/5 flex-shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
           <div className="min-w-0">
+            <span className="lounge-eyebrow flex items-center gap-2"><BrandLogo compact /> AO VIVO</span>
             <h1 className="font-bold truncate">{roomName}</h1>
             <p className="text-[11px] text-dark-400">
               {connecting ? 'conectando…' : `${names.size} na sala`}
@@ -407,10 +410,10 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      <div className="lounge-workspace flex-1 flex flex-col lg:flex-row min-h-0">
         {/* Vídeo */}
         <main className="relative flex-1 flex flex-col min-w-0 min-h-0">
-          <section aria-label="Área de vídeo" className="relative flex flex-1 min-h-0 overflow-hidden">
+          <section aria-label="Área de vídeo" className="lounge-stage relative flex flex-1 min-h-0 overflow-hidden">
             <RoomVideoGrid
               roomId={roomId}
               names={names}
@@ -418,6 +421,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
               onReport={handleReport}
               onBlock={handleBlock}
               blocked={blocked}
+              onShowPeople={() => { setShowChat(true); setActiveSide('people') }}
             />
 
             {/* Autovisualização (você): mostra o vídeo com máscara que os outros veem */}
@@ -429,27 +433,27 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
           <IcebreakerPanel key={`${roomId}:${identity}`} roomId={roomId} identity={identity} connected={connState === ConnectionState.Connected} blocked={blocked} />
 
           {/* Barra de controles */}
-          <div className="flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur p-3">
+          <div className="lounge-controls flex-shrink-0 border-t border-white/5 bg-dark-950/80 backdrop-blur p-3">
             {cam.error && <p role="alert" className="text-sm text-red-300 text-center mb-2">{cam.error}</p>}
             <div className="flex items-center justify-center gap-2 sm:gap-3">
               {!cam.isLive ? (
                 <button
                   onClick={cam.goLive}
                   disabled={cam.starting}
-                  className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-primary-500 to-purple-500 text-white font-bold disabled:opacity-50"
+                  className="lounge-primary flex items-center gap-2 px-6 py-3 rounded-2xl font-bold disabled:opacity-50"
                 >
                   <Video className="w-5 h-5" /> {cam.starting ? 'Ligando…' : 'Ligar minha câmera'}
                 </button>
               ) : (
                 <>
-                  <button onClick={cam.toggleCamera} className={`p-3 rounded-2xl border ${cam.isCameraOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
+                  <button aria-label={cam.isCameraOn ? 'Desligar câmera' : 'Ligar câmera'} onClick={cam.toggleCamera} className={`p-3 rounded-2xl border ${cam.isCameraOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
                     {cam.isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                   </button>
-                  <button onClick={cam.toggleMic} className={`p-3 rounded-2xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
+                  <button aria-label={cam.isMicOn ? 'Desligar microfone' : 'Ligar microfone'} onClick={cam.toggleMic} className={`p-3 rounded-2xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
                     {cam.isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                   </button>
                   <button onClick={cam.goLive} className="p-3 rounded-2xl border border-white/10 bg-white/5" title="Ajustar máscara na prévia privada">🎭</button>
-                  <button onClick={cam.leaveStage} className="p-3 rounded-2xl bg-red-500 text-white font-bold">
+                  <button aria-label="Sair do vídeo" onClick={cam.leaveStage} className="p-3 rounded-2xl bg-red-500 text-white font-bold">
                     <VideoOff className="w-5 h-5" />
                   </button>
                 </>
@@ -461,42 +465,44 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
 
         {/* Chat e pessoas presentes */}
         {showChat && (
-          <aside className="w-full h-[42vh] border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l flex-shrink-0 flex flex-col border-white/5 bg-dark-950 min-h-0">
-            <div className="flex items-center gap-1 border-b border-white/5 px-2 py-2">
+          <aside className="lounge-sidebar w-full h-[42vh] border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l flex-shrink-0 flex flex-col border-white/5 bg-dark-950 min-h-0">
+            <div className="lounge-tabs flex items-center gap-1 border-b border-white/5 px-2 py-2">
               <button type="button" onClick={() => setActiveSide('chat')} className={`flex-1 rounded-xl px-3 py-2 text-sm font-bold ${activeSide === 'chat' ? 'bg-white/10 text-white' : 'text-dark-400 hover:bg-white/5'}`}>Chat</button>
               <button type="button" onClick={() => setActiveSide('people')} className={`flex-1 rounded-xl px-3 py-2 text-sm font-bold ${activeSide === 'people' ? 'bg-white/10 text-white' : 'text-dark-400 hover:bg-white/5'}`}>Na sala <span className="ml-1 text-[10px]">{visiblePeople.length}</span></button>
               <button onClick={() => setShowChat(false)} className="p-1.5 rounded-lg hover:bg-white/5 lg:hidden"><X className="w-4 h-4" /></button>
             </div>
             {activeSide === 'chat' ? <>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div className="lounge-messages flex-1 overflow-y-auto p-3 space-y-2">
+              {messages.length === 0 && <div className="lounge-chat-welcome"><span>Uma conversa começa com um oi.</span><p>Este espaço é de todos na sala. Chegue do seu jeito.</p></div>}
               {messages.map((m) => (
                 <div key={m.id} className={m.type === 'system' ? 'text-center' : ''}>
                   {m.type === 'system' ? (
                     <span className="text-[11px] text-dark-500">{m.content}</span>
                   ) : (
-                    <div className="text-sm">
+                    <div className="lounge-message text-sm">
                       <button
                         onClick={() => requestMessageFromChat(m.userId, m.username)}
                         className={`font-semibold ${m.userId === identity ? 'text-primary-400' : 'text-pink-400 hover:underline'}`}
                       >
                         {m.username}
                       </button>
-                      <span className="text-dark-200">: {m.content}</span>
+                      <span className="text-dark-200">{m.content}</span>
                     </div>
                   )}
                 </div>
               ))}
               <div ref={msgEndRef} />
             </div>
-            <form onSubmit={sendMessage} className="p-3 border-t border-white/5 flex gap-2">
+            <form onSubmit={sendMessage} className="lounge-composer p-3 border-t border-white/5 flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Mensagem…"
+                placeholder="Dê um oi para a sala…"
+                aria-label="Mensagem para a sala"
                 maxLength={500}
                 className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500/40"
               />
-              <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
+              <button type="submit" aria-label="Enviar mensagem" disabled={sending} className="lounge-primary p-2 rounded-xl"><Send className="w-4 h-4" /></button>
             </form>
             </> : <PeoplePanel people={visiblePeople} selfId={identity} cameraLiveIds={cameraLiveIds} preferences={preferences} saving={savingPreferences} onPreferences={changePreferences} onInvite={sendInvite} />}
           </aside>

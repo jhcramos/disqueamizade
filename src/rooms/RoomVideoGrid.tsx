@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTracks, VideoTrack, useParticipants } from '@livekit/components-react'
-import { VideoOff, Eye } from 'lucide-react'
+import { MessageCircle, ArrowUpRight, Users, Eye } from 'lucide-react'
 import { track as analytics } from '@/services/analytics'
 import { siteUrl } from '@/config/site'
 
@@ -12,13 +12,14 @@ interface Props {
   onReport?: (identity: string, name: string) => void
   onBlock?: (identity: string, name: string) => void
   blocked: Set<string>
+  onShowPeople: () => void
 }
 
 /**
  * Grid de vídeo das câmeras publicando. Espectadores não geram tile.
  * Dispara `room_first_remote_seen` na primeira câmera remota vista.
  */
-export const RoomVideoGrid = ({ roomId, names, localIdentity, onReport, onBlock, blocked }: Props) => {
+export const RoomVideoGrid = ({ roomId, names, localIdentity, onReport, onBlock, blocked, onShowPeople }: Props) => {
   // 'camera' em vez de Track.Source.Camera: os tipos do namespace não resolvem
   // neste bundle, mas o valor em runtime é o mesmo.
   const cameraTracks = useTracks(['camera' as any], { onlySubscribed: false })
@@ -40,7 +41,7 @@ export const RoomVideoGrid = ({ roomId, names, localIdentity, onReport, onBlock,
   return (
     <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
       {remoteCameras.length === 0 ? (
-        <EmptyStage roomId={roomId} spectators={spectators} />
+        <EmptyStage roomId={roomId} onShowPeople={onShowPeople} />
       ) : (
         <div
           className="grid gap-3"
@@ -78,23 +79,26 @@ export const RoomVideoGrid = ({ roomId, names, localIdentity, onReport, onBlock,
   )
 }
 
-const EmptyStage = ({ roomId, spectators }: { roomId: string; spectators: number }) => {
+const EmptyStage = ({ roomId, onShowPeople }: { roomId: string; onShowPeople: () => void }) => {
   const shareUrl = siteUrl(`/sala/${roomId}`)
   const wa = `https://wa.me/?text=${encodeURIComponent(`Bora conversar no Disque Amizade? ${shareUrl}`)}`
   return (
-    <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center px-6">
-      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-        <VideoOff className="w-7 h-7 text-dark-400" />
+    <div className="lounge-empty">
+      <div className="lounge-stage-caption"><span className="lounge-dot" /> UM ESPAÇO PARA SE ENCONTRAR</div>
+      <div className="lounge-conversation-art" aria-hidden="true">
+        <div className="lounge-orbit" />
+        <div className="lounge-bubble lounge-bubble-one"><MessageCircle /></div>
+        <div className="lounge-bubble lounge-bubble-two"><span>oi.</span></div>
+        <span className="lounge-art-star">✳</span>
       </div>
-      <h3 className="text-xl font-bold text-white mb-2">
-        {spectators > 1 ? 'Ninguém ligou a câmera ainda' : 'Você é a primeira pessoa aqui'}
-      </h3>
-      <p className="text-dark-400 text-sm max-w-sm mb-6">
-        Ligue sua câmera para começar, ou chame alguém. Horário mais movimentado: das 20h às 23h.
+      <span className="lounge-eyebrow">BOAS CONVERSAS, SEM PRESSA</span>
+      <h3>Um oi pode mudar<br /><em>o seu dia.</em></h3>
+      <p>
+        Com câmera, só por áudio ou pelas palavras.<br className="hidden sm:block" /> O melhor jeito de começar é o seu.
       </p>
-      <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm transition-colors">
-        Chamar alguém pelo WhatsApp
-      </a>
+      <button onClick={onShowPeople} className="lounge-people-cta"><Users size={17} /> Ver quem está na sala <ArrowUpRight size={17} /></button>
+      <a href={wa} target="_blank" rel="noopener noreferrer" className="lounge-invite-link">Trazer um amigo pelo WhatsApp <ArrowUpRight size={14} /></a>
+      <span className="lounge-stage-footnote">Sua câmera só aparece quando você decidir ligar.</span>
     </div>
   )
 }

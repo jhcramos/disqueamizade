@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Calendar, Clock, ArrowRight, Tag } from 'lucide-react'
 import { Header } from '@/components/common/Header'
+import { Footer } from '@/components/common/Footer'
+import { BlogCover } from '@/components/blog/BlogCover'
 
 export interface BlogPost {
   slug: string
@@ -98,13 +100,13 @@ export const BlogPage = () => {
   useEffect(() => { setCurrentPage(1) }, [search, activeCategory])
 
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className="site-journal min-h-screen bg-dark-950">
       <Header />
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-pink-600/20 via-dark-950 to-purple-600/20 border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Blog do <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">Disque Amizade</span>
+            Histórias que aproximam.
           </h1>
           <p className="text-dark-400 text-lg max-w-2xl mx-auto mb-8">
             Dicas, novidades e guias sobre chat online, vídeo chat e como conhecer pessoas no Brasil
@@ -164,7 +166,7 @@ export const BlogPage = () => {
                 <Link to={`/blog/${feat.slug}`} className="block mb-8 group">
                   <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
                     {featImg ? (
-                      <img src={featImg} alt={feat.title} className="w-full h-full object-cover" />
+                      <BlogCover key={featImg} src={featImg} alt={feat.title} />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${getGradient(feat.slug)} flex items-center justify-center`}>
                         <span className="text-8xl">{CATEGORY_EMOJIS[feat.category] || '💬'}</span>
@@ -200,7 +202,7 @@ export const BlogPage = () => {
                   <div className="bg-dark-900 rounded-2xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all h-full flex flex-col">
                     <div className={`h-40 bg-gradient-to-br ${getGradient(post.slug)} flex items-center justify-center relative overflow-hidden`}>
                       {(post.coverImage || post.image) ? (
-                        <img src={post.coverImage || post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
+                        <BlogCover key={post.coverImage || post.image} src={post.coverImage || post.image} alt={post.title} />
                       ) : (
                         <span className="text-5xl">{CATEGORY_EMOJIS[post.category] || '💬'}</span>
                       )}
@@ -227,19 +229,22 @@ export const BlogPage = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-10">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <nav aria-label="Páginas do blog" className="flex flex-wrap justify-center gap-2 mt-10">
+                <button aria-label="Página anterior" disabled={currentPage === 1} onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="w-10 h-10 rounded-lg bg-dark-800 disabled:opacity-30">←</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).filter(page => Math.abs(page - currentPage) <= 2).map(page => (
                   <button
                     key={page}
+                    aria-current={currentPage === page ? 'page' : undefined}
                     onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                      currentPage === page ? 'bg-pink-500 text-white' : 'bg-dark-800 text-dark-400 hover:bg-dark-700'
+                      currentPage === page ? 'bg-primary-500 text-white' : 'bg-dark-800 text-dark-400 hover:bg-dark-700'
                     }`}
                   >
                     {page}
                   </button>
                 ))}
-              </div>
+                <button aria-label="Próxima página" disabled={currentPage === totalPages} onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="w-10 h-10 rounded-lg bg-dark-800 disabled:opacity-30">→</button>
+              </nav>
             )}
           </>
         )}
@@ -264,6 +269,7 @@ export const BlogPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

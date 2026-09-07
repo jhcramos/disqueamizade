@@ -88,7 +88,7 @@ export const SalaPublicaPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white flex flex-col">
+    <div className="site-editorial min-h-screen bg-dark-950 text-white flex flex-col">
       <Header />
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-10 w-full">
         {/* Breadcrumb */}
