@@ -4,6 +4,7 @@ import { useVideoFilter } from '@/hooks/useVideoFilter'
 import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { FILTER_CSS, CameraMasksButton } from '@/components/camera/CameraMasks'
 import { MASKS } from '@/masks'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 function useSetup() {
   const media = useCamera({ startMuted: true })
@@ -77,6 +78,7 @@ export function CameraPreview({ onContinue, onSkip, onCancel }: { onContinue: ()
   const camera = useCameraSetup()
   return <main className="site-camera-setup min-h-screen bg-dark-950 text-white flex items-center justify-center px-4 py-8">
     <section aria-label="Prévia privada da câmera" className="w-full max-w-2xl rounded-2xl border border-white/10 bg-dark-900 p-5 sm:p-7">
+      <div className="mb-6"><BrandLogo /></div>
       <p className="text-xs font-semibold text-emerald-300 mb-2">PRÉVIA PRIVADA · SÓ VOCÊ VÊ</p>
       <h1 className="text-2xl font-bold">Escolha como quer aparecer</h1>
       <p className="text-sm text-dark-300 mt-2 mb-5">Teste sua máscara antes de entrar. Câmera e microfone só serão compartilhados após sua escolha; o microfone começa desligado.</p>

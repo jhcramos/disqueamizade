@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { supabase } from '@/services/supabase/client'
 import { ArrowLeft, Mail, KeyRound, CheckCircle } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const isReset = searchParams.get('type') === 'recovery'
   
   if (isReset) {
-    return <NewPasswordForm />
+    return <><Link to="/" className="recovery-brand"><BrandLogo /></Link><NewPasswordForm /></>
   }
-  return <RequestResetForm />
+  return <><Link to="/" className="recovery-brand"><BrandLogo /></Link><RequestResetForm /></>
 }
 
 function RequestResetForm() {

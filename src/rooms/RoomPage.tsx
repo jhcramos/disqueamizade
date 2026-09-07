@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // RoomPage (nova) — sala de vídeo em LiveKit (SFU), modelo espectador+palco.
 import './room-lounge.css'
+import { BrandLogo } from '@/components/common/BrandLogo'
 //
 // Entra sem câmera (espectador). Botão "Ligar câmera" publica o stream com
 // máscaras. Vídeo em SFU (banda constante), chat via Supabase realtime, DM em
@@ -385,7 +386,7 @@ const RoomStage = ({ roomId, roomName, identity, displayName, isGuest, onReport,
         <div className="flex items-center gap-2 min-w-0">
           <Link to="/rooms" className="p-2 rounded-xl hover:bg-white/5 flex-shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
           <div className="min-w-0">
-            <span className="lounge-eyebrow">DISQUE AMIZADE / AO VIVO</span>
+            <span className="lounge-eyebrow flex items-center gap-2"><BrandLogo compact /> AO VIVO</span>
             <h1 className="font-bold truncate">{roomName}</h1>
             <p className="text-[11px] text-dark-400">
               {connecting ? 'conectando…' : `${names.size} na sala`}

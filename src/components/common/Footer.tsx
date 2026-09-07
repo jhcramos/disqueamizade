@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Heart, Phone } from 'lucide-react'
+import { BrandLogo } from './BrandLogo'
 
 export const Footer = () => {
   return (
@@ -8,14 +9,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-lg">
-                DA
-              </div>
-              <div>
-                <span className="site-wordmark"><span>disque</span><span>amizade.</span></span>
-              </div>
-            </div>
+            <Link to="/" className="inline-flex mb-4" aria-label="Disque Amizade — início"><BrandLogo /></Link>
             <p className="text-sm text-gray-500 mb-4">
               Um lugar para conhecer pessoas e deixar a conversa acontecer. Ao vivo, do seu jeito.
             </p>
