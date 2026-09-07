@@ -95,7 +95,7 @@ try {
     .getByRole("textbox", { name: "Como podemos chamar você?" })
     .fill("Teste capacete");
   await host
-    .getByRole("button", { name: "Entrar na garagem", exact: true })
+    .getByRole("button", { name: "Entrar na casa", exact: true })
     .click();
   const guest = await context.newPage();
   guest.on("pageerror", (e) => errors.push(e.message));
@@ -104,7 +104,7 @@ try {
     .getByRole("textbox", { name: "Como podemos chamar você?" })
     .fill("Teste receptor");
   await guest
-    .getByRole("button", { name: "Entrar na garagem", exact: true })
+    .getByRole("button", { name: "Entrar na casa", exact: true })
     .click();
   if (
     !(await host.locator("body").innerText()).includes(

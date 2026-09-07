@@ -2261,3 +2261,25 @@
 .avatar-name:has(.room-speech) {
   z-index: 8;
 }
+.entry-availability {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.entry-availability p {
+  margin: 0 0 10px;
+}
+.entry-availability a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rust);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.entry-availability svg {
+  flex-shrink: 0;
+}

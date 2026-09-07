@@ -82,7 +82,7 @@ export default function GaragePage() {
       setEntered(true);
     } catch {
       setEntryError(
-        "Não foi possível iniciar sua sessão. Você pode experimentar a visita local.",
+        "Não foi possível entrar agora. Tente novamente em instantes.",
       );
     } finally {
       setBusy(false);
@@ -109,7 +109,7 @@ export default function GaragePage() {
         <Link to="/" className="garage-brand">
           <BrandLogo />
         </Link>
-        <span className="garage-tag">LAB / PRIMEIRA VISITA</span>
+        <span className="garage-tag">BEM-VINDO À CASA</span>
         <Link to="/rooms">
           Voltar às salas <ArrowRight size={16} />
         </Link>
@@ -128,7 +128,8 @@ export default function GaragePage() {
               <em>Encontre sua turma.</em>
             </h1>
             <p>
-              Escolha um avatar, entre na garagem e deixe a conversa acontecer.
+              Escolha seu avatar e entre na casa. Lá dentro, você pode mudar de
+              ambiente quando quiser.
             </p>
           </div>
         </section>
@@ -174,35 +175,44 @@ export default function GaragePage() {
             <Settings2 size={16} />
             Personalizar este avatar
           </button>
-          <label className="mode-option">
-            <input
-              type="radio"
-              name="mode"
-              checked={mode === "local"}
-              onChange={() => setMode("local")}
-            />
-            <span>
-              Visita local
-              <small>Explore e teste com outra aba deste navegador.</small>
-            </span>
-          </label>
-          <label className={`mode-option ${!configured ? "unavailable" : ""}`}>
-            <input
-              type="radio"
-              name="mode"
-              checked={mode === "online"}
-              disabled={!configured}
-              onChange={() => setMode("online")}
-            />
-            <span>
-              Entrar online
-              <small>
-                {configured
-                  ? "Encontre outros participantes da garagem experimental."
-                  : "Disponível no ambiente com Supabase e LiveKit configurados."}
-              </small>
-            </span>
-          </label>
+          {import.meta.env.DEV &&
+            new URLSearchParams(location.search).has("devTools") && (
+              <>
+                <label className="mode-option">
+                  <input
+                    type="radio"
+                    name="mode"
+                    checked={mode === "local"}
+                    onChange={() => setMode("local")}
+                  />
+                  <span>
+                    Visita local
+                    <small>
+                      Explore e teste com outra aba deste navegador.
+                    </small>
+                  </span>
+                </label>
+                <label
+                  className={`mode-option ${!configured ? "unavailable" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="mode"
+                    checked={mode === "online"}
+                    disabled={!configured}
+                    onChange={() => setMode("online")}
+                  />
+                  <span>
+                    Entrar online
+                    <small>
+                      {configured
+                        ? "Encontre outros participantes da garagem experimental."
+                        : "Disponível no ambiente com Supabase e LiveKit configurados."}
+                    </small>
+                  </span>
+                </label>
+              </>
+            )}
           <button
             className="garage-secondary"
             onClick={() => setPreviewOpen(true)}
@@ -218,16 +228,24 @@ export default function GaragePage() {
               mode === "online" ? verifyAge(() => void enter()) : void enter()
             }
           >
-            {busy ? "Entrando…" : "Entrar na garagem"}
+            {busy ? "Entrando…" : "Entrar na casa"}
             <ArrowRight />
           </button>
           <p className="garage-note">
             <VideoOff size={15} /> Câmera e microfone começam desligados.
           </p>
-          <p className="prototype-note">
-            Protótipo: cenário pré-renderizado e avatares 3D de teste. As
-            chamadas mostram vídeo real.
-          </p>
+          {mode === "local" && (
+            <div className="entry-availability">
+              <p>
+                Por enquanto, você pode explorar a casa. Os encontros online
+                nesses ambientes estarão disponíveis em breve.
+              </p>
+              <Link to="/rooms">
+                Quer conversar agora? Conheça as salas online{" "}
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
         </section>
       </div>
       {previewOpen && (
@@ -494,7 +512,7 @@ function GarageRoom({
         </div>
         <span className="garage-status">
           <span className={net.connected ? "online-dot" : "offline-dot"} />
-          {mode === "local" ? "Visita local" : "Garagem experimental"} ·{" "}
+          {mode === "local" ? "Explorando a casa" : "Na casa"} ·{" "}
           {net.people.length + 1}{" "}
           {net.people.length ? "pessoas na casa" : "pessoa na casa"}
         </span>
@@ -980,7 +998,7 @@ function GarageRoom({
           <Sparkles size={14} /> Um lugar para encontrar pessoas, no seu ritmo.
         </span>
         <span>
-          Protótipo · cenário fixo + avatares 3D{" "}
+          A casa é sua também.{" "}
           {import.meta.env.DEV && location.search.includes("testMedia=1")
             ? " · MÍDIA SINTÉTICA DE TESTE"
             : ""}{" "}

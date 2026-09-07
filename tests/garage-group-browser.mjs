@@ -17,7 +17,7 @@ try {
       .getByRole("textbox", { name: "Como podemos chamar você?" })
       .fill(name);
     await p
-      .getByRole("button", { name: "Entrar na garagem", exact: true })
+      .getByRole("button", { name: "Entrar na casa", exact: true })
       .click();
     pages.push(p);
     await p.waitForTimeout(600);
