@@ -34,7 +34,7 @@ try {
       );
   const host = pages[0];
   await host
-    .getByRole("button", { name: "Pedir para conversar", exact: true })
+    .getByRole("button", { name: "Convidar para vídeo", exact: true })
     .click();
   await pages[1]
     .getByRole("button", { name: "Aceitar convite", exact: true })

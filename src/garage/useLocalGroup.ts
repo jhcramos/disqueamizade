@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { type Appearance } from "./avatarStyle";
 import {
-  nearby,
   sameRoom,
   parsePerson,
   START,
@@ -248,14 +247,7 @@ class LocalConversation {
     if (!data || typeof data !== "object") return;
     if (event === "invite") {
       const p = this.seen.get(from)?.person;
-      if (
-        this.group ||
-        this.pending ||
-        !p ||
-        !sameRoom(this.self, p) ||
-        !nearby(this.self.position, p.position)
-      )
-        return;
+      if (this.group || this.pending || !p || !sameRoom(this.self, p)) return;
       if (
         typeof data.id !== "string" ||
         data.id.length > 80 ||
@@ -298,7 +290,6 @@ class LocalConversation {
         p.expires < Date.now() ||
         !person ||
         !sameRoom(this.self, person) ||
-        !nearby(this.self.position, person.position) ||
         (this.group && this.group.host !== this.id)
       )
         return;
@@ -419,8 +410,7 @@ class LocalConversation {
       (this.group && this.group.host !== this.id) ||
       peer.busy ||
       this.group?.members.includes(peer.id) ||
-      !sameRoom(this.self, peer) ||
-      !nearby(this.self.position, peer.position)
+      !sameRoom(this.self, peer)
     )
       return;
     if (!canAddMember(this.group, !!this.pending)) {
@@ -450,12 +440,7 @@ class LocalConversation {
       this.acceptedPending
     )
       return;
-    if (
-      accept &&
-      (!peer ||
-        !sameRoom(this.self, peer) ||
-        !nearby(this.self.position, peer.position))
-    ) {
+    if (accept && (!peer || !sameRoom(this.self, peer))) {
       this.patch({
         error: "A pessoa saiu de perto. Você pode recusar o convite.",
       });

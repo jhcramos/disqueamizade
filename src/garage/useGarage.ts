@@ -9,7 +9,6 @@ import {
 import { fetchRoomToken } from "@/rooms/livekit";
 import { acquireGarageMedia } from "./media";
 import {
-  nearby,
   sameRoom,
   parsePerson,
   START,
@@ -179,7 +178,6 @@ export function useGarage(
           i ||
           !p ||
           !sameRoom(self.current, p) ||
-          !nearby(self.current.position, p.position) ||
           typeof data.id !== "string" ||
           !Number.isFinite(data.expires) ||
           data.expires < Date.now() ||
@@ -320,12 +318,7 @@ export function useGarage(
             (p) =>
               p.id === (raw.fromUser === identity ? raw.toUser : raw.fromUser),
           );
-          if (
-            !peer ||
-            !sameRoom(self.current, peer) ||
-            !nearby(self.current.position, peer.position)
-          )
-            return;
+          if (!peer || !sameRoom(self.current, peer)) return;
         }
         if (previous && previous.id !== raw.id) return;
         if (
@@ -439,8 +432,7 @@ export function useGarage(
       currentInvite.current ||
       pendingAction.current ||
       person.busy ||
-      !sameRoom(self.current, person) ||
-      !nearby(self.current.position, person.position)
+      !sameRoom(self.current, person)
     )
       return;
     pendingAction.current = true;
@@ -495,12 +487,7 @@ export function useGarage(
     )
       return;
     const peer = peers.current.find((p) => p.id === i.from);
-    if (
-      accept &&
-      (!peer ||
-        !sameRoom(self.current, peer) ||
-        !nearby(self.current.position, peer.position))
-    ) {
+    if (accept && (!peer || !sameRoom(self.current, peer))) {
       setError("A pessoa já saiu de perto. Você pode recusar este convite.");
       return;
     }

@@ -1,3 +1,5 @@
+import { useSocialChat } from "./useSocialChat";
+import { SocialChat } from "./SocialChat";
 import { BrandLogo } from "../components/common/BrandLogo";
 import { AccountModal } from "../social/AccountPanel";
 import { RoomChat } from "./RoomChat";
@@ -38,7 +40,6 @@ import {
   ROOMS,
   freeSpawn,
   distance,
-  approachRadius,
   inside,
   nearby,
   sameRoom,
@@ -355,6 +356,14 @@ function GarageRoom({
     busy: call,
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
+  const social = useSocialChat(self, roomPeople, room, mode);
+  useEffect(() => {
+    if (
+      incoming &&
+      (!social.preference.video || social.isBlocked(peerId || ""))
+    )
+      void net.respond(false);
+  }, [incoming, social.preference.video]);
   useEffect(() => {
     const overlap = roomPeople.some(
       (p) =>
@@ -427,29 +436,7 @@ function GarageRoom({
   useEffect(() => {
     if (call) stopPreview();
   }, [call]);
-  function approach(p: Person) {
-    setSelected(p.id);
-    const candidates = Array.from({ length: 16 }, (_, i) => ({
-      x: p.position.x + Math.cos((i * Math.PI) / 8) * approachRadius(room),
-      y:
-        p.position.y +
-        (Math.sin((i * Math.PI) / 8) * approachRadius(room)) / 0.8,
-    })).filter(
-      (point) =>
-        inside(point, room) &&
-        people.every(
-          (other) => distance(point, other.position) >= personalSpace(room),
-        ),
-    );
-    const next = candidates.sort(
-      (a, b) => distance(position, a) - distance(position, b),
-    )[0];
-    if (next) setDestination(next);
-    else
-      net.setError(
-        "Não há espaço perto dessa pessoa agora. Tente outro lado do ambiente.",
-      );
-  }
+
   return (
     <main className="garage-app">
       {accountOpen && (
@@ -541,7 +528,18 @@ function GarageRoom({
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           <GarageScene
-            chatBubbles={roomChat.bubbles}
+            preferences={social.preferences}
+            chatBubbles={{
+              ...roomChat.bubbles,
+              ...(social.session && !social.session.accepted
+                ? {
+                    [social.session.incoming ? social.session.peer : self.id]:
+                      social.session.incoming
+                        ? "Quer conversar por mensagem? Veja o convite no painel."
+                        : "Convite de mensagem enviado",
+                  }
+                : {}),
+            }}
             play={roomPlay.state}
             playControls={
               room === "bar" ? (
@@ -612,7 +610,17 @@ function GarageRoom({
             self={self}
             people={people}
             onMove={move}
-            onSelect={(id) => setSelected(id)}
+            onSelect={(id) => {
+              if (id === self.id) {
+                const panel = document.querySelector<HTMLDetailsElement>(
+                  ".social-chat details",
+                );
+                if (panel) {
+                  panel.open = true;
+                  panel.scrollIntoView({ block: "nearest" });
+                }
+              } else setSelected(id);
+            }}
             frozen={!!net.invite || settings || barGate}
             low={low}
           />
@@ -665,6 +673,7 @@ function GarageRoom({
           </div>
         </section>
         <aside className="garage-sidebar">
+          <SocialChat social={social} people={roomPeople} />
           <RoomChat
             chat={roomChat}
             room={room}
@@ -788,24 +797,33 @@ function GarageRoom({
                   <p className="conversation-prompt">{ROOMS[room].topic}</p>
                 </>
               )}
-              {person ? (
-                <button
-                  className="garage-primary"
-                  disabled={person.busy}
-                  onClick={() =>
-                    nearby(position, person.position)
-                      ? void net.request(person)
-                      : approach(person)
-                  }
-                >
-                  {person.busy
-                    ? "Em conversa"
-                    : nearby(position, person.position)
-                      ? "Pedir para conversar"
-                      : "Aproximar meu avatar"}
-                  <MessageCircle />
-                </button>
-              ) : null}
+              {person && (
+                <div className="social-actions">
+                  {social.preferences[person.id]?.text &&
+                    !social.isBlocked(person.id) && (
+                      <button
+                        className="garage-secondary"
+                        disabled={!!social.session}
+                        onClick={() => social.request(person)}
+                      >
+                        Mandar mensagem
+                      </button>
+                    )}
+                  {social.preferences[person.id]?.video &&
+                    !social.isBlocked(person.id) && (
+                      <button
+                        className="garage-primary"
+                        disabled={person.busy}
+                        onClick={() => void net.request(person)}
+                      >
+                        Convidar para vídeo
+                      </button>
+                    )}
+                  {!social.preferences[person.id] && (
+                    <p>Preferências ainda não informadas.</p>
+                  )}
+                </div>
+              )}
               {person && (
                 <p className="garage-note">
                   A conversa começa quando a outra pessoa aceitar.
@@ -847,14 +865,14 @@ function GarageRoom({
             <button
               key={p.id}
               onClick={() => {
-                approach(p);
+                setSelected(p.id);
                 setList(false);
               }}
             >
               <UserRound />
               {p.name}
               <span>
-                {p.busy ? "Em conversa" : "Aproximar"}
+                {p.busy ? "Em conversa" : "Ver preferências"}
                 <ArrowRight size={15} />
               </span>
             </button>

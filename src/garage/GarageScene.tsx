@@ -1,3 +1,4 @@
+import type { SocialPreference } from "./useSocialChat";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { createAdultAvatar, animateAdult } from "./adultAvatar";
@@ -17,6 +18,7 @@ import {
 } from "./model";
 
 type Props = {
+  preferences?: Record<string, SocialPreference>;
   play: PlayState;
   playControls: ReactNode;
   destination: Point;
@@ -425,6 +427,23 @@ export function GarageScene(props: Props) {
             )}
           {p.id === props.self.id ? "Você" : p.name}
           {p.busy ? " · em conversa" : ""}
+          {props.preferences?.[p.id] && (
+            <span
+              className="avatar-social"
+              title="💬 Mensagens · 📹 Vídeo · preferências opcionais"
+            >
+              <span>
+                {props.preferences[p.id].text ? "💬 " : ""}
+                {props.preferences[p.id].video ? "📹 " : ""}
+                {!props.preferences[p.id].text && !props.preferences[p.id].video
+                  ? "Só explorando"
+                  : ""}
+              </span>
+              {props.preferences[p.id].orientation && (
+                <span> · {props.preferences[p.id].orientation}</span>
+              )}
+            </span>
+          )}
         </button>
       ))}
       {props.bubble &&
