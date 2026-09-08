@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Calendar, Clock, ArrowRight, Tag } from 'lucide-react'
-import { Header } from '@/components/common/Header'
+import { BlogHeader } from '@/components/blog/BlogHeader'
 
 export interface BlogPost {
   slug: string
@@ -99,7 +99,7 @@ export const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-dark-950">
-      <Header />
+      <BlogHeader />
       {/* Hero */}
       <div className="relative bg-gradient-to-br from-pink-600/20 via-dark-950 to-purple-600/20 border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
@@ -164,7 +164,7 @@ export const BlogPage = () => {
                 <Link to={`/blog/${feat.slug}`} className="block mb-8 group">
                   <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
                     {featImg ? (
-                      <img src={featImg} alt={feat.title} className="w-full h-full object-cover" />
+                      <img onError={e => { if (!e.currentTarget.src.endsWith("/blog-images/placeholder.svg")) e.currentTarget.src = "/blog-images/placeholder.svg" }} src={featImg} alt={feat.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${getGradient(feat.slug)} flex items-center justify-center`}>
                         <span className="text-8xl">{CATEGORY_EMOJIS[feat.category] || '💬'}</span>
@@ -200,7 +200,7 @@ export const BlogPage = () => {
                   <div className="bg-dark-900 rounded-2xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all h-full flex flex-col">
                     <div className={`h-40 bg-gradient-to-br ${getGradient(post.slug)} flex items-center justify-center relative overflow-hidden`}>
                       {(post.coverImage || post.image) ? (
-                        <img src={post.coverImage || post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
+                        <img onError={e => { if (!e.currentTarget.src.endsWith("/blog-images/placeholder.svg")) e.currentTarget.src = "/blog-images/placeholder.svg" }} src={post.coverImage || post.image} alt={post.title} className="w-full h-full object-cover absolute inset-0" />
                       ) : (
                         <span className="text-5xl">{CATEGORY_EMOJIS[post.category] || '💬'}</span>
                       )}
@@ -227,7 +227,7 @@ export const BlogPage = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-10">
+              <div className="flex flex-wrap justify-center gap-2 mt-10">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                   <button
                     key={page}

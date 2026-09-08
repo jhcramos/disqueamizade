@@ -21,8 +21,8 @@ tags: [
 author: "Disque Amizade"
 date: "2026-04-11"
 readTime: 6
-image: "/blog-images/chat-gratis-sem-cadastro-imediato.png"
-coverImage: "/blog-images/chat-gratis-sem-cadastro-imediato.png"
+image: "/blog-images/chat-com-camera-gratis-conversar-video.webp"
+coverImage: "/blog-images/chat-com-camera-gratis-conversar-video.webp"
 wordCount: 698
 lastModified: "2026-04-11"
 relatedSlugs: [

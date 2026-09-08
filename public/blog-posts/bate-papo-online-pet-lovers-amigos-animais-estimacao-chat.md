@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-22"
 readTime: 8
-image: "/blog-images/bate-papo-online-pet-lovers-amigos-animais-estimacao-chat.png"
-coverImage: "/blog-images/bate-papo-online-pet-lovers-amigos-animais-estimacao-chat.png"
+image: "/blog-images/bate-papo-online-sabado-noite-alternativa-balada.webp"
+coverImage: "/blog-images/bate-papo-online-sabado-noite-alternativa-balada.webp"
 wordCount: 1200
 lastModified: "2026-07-22"
 relatedSlugs:
