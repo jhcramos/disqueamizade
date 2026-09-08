@@ -40,7 +40,6 @@ const rooms = [
 export function HomePage() {
   const [roomIndex, setRoom] = useState(0),
     [look, setLook] = useState("caio");
-  const room = rooms[roomIndex];
   return (
     <main className="house-home">
       <header className="house-nav">
@@ -66,19 +65,19 @@ export function HomePage() {
             alt="Casa em miniatura vista por inteiro, com avatares na sala de estar, na garagem e no Bar Vinyl" />
           <div className="whole-house-hotspots" role="group" aria-label="Conheça os ambientes">
             {rooms.map((r, i) => <button key={r.id} className={`house-spot spot-${r.id}`}
-              aria-pressed={roomIndex === i} onClick={() => setRoom(i)}>{r.name}{r.id === 'bar' ? ' · 18+' : ''} <ArrowUpRight size={13} /></button>)}
+              aria-pressed={roomIndex === i} onClick={() => setRoom(i)}>
+                <span>{r.name}</span><small>{r.label}</small><ArrowUpRight size={13} />
+              </button>)}
           </div>
           <figcaption>Uma ilustração da nossa casa. Escolha um ambiente para conhecer.</figcaption>
         </figure>
         <aside className="whole-house-entry" aria-label="Conheça a casa">
-          <p className="house-eyebrow">TEM UM LUGAR PARA VOCÊ</p>
-          <h2>{room.name}</h2>
-          <p className="whole-house-climate">{room.label}</p>
-          <div className="whole-house-avatars" aria-hidden="true">
-            <img src="/garage/home-caio.png" alt="" /><img src="/garage/home-lia.png" alt="" />
-            <span>Seu jeito.<br />Boas companhias.</span>
-          </div>
-          <p className="whole-house-description">Escolha seu avatar, explore a casa e encontre o seu jeito de conversar. Por mensagem ou vídeo, no seu tempo.</p>
+          <p className="house-eyebrow"><span /> CORPO REAL. ROSTO DE AVATAR.</p>
+          <h2>Você escolhe<br />como aparecer.</h2>
+          <figure className="whole-house-camera">
+            <img src="/garage/avatar-camera-helmets.webp" alt="Quatro pessoas em uma chamada de vídeo usando os rostos dos seus avatares como máscaras" />
+            <figcaption>A máscara acompanha o rosto e pode ser ligada ou desligada antes da conversa.</figcaption>
+          </figure>
           <Link className="house-cta" to="/garagem">Entrar na casa <ArrowRight size={20} /></Link>
           <p className="whole-house-privacy"><CameraOff size={16} /> Câmera desligada ao entrar</p>
           <p className="whole-house-free">Sem cadastro para explorar.</p>
