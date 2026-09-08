@@ -2650,3 +2650,105 @@
     }
   }
 }
+
+/* Anchor the entire nameplate above the head, regardless of label height. */
+.garage-scene .avatar-name {
+  transform: translate(-50%, -100%) translateY(-10px);
+}
+.house-screen-toggle {
+  display: none;
+}
+@media (max-width: 1000px) {
+  .house-screen-toggle {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fffaf3;
+    color: var(--ink);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-weight: 600;
+  }
+  .garage-app.is-immersive {
+    position: fixed;
+    inset: 0;
+    height: var(--house-screen-height, 100dvh);
+    min-height: 0;
+    z-index: 40;
+    padding: env(safe-area-inset-top, 0px) 0 0;
+    overflow: auto;
+    overscroll-behavior: none;
+  }
+  .is-immersive .house-screen-toggle {
+    position: sticky;
+    top: 0;
+    margin: 0;
+    width: 100%;
+    height: 44px;
+    z-index: 25;
+    border-radius: 0;
+    background: #faf5eb;
+    text-align: right;
+  }
+  .is-immersive .garage-topbar,
+  .is-immersive .garage-heading {
+    display: none;
+  }
+  .is-immersive .house-rooms {
+    margin: 0;
+    padding: 8px;
+    gap: 6px;
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .is-immersive .house-rooms button {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    min-width: 0;
+  }
+  .is-immersive .house-rooms small,
+  .is-immersive .house-rooms > p,
+  .is-immersive .house-rooms .room-count {
+    display: none;
+  }
+  .is-immersive .garage-layout {
+    border-radius: 0;
+    border: 0;
+  }
+  .is-immersive .garage-scene {
+    margin-top: 20px;
+  }
+  .is-immersive .garage-sidebar {
+    padding: 10px;
+  }
+  .is-immersive .garage-layout:not(.is-chatting) .room-chat {
+    bottom: max(0px, env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    border-radius: 16px 16px 0 0;
+    z-index: 24;
+  }
+  .is-immersive .room-chat-public {
+    padding: 7px 12px;
+  }
+  .is-immersive .room-chat-history {
+    max-height: 12dvh;
+    min-height: 0;
+  }
+  .is-immersive .room-chat-empty {
+    padding: 8px 0;
+  }
+  .is-immersive .room-chat form {
+    margin-top: 8px;
+  }
+  .is-immersive .room-chat-count {
+    padding-bottom: 8px;
+  }
+  .is-immersive .room-chat-toggle {
+    padding: 10px 12px;
+  }
+  .is-immersive .garage-under {
+    display: none;
+  }
+}

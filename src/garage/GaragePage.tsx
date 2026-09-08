@@ -319,6 +319,30 @@ function GarageRoom({
   const [seat, setSeat] = useState<string>();
   const [barGate, setBarGate] = useState(false),
     [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [immersive, setImmersive] = useState(false);
+  useEffect(() => {
+    if (!immersive) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const viewport = window.visualViewport;
+    const update = () =>
+      document.documentElement.style.setProperty(
+        "--house-screen-height",
+        `${viewport?.height || window.innerHeight}px`,
+      );
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setImmersive(false);
+    };
+    update();
+    viewport?.addEventListener("resize", update);
+    window.addEventListener("keydown", escape);
+    return () => {
+      document.body.style.overflow = previous;
+      viewport?.removeEventListener("resize", update);
+      window.removeEventListener("keydown", escape);
+      document.documentElement.style.removeProperty("--house-screen-height");
+    };
+  }, [immersive]);
   const [rouletteOpen, setRouletteOpen] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
@@ -440,7 +464,14 @@ function GarageRoom({
   }, [call]);
 
   return (
-    <main className="garage-app">
+    <main className={`garage-app${immersive ? " is-immersive" : ""}`}>
+      <button
+        className="house-screen-toggle"
+        onClick={() => setImmersive(!immersive)}
+        aria-pressed={immersive}
+      >
+        {immersive ? "✕ Sair da tela cheia" : "⛶ Tela cheia"}
+      </button>
       {accountOpen && (
         <AccountModal
           nickname={name}
