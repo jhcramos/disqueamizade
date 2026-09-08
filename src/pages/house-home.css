@@ -1193,81 +1193,50 @@
   }
 }
 
-/* Scroll-driven scenes use native scrolling; no wheel interception. */
-.house-home section[id] {
-  scroll-margin-top: 110px;
+
+/* Stable editorial entrance: the house and invitation share the first screen. */
+.house-home section[id] { scroll-margin-top: 24px; }
+.house-nav { position:relative; top:auto; max-width:none; margin:0; border-radius:0; padding:22px 4%; background:#f7f2e9; border-bottom:1px solid #dfd3c4; color:#3d263a; }
+.house-nav nav { color:#624c58; }
+.house-nav a:hover { color:#b64c2a; }
+.whole-house-hero { display:grid; grid-template-columns:minmax(0, 1.9fr) minmax(300px, 1fr); grid-template-rows:auto 1fr; background:#f7f2e9; color:#3d263a; padding:28px 4% 30px; gap:0 36px; }
+.whole-house-intro { grid-column:1; grid-row:1; position:relative; z-index:1; }
+.whole-house-intro .house-eyebrow { color:#806b5f; margin-bottom:12px; }
+.whole-house-intro h1 { font-family:Georgia,serif; font-size:clamp(36px,4vw,60px); letter-spacing:-.045em; line-height:1.05; }
+.whole-house-intro em { color:#b64c2a; }
+.whole-house-view { grid-column:1; grid-row:2; margin:0; position:relative; align-self:center; }
+.whole-house-view > img { display:block; width:100%; height:auto; max-height:530px; object-fit:contain; }
+.whole-house-view figcaption { text-align:center; font-size:11px; color:#826e60; padding:8px 0; }
+.whole-house-hotspots { position:absolute; inset:0 0 30px; pointer-events:none; }
+.house-spot { position:absolute; display:flex; gap:6px; align-items:center; border:1px solid #d5c2ab; border-radius:25px; padding:9px 14px; background:#fffaf0; color:#473340; font-size:12px!important; box-shadow:0 3px 12px #33201218; pointer-events:auto; }
+.house-spot[aria-pressed=true] { background:#b64c2a; color:white; border-color:#b64c2a; }
+.spot-living { left:9%; top:65%; }.spot-garage { left:48%; top:30%; }.spot-bar { right:7%; top:76%; }
+.whole-house-entry { grid-column:2; grid-row:1/3; border-left:1px solid #dfd3c4; padding:32px 0 20px 34px; align-self:stretch; display:flex; flex-direction:column; justify-content:center; }
+.whole-house-entry .house-eyebrow { color:#806b5f; margin-bottom:14px; }
+.whole-house-entry h2 { font-family:Georgia,serif; font-size:clamp(32px,3.1vw,48px); letter-spacing:-.04em; }
+.whole-house-climate { font-family:Georgia,serif; font-size:22px; margin:8px 0 20px; color:#755b65; }
+.whole-house-avatars { display:flex; height:110px; gap:12px; align-items:center; border-bottom:1px solid #dfd3c4; padding-bottom:18px; }
+.whole-house-avatars img { width:65px; height:90px; object-fit:contain; }
+.whole-house-avatars span { font-size:13px; line-height:1.5; color:#806b5f; }
+.whole-house-description { font-size:16px; line-height:1.7; color:#755f65; margin:24px 0; }
+.whole-house-entry .house-cta { background:#b64c2a; color:white; display:flex; justify-content:space-between; font-size:17px; border-radius:12px; padding:18px 22px; }
+.whole-house-privacy { display:flex; align-items:center; justify-content:center; gap:8px; font-size:12px; color:#806b5f; margin:14px 0 6px; }
+.whole-house-free { font-size:12px; text-align:center; margin:0; color:#806b5f; }
+.whole-house-note { font-size:10px; line-height:1.5; color:#806b5f; text-align:center; margin:16px 0 0; }
+.house-home .will-reveal { opacity:1; transform:none; }
+@media(max-width:700px) {
+ .house-nav { padding:16px 20px; gap:15px; flex-wrap:wrap; }
+ .house-nav nav { gap:18px; }
+ .house-nav .house-account { padding:10px; }
+ .whole-house-hero { grid-template-columns:1fr; grid-template-rows:auto auto auto; padding:24px 18px; gap:18px; }
+ .whole-house-intro { grid-column:1; grid-row:1; }
+ .whole-house-intro h1 { font-size:42px; }
+ .whole-house-view { grid-column:1; grid-row:3; }
+ .whole-house-entry { grid-column:1; grid-row:2; padding:0; border:0; }
+ .whole-house-entry > .house-eyebrow, .whole-house-entry h2, .whole-house-climate, .whole-house-avatars, .whole-house-description, .whole-house-free { display:none; }
+ .whole-house-note { margin-top:4px; }
+ .house-spot { padding:6px 9px; font-size:10px!important; }
+ .whole-house-view figcaption { font-size:10px; }
 }
-.house-nav {
-  position: sticky;
-  top: 16px;
-  z-index: 30;
-  backdrop-filter: blur(16px);
-}
-@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
-  .house-scroll-motion .house-scroll-runway {
-    height: 165vh;
-    margin-top: 40px;
-    padding-top: 1px;
-  }
-  .house-scroll-motion .house-product-orbit {
-    position: sticky;
-    top: 110px;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-  .house-scroll-motion .house-stage-wrap {
-    transform: perspective(1600px) rotateY(var(--scene-turn, -5deg))
-      scale(var(--scene-scale, 1));
-    transition: none;
-    transform-origin: center top;
-  }
-  .house-scroll-motion .house-orbit-avatar,
-  .house-scroll-motion .house-orbit-chat,
-  .house-scroll-motion .house-orbit-camera,
-  .house-scroll-motion .house-orbit-sticker {
-    translate: 0 var(--orbit-shift, 0px);
-    opacity: var(--orbit-opacity, 1);
-    animation: none;
-  }
-  .house-scroll-motion .house-manifesto > p {
-    background: linear-gradient(
-      90deg,
-      #f5f5f0 var(--read-progress, 0%),
-      #51564d var(--read-progress, 0%)
-    );
-    background-clip: text;
-    color: transparent;
-  }
-  .house-scroll-motion .house-manifesto > p strong {
-    color: inherit;
-  }
-  .house-scroll-motion .house-places {
-    display: grid;
-    grid-template-columns: 0.7fr 1.3fr;
-    gap: 64px;
-    align-items: start;
-  }
-  .house-scroll-motion .house-places .house-section-head {
-    position: sticky;
-    top: 150px;
-    display: block;
-  }
-  .house-scroll-motion .house-places-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 60px;
-  }
-  .house-scroll-motion .house-place {
-    position: sticky;
-    top: 115px;
-    background: #0b0c0b;
-    padding-bottom: 24px;
-  }
-  .house-scroll-motion .house-place > div:first-child {
-    aspect-ratio: 1.5;
-  }
-  .house-scroll-motion .house-places.will-reveal {
-    transform: none;
-    opacity: 1;
-  }
-}
+.house-nav .brand-logo img { background:#294432; border-radius:9px; padding:4px; }
+.house-nav .house-account { background:#b64c2a; }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -41,83 +41,8 @@ export function HomePage() {
   const [roomIndex, setRoom] = useState(0),
     [look, setLook] = useState("caio");
   const room = rooms[roomIndex];
-  const homeRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const root = homeRef.current;
-    if (!root) return;
-    const media = matchMedia(
-      "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
-    );
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      root.classList.toggle("house-scroll-motion", media.matches);
-      if (!media.matches) return;
-      const runway = root.querySelector<HTMLElement>(".house-scroll-runway")!;
-      const rect = runway.getBoundingClientRect();
-      const progress = Math.max(
-        0,
-        Math.min(1, (110 - rect.top) / Math.max(1, rect.height - innerHeight)),
-      );
-      root.style.setProperty("--scene-scale", String(1 + progress * 0.27));
-      root.style.setProperty("--scene-turn", `${-5 * (1 - progress)}deg`);
-      root.style.setProperty("--orbit-shift", `${progress * -100}px`);
-      root.style.setProperty("--orbit-opacity", String(1 - progress));
-      const manifesto = root.querySelector<HTMLElement>(".house-manifesto")!;
-      const read = Math.max(
-        0,
-        Math.min(
-          1,
-          (innerHeight * 0.8 - manifesto.getBoundingClientRect().top) /
-            (innerHeight * 0.5),
-        ),
-      );
-      root.style.setProperty("--read-progress", `${read * 100}%`);
-    };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    media.addEventListener("change", schedule);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      media.removeEventListener("change", schedule);
-    };
-  }, []);
-  useEffect(() => {
-    if (
-      matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      !("IntersectionObserver" in window)
-    )
-      return;
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        }),
-      { threshold: 0.08 },
-    );
-    const elements = document.querySelectorAll(
-      ".house-places, .house-identity, .house-masks, .house-connect, .house-journal",
-    );
-    elements.forEach((el) => {
-      el.classList.add("will-reveal");
-      observer.observe(el);
-    });
-    return () => {
-      observer.disconnect();
-      elements.forEach((el) => el.classList.remove("will-reveal"));
-    };
-  }, []);
   return (
-    <main className="house-home" ref={homeRef}>
+    <main className="house-home">
       <header className="house-nav">
         <Link to="/" aria-label="Disque Amizade início">
           <BrandLogo />
@@ -131,119 +56,34 @@ export function HomePage() {
           Meu perfil <ArrowUpRight size={16} />
         </Link>
       </header>
-      <section className="house-hero">
-        <div className="house-hero-copy">
-          <p className="house-eyebrow">
-            <span /> Seu avatar. Sua turma. Seu lugar.
-          </p>
-          <h1>
-            Seu próximo encontro <br />
-            começa com um <em>oi.</em>
-          </h1>
-          <p className="house-lead">
-            Uma casa virtual para chegar do seu jeito, explorar novos ambientes
-            e descobrir boas companhias.
-          </p>
-          <Link className="house-cta" to="/garagem">
-            Quero conhecer a casa <ArrowUpRight size={22} />
-          </Link>
-          <div className="house-promises">
-            <span>
-              <Check size={14} />
-              Sem cadastro para explorar
-            </span>
-            <span>
-              <CameraOff size={14} />
-              Câmera opcional
-            </span>
-          </div>
-          <p className="house-beta">
-            Prévia explorável · encontros online em preparação
-          </p>
+      <section className="whole-house-hero" aria-labelledby="welcome-title">
+        <div className="whole-house-intro">
+          <p className="house-eyebrow">UM LUGAR PARA ENCONTRAR SUA TURMA</p>
+          <h1 id="welcome-title">Entre. A <em>casa</em><br />também é sua.</h1>
         </div>
-        <div className="house-scroll-runway">
-          <div className="house-product-orbit">
-            <div className="house-orbit-avatar">
-              <span>100% seu jeito</span>
-              <img src="/garage/home-lia.png" alt="" />
-              <strong>
-                Seu primeiro oi
-                <br />
-                já tem personalidade.
-              </strong>
-            </div>
-            <div className="house-orbit-chat" aria-hidden="true">
-              <MessageCircle size={20} />
-              <span>Oi, pessoal! 👋</span>
-              <span>Chega mais.</span>
-            </div>
-            <div className="house-orbit-camera">
-              <CameraOff size={19} />
-              <span>
-                Câmera desligada.
-                <br />
-                <strong>Você decide quando ligar.</strong>
-              </span>
-            </div>
-            <div className="house-orbit-sticker" aria-hidden="true">
-              pode
-              <br />
-              <strong>chegar ↗</strong>
-            </div>
-            <div className="house-stage-wrap">
-              <div className="house-stage-top">
-                <span>DISQUE AMIZADE / A CASA</span>
-                <span>ESCOLHA UM CLIMA ↘</span>
-              </div>
-              <div className="house-stage">
-                <img
-                  className="house-stage-room"
-                  src={`/garage/${room.id}-background.webp`}
-                  alt={`Prévia do cenário ${room.name}`}
-                  fetchPriority="high"
-                />
-                <span className="house-scene-label">
-                  {String(roomIndex + 1).padStart(2, "0")} / {room.name}
-                  {room.id === "bar" ? " · 18+" : ""}
-                </span>
-                <div className="house-stage-person house-person-a">
-                  <div className="house-speech">{room.speech}</div>
-                  <img
-                    src="/garage/home-caio.png"
-                    alt="Avatar Caio Bloco Pop"
-                  />
-                  <span>Caio</span>
-                </div>
-                <div className="house-stage-person house-person-b">
-                  <div className="house-speech">{room.other}</div>
-                  <img src="/garage/home-lia.png" alt="Avatar Lia Bloco Pop" />
-                  <span>Lia</span>
-                </div>
-                <div className="house-stage-caption">
-                  <strong>{room.tag}</strong>
-                  <span>Cena ilustrativa com os avatares do produto</span>
-                </div>
-              </div>
-              <div
-                className="house-room-tabs"
-                role="group"
-                aria-label="Prévia dos ambientes"
-              >
-                {rooms.map((r, i) => (
-                  <button
-                    key={r.id}
-                    aria-pressed={i === roomIndex}
-                    onClick={() => setRoom(i)}
-                  >
-                    <span>0{i + 1}</span>
-                    {r.name}
-                    <ArrowUpRight size={15} />
-                  </button>
-                ))}
-              </div>
-            </div>
+        <figure className="whole-house-view">
+          <img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086"
+            alt="Casa em miniatura vista por inteiro, com avatares na sala de estar, na garagem e no Bar Vinyl" />
+          <div className="whole-house-hotspots" role="group" aria-label="Conheça os ambientes">
+            {rooms.map((r, i) => <button key={r.id} className={`house-spot spot-${r.id}`}
+              aria-pressed={roomIndex === i} onClick={() => setRoom(i)}>{r.name}{r.id === 'bar' ? ' · 18+' : ''} <ArrowUpRight size={13} /></button>)}
           </div>
-        </div>
+          <figcaption>Uma ilustração da nossa casa. Escolha um ambiente para conhecer.</figcaption>
+        </figure>
+        <aside className="whole-house-entry" aria-label="Conheça a casa">
+          <p className="house-eyebrow">TEM UM LUGAR PARA VOCÊ</p>
+          <h2>{room.name}</h2>
+          <p className="whole-house-climate">{room.label}</p>
+          <div className="whole-house-avatars" aria-hidden="true">
+            <img src="/garage/home-caio.png" alt="" /><img src="/garage/home-lia.png" alt="" />
+            <span>Seu jeito.<br />Boas companhias.</span>
+          </div>
+          <p className="whole-house-description">Escolha seu avatar, explore a casa e encontre o seu jeito de conversar. Por mensagem ou vídeo, no seu tempo.</p>
+          <Link className="house-cta" to="/garagem">Entrar na casa <ArrowRight size={20} /></Link>
+          <p className="whole-house-privacy"><CameraOff size={16} /> Câmera desligada ao entrar</p>
+          <p className="whole-house-free">Sem cadastro para explorar.</p>
+          <p className="whole-house-note">Prévia explorável · encontros online em preparação</p>
+        </aside>
       </section>
       <section className="house-manifesto">
         <p>
