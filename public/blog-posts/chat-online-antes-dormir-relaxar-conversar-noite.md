@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-06-24"
 readTime: 7
-image: "/blog-images/chat-online-antes-dormir-relaxar-conversar-noite.png"
-coverImage: "/blog-images/chat-online-antes-dormir-relaxar-conversar-noite.png"
+image: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
+coverImage: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
 wordCount: 1100
 lastModified: "2026-06-24"
 relatedSlugs:

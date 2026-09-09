@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-06-24"
 readTime: 7
-image: "/blog-images/bater-papo-online-celular-sem-baixar-app-guia-completo.png"
-coverImage: "/blog-images/bater-papo-online-celular-sem-baixar-app-guia-completo.png"
+image: "/blog-images/salas-tematicas-encontre-pessoas-interesses.webp"
+coverImage: "/blog-images/salas-tematicas-encontre-pessoas-interesses.webp"
 wordCount: 1150
 lastModified: "2026-06-24"
 relatedSlugs:

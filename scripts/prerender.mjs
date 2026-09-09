@@ -78,6 +78,9 @@ function writePage(routePath, html) {
 
 let count = 0
 
+// The directory also needs an index: direct /blog requests must resolve.
+writePage('blog', renderPage({title: 'Blog do Disque Amizade', description: 'Conversas, amizade e encontros: descubra histórias e dicas no blog do Disque Amizade.', url: `${SITE}/blog`}))
+count++
 // ─── Blog ───
 const indexPath = join(ROOT, 'public', 'blog-posts', 'index.json')
 if (existsSync(indexPath)) {

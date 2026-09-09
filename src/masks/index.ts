@@ -8,10 +8,11 @@ import { raposa } from './raposa'
 import { robo } from './robo'
 import { heroi } from './heroi'
 import { pixelado } from './pixelado'
+import { avatarMask } from './avatar'
 
 export type { MaskDef, MaskContext } from './types'
 
-export const MASKS: MaskDef[] = [raposa, carnaval, robo, heroi, pixelado]
+export const MASKS: MaskDef[] = [avatarMask, raposa, carnaval, robo, heroi, pixelado]
 
 const BY_ID = new Map(MASKS.map((m) => [m.id, m]))
 

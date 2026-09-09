@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-22"
 readTime: 9
-image: "/blog-images/fazer-amigos-online-universidade-faculdade-chat-estudantes.png"
-coverImage: "/blog-images/fazer-amigos-online-universidade-faculdade-chat-estudantes.png"
+image: "/blog-images/salas-tematicas-encontre-pessoas-interesses.webp"
+coverImage: "/blog-images/salas-tematicas-encontre-pessoas-interesses.webp"
 wordCount: 1280
 lastModified: "2026-07-22"
 relatedSlugs:

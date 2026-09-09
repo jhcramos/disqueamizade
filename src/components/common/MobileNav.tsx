@@ -12,6 +12,7 @@ export const MobileNav = () => {
   const location = useLocation()
 
   // Hide on full-screen experiences (inside a room)
+  if (['/', '/garagem', '/minha-conta', '/blog'].includes(location.pathname) || location.pathname.startsWith('/blog/')) return null
   const hideOnPaths = ['/room/']
   if (hideOnPaths.some(path => location.pathname.startsWith(path))) {
     return null
