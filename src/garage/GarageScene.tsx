@@ -37,6 +37,7 @@ type Props = {
   low: boolean;
 };
 export function GarageScene(props: Props) {
+  const pointerStart = useRef<{ x: number; y: number; id: number }>();
   const host = useRef<HTMLDivElement>(null),
     live = useRef(props),
     target = useRef(props.self.position),
@@ -370,6 +371,13 @@ export function GarageScene(props: Props) {
       role="group"
       aria-label={`${ROOMS[props.self.room || "garage"].name} navegável. Clique no piso ou use as setas para andar.`}
       onPointerDown={(e) => {
+        pointerStart.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      }}
+      onPointerCancel={() => { pointerStart.current = undefined; }}
+      onPointerUp={(e) => {
+        const start = pointerStart.current;
+        pointerStart.current = undefined;
+        if (!start || start.id !== e.pointerId || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) return;
         if (
           (e.target as HTMLElement).closest("button") ||
           props.frozen ||

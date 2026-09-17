@@ -74,6 +74,8 @@ try {
       return {
         cards,
         sidebarTop: sidebar.top,
+        sidebarBottom: sidebar.bottom,
+        viewportHeight: innerHeight,
         worldTop: world.top,
         overflow: document.documentElement.scrollWidth > innerWidth,
       };
@@ -87,8 +89,8 @@ try {
       throw Error(
         "Camera layout is too small or overflowing: " + JSON.stringify(result),
       );
-    if (mobile && result.sidebarTop >= result.worldTop)
-      throw Error("Mobile conversation must precede room");
+    if (mobile && (result.sidebarTop < 0 || result.sidebarBottom > result.viewportHeight))
+      throw Error("Mobile conversation sheet must fit inside viewport");
     console.log("PASS spacious camera layout", count, result.cards);
   }
   await checkVideoLayout(2);

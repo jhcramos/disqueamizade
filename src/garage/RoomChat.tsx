@@ -8,17 +8,22 @@ export function RoomChat({
   room,
   people,
   inCall,
+  expanded,
+  onExpandedChange,
 }: {
   chat: ReturnType<typeof useRoomChat>;
   room: RoomId;
   people: Person[];
   inCall: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(true),
+  const [localOpen, setOpen] = useState(true),
     [text, setText] = useState("");
   const [seen, setSeen] = useState<string | undefined>();
   const end = useRef<HTMLDivElement>(null);
   const latest = chat.messages[chat.messages.length - 1]?.id;
+  const open = expanded ?? localOpen;
   useEffect(() => {
     setOpen(!inCall);
     setText("");
@@ -42,7 +47,7 @@ export function RoomChat({
         className="room-chat-toggle"
         aria-expanded={open}
         aria-controls="room-chat-content"
-        onClick={() => setOpen(!open)}
+        onClick={() => onExpandedChange ? onExpandedChange(!open) : setOpen(!open)}
       >
         <MessageCircle size={20} />
         <strong>Chat · {ROOMS[room].name}</strong>

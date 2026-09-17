@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { HouseTray } from './MobileHouseViewport';
 import {
   Lightbulb,
   Radio,
@@ -312,7 +313,7 @@ export function RoomPlay({
           ● ● ●
         </div>
       )}
-      <div className="play-tray" onPointerDown={(e) => e.stopPropagation()}>
+      <HouseTray><div className="play-tray" onPointerDown={(e) => e.stopPropagation()}>
         <span className="play-tray-title">
           <Sparkles size={14} /> A casa tem brincadeira
         </span>
@@ -351,7 +352,7 @@ export function RoomPlay({
             </button>
           )}
         </p>
-      </div>
+      </div></HouseTray>
     </>
   );
 }

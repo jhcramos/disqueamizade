@@ -1,4 +1,5 @@
 import { SurpriseDialog } from "./SurpriseStation";
+import { HouseTrayContext, MobileHouseViewport, useMobileHouse } from './MobileHouseViewport';
 import { GatheringPanel } from './GatheringPanel';
 import { CONVERSATION_SPOTS, type ConversationSpot } from './gatherings';
 import { useSocialChat } from "./useSocialChat";
@@ -317,13 +318,16 @@ function GarageRoom({
   onLeave: () => void;
 }) {
   const [accountOpen, setAccountOpen] = useState(false);
+  const mobileHouse = useMobileHouse();
+  const [mobilePanel, setMobilePanel] = useState<'chat' | 'rods' | 'play' | 'people' | 'menu' | null>(null);
+  const [trayTarget, setTrayTarget] = useState<HTMLDivElement | null>(null);
   const [appearance, setAppearance] = useState(initialAppearance);
   const [seat, setSeat] = useState<string>();
   const [barGate, setBarGate] = useState(false),
     [adultConfirmed, setAdultConfirmed] = useState(false);
   const [immersive, setImmersive] = useState(false);
   useEffect(() => {
-    if (!immersive) return;
+    if (!immersive && !mobileHouse) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const viewport = window.visualViewport;
@@ -344,7 +348,7 @@ function GarageRoom({
       window.removeEventListener("keydown", escape);
       document.documentElement.style.removeProperty("--house-screen-height");
     };
-  }, [immersive]);
+  }, [immersive, mobileHouse]);
   const [rouletteOpen, setRouletteOpen] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
@@ -385,7 +389,18 @@ function GarageRoom({
     busy: call,
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
+  const [lastSeenMessage, setLastSeenMessage] = useState<string>();
+  const latestMessage = roomChat.messages[roomChat.messages.length - 1];
+  useEffect(() => { if (mobilePanel === 'chat') setLastSeenMessage(latestMessage?.id); }, [mobilePanel, latestMessage?.id]);
+  useEffect(() => { setMobilePanel(null); setLastSeenMessage(undefined); }, [room]);
+  const unreadMessages = mobilePanel === 'chat' ? 0 : roomChat.messages.length - (roomChat.messages.findIndex(m => m.id === lastSeenMessage) + 1);
   const social = useSocialChat(self, roomPeople, room, mode);
+  useEffect(() => {
+    if (mobileHouse && (incoming || call || social.session)) setMobilePanel('people');
+  }, [mobileHouse, incoming, call, social.session?.peer]);
+  useEffect(() => {
+    if (mobileHouse && net.knocks.some(k => !social.isBlocked(k.from))) setMobilePanel('rods');
+  }, [net.knocks.length]);
   const canGather = social.preference.video && !social.session;
   useEffect(() => {
     if (!canGather && net.gathering) net.setGathering(undefined);
@@ -400,6 +415,7 @@ function GarageRoom({
     net.update(point, room);
     setArrival(n => n + 1);
     net.setGathering({ spot: spot.id, open: true, count: 1 });
+    if (mobileHouse) setMobilePanel(null);
   }
   const gatheringPlaces = CONVERSATION_SPOTS[room].map((spot, index) => {
     const hosts = [self, ...roomPeople].filter(p => p.gathering?.spot === spot.id && !social.isBlocked(p.id));
@@ -412,6 +428,13 @@ function GarageRoom({
     return { spot, index, status, occupied, disabled };
   });
   function selectGathering(spot: ConversationSpot, occupied: boolean) {
+    if (mobileHouse) {
+      setMobilePanel('rods');
+      const details = document.querySelector<HTMLDetailsElement>('.gathering-panel details');
+      if (details) details.open = true;
+      requestAnimationFrame(() => document.getElementById(`gathering-${spot.id}`)?.scrollIntoView({ block: 'nearest' }));
+      return;
+    }
     if (!occupied) { openGathering(spot); return; }
     const details = document.querySelector<HTMLDetailsElement>('.gathering-panel details');
     if (details) details.open = true;
@@ -511,7 +534,28 @@ function GarageRoom({
   }, [call]);
 
   return (
-    <main className={`garage-app${immersive ? " is-immersive" : ""}`}>
+    <HouseTrayContext.Provider value={mobileHouse ? trayTarget : null}>
+    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'}>
+      {mobileHouse && <>
+        <header className="mobile-house-header">
+          <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
+            {(['garage', 'living', 'bar'] as RoomId[]).map(id => <option key={id} value={id}>{ROOMS[id].name}{id === 'bar' ? ' · 18+' : ''}</option>)}
+          </select><small>{roomPeople.length + 1} {roomPeople.length ? 'pessoas' : 'pessoa'} aqui</small></label>
+          {(call || social.session) && <button onClick={() => setMobilePanel('people')}>Conversa</button>}
+          <button onClick={() => setMobilePanel(mobilePanel === 'menu' ? null : 'menu')} aria-label="Meu perfil e opções"><UserRound size={20} /></button>
+        </header>
+        {mobilePanel && <button className="mobile-sheet-close" onClick={() => setMobilePanel(null)} aria-label="Fechar painel e voltar à casa"><X size={18} /> Voltar à casa</button>}
+        <div className="mobile-play-sheet" ref={setTrayTarget} onClick={e => { if ((e.target as HTMLElement).closest('button')) setMobilePanel(null); }} />
+        <footer className="mobile-house-dock">
+          {latestMessage && mobilePanel !== 'chat' && <button className="mobile-last-message" onClick={() => setMobilePanel('chat')}><strong>{latestMessage.name}</strong> {latestMessage.text}</button>}
+          <nav aria-label="Ferramentas da casa">
+            <button aria-pressed={mobilePanel === 'chat'} onClick={() => setMobilePanel(mobilePanel === 'chat' ? null : 'chat')}><MessageCircle size={20} /> Chat {unreadMessages > 0 && <small>{unreadMessages}</small>}</button>
+            <button aria-pressed={mobilePanel === 'rods'} onClick={() => setMobilePanel(mobilePanel === 'rods' ? null : 'rods')}><Users size={20} /> Rodas</button>
+            <button aria-pressed={mobilePanel === 'play'} onClick={() => setMobilePanel(mobilePanel === 'play' ? null : 'play')}><Sparkles size={20} /> Interagir</button>
+            <button aria-pressed={mobilePanel === 'people'} onClick={() => setMobilePanel(mobilePanel === 'people' ? null : 'people')}><UserRound size={20} /> Pessoas</button>
+          </nav>
+        </footer>
+      </>}
       <button
         className="house-screen-toggle"
         onClick={() => setImmersive(!immersive)}
@@ -626,10 +670,11 @@ function GarageRoom({
               </button>
             )}</div>
           </nav>}
+          <MobileHouseViewport active={mobileHouse} position={position} room={`${room}-${arrival}`}>
           <GarageScene
             gatheringMarkers={mode === 'local' ? gatheringPlaces.map(({ spot, index, status, occupied, disabled }) => {
               return <button className="gathering-marker" data-occupied={occupied} key={spot.id} disabled={disabled} style={{ left: `${spot.point.x * 100}%`, top: `${spot.point.y * 100 + 5}%` }} onClick={() => selectGathering(spot, occupied)} aria-label={`${spot.name}: ${status}`}>
-                <span aria-hidden="true">{index + 1}</span>
+                <span aria-hidden="true">{mobileHouse ? `${spot.name} · ${occupied ? status : '4 vagas'}` : index + 1}</span>
               </button>;
             }) : null}
             rouletteDisabled={!!social.session}
@@ -719,6 +764,7 @@ function GarageRoom({
             people={people}
             onMove={move}
             onSelect={(id) => {
+              if (mobileHouse) setMobilePanel('people');
               if (id === self.id) {
                 const panel = document.querySelector<HTMLDetailsElement>(
                   ".social-chat details",
@@ -732,6 +778,7 @@ function GarageRoom({
             frozen={!!net.invite || settings || barGate}
             low={low}
           />
+          </MobileHouseViewport>
           <footer className="world-footer">
             <span>
               <Footprints size={17} />
@@ -787,12 +834,17 @@ function GarageRoom({
           </div>
         </section>
         <aside className="garage-sidebar">
+          {mobileHouse && <div className="mobile-people-picks"><h2>Pessoas neste ambiente</h2>
+            {roomPeople.length ? roomPeople.map(p => <button key={p.id} onClick={() => setSelected(p.id)}>{p.name}{p.busy ? ' · em conversa' : ''}</button>) : <p>Você chegou primeiro. Explore a casa enquanto a conversa começa.</p>}
+          </div>}
           <SocialChat social={social} people={roomPeople} />
           <RoomChat
             chat={roomChat}
             room={room}
             people={[self, ...roomPeople]}
             inCall={!!call}
+            expanded={mobileHouse ? mobilePanel === 'chat' : undefined}
+            onExpandedChange={mobileHouse ? open => setMobilePanel(open ? 'chat' : null) : undefined}
           />
 
           {call ? (
@@ -1092,5 +1144,6 @@ function GarageRoom({
         </span>
       </footer>
     </main>
+    </HouseTrayContext.Provider>
   );
 }

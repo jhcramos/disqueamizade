@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { HouseTray } from './MobileHouseViewport';
 import {
   Armchair,
   Lightbulb,
@@ -185,7 +186,7 @@ export function BarPlay({
           🥂 {toast.name}: aos bons encontros!
         </div>
       )}
-      <div
+      <HouseTray><div
         className="play-tray bar-tray"
         onPointerDown={(e) => e.stopPropagation()}
       >
@@ -269,7 +270,7 @@ export function BarPlay({
             </button>
           )}
         </p>
-      </div>
+      </div></HouseTray>
     </>
   );
 }

@@ -51,6 +51,7 @@ try {
   await pages[4].locator('.room-chat').getByText('Qual música faria você levantar para dançar?', { exact: true }).waitFor();
   console.log('PASS optional question shared to room chat');
   await pages[4].setViewportSize({ width: 390, height: 844 });
+  await pages[4].getByRole('navigation', { name: 'Ferramentas da casa' }).getByRole('button', { name: 'Rodas', exact: true }).click();
   assert.equal(await pages[4].evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await pages[4].locator('.gathering-panel').scrollIntoViewIfNeeded();
   await pages[4].screenshot({ path: '/tmp/disque-gatherings-mobile.png', fullPage: true });
