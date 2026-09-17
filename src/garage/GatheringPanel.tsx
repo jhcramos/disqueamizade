@@ -33,7 +33,7 @@ export function GatheringPanel(props: Props) {
           {CONVERSATION_SPOTS[room].map(spot => {
             const own = mine && gathering.spot === spot.id;
             const hosts = others.filter(p => p.gathering?.spot === spot.id);
-            return <article key={spot.id} className="gathering-spot">
+            return <article key={spot.id} id={`gathering-${spot.id}`} tabIndex={-1} className="gathering-spot">
               <h3><Armchair size={16} /> {spot.name}</h3>
               {own ? <div className="gathering-own">
                 <strong>{(group?.members.length || 1) >= 4 ? 'Roda completa' : gathering.open ? 'Pode chegar' : 'Conversa reservada'} · {group?.members.length || 1}/4</strong>

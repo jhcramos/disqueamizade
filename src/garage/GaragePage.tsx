@@ -401,6 +401,24 @@ function GarageRoom({
     setArrival(n => n + 1);
     net.setGathering({ spot: spot.id, open: true, count: 1 });
   }
+  const gatheringPlaces = CONVERSATION_SPOTS[room].map((spot, index) => {
+    const hosts = [self, ...roomPeople].filter(p => p.gathering?.spot === spot.id && !social.isBlocked(p.id));
+    const own = hosts.some(p => p.id === self.id);
+    const occupied = hosts.length > 0;
+    const status = hosts.length > 1 ? `${hosts.length} rodas · Ver opções`
+      : occupied ? `${hosts[0].gathering!.count}/4 · ${hosts[0].gathering!.count >= 4 ? 'Completa' : !hosts[0].gathering!.open ? 'Reservada' : own ? 'Sua roda' : 'Pode chegar'}`
+      : '4 vagas · Começar';
+    const disabled = !occupied && (!canGather || net.invite?.status === 'pending' || !!net.group?.pendingName || (!!net.group && net.group.host !== self.id));
+    return { spot, index, status, occupied, disabled };
+  });
+  function selectGathering(spot: ConversationSpot, occupied: boolean) {
+    if (!occupied) { openGathering(spot); return; }
+    const details = document.querySelector<HTMLDetailsElement>('.gathering-panel details');
+    if (details) details.open = true;
+    const card = document.getElementById(`gathering-${spot.id}`);
+    card?.focus({ preventScroll: true });
+    card?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
   const gatheringHost = roomPeople.find(p => p.id === net.group?.host && p.gathering);
   useEffect(() => {
     if (!net.group || net.group.host === net.identity || !gatheringHost) return;
@@ -599,12 +617,19 @@ function GarageRoom({
       </nav>
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
+          {mode === 'local' && <nav className="gathering-places" aria-label="Lugares para conversar">
+            <p><Users size={16} /> Escolha um lugar para conversar <small>Toque para começar ou ver a roda.</small></p>
+            <div>{gatheringPlaces.map(({ spot, index, status, occupied, disabled }) =>
+              <button key={spot.id} disabled={disabled} onClick={() => selectGathering(spot, occupied)}>
+                <span className="gathering-place-number" aria-hidden="true">{index + 1}</span>
+                <span><strong>{spot.name}</strong><small>{status}</small></span>
+              </button>
+            )}</div>
+          </nav>}
           <GarageScene
-            gatheringMarkers={mode === 'local' ? [self, ...roomPeople].filter(p => p.gathering && !social.isBlocked(p.id)).map(p => {
-              const spot = CONVERSATION_SPOTS[room].find(s => s.id === p.gathering!.spot);
-              if (!spot) return null;
-              return <button className="gathering-marker" key={p.id} style={{ left: `${p.position.x * 100}%`, top: `${p.position.y * 100 + 4}%` }} onClick={() => document.querySelector('.gathering-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' })} aria-label={`${spot.name}: ${p.gathering!.count >= 4 ? 'Roda completa' : p.gathering!.open ? 'Pode chegar' : 'Conversa reservada'}, ${p.gathering!.count} de 4 pessoas`}>
-                <Users size={13} /> {p.gathering!.count >= 4 ? 'Completa' : p.gathering!.open ? 'Pode chegar' : 'Reservada'} · {p.gathering!.count}/4
+            gatheringMarkers={mode === 'local' ? gatheringPlaces.map(({ spot, index, status, occupied, disabled }) => {
+              return <button className="gathering-marker" data-occupied={occupied} key={spot.id} disabled={disabled} style={{ left: `${spot.point.x * 100}%`, top: `${spot.point.y * 100 + 5}%` }} onClick={() => selectGathering(spot, occupied)} aria-label={`${spot.name}: ${status}`}>
+                <span aria-hidden="true">{index + 1}</span>
               </button>;
             }) : null}
             rouletteDisabled={!!social.session}

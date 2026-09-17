@@ -2777,9 +2777,22 @@
 .gathering-icebreaker { border-top: 1px solid var(--line); padding-top: 12px; }
 .gathering-icebreaker p { font-family: Georgia, serif; font-size: 20px; margin: 12px 0; }
 .gathering-icebreaker small { display: block; margin-top: 8px; }
-.gathering-marker { position: absolute; transform: translateX(-50%); z-index: 9; display: flex; align-items: center; gap: 4px; white-space: nowrap; border: 1px solid #68856a; border-radius: 20px; padding: 6px 8px; background: #eff5e6; color: #334a35; box-shadow: 0 2px 8px #0002; font-size: 11px; cursor: pointer; }
+.gathering-places { padding: 14px 16px; background: #fffbf4; border-bottom: 1px solid var(--line); }
+.gathering-places p { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.gathering-places p small { flex-basis: 100%; color: #78695e; font-size: 12px; font-weight: 400; }
+.gathering-places > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; }
+.gathering-places button { display: flex; align-items: center; gap: 8px; min-height: 60px; padding: 10px; text-align: left; border: 1px solid #ceba9e; border-radius: 12px; color: var(--ink); background: #f6eedf; cursor: pointer; }
+.gathering-places strong { display: block; font-size: 13px; }
+.gathering-places button small { display: block; font-size: 12px; color: #3f614b; margin-top: 3px; }
+.gathering-place-number { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: #ae492e; color: #fffaf3; font-weight: 700; }
+.gathering-marker { position: absolute; transform: translateX(-50%); z-index: 9; display: grid; place-items: center; width: 44px; height: 44px; border: 2px dashed #ae492e; border-radius: 50%; background: #fff9eae8; color: #87371f; box-shadow: 0 2px 8px #0003; font-size: 17px; font-weight: 700; cursor: pointer; }
+.gathering-marker[data-occupied="true"] { border-style: solid; border-color: #4d7252; background: #e8f1dc; color: #334a35; }
+.gathering-marker:disabled, .gathering-places button:disabled { opacity: .5; cursor: not-allowed; }
+.gathering-spot { scroll-margin-top: 56px; }
+.gathering-spot:focus, .gathering-places button:focus-visible { outline: 3px solid #b74b2b; outline-offset: 3px; }
 @media (max-width: 540px) {
   .gathering-panel { padding: 14px; }
   .gathering-spots { grid-template-columns: 1fr; }
-  .gathering-marker { font-size: 10px; padding: 5px 6px; }
+  .gathering-places { padding: 12px; }
+  .gathering-places button { padding: 8px; }
 }

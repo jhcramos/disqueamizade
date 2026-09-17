@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+const errors = [];
+try {
+  const page = await context.newPage();
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(`${process.env.BASE_URL || 'http://localhost:3000'}/garagem`);
+  await page.getByRole('textbox', { name: 'Como podemos chamar você?' }).fill('Teste mobile');
+  await page.getByRole('button', { name: 'Entrar na casa', exact: true }).click();
+  await page.locator('.garage-scene').waitFor();
+  assert.equal(await page.locator('.gathering-marker').count(), 2, 'Empty garage must show both gathering places');
+  const places = page.getByRole('navigation', { name: 'Lugares para conversar' });
+  await places.getByRole('button', { name: /Roda do som.*4 vagas.*Começar/ }).waitFor();
+  await page.locator('.gathering-places').evaluate(el => el.scrollIntoView({ block: 'start' }));
+  const marker = page.locator('.garage-scene').getByRole('button', { name: /Roda do som.*4 vagas.*Começar/ });
+  const hitbox = await marker.boundingBox();
+  assert.ok(hitbox.width >= 44 && hitbox.height >= 44);
+  await marker.tap();
+  await places.getByRole('button', { name: /Roda do som.*1\/4.*Sua roda/ }).waitFor();
+  assert.equal(await page.locator('.gathering-marker[data-occupied="true"]').count(), 1);
+  await page.locator('.gathering-panel summary').click();
+  await places.getByRole('button', { name: /Roda do som.*Sua roda/ }).click();
+  assert.ok(await page.locator('.gathering-panel details').evaluate(el => el.open));
+  const reserve = page.getByRole('button', { name: 'Reservar conversa', exact: true });
+  await reserve.click();
+  await places.getByRole('button', { name: /Roda do som.*Reservada/ }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await places.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/tmp/disque-gathering-places-mobile.png' });
+  assert.deepEqual(errors, []);
+  console.log('PASS mobile empty places, touch opening, occupancy, reserved status and reopening collapsed details');
+} finally { await browser.close(); }

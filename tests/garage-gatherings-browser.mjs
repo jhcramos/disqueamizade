@@ -61,15 +61,15 @@ try {
   await visitor.setViewportSize({ width: 1440, height: 1100 });
   await visitor.locator('.house-rooms').getByRole('button', { name: /Sala de estar/ }).click();
   await visitor.locator('.gathering-spot').filter({ hasText: 'Roda do sofá' }).getByRole('button', { name: 'Abrir roda aqui' }).click();
-  await visitor.locator('.gathering-marker').filter({ hasText: 'Pode chegar' }).waitFor();
+  await visitor.locator('.gathering-marker[data-occupied="true"]').waitFor();
   await visitor.locator('.house-rooms').getByRole('button', { name: /Bar Vinyl/ }).click();
   await visitor.getByRole('button', { name: 'Tenho 18 anos ou mais' }).click();
-  assert.equal(await visitor.locator('.gathering-marker').count(), 0);
+  assert.equal(await visitor.locator('.gathering-marker[data-occupied="true"]').count(), 0);
   assert.equal(await visitor.locator('.gathering-spot').count(), 3);
   await visitor.locator('.gathering-spot').filter({ has: visitor.getByRole('heading', { name: 'Mesa 2', exact: true }) }).getByRole('button', { name: 'Abrir roda aqui' }).click();
-  await visitor.locator('.gathering-marker').waitFor();
+  await visitor.locator('.gathering-marker[data-occupied="true"]').waitFor();
   await visitor.getByRole('button', { name: 'Retirar placa' }).click();
-  assert.equal(await visitor.locator('.gathering-marker').count(), 0);
+  assert.equal(await visitor.locator('.gathering-marker[data-occupied="true"]').count(), 0);
   assert.deepEqual(errors, []);
   console.log('PASS mobile layout, host disconnect, sofa, three bar tables, clearing signs on room change');
 } catch (error) {
