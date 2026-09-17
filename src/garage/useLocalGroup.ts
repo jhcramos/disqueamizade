@@ -11,6 +11,8 @@ import {
 import { acquireGarageMedia } from "./media";
 import { canAddMember, validGroup, type LocalGroup } from "./groupRules";
 import type { Invite } from "./useGarage";
+import { normalizeGathering, type Gathering } from './gatherings';
+export type Knock = { from: string; expires: number };
 
 type Pending = Invite & { groupId: string; members: string[] };
 type Link = {
@@ -21,6 +23,8 @@ type Link = {
 type Flags = { video: boolean; audio: boolean };
 export type GroupView = LocalGroup & { pendingName: string; notice: string };
 type State = {
+  gathering: Gathering | undefined;
+  knocks: Knock[];
   people: Person[];
   invite: Invite | null;
   error: string;
@@ -33,6 +37,8 @@ type State = {
   mic: boolean;
 };
 const initial = (): State => ({
+  gathering: undefined,
+  knocks: [],
   people: [],
   invite: null,
   error: "",
@@ -54,6 +60,7 @@ class LocalConversation {
   seen = new Map<string, { person: Person; time: number }>();
   group: LocalGroup | null = null;
   pending: Pending | null = null;
+  knockTimes = new Map<string, number>();
   acceptedPending = false;
   links = new Map<string, Link>();
   media: MediaStream | null = null;
@@ -108,16 +115,43 @@ class LocalConversation {
       this.channel.postMessage({ event, data, from: this.id, to });
   }
   update(point?: Point, room?: RoomId, profile?: Partial<Person>) {
+    if (room && room !== this.self.room) this.patch({ gathering: undefined, knocks: [] });
+    const gathering = this.state.gathering && (!this.group || this.group.host === this.id)
+      ? { ...this.state.gathering, count: this.group?.members.length || 1 } : undefined;
     this.self = {
       ...this.self,
       ...profile,
       ...(point ? { position: point } : {}),
       ...(room ? { room } : {}),
       id: this.id,
+      gathering,
       busy: !!this.group || this.acceptedPending,
     };
     this.send("person", this.self);
   }
+  setGathering = (value?: Gathering) => {
+    if (this.group && this.group.host !== this.id) return;
+    const gathering = normalizeGathering(value, this.self.room || 'garage');
+    this.patch({ gathering, knocks: [] });
+    this.update();
+  };
+  knock = (person: Person) => {
+    const peer = this.seen.get(person.id)?.person;
+    if (this.group || this.pending || !peer || !sameRoom(this.self, peer) || !peer.gathering?.open || peer.gathering.count >= 4) return;
+    const last = this.knockTimes.get(peer.id) || 0;
+    if (Date.now() - last < 30000) { this.patch({ error: 'Seu pedido já foi enviado. Aguarde um instante.' }); return; }
+    this.knockTimes.set(peer.id, Date.now());
+    this.send('knock', { spot: peer.gathering.spot }, peer.id);
+    this.patch({ error: 'Pedido enviado. Você receberá um convite se houver lugar.' });
+  };
+  answerKnock = async (id: string, accept: boolean) => {
+    const request = this.state.knocks.find(k => k.from === id && k.expires > Date.now());
+    const peer = this.seen.get(id)?.person;
+    this.patch({ knocks: this.state.knocks.filter(k => k.from !== id) });
+    if (!request || !peer) return;
+    if (accept && this.state.gathering?.open) await this.request(peer);
+    else this.send('knock-declined', {}, id);
+  };
   refresh() {
     const g = this.group;
     this.patch({
@@ -164,6 +198,7 @@ class LocalConversation {
       !!this.group && g.members.some((id) => !this.group!.members.includes(id));
     this.stopMedia();
     this.group = g;
+    if (g.host !== this.id) this.patch({ gathering: undefined, knocks: [] });
     this.pending = null;
     this.acceptedPending = false;
     this.patch({
@@ -245,6 +280,18 @@ class LocalConversation {
       return;
     }
     if (!data || typeof data !== "object") return;
+    if (event === 'knock') {
+      const peer = this.seen.get(from)?.person;
+      const g = this.state.gathering;
+      if (!peer || !sameRoom(this.self, peer) || peer.busy || !g?.open || data.spot !== g.spot || !canAddMember(this.group, !!this.pending) || (this.group && this.group.host !== this.id)) return;
+      if (this.state.knocks.some(k => k.from === from) || this.state.knocks.length >= 4) return;
+      this.patch({ knocks: [...this.state.knocks, { from, expires: Date.now() + 30000 }] });
+      return;
+    }
+    if (event === 'knock-declined' && Date.now() - (this.knockTimes.get(from) || 0) < 30000) {
+      this.patch({ error: 'Agora não deu para entrar nessa roda. Você pode explorar outra.' });
+      return;
+    }
     if (event === "invite") {
       const p = this.seen.get(from)?.person;
       if (this.group || this.pending || !p || !sameRoom(this.self, p)) return;
@@ -460,6 +507,7 @@ class LocalConversation {
     this.group = null;
     this.pending = null;
     this.acceptedPending = false;
+    this.patch({ gathering: undefined, knocks: [] });
     this.refresh();
   }
   end = async () => {
@@ -509,6 +557,7 @@ class LocalConversation {
     }
   }
   tick() {
+    this.patch({ knocks: this.state.knocks.filter(k => k.expires > Date.now() && this.seen.has(k.from)) });
     this.update();
     for (const [id, v] of this.seen)
       if (v.time < Date.now() - 7000) this.removePeer(id);
@@ -664,6 +713,9 @@ export function useLocalGroup(
   return {
     ...state,
     identity,
+    setGathering: (value?: Gathering) => controller.current?.setGathering(value),
+    knock: (person: Person) => controller.current?.knock(person),
+    answerKnock: (id: string, accept: boolean) => controller.current?.answerKnock(id, accept),
     token: null,
     remoteStream: null,
     setError: (error: string) => controller.current?.patch({ error }),

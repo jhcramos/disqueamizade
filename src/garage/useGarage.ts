@@ -547,6 +547,11 @@ export function useGarage(
     ? local
     : {
         group: null,
+        gathering: undefined,
+        knocks: [],
+        setGathering: (_value?: import('./gatherings').Gathering) => {},
+        knock: (_person: Person) => {},
+        answerKnock: async (_id: string, _accept: boolean) => {},
         localMedia: null,
         remoteStreams: {},
         remoteFlags: {},

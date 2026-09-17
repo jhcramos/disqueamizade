@@ -1,4 +1,5 @@
 import { normalizeSeat } from "./seats.ts";
+import { normalizeGathering, type Gathering } from './gatherings.ts';
 import { normalizeAppearance, type Appearance } from "./avatarStyle.ts";
 export type Point = { x: number; y: number };
 export type RoomId = "garage" | "living" | "bar";
@@ -23,6 +24,7 @@ export const ROOMS = {
   },
 };
 export type Person = {
+  gathering?: Gathering;
   seat?: string;
   appearance?: Appearance;
   room?: RoomId;
@@ -156,6 +158,7 @@ export function parsePerson(raw: unknown): Person | null {
   )
     return null;
   return {
+    gathering: normalizeGathering(p.gathering, p.room === 'bar' ? 'bar' : p.room === 'living' ? 'living' : 'garage'),
     seat: normalizeSeat(p.seat, p.room),
     appearance: normalizeAppearance(p.appearance),
     room: p.room === "bar" ? "bar" : p.room === "living" ? "living" : "garage",

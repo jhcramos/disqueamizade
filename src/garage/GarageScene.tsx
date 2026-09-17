@@ -19,6 +19,7 @@ import {
 } from "./model";
 
 type Props = {
+  gatheringMarkers?: ReactNode;
   onRoulette?: () => void;
   rouletteDisabled?: boolean;
   preferences?: Record<string, SocialPreference>;
@@ -475,6 +476,7 @@ export function GarageScene(props: Props) {
         />
       )}
       {props.playControls}
+      {props.gatheringMarkers}
       <span className="scene-location">
         {ROOMS[props.self.room || "garage"].name} /{" "}
         {props.self.room === "bar"

@@ -1,4 +1,6 @@
 import { SurpriseDialog } from "./SurpriseStation";
+import { GatheringPanel } from './GatheringPanel';
+import { CONVERSATION_SPOTS, type ConversationSpot } from './gatherings';
 import { useSocialChat } from "./useSocialChat";
 import { SocialChat } from "./SocialChat";
 import { BrandLogo } from "../components/common/BrandLogo";
@@ -372,6 +374,7 @@ function GarageRoom({
   const peerName =
     net.people.find((p) => p.id === peerId)?.name || "seu convidado";
   const self: Person = {
+    gathering: net.gathering ? { ...net.gathering, count: net.group?.members.length || 1 } : undefined,
     id: net.identity,
     name,
     avatar,
@@ -383,6 +386,32 @@ function GarageRoom({
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
   const social = useSocialChat(self, roomPeople, room, mode);
+  const canGather = social.preference.video && !social.session;
+  useEffect(() => {
+    if (!canGather && net.gathering) net.setGathering(undefined);
+  }, [canGather]);
+  function openGathering(spot: ConversationSpot) {
+    if (net.invite?.status === 'pending' || (net.group && net.group.host !== net.identity) || social.session || !canGather || mode !== 'local') return;
+    const point = freeSpawn(roomPeople.map(p => p.position), spot.point, room);
+    if (!point) { net.setError('Não há lugar livre aqui agora. Tente outra roda.'); return; }
+    setSeat(undefined);
+    setPosition(point);
+    setDestination(point);
+    net.update(point, room);
+    setArrival(n => n + 1);
+    net.setGathering({ spot: spot.id, open: true, count: 1 });
+  }
+  const gatheringHost = roomPeople.find(p => p.id === net.group?.host && p.gathering);
+  useEffect(() => {
+    if (!net.group || net.group.host === net.identity || !gatheringHost) return;
+    const point = freeSpawn(roomPeople.map(p => p.position), gatheringHost.position, room);
+    if (!point) return;
+    setSeat(undefined);
+    setPosition(point);
+    setDestination(point);
+    net.update(point, room);
+    setArrival(n => n + 1);
+  }, [net.group?.id, gatheringHost?.gathering?.spot]);
   useEffect(() => {
     if (
       incoming &&
@@ -571,6 +600,13 @@ function GarageRoom({
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           <GarageScene
+            gatheringMarkers={mode === 'local' ? [self, ...roomPeople].filter(p => p.gathering && !social.isBlocked(p.id)).map(p => {
+              const spot = CONVERSATION_SPOTS[room].find(s => s.id === p.gathering!.spot);
+              if (!spot) return null;
+              return <button className="gathering-marker" key={p.id} style={{ left: `${p.position.x * 100}%`, top: `${p.position.y * 100 + 4}%` }} onClick={() => document.querySelector('.gathering-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' })} aria-label={`${spot.name}: ${p.gathering!.count >= 4 ? 'Roda completa' : p.gathering!.open ? 'Pode chegar' : 'Conversa reservada'}, ${p.gathering!.count} de 4 pessoas`}>
+                <Users size={13} /> {p.gathering!.count >= 4 ? 'Completa' : p.gathering!.open ? 'Pode chegar' : 'Reservada'} · {p.gathering!.count}/4
+              </button>;
+            }) : null}
             rouletteDisabled={!!social.session}
             onRoulette={() => {
               if (!net.invite && !social.session) setRouletteOpen(true);
@@ -683,6 +719,12 @@ function GarageRoom({
               {list ? "Ver ambiente" : "Ver pessoas em lista"}
             </button>
           </footer>
+          <GatheringPanel room={room} self={self} people={roomPeople} gathering={net.gathering} group={net.group}
+            knocks={net.knocks} pending={net.invite?.status === 'pending' || !!net.group?.pendingName} unavailable={mode !== 'local'}
+            canVideo={!!canGather} isBlocked={social.isBlocked} onOpen={openGathering} onChange={net.setGathering}
+            onKnock={p => { if (canGather && !social.isBlocked(p.id)) net.knock(p); }}
+            onAnswer={(id, accept) => { if (!accept || (canGather && !social.isBlocked(id))) void net.answerKnock(id, accept); }}
+            onShare={roomChat.send} />
           <div className="mobile-walk" aria-label="Controles de movimento">
             {[
               [ArrowLeft, -0.045, 0, "Andar à esquerda"],
