@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {Video,VideoOff,Mic,MicOff,LogOut} from 'lucide-react';
 import type {usePokerCall,CallTile} from './usePokerCall';
 function Media({stream,audio=false}:{stream:MediaStream;audio?:boolean}){
  const ref=useRef<HTMLVideoElement&HTMLAudioElement>(null),[blocked,setBlocked]=useState(false);
@@ -13,10 +14,14 @@ export function PokerVideo({call,seated,unavailable,onPreview}:{call:ReturnType<
   {call.status==='idle'?<><p>Jogue e converse. Você escolhe quando ligar a câmera e o microfone.</p><div className="poker-media-controls"><button disabled={!seated||unavailable} onClick={()=>void call.join()}>Conversar com a mesa</button><button onClick={onPreview}>Testar câmera e máscara</button></div>{!seated&&<small>Sente-se para participar da conversa.</small>}{unavailable&&<small>Encerre a outra conversa antes de entrar aqui.</small>}</>:<>
    {call.status==='connecting'?<p role="status">Conectando à conversa…</p>:<>
     {expanded&&<div className="poker-video-grid">{call.tiles.map(t=><div className="poker-video-tile" key={t.id}>{t.video?<Media stream={t.video}/>:<div className="poker-camera-off">Câmera desligada</div>}<span>{t.name}{t.self?' · você':''}</span></div>)}</div>}
-    <div className="poker-media-controls"><button aria-pressed={!!self?.video} disabled={call.pending} onClick={()=>void call.toggle('video')}>{self?.video?'Desligar câmera':'Ligar câmera'}</button><button aria-pressed={!!self?.audioOn} disabled={call.pending} onClick={()=>void call.toggle('audio')}>{self?.audioOn?'Desligar microfone':'Ligar microfone'}</button></div>
-    <label className="poker-mask-choice"><input type="checkbox" checked={call.masked} onChange={e=>call.changeMask(e.target.checked)}/> Máscara do meu avatar</label>
+    <div className="poker-media-controls is-connected">
+     <button title={self?.video?'Desligar câmera':'Ligar câmera'} aria-label={self?.video?'Desligar câmera':'Ligar câmera'} aria-pressed={!!self?.video} disabled={call.pending} onClick={()=>void call.toggle('video')}>{self?.video?<Video size={18}/>:<VideoOff size={18}/>}</button>
+     <button title={self?.audioOn?'Desligar microfone':'Ligar microfone'} aria-label={self?.audioOn?'Desligar microfone':'Ligar microfone'} aria-pressed={!!self?.audioOn} disabled={call.pending} onClick={()=>void call.toggle('audio')}>{self?.audioOn?<Mic size={18}/>:<MicOff size={18}/>}</button>
+     <label className="poker-mask-choice" title="Máscara do meu avatar"><input aria-label="Máscara do meu avatar" type="checkbox" checked={call.masked} onChange={e=>call.changeMask(e.target.checked)}/> Máscara</label>
+     <button title="Sair só da conversa" aria-label="Sair só da conversa" onClick={()=>void call.leave()}><LogOut size={18}/></button>
+    </div>
    </>}
-   <button className="poker-call-leave" onClick={()=>void call.leave()}>Sair só da conversa</button>
+   {call.status==='connecting'&&<button className="poker-call-leave" onClick={()=>void call.leave()}>Cancelar conversa</button>}
   </>}
   {call.notice&&<p role="status">{call.notice}</p>}
  </div>;

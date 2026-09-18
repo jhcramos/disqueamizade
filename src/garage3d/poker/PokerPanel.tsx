@@ -56,13 +56,13 @@ export function PokerPanel({open,onClose,getVisitor,onSeat,avatar,appearance,una
  return <>{mediaUI}<section className="house-poker" aria-label="Mesa de pôquer" onPointerDown={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}}}>
   <header><div><small>BAR VINYL · MESA DO MEIO</small><h2>Uma mão entre amigos.</h2></div><button onClick={onClose} aria-label="Minimizar pôquer">×</button></header>
   <div className="poker-scroll"><p className="poker-intro">Texas Hold’em · até 4 pessoas · fichas gratuitas, sem dinheiro real</p>
-  <PokerVideo call={call} seated={!!me&&!me.left} unavailable={unavailable} onPreview={()=>setPreview(true)}/>
+  <div className="poker-table-body"><PokerVideo call={call} seated={!!me&&!me.left} unavailable={unavailable} onPreview={()=>setPreview(true)}/>
   <div className="poker-felt">
-   <div className="poker-players">{[0,1,2,3].map(seat=>{const p=game?.players.find(p=>p.seat===seat);return <div key={seat} className={`poker-player ${p?.id===game?.turn?'is-turn':''} ${p?.folded?'is-folded':''}`}><strong>{p?p.id===me?.id?`${p.name} · você`:p.name:'Lugar livre'}{p&&game?.dealer===seat&&<i title="Dealer">D</i>}</strong><span>{p?`${p.chips.toLocaleString('pt-BR')} fichas${p.left?' · saiu':p.waiting?' · próxima mão':p.folded?' · desistiu':''}`:'Convide alguém da casa'}</span>{p&&<div className="poker-mini-cards"><Card card={p.cards[0]}/><Card card={p.cards[1]}/>{p.bet>0&&<small>+{p.bet}</small>}</div>}</div>;})}</div>
+   <div className="poker-players">{[0,1,2,3].map(seat=>{const p=game?.players.find(p=>p.seat===seat);return <div key={seat} className={`poker-player ${!p?'is-empty':''} ${p?.id===me?.id?'is-self':''} ${p?.id===game?.turn?'is-turn':''} ${p?.folded?'is-folded':''}`}><strong>{p?p.id===me?.id?`${p.name} · você`:p.name:'Lugar livre'}{p&&game?.dealer===seat&&<i title="Dealer">D</i>}</strong><span>{p?`${p.chips.toLocaleString('pt-BR')} fichas${p.left?' · saiu':p.waiting?' · próxima mão':p.folded?' · desistiu':''}`:'Convide alguém da casa'}</span>{p&&<div className="poker-mini-cards"><Card card={p.cards[0]}/><Card card={p.cards[1]}/>{p.bet>0&&<small>+{p.bet}</small>}</div>}</div>;})}</div>
    <div className="poker-board" aria-label="Cartas comunitárias">{Array.from({length:5},(_,i)=><Card key={i} card={game?.board[i]}/>)}</div>
    <div className="poker-pot"><span>{phase[game?.street??'waiting']}</span><strong>Pote · {game?.pot??0}</strong></div>
   </div>
-  <p className="poker-note" role="status">{game?.note||'Conectando à mesa…'}</p>
+  </div><p className="poker-note" role="status">{game?.note||'Conectando à mesa…'}</p>
   {me&&me.cards.length===2&&game&&game.board.length>=3&&!me.folded&&<p className="poker-hand">Sua combinação: {handNames[rankHand([...me.cards,...game.board])[0]]}</p>}
   {game?.turn&&<p className="poker-turn">{game.turn===me?.id?'Sua vez':`Vez de ${game.players.find(p=>p.id===game.turn)?.name}`} · {Math.max(0,Math.min(30,Math.ceil((game.deadline-clock)/1000)))}s</p>}
   {message&&<p className="poker-feedback" role="status">{message}</p>}

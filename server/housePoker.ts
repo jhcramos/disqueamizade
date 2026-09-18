@@ -14,6 +14,7 @@ export async function handlePoker(body:Record<string,any>,res:VercelResponse,url
  const near=Math.hypot(visitor.position.x-TABLE.x,visitor.position.z-TABLE.z)<2.1;
  if(command&&command.action!=='leave'&&!near)return res.status(400).json({error:'Aproxime-se da mesa de pôquer no bar para jogar.'});
  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}}),now=Date.now();
+ let preparedRoom:string|undefined;
  for(let attempt=0;attempt<5;attempt++){
   const {data,error}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();
   if(error||!data)return res.status(503).json({error:'A mesa está indisponível. Tente novamente.'});
@@ -29,8 +30,8 @@ export async function handlePoker(body:Record<string,any>,res:VercelResponse,url
   if(callCommand?.action==='join'&&(!near||visitor.frozen||!game.players.some(p=>p.id===identity.id&&!p.left)))return res.status(403).json({error:'Sente-se à mesa e encerre outras conversas antes de entrar no vídeo.'});
   const previousCall:PokerCall|undefined=payload.pokerCall;
   const pokerCall=nextPokerCall(previousCall,game,identity.id,callCommand,body.callActive===true,now);
-  if(callCommand?.action==='join'){
-   try{await preparePokerRoom(pokerCall.room);}catch{return res.status(503).json({error:'Não foi possível conectar a conversa. Sua partida continua normalmente.'});}
+  if(callCommand?.action==='join'&&preparedRoom!==pokerCall.room){
+   try{await preparePokerRoom(pokerCall.room);preparedRoom=pokerCall.room;}catch{return res.status(503).json({error:'Não foi possível conectar a conversa. Sua partida continua normalmente.'});}
   }
   const {data:written,error:failed}=await db.from('house_resident_world').update({revision:data.revision+1,payload:{...payload,poker:game,pokerCall,pokerCommands:Object.fromEntries(Object.entries(commands).slice(-80))},updated_at:new Date(now).toISOString()}).eq('id','main').eq('revision',data.revision).select('revision');
   if(failed)return res.status(503).json({error:'A mesa está reconectando.'});
