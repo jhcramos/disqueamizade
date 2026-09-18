@@ -124,8 +124,7 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   for(const x of [-.5,.5]){ball(car,'#eee0b7',x,.63,.62,.14,.14,.05);const wheel=cylinder(car,'#282828',x*1.3,.29,0,.28,.19);wheel.rotation.z=Math.PI/2;}
   }else if(roomId==='living'){
     box(root,'#89633e',2.8,.47,-3.2,2.75,.94,.7);
-    box(root,'#473e32',2.8,1.35,-3.2,1.7,.95,.36);
-    const screen=box(root,'#859a85',2.7,1.35,-2.99,1.32,.69,.035);screen.name='television-screen';screen.userData.kind='screen';
+
     for(let i=0;i<18;i++)box(root,['#536953','#a26547','#d0b17d'][i%3],1.55+i*.14,.43,-2.83,.065,.6,.24);
     cylinder(root,'#6d5131',4,1.05,-3.2,.09,.35);ball(root,'#ecd4a3',4,1.4,-3.2,.24,.22,.24);
   }else{
@@ -136,6 +135,25 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
     }
     for(const t of barTables){cylinder(root,'#825a38',t.x,1.08,t.z,.52,.10);cylinder(root,'#4d3c2d',t.x,.54,t.z,.09,1.02);cylinder(root,'#4d3c2d',t.x,.06,t.z,.32,.1);cylinder(root,'#efd19b',t.x,1.21,t.z,.06,.15);}
   }
+  // Physical TVs are hit targets; the official video player opens outside the canvas.
+  const tv=new T.Group();tv.userData.kind='television';root.add(tv);
+  const tvSize=roomId==='living'?{w:1.85,h:1.14,x:2.8,y:1.58,z:-3.10}:{w:2.7,h:1.6,x:roomId==='garage'?2.65:2.55,y:roomId==='garage'?1.95:2.03,z:-3.55};
+  const {w:tw,h:th,x:tx,y:ty,z:tz}=tvSize;tv.position.set(tx,ty,tz);
+  box(tv,roomId==='living'?'#70462e':'#302d29',0,0,0,tw,th,.18);
+  if(roomId==='garage'){
+    box(tv,'#b6a385',0,th/2+.07,-.02,tw+.18,.12,.20);
+    box(tv,'#726449',0,-th/2-.04,.02,tw+.08,.07,.1);
+  }
+  const display=document.createElement('canvas');display.width=640;display.height=360;
+  const pen=display.getContext('2d')!;pen.fillStyle='#213f3c';pen.fillRect(0,0,640,360);
+  pen.strokeStyle='#bfa478';pen.lineWidth=2;pen.strokeRect(24,24,592,312);
+  pen.fillStyle='#f5dfb3';pen.textAlign='center';pen.font='18px sans-serif';pen.fillText('DISQUE AMIZADE APRESENTA',320,88);
+  pen.font='italic 46px Georgia';pen.fillText(roomId==='garage'?'Cinema de garagem':roomId==='living'?'A TV da sala':'Na tela do Vinyl',320,171);
+  pen.beginPath();pen.moveTo(306,216);pen.lineTo(306,258);pen.lineTo(344,237);pen.closePath();pen.fill();
+  pen.font='17px sans-serif';pen.fillText('TOQUE PARA ESCOLHER UM VÍDEO',320,301);
+  const tvTexture=new T.CanvasTexture(display);tvTexture.colorSpace=T.SRGBColorSpace;
+  const television=new T.Mesh(new T.PlaneGeometry(tw-.18,th-.18),new T.MeshStandardMaterial({map:tvTexture,roughness:.6}));television.position.z=.101;television.name='television-screen';tv.add(television);
+  if(roomId==='living')for(const x of [-.65,.65])box(tv,'#40382d',x,-th/2-.07,0,.11,.18,.24);
   furniture[roomId].forEach((f,group)=>{
     const {x,z,angle,color,count,stool}=f;
     const g=new T.Group();g.position.set(x,0,z);g.rotation.y=angle;root.add(g);const w=count*.8+.2;

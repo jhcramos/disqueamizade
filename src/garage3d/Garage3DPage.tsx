@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as T from 'three';
-import { ArrowLeft, Armchair, Footprints, Lightbulb, Maximize2, Phone, RotateCcw, Eye, Music2, Sparkles, ArrowUp, ArrowDown, ArrowRight, MessageCircle, Video } from 'lucide-react';
+import { ArrowLeft, Armchair, Footprints, Lightbulb, Maximize2, Phone, RotateCcw, Eye, Music2, Sparkles, ArrowUp, ArrowDown, ArrowRight, MessageCircle, Video, Tv } from 'lucide-react';
 import { createAdultAvatar, animateAdult } from '../garage/adultAvatar';
 import { presetAppearance } from '../garage/avatarPresets';
 import { buildRoom } from './buildRoom';
@@ -100,6 +100,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       const hits=raycaster.intersectObjects(roomIds.map(id=>rooms[id].root),true).filter(hit=>{let node:T.Object3D|null=hit.object;while(node){if(!node.visible)return false;node=node.parent;}return true;});
       for(const hit of hits){let root:T.Object3D=hit.object;while(root.parent&&!root.userData.roomId)root=root.parent;const id=root.userData.roomId as RoomId;if(!id)return;
         const seats=allSeats[id];let o:T.Object3D|null=hit.object;while(o&&o!==root){
+        if(o.userData.kind==='television'){live.current?.onTelevision?.(id);return;}
         if(o.userData.kind==='seat'){const nearest=(o.userData.indices as number[]).reduce((a,b)=>Math.hypot(seats[a].x-hit.point.x,seats[a].z-hit.point.z)<Math.hypot(seats[b].x-hit.point.x,seats[b].z-hit.point.z)?a:b);sit(nearest,id);return;}
         if(o.userData.kind==='phone'){const index=o.userData.index as number;const near=nearbyPhone(actor.position);if(near?.index===index&&near.room===id){if(ringing?.index===index&&ringing.room===id)answer();else setStatus('Você está perto do telefone. Toque em “Ligar” para conversar.');}else goToPhone(index,id);return;}o=o.parent;}
         if(hit.object===rooms[id].floor||hit.point.y<.065){stand();path=houseRoute(actor.position,hit.point);setStatus(path.length?'Passeando pela casa…':'Esse lugar está ocupado por um móvel. Toque no piso livre.');return;}
@@ -133,7 +134,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
         remote.sync(state.people,now,dt,reduced,state.play.perform);
         playObjects.sync(state,now);
         dance=!state.frozen&&!!state.play.perform?.on&&state.play.perform.actor===own.id&&!sitting&&Date.now()-state.play.perform.at<6000;
-        rooms[room].screen(state.play.screen?.on===true);
+        rooms[room].screen(state.televisionOn===true||state.play.screen?.on===true);
         const roomLit=state.play.lights?.on!==false;if(lights[room]!==roomLit){lights[room]=roomLit;setLit(roomLit);}
         roomIds.forEach(id=>{if(id===room)rooms[id].lights(state.play.lights?.on!==false);});
       }
@@ -164,7 +165,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       rooms.living.cutaway(!fp&&targetZoom===3&&actor.position.z< -4);
       renderer.render(scene,fp?eyeCamera:camera);el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.camera=fp?'first-person':'overview';el.dataset.nearPhone=nearestKey;el.dataset.yaw=yaw.toFixed(2);el.dataset.dancing=String(dance);
       el.dataset.position=`${actor.position.x.toFixed(2)},${actor.position.z.toFixed(2)}`;
-      el.dataset.people=String(state?.people.length??0);
+      el.dataset.people=String(state?.people.length??0);el.dataset.televisions='3';
       el.dataset.seated=String(sitting);el.dataset.hipHeight=(actor.position.y+hipHeight).toFixed(3);el.dataset.seatHeight=pendingSeat!==null?String(allSeats[pendingSeat.room][pendingSeat.index].height):'';el.dataset.view=currentView;el.dataset.zoom=zoom.toFixed(2);
       frame=requestAnimationFrame(tick);
     }
@@ -177,6 +178,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     <section className="garage3d-intro"><div><p>A MESMA CASA. UMA NOVA DIMENSÃO.</p><h1>Entre. Fique à vontade.</h1></div><p>Um cantinho para ouvir música,<br/>puxar uma cadeira e encontrar sua turma.</p></section>
     <nav className="garage3d-rooms" aria-label="Enquadramento da casa">
       <button aria-pressed={close} onClick={()=>{setClose(true);setView(roomId);controls.current?.focus(roomId);controls.current?.view(true);}}>Meu avatar</button>
+      {session?.onTelevision&&<button disabled={session.frozen} onClick={()=>session.onTelevision?.(roomId)}><Tv size={14}/> Televisão</button>}
       <button aria-pressed={view==='house'&&!close} onClick={()=>focus('house')}>Casa inteira</button>
     </nav>
     <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada">

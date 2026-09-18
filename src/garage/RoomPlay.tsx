@@ -36,8 +36,10 @@ type Props = {
   frozen: boolean;
   connected: boolean;
   spatial?:boolean;
+  onTelevision?:()=>void;
 };
 export function RoomPlay({
+  onTelevision,
   self,
   people,
   state,
@@ -162,6 +164,7 @@ export function RoomPlay({
     } else setNotice("Espere um instante antes de brincar de novo.");
   }
   function request(kind: PlayKind) {
+    if(kind==='screen'&&living&&onTelevision){onTelevision();return;}
     if (frozen) return;
     setPending(null);
     if (kind === "cushion" && holder && !ownCushion) {
@@ -259,7 +262,7 @@ export function RoomPlay({
     ],
     [
       "screen",
-      powered
+      living&&onTelevision?'Escolher vídeo na TV':powered
         ? living
           ? "Desligar TV"
           : "Desligar som"

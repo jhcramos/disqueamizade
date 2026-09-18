@@ -1,3 +1,5 @@
+import { HouseTheatre } from "./theatre/HouseTheatre";
+import { useScreening } from "./theatre/useScreening";
 import { HousePhones } from "./HousePhones";
 import { HouseTrayContext, MobileHouseViewport, useMobileHouse } from './MobileHouseViewport';
 import { GatheringPanel } from './GatheringPanel';
@@ -317,6 +319,7 @@ function GarageRoom({
   userId?: string;
   onLeave: () => void;
 }) {
+  const [theatreOpen, setTheatreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [desktopPanel,setDesktopPanel]=useState<'rods'|'play'|null>(null);
   const mobileHouse = useMobileHouse();
@@ -374,6 +377,7 @@ function GarageRoom({
     [previewOpen, setPreviewOpen] = useState(false);
   const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy);
   useEffect(()=>{setDesktopPanel(null);},[room]);
+  useEffect(()=>{if(desktopPanel)setTheatreOpen(false);},[desktopPanel]);
   const roomPlay = useRoomPlay(room, mode);
   const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
   const people = roomPeople;
@@ -402,12 +406,17 @@ function GarageRoom({
     busy: call || phoneBusy,
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
+  const screening = useScreening(room, mode, self, roomPeople);
+  function openTheatre() { if (net.invite || phoneBusy || social.session) return; setTheatreOpen(true); setDesktopPanel(null); setMobilePanel(null); }
+  useEffect(() => { setTheatreOpen(false); }, [room]);
+  useEffect(() => { if (mobilePanel || call || phoneBusy || previewOpen || accountOpen) setTheatreOpen(false); }, [mobilePanel, call, phoneBusy, previewOpen, accountOpen]);
   const [lastSeenMessage, setLastSeenMessage] = useState<string>();
   const latestMessage = roomChat.messages[roomChat.messages.length - 1];
   useEffect(() => { if (mobilePanel === 'chat') setLastSeenMessage(latestMessage?.id); }, [mobilePanel, latestMessage?.id]);
   useEffect(() => { setMobilePanel(null); setLastSeenMessage(undefined); }, [room]);
   const unreadMessages = mobilePanel === 'chat' ? 0 : roomChat.messages.length - (roomChat.messages.findIndex(m => m.id === lastSeenMessage) + 1);
   const social = useSocialChat(self, roomPeople, room, mode);
+  useEffect(() => { if (social.session || incoming || rouletteOpen || settings || barGate) setTheatreOpen(false); }, [social.session, incoming, rouletteOpen, settings, barGate]);
   useEffect(() => {
     if (mobileHouse && (incoming || call || social.session)) setMobilePanel('people');
   }, [mobileHouse, incoming, call, social.session?.peer]);
@@ -527,7 +536,7 @@ function GarageRoom({
 
   return (
     <HouseTrayContext.Provider value={trayTarget}>
-    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'} data-desktop-panel={desktopPanel||'none'}>
+    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'} data-desktop-panel={desktopPanel||'none'} data-theatre={theatreOpen}>
       {mobileHouse && <>
         <header className="mobile-house-header">
           <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
@@ -668,6 +677,8 @@ function GarageRoom({
           <GarageScene
             revision={arrival}
             onRoom={(next,point)=>changeRoom(next,false,point)}
+            onTelevision={id=>{if(id===room)openTheatre();else if(changeRoom(id))setTimeout(()=>setTheatreOpen(true),0);}}
+            televisionOn={!!screening.state.current}
             onSeat={chooseSeat}
             onPhone={id=>{setSelectedPhone(id);setRouletteOpen(true);}}
             ringingPhones={ringingPhones}
@@ -694,18 +705,18 @@ function GarageRoom({
                   act={roomPlay.act}
                   onApproach={setDestination}
                   onSeat={chooseSeat}
-                  frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
+                  frozen={theatreOpen || !!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
                   connected={roomPlay.connected}
                 />
               ) : (
-                <RoomPlay spatial
+                <RoomPlay spatial onTelevision={openTheatre}
                   key={room}
                   self={self}
                   people={people}
                   state={roomPlay.state}
                   act={roomPlay.act}
                   onApproach={setDestination}
-                  frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
+                  frozen={theatreOpen || !!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
                   connected={roomPlay.connected}
                 />
               )
@@ -824,6 +835,7 @@ function GarageRoom({
           </div>
         </section>
         <aside className="garage-sidebar">
+          {theatreOpen && <HouseTheatre key={room} screening={screening} self={self} people={roomPeople} room={room} onClose={()=>setTheatreOpen(false)} />}
           {mobileHouse && <div className="mobile-people-picks"><h2>Pessoas neste ambiente</h2>
             {roomPeople.length ? roomPeople.map(p => <button key={p.id} onClick={() => setSelected(p.id)}>{p.name}{p.busy ? ' · em conversa' : ''}</button>) : <p>Você chegou primeiro. Explore a casa enquanto a conversa começa.</p>}
           </div>}
