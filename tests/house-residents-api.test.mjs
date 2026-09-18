@@ -42,10 +42,13 @@ test('resident API guards requests and owns anonymous identity independently of 
   assert.equal(generations.length,1);
   assert.equal(generations[0].model,'zai-org/GLM-5.3-Flash');
   assert.equal(generations[0].reasoning_effort,'none');assert.equal(generations[0].max_tokens,100);
+  assert.equal(generated.body.state.speech.generatedBy,'zai-org/GLM-5.3-Flash');
   assert.equal(generated.body.state.speech.text,'O café esfriou, mas a fofoca continua quentinha.');
   assert.ok(row.payload.nextAI>Date.now()+110000);
   await invoke();assert.equal(generations.length,1,'Other visitors reuse the same generation window');
-  row.payload.nextAI=0;delete row.payload.state.speech;providerStatus=503;
+  row.payload.nextAI=0;
+  await invoke();assert.equal(generations.length,1,'An existing bubble is allowed to finish before spending on another line');
+  delete row.payload.state.speech;providerStatus=503;
   assert.equal((await invoke()).status,200,'Provider failures do not interrupt household actions');
   await invoke();assert.equal(generations.length,2,'No immediate retries after provider failure');
  }finally{

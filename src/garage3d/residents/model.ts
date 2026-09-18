@@ -4,7 +4,7 @@ export type ItemId = 'coffee' | 'watering' | 'record' | 'toy';
 export type Visitor = { id:string; name:string; position:Place; frozen?:boolean };
 export type Resident = {id:ResidentId; position:Place; angle:number; activity:string; path:Place[]; until:number; step:number; target?:string};
 export type Item = {id:ItemId; kind:ItemId; position:Place; height:number; holder?:string; reserved?:string};
-export type LifeState = {version:1; residents:Resident[]; items:Item[]; memories:string[]; speech?:{owner:ResidentId;text:string;until:number}; cooldown:Record<string,number>; watered:number; coffees:number; dances:number; fetches:number};
+export type LifeState = {version:1; residents:Resident[]; items:Item[]; memories:string[]; speech?:{owner:ResidentId;text:string;until:number;generatedBy?:string}; cooldown:Record<string,number>; watered:number; coffees:number; dances:number; fetches:number};
 export const NAMES:Record<ResidentId,string>={dora:'Dora',teo:'Téo',biscoito:'Biscoito'};
 export const ITEMS:Record<ItemId,{name:string;position:Place;height:number}>={
  coffee:{name:'Café da casa',position:{x:-5.3,z:.85},height:.53},
