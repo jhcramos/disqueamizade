@@ -30,3 +30,5 @@
 .is-cinema .garage3d-rooms>button:not(.cinema-exit){display:none}
 .is-cinema .garage3d-canvas{pointer-events:none}
 .is-cinema .garage3d-stage.is-first-person{border:0;border-radius:0;max-height:none}
+/* Only the scene owns gestures. Chat, forms and the rest of the page keep native scrolling. */
+.garage3d-canvas{touch-action:none;user-select:none;cursor:grab}.garage3d-canvas:active{cursor:grabbing}.house-gesture-hint{position:absolute;top:66px;right:6px;font-size:10px;color:#796550;background:#fff8eddd;padding:5px 8px;border-radius:8px;pointer-events:none}.is-first-person .house-gesture-hint{display:none}@media(max-width:700px){.house-gesture-hint{top:60px;right:4px;font-size:9px;padding:4px 6px}}
