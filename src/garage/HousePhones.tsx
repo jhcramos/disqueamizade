@@ -8,6 +8,7 @@ import { CameraSetupProvider } from '@/rooms/CameraSetup';
 import { RouletteCall } from '@/rooms/RouletteCall';
 import { reportUser } from '@/services/moderation';
 import { HOUSE_PHONES, type PhoneState } from './phoneModel';
+import { playPhoneRing } from './phoneRing';
 import { ROOMS, type RoomId } from './model';
 import './housePhones.css';
 
@@ -92,6 +93,7 @@ export function HousePhones(props: Props) {
     return () => { cancelled = true; };
   }, [mine?.id, mine?.status, identity]);
   const ringKey = rings.map(r => r.id).join(',');
+  const ringExpires = Math.max(0, ...rings.map(r => Date.parse(r.expires)));
   useEffect(()=>{props.onRings?.(rings.map(r=>r.phone));},[ringKey,props.onRings]);
   useEffect(()=>{if(props.open&&props.selectedPhone&&HOUSE_PHONES[props.room].some(p=>p.id===props.selectedPhone))setSelected(props.selectedPhone);},[props.open,props.selectedPhone,props.room]);
   useEffect(() => {
@@ -101,23 +103,19 @@ export function HousePhones(props: Props) {
   }, [muted]);
   useEffect(() => {
     if (muted || !ringKey || props.busy || active) return;
+    let stopRing = () => {};
     const chime = () => {
+      stopRing();
+      if (Date.now() >= ringExpires) return;
       const ctx = audio.current;
       if (!ctx || ctx.state !== 'running') return;
-      for (const offset of [0, .24]) {
-        const oscillator = ctx.createOscillator(), gain = ctx.createGain();
-        oscillator.type = 'sine'; oscillator.frequency.value = 660;
-        gain.gain.setValueAtTime(0, ctx.currentTime+offset);
-        gain.gain.linearRampToValueAtTime(.045,ctx.currentTime+offset+.015);
-        gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+offset+.19);
-        oscillator.connect(gain); gain.connect(ctx.destination);
-        oscillator.start(ctx.currentTime+offset); oscillator.stop(ctx.currentTime+offset+.2);
-      }
+      stopRing = playPhoneRing(ctx);
     };
-    chime(); const timer = setInterval(chime, 3200);
-    return () => clearInterval(timer);
-  }, [muted, ringKey, props.busy, active]);
-  useEffect(() => () => { void audio.current?.close(); }, []);
+    chime(); const timer = setInterval(chime, 4400);
+    const expiry = setTimeout(() => { clearInterval(timer); stopRing(); }, Math.max(0, ringExpires - Date.now()));
+    return () => { clearInterval(timer); clearTimeout(expiry); stopRing(); };
+  }, [muted, ringKey, ringExpires, props.busy, active]);
+  useEffect(() => () => { void audio.current?.close(); audio.current = null; }, []);
   async function act(action: string, callId?: string) {
     if (working.current) return;
     working.current = true; setPending(true); setError('');
@@ -153,7 +151,7 @@ export function HousePhones(props: Props) {
           <button className="phone-primary" disabled={!ready || pending || props.busy || !enabled} onClick={() => void act(incoming?'answer':'call',incoming?.id)}><Phone size={18}/>{pending?'Conectando…':incoming?'Atender ligação':'Ligar para alguém'}</button>}
         <small>Câmera e microfone começam desligados. Você escolhe se quer ativá-los.</small>
       </>}
-      {!active && <footer><label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)}/> Disponível para receber ligações</label><button onClick={() => { if (muted) {audio.current ||= new AudioContext(); void audio.current.resume();} setMuted(!muted); }}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>} {muted?'Ativar toque':'Silenciar toque'}</button></footer>}
+      {!active && <footer><label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)}/> Disponível para receber ligações</label><button onClick={() => { if (muted) {audio.current ||= new AudioContext(); void audio.current.resume().catch(() => {});} setMuted(!muted); }}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>} {muted?'Ativar toque':'Silenciar toque'}</button></footer>}
     </dialog>
   </>;
 }
