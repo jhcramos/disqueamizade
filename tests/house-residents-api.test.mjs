@@ -6,8 +6,13 @@ import {createLife} from '../src/garage3d/residents/model.ts';
 
 test('resident API guards requests and owns anonymous identity independently of visitor input',async()=>{
  const saved={url:process.env.SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,ai:process.env.DEEPINFRA_API_KEY},originalFetch=globalThis.fetch;
+ const generations=[];let providerStatus=200;
  let row={revision:0,payload:{state:createLife(),visitors:{},at:Date.now(),nextAI:Date.now()+120000,commands:{}}};
  globalThis.fetch=async(request,init)=>{
+  if(String(request)==='https://api.deepinfra.com/v1/openai/chat/completions'){
+   generations.push(JSON.parse(init.body));
+   return new Response(JSON.stringify(providerStatus===200?{choices:[{message:{content:'O café esfriou, mas a fofoca continua quentinha.'}}]}:{error:'unavailable'}),{status:providerStatus});
+  }
   assert.match(String(request),/^https:\/\/resident-test\.invalid\/rest\/v1\/house_resident_world/);
   if(init?.method==='PATCH'){row={...row,...JSON.parse(init.body)};return new Response(JSON.stringify([{revision:row.revision}]),{status:200});}
   return new Response(JSON.stringify(row),{status:200});
@@ -31,6 +36,18 @@ test('resident API guards requests and owns anonymous identity independently of 
   assert.notEqual(response.body.identity.id,claimed);
   assert.ok(row.payload.visitors[response.body.identity.id]);assert.equal(row.payload.visitors[claimed],undefined);
   assert.equal((await invoke({headers:{host:'example.invalid','x-resident-session':response.body.identity.token}})).status,429);
+  process.env.DEEPINFRA_API_KEY='fake-provider-test-only';row.payload.nextAI=0;delete row.payload.state.speech;
+  const generated=await invoke();
+  assert.equal(generated.status,200);assert.equal(generated.body.generative,true);
+  assert.equal(generations.length,1);
+  assert.equal(generations[0].model,'zai-org/GLM-5.3-Flash');
+  assert.equal(generations[0].reasoning_effort,'none');assert.equal(generations[0].max_tokens,100);
+  assert.equal(generated.body.state.speech.text,'O café esfriou, mas a fofoca continua quentinha.');
+  assert.ok(row.payload.nextAI>Date.now()+110000);
+  await invoke();assert.equal(generations.length,1,'Other visitors reuse the same generation window');
+  row.payload.nextAI=0;delete row.payload.state.speech;providerStatus=503;
+  assert.equal((await invoke()).status,200,'Provider failures do not interrupt household actions');
+  await invoke();assert.equal(generations.length,2,'No immediate retries after provider failure');
  }finally{
   globalThis.fetch=originalFetch;
   for(const [key,value]of Object.entries({SUPABASE_URL:saved.url,SUPABASE_SERVICE_ROLE_KEY:saved.key,DEEPINFRA_API_KEY:saved.ai})){if(value===undefined)delete process.env[key];else process.env[key]=value;}
