@@ -26,7 +26,7 @@ export function createResidentTransport(getVisitor:()=>Visitor,onState:(s:LifeSt
  }
  async function poll(){if(closed||fetching)return;fetching=true;
   const command=pending[0];
-  try{const response=await fetch('/api/house-residents',{method:'POST',headers:{'Content-Type':'application/json',...(serverToken?{'X-Resident-Session':serverToken}:{})},body:JSON.stringify({visitor:getVisitor(),command}),signal:AbortSignal.timeout(7000)});
+  try{const response=await fetch('/api/house-residents',{method:'POST',headers:{'Content-Type':'application/json',...(serverToken?{'X-Resident-Session':serverToken}:{})},body:JSON.stringify({visitor:getVisitor(),command}),signal:AbortSignal.timeout(20000)});
    if(!response.ok){if(response.status===401){serverToken='';serverId='';pending.length=0;mode='reconnecting';emit();onResult('Renovando sua conexão com os moradores. Tente novamente em um instante.');}else if(mode==='connecting'){mode='local';emit();send({type:'hello'});void elect();}else if(mode==='online'){mode='reconnecting';emit();}return;}
    const data=await response.json(),parsed=parseLife(data.state);if(!parsed)throw new Error('invalid state');
    if(closed)return;

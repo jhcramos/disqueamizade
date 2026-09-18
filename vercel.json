@@ -32,6 +32,9 @@
   "functions": {
     "api/tts.py": {
       "maxDuration": 10
+    },
+    "api/house-residents.ts": {
+      "maxDuration": 30
     }
   },
   "cleanUrls": true,
