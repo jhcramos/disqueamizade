@@ -25,8 +25,7 @@ export function GatheringPanel(props: Props) {
   const frozen = unavailable || pending || (!!group && group.host !== self.id);
   return <section className="gathering-panel" aria-label="Rodas de conversa">
     <details open ref={details}>
-      <summary><Users size={18} /> Encontre sua roda <small>{visibleKnocks.length ? `${visibleKnocks.length} pedido(s)` : 'Até 4 pessoas'}</small></summary>
-      <p className="gathering-welcome">{room === 'garage' ? 'Chegue perto do som ou puxe uma cadeira. Um oi já é um começo.' : room === 'living' ? 'O sofá é um bom lugar para uma conversa sem pressa.' : 'Escolha uma mesa e veja quem está aberto a companhia.'}</p>
+      <summary><Users size={18} /> Conversas neste ambiente <small>{visibleKnocks.length ? `${visibleKnocks.length} pedido(s)` : 'Até 4 pessoas'}</small></summary>
       {unavailable && <p>As rodas compartilhadas ainda estão em preparação neste modo.</p>}
       {!unavailable && <>
         <div className="gathering-spots">

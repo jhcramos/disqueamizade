@@ -18,6 +18,7 @@ try {
     await p.goto(`${base}/garagem`);
     await p.getByRole('textbox', { name: 'Como podemos chamar você?' }).fill(name);
     await p.getByRole('button', { name: 'Entrar na casa', exact: true }).click();
+    await p.getByRole('button',{name:'Conversas',exact:true}).click();
     await p.locator('.gathering-panel').waitFor();
     pages.push(p);
     console.log('Joined', name);
@@ -61,10 +62,12 @@ try {
   const visitor = pages[4];
   await visitor.setViewportSize({ width: 1440, height: 1100 });
   await visitor.locator('.house-rooms').getByRole('button', { name: /Sala de estar/ }).click();
+  await visitor.getByRole('button',{name:'Conversas',exact:true}).click();
   await visitor.locator('.gathering-spot').filter({ hasText: 'Roda do sofá' }).getByRole('button', { name: 'Abrir roda aqui' }).click();
   await visitor.getByRole('button',{name:'Retirar placa',exact:true}).waitFor();
   await visitor.locator('.house-rooms').getByRole('button', { name: /Bar Vinyl/ }).click();
   await visitor.getByRole('button', { name: 'Tenho 18 anos ou mais' }).click();
+  await visitor.getByRole('button',{name:'Conversas',exact:true}).click();
   assert.equal(await visitor.getByRole('button',{name:'Retirar placa',exact:true}).count(), 0);
   assert.equal(await visitor.locator('.gathering-spot').count(), 3);
   await visitor.locator('.gathering-spot').filter({ has: visitor.getByRole('heading', { name: 'Mesa 2', exact: true }) }).getByRole('button', { name: 'Abrir roda aqui' }).click();

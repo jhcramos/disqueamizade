@@ -10,13 +10,14 @@ try{
   await page.getByRole('button',{name:'Entrar na casa',exact:true}).click();
   await page.waitForFunction(()=>Number(document.querySelector('.garage3d-canvas')?.dataset.drawCalls)>0);
   await page.locator('.garage3d-canvas canvas').evaluate(el=>el.dataset.persistent='yes');
-  assert.equal(await page.getByRole('button',{name:/^Explorar /}).count(),3);
+  assert.ok(Number(await page.locator('.garage3d-canvas').getAttribute('data-zoom'))>=2.99);
   await page.screenshot({path:'/tmp/garage3d-house-desktop.png'});
   for(const [name,count] of [['Garagem',8],['Sala de estar',8],['Bar Vinyl',15]]){
     const before=await page.locator('.garage3d-canvas').getAttribute('data-position');
-    await page.getByRole('navigation',{name:'Ambientes 3D'}).getByRole('button',{name:new RegExp(name)}).click();
+    await page.getByRole('navigation',{name:'Ambientes da casa'}).getByRole('button',{name:new RegExp(name)}).click();
     assert.equal(await page.locator('.garage3d-canvas canvas').getAttribute('data-persistent'),'yes');
     if(name==='Bar Vinyl')await page.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
+    await page.getByRole('button',{name:'Interagir',exact:true}).click();
     assert.equal(await page.getByRole('combobox',{name:'Escolher assento'}).locator('option').count(),count+1);
     for(let value=0;value<count;value++){
       await page.getByRole('combobox',{name:'Escolher assento'}).selectOption(String(value));
@@ -38,9 +39,10 @@ try{
   await page.getByRole('heading',{name:'Quem será que vai atender?'}).waitFor();
   await page.getByRole('button',{name:'Fechar telefones'}).click();
   await page.screenshot({path:'/tmp/garage3d-verified-desktop.png'});
+  await page.getByRole('button',{name:'Fechar painel',exact:true}).click();
   await page.setViewportSize({width:390,height:844});
-  await page.getByRole('button',{name:'Chegar mais perto',exact:true}).click();
   await page.getByRole('button',{name:'Ver ambiente inteiro',exact:true}).click();
+  await page.getByRole('button',{name:'Chegar mais perto',exact:true}).click();
   await page.getByRole('button',{name:/^Casa inteira/}).click();
   await page.waitForTimeout(1500);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

@@ -2897,3 +2897,45 @@
 }
 .entry-picture:has(img[src="/garage/whole-house.webp"]){background:#f4ede0}
 .entry-picture img[src="/garage/whole-house.webp"]{object-fit:contain;object-position:center 10%;height:74%}
+
+/* A workspace around the house, not a second page below it. */
+.garage-world{position:relative}
+.house-workspace-tools{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:#fbf6ed}
+.house-workspace-tools button{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:20px;padding:8px 12px;min-height:38px;background:transparent;color:var(--ink);font-size:12px}
+.house-workspace-tools button[aria-expanded=true]{background:#ece1ce;border-color:#bd9a73}
+.house-workspace-tools>span{margin-left:auto;font-size:11px;color:var(--muted)}
+.garage-app:not(.is-mobile-house) .gathering-panel,.desktop-play-sheet{display:none}
+.garage-app:not(.is-mobile-house)[data-desktop-panel="rods"] .gathering-panel,
+.garage-app:not(.is-mobile-house)[data-desktop-panel="play"] .desktop-play-sheet{display:block;position:absolute;right:12px;top:62px;width:min(370px,calc(100% - 24px));max-height:calc(100% - 82px);overflow:auto;overscroll-behavior:contain;z-index:14;background:#fffaf1;border:1px solid #d8c8ae;border-radius:16px;box-shadow:0 10px 36px #38261720;padding:20px 16px}
+.desktop-panel-close{position:absolute;top:69px;right:20px;display:grid;place-items:center;width:36px;height:36px;background:#fff8eb;border:1px solid #e0d1bb;border-radius:50%;z-index:15;color:var(--ink)}
+.desktop-play-sheet .play-tray{padding:14px 0 0;margin:0;border:0;background:transparent}
+.desktop-play-sheet .garage3d-tools{border:0;padding-top:6px}
+.desktop-play-sheet .garage3d-tools-room{padding-right:32px}
+.gathering-panel summary{font-size:16px;padding-right:32px}
+.gathering-panel .gathering-spots{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+.gathering-panel .gathering-spot{padding:13px;border-radius:12px;background:#f9f2e5}
+.gathering-panel .gathering-spot h3{font-size:14px;margin:0 0 8px}
+.gathering-panel .gathering-spot p,.gathering-panel .gathering-privacy{font-size:12px;line-height:1.5}
+.gathering-panel .gathering-spot button,.gathering-panel .gathering-icebreaker button{padding:8px 10px;min-height:40px;font-size:12px}
+.gathering-panel .gathering-own{gap:7px}
+.gathering-panel .gathering-own strong{font-size:12px}
+.house-screen-toggle{display:block;position:absolute;right:4%;top:100px;border:1px solid var(--line);border-radius:22px;background:#fffaf3;color:var(--ink);padding:9px 13px;font-size:12px;min-height:40px;z-index:4;margin:0}
+.garage-app:not(.garage-entry):not(.is-mobile-house){position:relative}
+.garage-app:not(.is-mobile-house) .garage-heading{padding-right:170px}
+.garage-app.is-immersive:not(.is-mobile-house){position:fixed;inset:0;z-index:40;height:var(--house-screen-height,100dvh);min-height:0;max-width:none;width:100%;padding:12px;display:flex;flex-direction:column;overflow:hidden;background:#f8f2e7}
+.is-immersive:not(.is-mobile-house) .garage-topbar,.is-immersive:not(.is-mobile-house) .garage-heading,.is-immersive:not(.is-mobile-house) .garage-bottom,.is-immersive:not(.is-mobile-house) .world-footer,.is-immersive:not(.is-mobile-house) .garage-under{display:none}
+.is-immersive:not(.is-mobile-house) .house-screen-toggle{position:absolute;right:15px;top:17px;width:auto;height:40px;border-radius:22px;z-index:45}
+.is-immersive:not(.is-mobile-house) .house-rooms{flex-shrink:0;margin:0;padding:0 160px 10px 0;min-height:54px;gap:6px}
+.is-immersive:not(.is-mobile-house) .house-rooms button{padding:7px 10px;font-size:12px}
+.is-immersive:not(.is-mobile-house) .house-rooms small,.is-immersive:not(.is-mobile-house) .house-rooms p{display:none}
+.is-immersive:not(.is-mobile-house) .garage-layout{flex:1;min-height:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;align-items:stretch;border-radius:16px;overflow:hidden}
+.is-immersive:not(.is-mobile-house) .garage-world{display:flex;flex-direction:column;min-height:0;height:100%}
+.is-immersive:not(.is-mobile-house) .house-viewport-desktop{flex:1;min-height:0}
+.is-immersive:not(.is-mobile-house) .house-world-camera{height:100%}
+.is-immersive:not(.is-mobile-house) .garage-sidebar{position:static;height:100%;max-height:100%;min-height:0;width:auto;overflow-y:auto;padding:12px}
+.is-immersive:not(.is-mobile-house) .garage-sidebar .room-chat{position:static;box-shadow:none;margin:0 0 16px;width:100%}
+.is-immersive:not(.is-mobile-house) .room-chat-history{max-height:30dvh}
+.is-immersive:not(.is-mobile-house) .garage-layout.is-chatting{grid-template-columns:minmax(0,.85fr) minmax(390px,1.15fr)}
+.is-mobile-house .house-screen-toggle{display:none}
+.is-mobile-house[data-mobile-panel="chat"]{--sheet-height:min(390px,45dvh)}
+.is-mobile-house[data-mobile-panel="chat"] .garage-layout{bottom:calc(var(--dock-height) + var(--sheet-height))}

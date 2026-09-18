@@ -1,7 +1,7 @@
 import { HousePhones } from "./HousePhones";
 import { HouseTrayContext, MobileHouseViewport, useMobileHouse } from './MobileHouseViewport';
 import { GatheringPanel } from './GatheringPanel';
-import { CONVERSATION_SPOTS, type ConversationSpot } from './gatherings';
+import { type ConversationSpot } from './gatherings';
 import { useSocialChat } from "./useSocialChat";
 import { SocialChat } from "./SocialChat";
 import { BrandLogo } from "../components/common/BrandLogo";
@@ -19,7 +19,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown,
-  Armchair,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -319,6 +318,7 @@ function GarageRoom({
   onLeave: () => void;
 }) {
   const [accountOpen, setAccountOpen] = useState(false);
+  const [desktopPanel,setDesktopPanel]=useState<'rods'|'play'|null>(null);
   const mobileHouse = useMobileHouse();
   const [mobilePanel, setMobilePanel] = useState<'chat' | 'rods' | 'play' | 'people' | 'menu' | null>(null);
   const [trayTarget, setTrayTarget] = useState<HTMLDivElement | null>(null);
@@ -350,6 +350,13 @@ function GarageRoom({
       document.documentElement.style.removeProperty("--house-screen-height");
     };
   }, [immersive, mobileHouse]);
+  async function toggleScreen(){
+    const root=document.querySelector<HTMLElement>('.garage-app:not(.garage-entry)');
+    if(immersive){setImmersive(false);if(document.fullscreenElement===root)await document.exitFullscreen().catch(()=>{});return;}
+    setImmersive(true);
+    await root?.requestFullscreen?.().catch(()=>{});
+  }
+  useEffect(()=>{const update=()=>{if(!document.fullscreenElement)setImmersive(false);};document.addEventListener('fullscreenchange',update);return()=>document.removeEventListener('fullscreenchange',update);},[]);
   const [rouletteOpen, setRouletteOpen] = useState(() => new URLSearchParams(window.location.search).has('phones'));
   const [selectedPhone,setSelectedPhone]=useState<string>();
   const [ringingPhones,setRingingPhones]=useState<string[]>([]);
@@ -366,6 +373,7 @@ function GarageRoom({
     [low, setLow] = useState(false),
     [previewOpen, setPreviewOpen] = useState(false);
   const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy);
+  useEffect(()=>{setDesktopPanel(null);},[room]);
   const roomPlay = useRoomPlay(room, mode);
   const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
   const people = roomPeople;
@@ -404,7 +412,7 @@ function GarageRoom({
     if (mobileHouse && (incoming || call || social.session)) setMobilePanel('people');
   }, [mobileHouse, incoming, call, social.session?.peer]);
   useEffect(() => {
-    if (mobileHouse && net.knocks.some(k => !social.isBlocked(k.from))) setMobilePanel('rods');
+    if(net.knocks.some(k => !social.isBlocked(k.from))){if(mobileHouse)setMobilePanel('rods');else setDesktopPanel('rods');}
   }, [net.knocks.length]);
   const canGather = social.preference.video && !social.session && !phoneBusy;
   useEffect(() => {
@@ -422,31 +430,6 @@ function GarageRoom({
     setArrival(n => n + 1);
     net.setGathering({ spot: spot.id, open: true, count: 1 });
     if (mobileHouse) setMobilePanel(null);
-  }
-  const gatheringPlaces = CONVERSATION_SPOTS[room].map((spot, index) => {
-    const hosts = [self, ...roomPeople].filter(p => p.gathering?.spot === spot.id && !social.isBlocked(p.id));
-    const own = hosts.some(p => p.id === self.id);
-    const occupied = hosts.length > 0;
-    const status = hosts.length > 1 ? `${hosts.length} rodas · Ver opções`
-      : occupied ? `${hosts[0].gathering!.count}/4 · ${hosts[0].gathering!.count >= 4 ? 'Completa' : !hosts[0].gathering!.open ? 'Reservada' : own ? 'Sua roda' : 'Pode chegar'}`
-      : '4 vagas · Começar';
-    const disabled = !occupied && (!canGather || net.invite?.status === 'pending' || !!net.group?.pendingName || (!!net.group && net.group.host !== self.id));
-    return { spot, index, status, occupied, disabled };
-  });
-  function selectGathering(spot: ConversationSpot, occupied: boolean) {
-    if (mobileHouse) {
-      setMobilePanel('rods');
-      const details = document.querySelector<HTMLDetailsElement>('.gathering-panel details');
-      if (details) details.open = true;
-      requestAnimationFrame(() => document.getElementById(`gathering-${spot.id}`)?.scrollIntoView({ block: 'nearest' }));
-      return;
-    }
-    if (!occupied) { openGathering(spot); return; }
-    const details = document.querySelector<HTMLDetailsElement>('.gathering-panel details');
-    if (details) details.open = true;
-    const card = document.getElementById(`gathering-${spot.id}`);
-    card?.focus({ preventScroll: true });
-    card?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
   const gatheringHost = roomPeople.find(p => p.id === net.group?.host && p.gathering);
   useEffect(() => {
@@ -543,8 +526,8 @@ function GarageRoom({
   }, [call]);
 
   return (
-    <HouseTrayContext.Provider value={mobileHouse ? trayTarget : null}>
-    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'}>
+    <HouseTrayContext.Provider value={trayTarget}>
+    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'} data-desktop-panel={desktopPanel||'none'}>
       {mobileHouse && <>
         <header className="mobile-house-header">
           <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
@@ -569,7 +552,7 @@ function GarageRoom({
       </>}
       <button
         className="house-screen-toggle"
-        onClick={() => setImmersive(!immersive)}
+        onClick={() => void toggleScreen()}
         aria-pressed={immersive}
       >
         {immersive ? "✕ Sair da tela cheia" : "⛶ Tela cheia"}
@@ -672,15 +655,15 @@ function GarageRoom({
       </nav>
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
-          {mode === 'local' && <nav className="gathering-places" aria-label="Lugares para conversar">
-            <p><Armchair size={16} /> Puxe uma cadeira <small>Escolha um cantinho para começar ou participar de uma conversa.</small></p>
-            <div>{gatheringPlaces.map(({ spot, status, occupied, disabled }) =>
-              <button key={spot.id} disabled={disabled} onClick={() => selectGathering(spot, occupied)}>
-                <Armchair size={20} aria-hidden="true" />
-                <span><strong>{spot.name}</strong><small>{status}</small></span>
-              </button>
-            )}</div>
-          </nav>}
+          {!mobileHouse&&<>
+            <nav className="house-workspace-tools" aria-label="Ferramentas da casa">
+              <button aria-expanded={desktopPanel==='rods'} onClick={()=>setDesktopPanel(desktopPanel==='rods'?null:'rods')}><Users size={16}/> Conversas {net.knocks.length>0&&<small>{net.knocks.length}</small>}</button>
+              <button aria-expanded={desktopPanel==='play'} onClick={()=>setDesktopPanel(desktopPanel==='play'?null:'play')}><Sparkles size={16}/> Interagir</button>
+              <span>Toque no piso para andar</span>
+            </nav>
+            {desktopPanel&&<button className="desktop-panel-close" onClick={()=>setDesktopPanel(null)} aria-label="Fechar painel"><X size={17}/></button>}
+            <div className="desktop-play-sheet" ref={setTrayTarget}/>
+          </>}
           <MobileHouseViewport active={false} position={position} room={`${room}-${arrival}`}>
           <GarageScene
             revision={arrival}

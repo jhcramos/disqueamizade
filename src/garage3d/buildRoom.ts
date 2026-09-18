@@ -39,10 +39,11 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   }
   const floor=box(root,'#c9b59b',0,-.13,0,10,.25,8);
   floor.material=new T.MeshStandardMaterial({map:texture(roomId==='garage'?'floor':'wood'),roughness:.95}); floor.name='walk-floor';
+  const divider=new T.Group();divider.userData.kind='divider';root.add(divider);
   const plaster=new T.MeshStandardMaterial({map:texture('wall'),roughness:1});
   for(const [x,z,w,d] of [[0,-4,10,.2],[-5,0,.2,8]]){
     if(integrated&&roomId==='living'&&z===-4){
-      for(const side of [-1,1]){const m=box(root,'#d9b58d',side*3,1.5,-4,4,3,.2);m.material=plaster;box(root,'#a65d3e',side*3,3.02,-4,4,.12,.28);box(root,'#826347',side*3,.12,-3.84,3.9,.2,.09);}
+      for(const side of [-1,1]){const m=box(divider,'#d9b58d',side*3,1.5,-4,4,3,.2);m.material=plaster;box(divider,'#a65d3e',side*3,3.02,-4,4,.12,.28);box(divider,'#826347',side*3,.12,-3.84,3.9,.2,.09);}
       // Open arch between the garage and living room; no lintel obscuring the view.
       continue;
     }
@@ -105,8 +106,9 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
     if(flag){ctx.fillStyle='#e2bd49';ctx.beginPath();ctx.moveTo(128,40);ctx.lineTo(232,160);ctx.lineTo(128,280);ctx.lineTo(24,160);ctx.fill();ctx.fillStyle='#294b70';ctx.beginPath();ctx.arc(128,160,61,0,7);ctx.fill();}
     else{ctx.fillStyle='#473125';ctx.textAlign='center';ctx.font='bold 30px Georgia';ctx.fillText(text,128,60);ctx.lineWidth=5;for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(128,190,30+i*14,0,7);ctx.strokeStyle='#754b36';ctx.stroke();}ctx.font='18px Georgia';ctx.fillText('DISQUE AMIZADE',128,295);}
     const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;
-    box(root,'#6c482d',x,2.0,-3.85,.96,1.2,.055);
-    const m=new T.Mesh(new T.PlaneGeometry(.86,1.1),new T.MeshStandardMaterial({map,roughness:1}));m.position.set(x,2,-3.81);root.add(m);
+    const parent=integrated&&roomId==='living'?divider:root;
+    box(parent,'#6c482d',x,2.0,-3.85,.96,1.2,.055);
+    const m=new T.Mesh(new T.PlaneGeometry(.86,1.1),new T.MeshStandardMaterial({map,roughness:1}));m.position.set(x,2,-3.81);parent.add(m);
   }
   if(roomId==='garage'){poster(-3.4,'BRASIL','#35704b',true);poster(-2.2,'LADO A','#d8a150');poster(.0,'BAILE','#c68151');}
   else if(roomId==='living'){poster(-3.4,'EM CASA','#b7bb92');poster(-2.2,'CAFÉ','#d8ae78');if(!integrated)poster(.0,'BOA PROSA','#c68151');}
@@ -210,8 +212,11 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   }
   if(roomId!=='living')box(interior,'#d9b58d',4.95,1.85,.35,.18,2.4,7.3);
   interior.traverse(o=>{if(o instanceof T.Mesh)o.castShadow=false;});
-  return {root,floor,screen:(on:boolean)=>{const mesh=root.getObjectByName('television-screen') as T.Mesh|undefined;if(mesh){const mat=mesh.material as T.MeshStandardMaterial;mat.emissive.set(on?'#4d9b83':'#000000');mat.emissiveIntensity=on?.7:0;}},phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
-    const geometries=new Set<T.BufferGeometry>(originals),mats=new Set<T.Material>(),textures=new Set<T.Texture>();
+  const dividerMaterials=new Set<T.Material>(),dividerSources=new Set<T.Material>();
+  divider.traverse(o=>{if(o instanceof T.Mesh){dividerSources.add(o.material as T.Material);o.material=(o.material as T.Material).clone();dividerMaterials.add(o.material);}});
+  let cut=false;
+  return {root,floor,cutaway:(enabled:boolean)=>{if(cut===enabled)return;cut=enabled;dividerMaterials.forEach(m=>{m.transparent=enabled;m.opacity=enabled?.16:1;m.depthWrite=!enabled;m.needsUpdate=true;});},screen:(on:boolean)=>{const mesh=root.getObjectByName('television-screen') as T.Mesh|undefined;if(mesh){const mat=mesh.material as T.MeshStandardMaterial;mat.emissive.set(on?'#4d9b83':'#000000');mat.emissiveIntensity=on?.7:0;}},phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
+    const geometries=new Set<T.BufferGeometry>(originals),mats=new Set<T.Material>(dividerSources),textures=new Set<T.Texture>();
     root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){mats.add(m);if(m.map)textures.add(m.map);}}});
     geometries.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());scene.remove(root);
   }};

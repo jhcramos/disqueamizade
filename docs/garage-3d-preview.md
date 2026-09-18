@@ -2,7 +2,7 @@
 
 A entrada pública continua em `/garagem`; `/garagem-3d` redireciona para ela. A home já encaminha para essa entrada. A seleção de avatar, conta e amigos, chat público, mensagens privadas, convites, máscaras e chamadas continuam sob `GaragePage`. `HouseScene` adapta esses dados para a cena tridimensional, sem um segundo estado de sessão.
 
-A casa abre inteira: garagem ao fundo, sala à frente à esquerda e bar à direita, numa única cena. Há passagens navegáveis, 8 assentos na garagem, 8 na sala e 15 no bar (três mesas de quatro e três bancos no balcão). Os 12 telefones ficam sobre móveis. Entrar no bar, por menu ou pelo piso, exige a confirmação de idade existente. Os assentos físicos não alteram o limite de quatro participantes da conversa.
+A casa abre com a câmera próxima ao avatar; “Casa inteira” permite ver os três ambientes: garagem ao fundo, sala à frente à esquerda e bar à direita, numa única cena. Há passagens navegáveis, 8 assentos na garagem, 8 na sala e 15 no bar (três mesas de quatro e três bancos no balcão). Os 12 telefones ficam sobre móveis. Entrar no bar, por menu ou pelo piso, exige a confirmação de idade existente. Os assentos físicos não alteram o limite de quatro participantes da conversa.
 
 As posições de presença são normalizadas por ambiente e convertidas para o mapa global em `coordinates.ts`. Colisões, assentos, pontos de conversa, nascimento e animações usam esse mapa. As abordagens de cadeiras podem compartilhar uma passagem; os avatares sentados usam a posição e altura física do móvel. A troca de ambiente desfaz a pose sentada. Canais de presença e brincadeiras têm nova versão para não misturar coordenadas de abas antigas.
 
@@ -25,3 +25,11 @@ Esta promoção do cenário **não ativa presença online pública entre navegad
 - `garage-room-chat-browser.mjs`, `garage-gatherings-browser.mjs` e `garage-group-browser.mjs`: chat e isolamento de salas, convites/aceites/capacidade, quatro vídeos e áudios com fontes de teste, encerramento das trilhas.
 
 A renderização agrupa peças fixas por material, limita a resolução e respeita movimento reduzido. O modo de menor qualidade desliga sombras e reduz a resolução sem recriar a sessão. Testes de viewport mobile em Chromium não substituem avaliação em aparelhos físicos. O acabamento 3D continua sendo uma interpretação da referência, não uma reprodução idêntica.
+
+## Espaço de conversa
+
+Os nomes usam uma etiqueta discreta acima da cabeça; ícones pequenos mantêm a indicação de mensagem/vídeo e as preferências completas estão no perfil. Mensagens temporárias crescem acima da etiqueta. Placas de móveis próximas da projeção de uma pessoa ficam ocultas para não cobri-la. No enquadramento próximo da garagem, a divisória da sala fica translúcida; a colisão da passagem permanece igual.
+
+A barra “Puxe uma cadeira” foi retirada. No desktop, “Conversas” e “Interagir” abrem painéis compactos sobre a cena. Pedidos de entrada em uma roda abrem o painel de conversas automaticamente. A tela cheia mantém a casa e o chat lado a lado; solicita fullscreen nativo quando disponível e usa o layout imersivo como alternativa. No celular, o chat inferior reduz a área do cenário e evita cobrir o personagem.
+
+`house-workspace-browser.mjs` verifica zoom inicial, afastamento dos balões em relação à cabeça, painéis recolhidos, abertura de rodas, tela cheia com chat ao lado, saída e layout mobile.

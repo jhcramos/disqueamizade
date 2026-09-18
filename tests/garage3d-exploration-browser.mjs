@@ -11,12 +11,14 @@ try{
   const scene=page.locator('.garage3d-canvas');
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='overview');
   assert.equal(await page.getByRole('button',{name:'Ligar',exact:true}).count(),0);
+  await page.getByRole('button',{name:'Interagir',exact:true}).click();
   await page.getByRole('button',{name:'Ir até o telefone',exact:true}).click();
   await page.getByRole('button',{name:'Ligar',exact:true}).waitFor({timeout:15000});
   assert.equal(await scene.getAttribute('data-near-phone'),'garage-3');
   await page.getByRole('button',{name:'Ligar',exact:true}).click();
   await page.getByRole('heading',{name:'Quem será que vai atender?'}).waitFor();
   await page.getByRole('button',{name:'Fechar telefones'}).click();
+  await page.getByRole('button',{name:'Fechar painel',exact:true}).click();
   await page.getByRole('button',{name:'Primeira pessoa',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.camera==='first-person');
   const before=await scene.getAttribute('data-position');
@@ -26,6 +28,7 @@ try{
   assert.equal(await page.getByRole('button',{name:'Ligar',exact:true}).count(),0);
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.camera==='overview');
+  await page.getByRole('button',{name:'Interagir',exact:true}).click();
   await page.getByRole('button',{name:'Dançar',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.dancing==='true');
   await page.waitForTimeout(700);
