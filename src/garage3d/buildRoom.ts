@@ -167,7 +167,7 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   for(let i=1;i<24;i+=2){const pos=wirePoints[i];const bulb=ball(root,['#ec814d','#e5c568','#65a7a1','#cb624f'][i%4],pos.x,pos.y-.09,pos.z,.06,.085,.06);bulb.material=new T.MeshStandardMaterial({color:'#ffde95',emissive:['#ed6534','#eaa540','#428e76','#bf5646'][i%4],emissiveIntensity:2});bulbs.push(bulb);}
   const disco=new T.Mesh(new T.SphereGeometry(.4,20,12),new T.MeshStandardMaterial({color:'#c8bfae',metalness:.82,roughness:.25,flatShading:true}));disco.position.set(-.55,2.45,-1.9);root.add(disco);
   disco.visible=roomId==='garage';
-  cylinder(root,'#463b30',-.55,2.95,-1.9,.012,.7);
+  if(roomId==='garage')cylinder(root,'#463b30',-.55,2.95,-1.9,.012,.7);
   const lamp=new T.PointLight('#ffc67d',16,8,2);lamp.position.set(-3,2,-1.7);root.add(lamp);
   // Batch static furniture by material. Interactive meshes retain their hit targets.
   root.updateMatrixWorld(true);
@@ -201,7 +201,16 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
     const mesh=new T.Mesh(merged,mat);mesh.castShadow=true;mesh.receiveShadow=true;
     for(const old of meshes){originals.add(old.geometry);old.removeFromParent();}root.add(mesh);
   }
-  return {root,floor,phones:telephoneGroups,disco,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
+  // Restore the cutaway exterior walls/ceiling when viewing from inside the house.
+  const interior=new T.Group();root.add(interior);interior.visible=false;
+  box(interior,'#e5d1ae',0,3.2,0,10,.15,8);
+  if(roomId!=='garage'){
+    box(interior,'#d9b58d',0,1.5,4,10,3,.18);
+    for(const x of [-2.5,2.5]){box(interior,'#926b42',x,1.9,3.86,1.8,1.4,.08);box(interior,'#81998a',x,1.9,3.80,1.6,1.2,.04);box(interior,'#bc975e',x,1.9,3.76,.06,1.2,.04);box(interior,'#bc975e',x,1.9,3.76,1.6,.06,.04);}
+  }
+  if(roomId!=='living')box(interior,'#d9b58d',4.95,1.85,.35,.18,2.4,7.3);
+  interior.traverse(o=>{if(o instanceof T.Mesh)o.castShadow=false;});
+  return {root,floor,phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
     const geometries=new Set<T.BufferGeometry>(originals),mats=new Set<T.Material>(),textures=new Set<T.Texture>();
     root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){mats.add(m);if(m.map)textures.add(m.map);}}});
     geometries.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());scene.remove(root);

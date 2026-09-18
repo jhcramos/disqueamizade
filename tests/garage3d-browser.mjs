@@ -27,8 +27,10 @@ try{
   }
   await page.getByRole('button',{name:'Apagar luzes',exact:true}).click();
   await page.getByRole('button',{name:'Acender luzes',exact:true}).click();
-  await page.getByRole('button',{name:'Testar telefone',exact:true}).click();
-  await page.getByRole('button',{name:'Atender telefone',exact:true}).click();
+  await page.getByRole('button',{name:'Ir até o telefone',exact:true}).click();
+  await page.getByRole('button',{name:'Ligar',exact:true}).waitFor({timeout:20000});
+  await page.getByRole('button',{name:'Ligar',exact:true}).click();
+  await page.getByRole('button',{name:'Atender',exact:true}).click();
   assert.match(await page.getByRole('status').textContent(),/Teste atendido/);
   await page.screenshot({path:'/tmp/garage3d-verified-desktop.png'});
   await page.setViewportSize({width:390,height:844});

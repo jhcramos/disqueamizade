@@ -4,6 +4,7 @@ export type Furniture = Place & { angle:number; name:string; count:number; color
 export const roomNames:Record<RoomId,string>={garage:'Garagem',living:'Sala de estar',bar:'Bar Vinyl'};
 export const roomOffsets:Record<RoomId,Place>={garage:{x:-5,z:-8},living:{x:-5,z:0},bar:{x:5,z:0}};
 export const roomIds:RoomId[]=['garage','living','bar'];
+export type HousePhone=Place&{room:RoomId;index:number};
 export const furniture:Record<RoomId,Furniture[]>={
   garage:[
     {x:-2.8,z:.65,angle:Math.PI/2,name:'Sofá do som',count:3,color:'#b77d55'},
@@ -65,6 +66,27 @@ export function route(from:Place,to:Place,room:RoomId='garage'):Place[]{
   }return[];
 }
 export function worldPoint(p:Place,room:RoomId):Place{return{x:p.x+roomOffsets[room].x,z:p.z+roomOffsets[room].z};}
+export function roomAt(p:Place):RoomId|undefined{return roomIds.find(id=>Math.abs(p.x-roomOffsets[id].x)<5&&Math.abs(p.z-roomOffsets[id].z)<4);}
+export function nearbyPhone(p:Place):HousePhone|null{
+  const room=roomAt(p);if(!room)return null;
+  const candidates=phones.map((phone,index)=>({...worldPoint(phone,room),room,index}));
+  return candidates.filter(phone=>Math.hypot(phone.x-p.x,phone.z-p.z)<=1.15).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]??null;
+}
+/** Small swept steps prevent keyboard/touch movement from tunnelling through furniture. */
+export function moveInHouse(from:Place,dx:number,dz:number):Place{
+  const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.05));let p={...from};
+  for(let i=0;i<count;i++){
+    const next={x:p.x+dx/count,z:p.z+dz/count};if(houseWalkable(next)){p=next;continue;}
+    const x={x:next.x,z:p.z};if(houseWalkable(x))p=x;
+    const z={x:p.x,z:next.z};if(houseWalkable(z))p=z;
+  }return p;
+}
+export function routeToPhone(from:Place,room:RoomId,index:number):Place[]{
+  const phone=phones[index];if(!phone)return[];
+  const center=worldPoint(phone,room);
+  const candidates=Array.from({length:12},(_,i)=>({x:center.x+Math.sin(i*Math.PI/6)*.85,z:center.z+Math.cos(i*Math.PI/6)*.85})).filter(houseWalkable).sort((a,b)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(b.x-from.x,b.z-from.z));
+  for(const goal of candidates){const path=houseRoute(from,goal);if(path.length)return path;}return[];
+}
 const houseObstacles=roomIds.flatMap(room=>obstaclesFor(room).map(o=>({...o,...worldPoint(o,room)})));
 function onFloor(p:Place){return roomIds.some(room=>Math.abs(p.x-roomOffsets[room].x)<5&&Math.abs(p.z-roomOffsets[room].z)<4);}
 export function houseWalkable(p:Place){
