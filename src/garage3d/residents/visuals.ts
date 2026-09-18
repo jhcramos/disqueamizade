@@ -1,3 +1,5 @@
+import {ballFlightPose} from './ball';
+import type {BallFlight} from './model';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { createAdultAvatar, animateAdult } from '../../garage/adultAvatar';
@@ -17,6 +19,7 @@ export type VisualItem = {
   kind: 'coffee' | 'watering' | 'record' | 'toy';
   position: { x: number; z: number };
   height: number;
+  holder?:string;flight?:BallFlight;
 };
 
 // Each builder owns its materials; removing one actor never disposes another's.
@@ -199,8 +202,11 @@ export function createResidentVisuals(scene: T.Scene) {
         const activity=display.activity.toLowerCase();
         if (resident.id === 'biscoito') {
           const resting = /rest|sleep|nap|descans|dorm/.test(activity);
-          const happy = /pet|fetch|bring|play|carinh|brinc/.test(activity);
+          const eager=activity==='eager'&&!moving;
+          const happy = /eager|pet|fetch|bring|play|carinh|brinc/.test(activity);
           const phase = actor.stride;
+          const hopPhase=seconds%3.4;const hop=eager&&!reduced&&hopPhase<1.1?Math.abs(Math.sin(hopPhase/1.1*Math.PI*2))*.13:0;
+          model.position.y=actor.baseY+hop;model.rotation.x=eager&&!reduced&&hopPhase>1.7&&hopPhase<2.7?.1:0;
           for (let i = 0; i < 4; i++) {
             const leg = model.getObjectByName(`dog-leg-${i}`)!;
             const target = moving && !reduced ? Math.sin(phase + (i === 0 || i === 3 ? 0 : Math.PI)) * .42 : resting ? -1.1 : 0;
@@ -241,7 +247,10 @@ export function createResidentVisuals(scene: T.Scene) {
           actor.model.rotation.x += (item.position.z - previous.z) / .14;
           actor.model.rotation.z -= (item.position.x - previous.x) / .14;
         }
-        actor.root.position.set(item.position.x, item.height, item.position.z);
+        const dog=item.holder==='biscoito'?roots.get('biscoito'):undefined;
+        if(dog){const head=dog.getObjectByName('dog-head')!;head.updateWorldMatrix(true,false);const mouth=new T.Vector3(0,-.09,.25).applyMatrix4(head.matrixWorld);actor.root.position.copy(mouth);}
+        else if(item.flight&&Date.now()<item.flight.start+item.flight.duration){const p=ballFlightPose(item.flight,Date.now());actor.root.position.set(p.x,p.y,p.z);}
+        else actor.root.position.set(item.position.x, item.height, item.position.z);
       }
     },
     dispose() { for (const id of roots.keys()) remove(id); },

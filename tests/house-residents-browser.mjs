@@ -49,5 +49,5 @@ try{
  await page.waitForFunction(()=>window.__residentExpiry.done,undefined,{timeout:10000});
  assert.deepEqual(await page.evaluate(()=>window.__residentExpiry.headers.slice(0,3)),['','expired-token','']);
  console.log('PASS: pickup, fetch, return, mobile layout, session renewal; no browser errors');
-} catch(e){await page.screenshot({path:'/tmp/house-residents-failure.png'});console.log(await page.locator('.resident-panel').innerText().catch(()=>''));console.log('errors',errors);throw e;}
+} catch(e){await page.screenshot({path:'/tmp/house-residents-failure.png'});console.log(await page.locator('.resident-panel').innerText().catch(()=>''));console.log('errors',errors);console.log(await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('house-residents-v1')||'null');return s?{dog:s.residents[2],toy:s.items.find(i=>i.id==='toy')}:null;}));throw e;}
 finally{await browser.close();}
