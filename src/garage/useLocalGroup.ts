@@ -51,6 +51,11 @@ const initial = (): State => ({
   mic: false,
 });
 
+// Hidden tabs may publish only once per minute. A missed 1.5s heartbeat is not
+// a departure: keep the last avatar through a full throttled interval plus margin.
+// Explicit leave/pagehide messages still remove the peer immediately.
+const LOCAL_PRESENCE_TIMEOUT_MS = 90_000;
+
 // Local prototype transport. Group membership is controlled by the inviter;
 // media signaling is accepted only from members of the approved revision.
 class LocalConversation {
@@ -562,7 +567,7 @@ class LocalConversation {
     this.patch({ knocks: this.state.knocks.filter(k => k.expires > Date.now() && this.seen.has(k.from)) });
     this.update();
     for (const [id, v] of this.seen)
-      if (v.time < Date.now() - 7000) this.removePeer(id);
+      if (v.time < Date.now() - LOCAL_PRESENCE_TIMEOUT_MS) this.removePeer(id);
     if (this.pending && this.pending.expires < Date.now()) {
       this.pending = null;
       this.acceptedPending = false;
