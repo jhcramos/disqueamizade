@@ -2,6 +2,8 @@ export type Place = { x: number; z: number };
 export type RoomId = 'garage'|'living'|'bar';
 export type Furniture = Place & { angle:number; name:string; count:number; color:string; stool?:boolean };
 export const roomNames:Record<RoomId,string>={garage:'Garagem',living:'Sala de estar',bar:'Bar Vinyl'};
+export const roomOffsets:Record<RoomId,Place>={garage:{x:-5,z:-8},living:{x:-5,z:0},bar:{x:5,z:0}};
+export const roomIds:RoomId[]=['garage','living','bar'];
 export const furniture:Record<RoomId,Furniture[]>={
   garage:[
     {x:-2.8,z:.65,angle:Math.PI/2,name:'Sofá do som',count:3,color:'#b77d55'},
@@ -60,5 +62,30 @@ export function route(from:Place,to:Place,room:RoomId='garage'):Place[]{
     for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){
       const n={x:p.x+dx,z:p.z+dz},id=key(n);if(!seen.has(id)&&walkable(n,room)){seen.add(id);previous.set(id,p);queue.push(n);}
     }
+  }return[];
+}
+export function worldPoint(p:Place,room:RoomId):Place{return{x:p.x+roomOffsets[room].x,z:p.z+roomOffsets[room].z};}
+const houseObstacles=roomIds.flatMap(room=>obstaclesFor(room).map(o=>({...o,...worldPoint(o,room)})));
+function onFloor(p:Place){return roomIds.some(room=>Math.abs(p.x-roomOffsets[room].x)<5&&Math.abs(p.z-roomOffsets[room].z)<4);}
+export function houseWalkable(p:Place){
+  if(!Number.isFinite(p.x)||!Number.isFinite(p.z))return false;
+  // Slight overlap at the shared edges forms one floor, not three disconnected rectangles.
+  const inHouse=(q:Place)=>onFloor(q)||(Math.abs(q.z+4)<.001&&q.x>-10&&q.x<0)||(Math.abs(q.x)<.001&&q.z>-4&&q.z<4);
+  if(![[0,0],[.18,0],[-.18,0],[0,.18],[0,-.18]].every(([x,z])=>inHouse({x:p.x+x,z:p.z+z})))return false;
+  if(Math.abs(p.z+4)<.25&&p.x<0&&Math.abs(p.x+5)>.78)return false;
+  if(Math.abs(p.x)<.25&&p.z>-4&&(p.z<2.15||p.z>3.45))return false;
+  return !houseObstacles.some(o=>Math.abs(p.x-o.x)<o.w/2+.13&&Math.abs(p.z-o.z)<o.d/2+.13);
+}
+export function houseRoute(from:Place,to:Place):Place[]{
+  if(!houseWalkable(to))return[];
+  const step=.2,key=(p:Place)=>`${Math.round(p.x/step)},${Math.round(p.z/step)}`;
+  const origin={x:Math.round(from.x/step)*step,z:Math.round(from.z/step)*step};
+  const queue=[origin],seen=new Set([key(origin)]),previous=new Map<string,Place>();
+  for(let i=0;i<queue.length;i++){
+    const p=queue[i];
+    if(Math.hypot(p.x-to.x,p.z-to.z)<.25&&[.25,.5,.75].every(t=>houseWalkable({x:p.x+(to.x-p.x)*t,z:p.z+(to.z-p.z)*t}))){
+      const path=[to];let cursor=p;while(key(cursor)!==key(origin)){path.unshift(cursor);cursor=previous.get(key(cursor))!;}return path;
+    }
+    for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){const n={x:p.x+dx,z:p.z+dz},id=key(n);if(!seen.has(id)&&houseWalkable(n)){seen.add(id);previous.set(id,p);queue.push(n);}}
   }return[];
 }

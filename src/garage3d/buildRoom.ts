@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { phones, furniture, seatsFor, barTables, plants, type RoomId } from './layout';
 
-export function buildRoom(scene:T.Scene, roomId:RoomId='garage') {
+export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=false) {
   const seats=seatsFor(roomId);
   const root=new T.Group(); scene.add(root);
   const cube=new RoundedBoxGeometry(1,1,1,2,.04);
@@ -41,15 +41,26 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage') {
   floor.material=new T.MeshStandardMaterial({map:texture(roomId==='garage'?'floor':'wood'),roughness:.95}); floor.name='walk-floor';
   const plaster=new T.MeshStandardMaterial({map:texture('wall'),roughness:1});
   for(const [x,z,w,d] of [[0,-4,10,.2],[-5,0,.2,8]]){
+    if(integrated&&roomId==='living'&&z===-4){
+      for(const side of [-1,1]){const m=box(root,'#d9b58d',side*3,1.5,-4,4,3,.2);m.material=plaster;box(root,'#a65d3e',side*3,3.02,-4,4,.12,.28);box(root,'#826347',side*3,.12,-3.84,3.9,.2,.09);}
+      // Open arch between the garage and living room; no lintel obscuring the view.
+      continue;
+    }
+    if(integrated&&roomId==='bar'&&x===-5){
+      for(const [center,length] of [[-1,6],[3.8,.4]]){box(root,'#d9b58d',-5,.5,center,.2,1,length);box(root,'#a65d3e',-5,1.04,center,.26,.10,length);}
+      continue;
+    }
     const wall=box(root,'#d9b58d',x,1.5,z,w,3,d);wall.material=plaster;
     box(root,'#a65d3e',x,3.02,z,w+.05,.12,d+.08);
     // Trim sits in front of the plaster, never on the same surface.
     box(root,'#826347',x===-5?-4.84:x,.12,z===-4?-3.84:z,x===-5?.09:9.8,.2,z===-4?.09:7.8);
   }
-  for(let x=-4.8;x<5;x+=.42){box(root,'#b66d49',x,-.09,4,.4,.25,.18);}
+  if(!integrated||roomId!=='garage')for(let x=-4.8;x<5;x+=.42){box(root,'#b66d49',x,-.09,4,.4,.25,.18);}
   // Low cutaway wall keeps the dollhouse readable without hiding people.
-  box(root,'#d3b18c',4.95,.24,.35,.18,.65,7.3);
-  box(root,'#ac6545',4.95,.58,.35,.23,.08,7.3);
+  if(!integrated||roomId!=='living'){
+    box(root,'#d3b18c',4.95,.24,.35,.18,.65,7.3);
+    box(root,'#ac6545',4.95,.58,.35,.23,.08,7.3);
+  }
   const rug=box(root,roomId==='living'?'#8b9373':'#884c40',-.5,.013,1.1,4.8,.02,3.2);
   if(roomId==='bar')rug.visible=false;
   if(roomId!=='bar'){
@@ -71,11 +82,13 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage') {
   }
   plants.forEach(([x,z])=>plant(x,z,1.1));
   // A recessed timber window adds depth to the otherwise quiet side wall.
+  if(!integrated||roomId!=='bar'){
   box(root,'#604b36',-4.86,1.75,.5,.12,1.45,1.9);
   for(const z of [-.02,1.02])box(root,'#7b8c72',-4.77,1.75,z,.04,1.23,.87);
   for(const z of [-.46,.5,1.46])box(root,'#b08550',-4.72,1.75,z,.10,1.45,.08);
   for(const y of [1.03,1.75,2.47])box(root,'#b08550',-4.72,y,.5,.10,.08,1.98);
   box(root,'#9f7246',-4.63,1.01,.5,.38,.08,2.05);
+  }
   // Record cabinet, individual vinyl spines, turntable and twin speakers.
   if(roomId!=='bar'){
   box(root,'#70432b',-3.6,.55,-3.4,2.25,1.1,.7);
@@ -96,7 +109,7 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage') {
     const m=new T.Mesh(new T.PlaneGeometry(.86,1.1),new T.MeshStandardMaterial({map,roughness:1}));m.position.set(x,2,-3.81);root.add(m);
   }
   if(roomId==='garage'){poster(-3.4,'BRASIL','#35704b',true);poster(-2.2,'LADO A','#d8a150');poster(.0,'BAILE','#c68151');}
-  else if(roomId==='living'){poster(-3.4,'EM CASA','#b7bb92');poster(-2.2,'CAFÉ','#d8ae78');poster(.0,'BOA PROSA','#c68151');}
+  else if(roomId==='living'){poster(-3.4,'EM CASA','#b7bb92');poster(-2.2,'CAFÉ','#d8ae78');if(!integrated)poster(.0,'BOA PROSA','#c68151');}
   else{poster(1.7,'VINYL','#a2a578');poster(3.2,'LADO B','#d8ae78');}
   // Raised shutter and a small, intentionally stylized yellow car in the recess.
   if(roomId==='garage'){
