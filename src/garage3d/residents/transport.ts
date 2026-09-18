@@ -1,3 +1,4 @@
+import {concierge,freshConcierge,applyCompanyDecision,companyCandidates,preparedDecision} from './concierge';
 import {applyCommand,createLife,parseLife,releaseBed,returnItem,tickLife,type Command,type LifeState,type Visitor} from './model';
 export type Connection='connecting'|'local'|'online'|'reconnecting';
 /** A single local coordinator is used only when the hosted service is not configured. */
@@ -6,11 +7,12 @@ export function createResidentTransport(getVisitor:()=>Visitor,onState:(s:LifeSt
  const visitors=new Map<string,{visitor:Visitor;seen:number}>(),channel=new BroadcastChannel('house-residents-v1');
  let serverToken='',serverId='';
  const pending:Command[]=[];let processed=new Set<string>();
- try{const saved=parseLife(JSON.parse(localStorage.getItem('house-residents-v1')||'null'));if(saved){state=saved;state.items.forEach(returnItem);if(state.bed.holder)releaseBed(state,state.bed.holder);state.social.invites=[];state.social.solo={};state.social.welcomed={};state.residents.forEach(r=>{r.path=[];r.until=Date.now()+({dora:4300,teo:8900,biscoito:1700}[r.id]);r.activity='idle';});}}catch{/* private storage: in-memory simulation still works */}
+ try{const saved=parseLife(JSON.parse(localStorage.getItem('house-residents-v1')||'null'));if(saved){state=saved;state.items.forEach(returnItem);if(state.bed.holder)releaseBed(state,state.bed.holder);state.social.invites=[];state.social.solo={};state.social.welcomed={};state.social.concierge=freshConcierge();state.residents.forEach(r=>{r.path=[];r.until=Date.now()+({dora:4300,teo:8900,biscoito:1700}[r.id]);r.activity='idle';});}}catch{/* private storage: in-memory simulation still works */}
  const emit=()=>onState(structuredClone(state),mode);
  const send=(data:unknown)=>{if(!closed)channel.postMessage(data);};
  function accept(c:Command){if(processed.has(c.id))return;processed.add(c.id);if(processed.size>200)processed=new Set([...processed].slice(-100));
-  const text=applyCommand(state,c,Date.now(),[...visitors.values()].map(p=>({...p.visitor,available:Date.now()-p.seen<8000})));send({type:'result',id:c.id,visitor:c.visitor.id,text});if(c.visitor.id===getVisitor().id)onResult(text);
+  const eligible=[...visitors.values()].map(p=>({...p.visitor,available:Date.now()-p.seen<8000}));const text=applyCommand(state,c,Date.now(),eligible);
+  if(c.action==='askCompany'&&concierge(state).requests[c.visitor.id]?.pending){const request=concierge(state).requests[c.visitor.id];applyCompanyDecision(state,c.visitor.id,c.id,preparedDecision(request.text,companyCandidates(state,c.visitor,eligible,Date.now())),eligible,Date.now());}send({type:'result',id:c.id,visitor:c.visitor.id,text});if(c.visitor.id===getVisitor().id)onResult(text);
  }
  channel.onmessage=({data})=>{if(closed||mode==='online'||!navigator.locks||!data)return;
   if(data.type==='visitor'&&data.visitor&&typeof data.visitor.id==='string'&&Number.isFinite(data.visitor.position?.x)&&Number.isFinite(data.visitor.position?.z))visitors.set(data.visitor.id,{visitor:data.visitor,seen:Date.now()});
@@ -31,6 +33,9 @@ export function createResidentTransport(getVisitor:()=>Visitor,onState:(s:LifeSt
    const data=await response.json(),parsed=parseLife(data.state);if(!parsed)throw new Error('invalid state');
    if(closed)return;
    if(typeof data.identity?.token==='string'&&typeof data.identity?.id==='string'){serverToken=data.identity.token;serverId=data.identity.id;}
+   const company=concierge(parsed);if(company.requests[serverId]){company.requests[getVisitor().id]=company.requests[serverId];if(serverId!==getVisitor().id)delete company.requests[serverId];}
+   company.proposals.forEach(p=>{if(p.from===serverId)p.from=getVisitor().id;if(p.to===serverId)p.to=getVisitor().id;});
+   company.circles.forEach(r=>r.members.forEach(m=>{if(m.id===serverId)m.id=getVisitor().id;}));
    parsed.social.invites.forEach(i=>{if(i.from===serverId)i.from=getVisitor().id;if(i.to===serverId)i.to=getVisitor().id;});
    if(serverId in parsed.social.solo){parsed.social.solo[getVisitor().id]=parsed.social.solo[serverId];if(serverId!==getVisitor().id)delete parsed.social.solo[serverId];}
    // The shared service owns its anonymous identity; map only our local display id.
@@ -51,7 +56,7 @@ export function createResidentTransport(getVisitor:()=>Visitor,onState:(s:LifeSt
  },100);
  const heartbeat=setInterval(()=>{if(mode==='local'){void elect();}else void poll();},1800);
  void poll();
- return {get state(){return state;},get mode(){return mode;},command(action:Command['action'],target:string){const c:Command={id:crypto.randomUUID(),visitor:getVisitor(),action,target};
+ return {get state(){return state;},get mode(){return mode;},command(action:Command['action'],target:string,request?:string){const c:Command={id:crypto.randomUUID(),visitor:getVisitor(),action,target,request};
   if(mode==='local'){send({type:'visitor',visitor:c.visitor});visitors.set(c.visitor.id,{visitor:c.visitor,seen:Date.now()});if(leader)accept(c);else send({type:'command',command:c});}
   else if(mode==='online'){if(pending.length<2){pending.push(c);void poll();}}
   else onResult('A casa está reconectando. Tente em um instante.');

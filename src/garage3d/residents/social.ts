@@ -1,13 +1,14 @@
+import {CONCIERGE_ACTIONS,companyCommand,tickCompany,validConcierge,concierge,type Concierge} from './concierge.ts';
 import {houseRoute,houseWalkable,roomAt,type Place} from '../layout.ts';
 import type {Command,LifeState,Visitor} from './model.ts';
 export type HostInvite={id:string;host:'dora'|'teo';kind:'welcome'|'meet'|'activity'|'ball';from:string;to:string;fromName:string;toName:string;stage:'pending'|'ready';expires:number;point?:Place;topic:string};
-export type HostSocial={solo:Record<string,boolean>;invites:HostInvite[];welcomed:Record<string,number>};
-export const HOST_ACTIONS=new Set(['introduce','together','solo','socialOn','passToy','acceptHost','declineHost','dismissHost']);
+export type HostSocial={concierge?:Concierge;solo:Record<string,boolean>;invites:HostInvite[];welcomed:Record<string,number>};
+export const HOST_ACTIONS=new Set([...CONCIERGE_ACTIONS,'introduce','together','solo','socialOn','passToy','acceptHost','declineHost','dismissHost']);
 export const freshSocial=():HostSocial=>({solo:{},invites:[],welcomed:{}});
 const dist=(a:Place,b:Place)=>Math.hypot(a.x-b.x,a.z-b.z);
 const available=(s:LifeState,v:Visitor)=>!v.frozen&&v.available!==false&&!s.social.solo[v.id];
 const compatible=(a:Visitor,b:Visitor)=>a.id!==b.id&&(a.publicId??a.id)!==(b.publicId??b.id)&&roomAt(a.position)===roomAt(b.position)&&!a.blocked?.includes(b.publicId??b.id)&&!b.blocked?.includes(a.publicId??a.id);
-const involved=(s:LifeState,id:string)=>s.social.invites.some(i=>i.kind!=='welcome'&&(i.from===id||i.to===id));
+const involved=(s:LifeState,id:string)=>concierge(s).circles.some(r=>r.members.some(m=>m.id===id))||concierge(s).proposals.some(p=>p.from===id||p.to===id)||s.social.invites.some(i=>i.kind!=='welcome'&&(i.from===id||i.to===id));
 function begin(s:LifeState,c:Command,visitors:Visitor[],now:number,kind:'meet'|'activity'|'ball'){
  const a=c.visitor;if(!available(s,a))return 'Ative as apresentações quando quiser companhia.';
  if(involved(s,a.id))return 'Você já tem um convite. Conclua ou cancele antes de começar outro.';
@@ -23,9 +24,10 @@ function begin(s:LifeState,c:Command,visitors:Visitor[],now:number,kind:'meet'|'
 }
 export function hostCommand(s:LifeState,c:Command,visitors:Visitor[],now:number):string{
  const v=c.visitor;s.social??=freshSocial();
+ if(CONCIERGE_ACTIONS.has(c.action))return companyCommand(s,c,visitors,now);
  if(c.action==='solo'||c.action==='socialOn'){
   s.social.solo[v.id]=c.action==='solo';s.social.welcomed[v.id]=now;
-  if(c.action==='solo')s.social.invites=s.social.invites.filter(i=>i.from!==v.id&&i.to!==v.id);
+  if(c.action==='solo'){s.social.invites=s.social.invites.filter(i=>i.from!==v.id&&i.to!==v.id);companyCommand(s,{...c,action:'cancelCompany'},visitors,now);}
   return c.action==='solo'?'Tudo bem! Dora e Téo vão deixar você explorar em paz.':'Dora e Téo podem voltar a convidar você.';
  }
  if(c.action==='introduce'||c.action==='together'||c.action==='passToy')return begin(s,c,visitors,now,c.action==='passToy'?'ball':c.action==='together'?'activity':'meet');
@@ -61,19 +63,23 @@ export function hostCommand(s:LifeState,c:Command,visitors:Visitor[],now:number)
  return 'Apresentação aceita! Toque em “Ir ao encontro” para chegar perto. Câmera e microfone continuam desligados.';
 }
 export function tickSocial(s:LifeState,visitors:Visitor[],now:number){
- s.social??=freshSocial();const byId=new Map(visitors.map(v=>[v.id,v]));
+ s.social??=freshSocial();tickCompany(s,visitors,now);const byId=new Map(visitors.map(v=>[v.id,v]));
  s.social.invites=s.social.invites.filter(i=>{const a=byId.get(i.from),b=byId.get(i.to);return i.expires>now&&a&&b&&available(s,a)&&available(s,b)&&(i.kind==='welcome'||compatible(a,b));});
  for(const id of Object.keys(s.social.welcomed))if(!byId.has(id)&&now-s.social.welcomed[id]>120000){delete s.social.welcomed[id];delete s.social.solo[id];}
- for(const v of visitors){if(!available(s,v)||s.social.welcomed[v.id]||s.social.invites.length>=20||involved(s,v.id))continue;
+ for(const v of visitors){if(concierge(s).requests[v.id]||!available(s,v)||s.social.welcomed[v.id]||s.social.invites.length>=20||involved(s,v.id))continue;
   s.social.welcomed[v.id]=now||1;
   s.social.invites.push({id:`welcome:${v.id}`,host:'dora',kind:'welcome',from:v.id,to:v.id,fromName:v.name,toName:v.name,stage:'pending',expires:now+45000,topic:'Quer ajuda para conhecer o pessoal da casa?'});
  }
 }
 export function validSocial(value:unknown):value is HostSocial{
- const s=value as HostSocial;if(!s||!s.solo||!s.welcomed||!Array.isArray(s.invites)||s.invites.length>24||Object.keys(s.solo).length>120||Object.keys(s.welcomed).length>120)return false;
+ const s=value as HostSocial;if(s?.concierge&&!validConcierge(s.concierge))return false;if(!s||!s.solo||!s.welcomed||!Array.isArray(s.invites)||s.invites.length>24||Object.keys(s.solo).length>120||Object.keys(s.welcomed).length>120)return false;
  if(Object.values(s.solo).some(v=>typeof v!=='boolean')||Object.values(s.welcomed).some(v=>!Number.isFinite(v)))return false;
  const str=(x:unknown,n:number)=>typeof x==='string'&&x.length>0&&x.length<=n;
  return new Set(s.invites.map(i=>i.id)).size===s.invites.length&&s.invites.every(i=>str(i.id,100)&&str(i.from,100)&&str(i.to,100)&&str(i.fromName,24)&&str(i.toName,24)&&['dora','teo'].includes(i.host)&&['welcome','meet','activity','ball'].includes(i.kind)&&['pending','ready'].includes(i.stage)&&Number.isFinite(i.expires)&&str(i.topic,200)&&(!i.point||(Number.isFinite(i.point.x)&&Number.isFinite(i.point.z)&&houseWalkable(i.point))));
 }
 /** Invitations are personal; public speech is only emitted after acceptance. */
-export function personalLife(s:LifeState,id:string):LifeState{const state=structuredClone(s);state.social??=freshSocial();state.social.invites=state.social.invites.filter(i=>i.from===id||i.to===id);state.social.solo={[id]:!!state.social.solo[id]};state.social.welcomed={};return state;}
+export function personalLife(s:LifeState,id:string):LifeState{const state=structuredClone(s);state.social??=freshSocial();state.social.invites=state.social.invites.filter(i=>i.from===id||i.to===id);state.social.solo={[id]:!!state.social.solo[id]};state.social.welcomed={};const c=concierge(state);
+ c.reservedSeats=c.circles.flatMap(r=>r.members.filter(m=>m.id!==id).map(m=>m.seat));
+ c.requests=c.requests[id]?{[id]:c.requests[id]}:{};
+ c.proposals=c.proposals.filter(p=>p.from===id||(p.to===id&&p.stage==='invited'));
+ c.circles=c.circles.filter(r=>r.members.some(m=>m.id===id));return state;}

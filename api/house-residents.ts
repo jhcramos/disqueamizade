@@ -1,3 +1,6 @@
+import {concierge,companyCandidates,applyCompanyDecision,preparedDecision} from '../src/garage3d/residents/concierge.ts';
+import {chooseCompany,invitationLine} from '../server/houseConcierge.ts';
+import {normalizeSeat} from '../src/garage/seats.ts';
 import {HOST_ACTIONS,personalLife} from '../src/garage3d/residents/social.ts';
 import type { VercelRequest,VercelResponse } from '@vercel/node';
 import {createClient} from '@supabase/supabase-js';
@@ -31,11 +34,12 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  if(!body||JSON.stringify(body).length>6000)return res.status(400).json({error:'input'});
  const raw=body.visitor;
  if(!raw||typeof raw.id!=='string'||!/^[a-f0-9-]{36}$/.test(raw.id)||typeof raw.name!=='string'||!Number.isFinite(raw.position?.x)||!Number.isFinite(raw.position?.z)||!roomAt(raw.position))return res.status(400).json({error:'visitor'});
- const visitor:Visitor={id:identity.id,name:raw.name.replace(/[<>\r\n]/g,'').slice(0,24),position:{x:raw.position.x,z:raw.position.z},frozen:raw.frozen===true,publicId:raw.id,blocked:Array.isArray(raw.blocked)?raw.blocked.filter((id:unknown)=>typeof id==='string'&&id.length<=100).slice(0,100):[]};
+ const visitor:Visitor={id:identity.id,name:raw.name.replace(/[<>\r\n]/g,'').slice(0,24),position:{x:raw.position.x,z:raw.position.z},seat:normalizeSeat(raw.seat,roomAt(raw.position)),frozen:raw.frozen===true,publicId:raw.id,blocked:Array.isArray(raw.blocked)?raw.blocked.filter((id:unknown)=>typeof id==='string'&&id.length<=100).slice(0,100):[]};
  visitor.name=visitor.name.trim()||'Visitante';
  if(body.feature==='poker')return handlePoker(body,res,url,key,identity,visitor);
  const command=body.command;
  if(command&&(!ACTIONS.has(command.action)||!(TARGETS.has(command.target)||(HOST_ACTIONS.has(command.action)&&typeof command.target==='string'&&command.target.length<=100))||typeof command.id!=='string'||!/^[a-f0-9-]{36}$/.test(command.id)))return res.status(400).json({error:'command'});
+ if(command?.action==='askCompany'&&(typeof command.request!=='string'||command.request.trim().length<3||command.request.length>240))return res.status(400).json({error:'request'});
  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}}),now=Date.now();
  for(let attempt=0;attempt<4;attempt++){
   const {data,error}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();
@@ -52,10 +56,32 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
   world.at=now;
   let result:string|undefined;
   if(command){result=world.commands[command.id];if(!result){result=applyCommand(state,{...command,visitor} as Command,now,Object.values(world.visitors).map(p=>({...p.visitor,available:now-p.seen<8000})));world.commands[command.id]=result;world.commands=Object.fromEntries(Object.entries(world.commands).slice(-100));}}
-  const generate=!!process.env.DEEPINFRA_API_KEY&&now>=world.nextAI&&(!state.speech||state.speech.until<now);
+  const companyRequest=concierge(state).requests[visitor.id];
+  const selecting=command?.action==='askCompany'&&companyRequest?.id===command.id&&companyRequest.pending;
+  const eligible=Object.values(world.visitors).map(p=>({...p.visitor,available:now-p.seen<8000}));
+  const candidates=selecting?companyCandidates(state,visitor,eligible,now):[];
+  const evaluate=selecting&&candidates.length>0&&!!process.env.TYPESAFE_API_KEY&&(state.cooldown['company-global']??0)<=now;
+  if(evaluate){state.cooldown['company-global']=now+10000;companyRequest.pending=false;/* Persist the API reservation before any external call. */}
+  else if(selecting)applyCompanyDecision(state,visitor.id,command.id,preparedDecision(companyRequest.text,candidates),eligible,now);
+  const generate=!selecting&&!!process.env.DEEPINFRA_API_KEY&&now>=world.nextAI&&(!state.speech||state.speech.until<now);
   if(generate)world.nextAI=now+120000;
   const {data:written,error:writeError}=await db.from('house_resident_world').update({revision:data.revision+1,payload:world,updated_at:new Date(now).toISOString()}).eq('id','main').eq('revision',data.revision).select('revision');
   if(writeError)return res.status(503).json({configured:false});if(!written?.length)continue;
+  if(evaluate){
+   const decision=await chooseCompany(companyRequest.text,candidates);
+   decision.line=await invitationLine(decision,companyRequest.host);
+   for(let retry=0;retry<4;retry++){
+    const {data:latest}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();
+    if(!latest||!parseLife(latest.payload.state))break;
+    const current=concierge(latest.payload.state).requests[visitor.id];
+    if(current?.id!==command.id||current.expires<=Date.now())break;
+    current.pending=true;
+    const fresh=Object.values(latest.payload.visitors as World['visitors']).map(p=>({...p.visitor,available:Date.now()-p.seen<8000}));
+    applyCompanyDecision(latest.payload.state,visitor.id,command.id,decision,fresh,Date.now());
+    const {data:updated}=await db.from('house_resident_world').update({revision:latest.revision+1,payload:latest.payload}).eq('id','main').eq('revision',latest.revision).select('revision');
+    if(updated?.length){world.state=latest.payload.state;break;}
+   }
+  }
   if(generate){try{const speech=await improvise(state);if(speech){
    // CAS prevents a late model response from overwriting intervening visitor actions.
    const {data:latest}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();

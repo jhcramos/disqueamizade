@@ -2,7 +2,7 @@ import {freshSocial,validSocial,hostCommand,tickSocial,HOST_ACTIONS,type HostSoc
 import { houseRoute, houseWalkable, type Place } from '../layout.ts';
 export type ResidentId = 'dora' | 'teo' | 'biscoito';
 export type ItemId = 'coffee' | 'watering' | 'record' | 'toy';
-export type Visitor = { id:string; name:string; position:Place; frozen?:boolean; available?:boolean; publicId?:string; blocked?:string[] };
+export type Visitor = { seat?:string; id:string; name:string; position:Place; frozen?:boolean; available?:boolean; publicId?:string; blocked?:string[] };
 export type Resident = {id:ResidentId; position:Place; angle:number; activity:string; path:Place[]; until:number; step:number; target?:string};
 export type BallFlight={from:Place;to:Place;start:number;duration:number;fromHeight:number;toHeight:number};
 export type Item = {id:ItemId; kind:ItemId; position:Place; height:number; holder?:string; reserved?:string;flight?:BallFlight};
@@ -16,8 +16,8 @@ export const ITEMS:Record<ItemId,{name:string;position:Place;height:number}>={
 };
 export const PLANT:Place={x:-9.25,z:-.9};
 export const BED:Place={x:-1.4,z:1.85};
-export type LifeAction = 'pick'|'return'|'coffee'|'water'|'record'|'throw'|'pet'|'greet'|'fill'|'rest'|'talk'|'moveBed'|'placeBed'|'cancelBed'|'introduce'|'together'|'solo'|'socialOn'|'passToy'|'acceptHost'|'declineHost'|'dismissHost';
-export type Command={id:string;visitor:Visitor;action:LifeAction;target:string};
+export type LifeAction = 'askCompany'|'cancelCompany'|'acceptCompany'|'declineCompany'|'leaveCompany'|'pick'|'return'|'coffee'|'water'|'record'|'throw'|'pet'|'greet'|'fill'|'rest'|'talk'|'moveBed'|'placeBed'|'cancelBed'|'introduce'|'together'|'solo'|'socialOn'|'passToy'|'acceptHost'|'declineHost'|'dismissHost';
+export type Command={id:string;visitor:Visitor;action:LifeAction;target:string;request?:string};
 const distance=(a:Place,b:Place)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function createLife(now=Date.now()):LifeState{return{version:1,social:freshSocial(),bed:{position:{...BED},home:{...BED}},residents:[
  {id:'dora',position:{x:-6.3,z:2.7},angle:0,activity:'idle',path:[],until:now+12000,step:0},
@@ -56,7 +56,7 @@ export function bedFits(p:Place){return Number.isFinite(p.x)&&Number.isFinite(p.
 export function releaseBed(s:LifeState,visitor:string){if(s.bed.holder===visitor){s.bed.holder=undefined;s.bed.position={...s.bed.home};}}
 export function returnItem(item:Item){delete item.flight;item.holder=undefined;item.reserved=undefined;item.position={...ITEMS[item.id].position};item.height=ITEMS[item.id].height;}
 export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visitor[]=[c.visitor]):string{
- if(HOST_ACTIONS.has(c.action)){if(c.visitor.frozen&&! ['solo','declineHost','dismissHost'].includes(c.action))return 'Termine sua conversa antes de aceitar outro convite.';return hostCommand(s,c,visitors,now);}
+ if(HOST_ACTIONS.has(c.action)){if(c.visitor.frozen&&! ['solo','declineHost','dismissHost','cancelCompany','declineCompany','leaveCompany'].includes(c.action))return 'Termine sua conversa antes de aceitar outro convite.';return hostCommand(s,c,visitors,now);}
  const v=c.visitor,p=targetPosition(s,c.target);
  if(!v||!v.id||v.id.length>100||!Number.isFinite(v.position.x)||!Number.isFinite(v.position.z)||v.frozen)return 'Espere terminar a conversa para brincar.';
  if((s.cooldown[v.id]??0)>now&&!['placeBed','cancelBed'].includes(c.action))return 'Só um instante…';
@@ -157,7 +157,7 @@ export function parseLife(raw:unknown):LifeState|null{
  if(new Set(s.items.filter(i=>i.holder).map(i=>i.holder)).size!==s.items.filter(i=>i.holder).length)return null;
  if(!Array.isArray(s.memories)||s.memories.length>12||s.memories.some(m=>typeof m!=='string'||m.length>200))return null;
  if(s.speech&&(!Object.prototype.hasOwnProperty.call(NAMES,s.speech.owner)||typeof s.speech.text!=='string'||s.speech.text.length>250||!Number.isFinite(s.speech.until)))return null;
- if(!s.cooldown||typeof s.cooldown!=='object'||Object.keys(s.cooldown).length>200||Object.values(s.cooldown).some(t=>!Number.isFinite(t)))return null;
+ if(!s.cooldown||typeof s.cooldown!=='object'||Object.keys(s.cooldown).length>600||Object.values(s.cooldown).some(t=>!Number.isFinite(t)))return null;
  if([s.watered,s.coffees,s.dances,s.fetches].some(n=>!Number.isInteger(n)||n<0))return null;
  if(s.bed&&(!valid(s.bed.position)||!valid(s.bed.home)||!bedFits(s.bed.home)||(s.bed.holder!==undefined&&(typeof s.bed.holder!=='string'||s.bed.holder.length>100))))return null;
  if(s.social&&!validSocial(s.social))return null;
