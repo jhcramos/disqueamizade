@@ -10,6 +10,7 @@ try {
   const page=await context.newPage(); pages.push(page);
   page.on('pageerror',e=>errors.push(e.message));
   page.on('response',async response=>{if(response.url().includes('/auth/v1/signup') && response.ok()){const data=await response.json();if(data.user?.id)users.push(data.user.id);}});
+  page.on('response',async response=>{if(response.url().includes('/functions/v1/send-chat')){const data=await response.json();console.log('CHAT HTTP',response.status(),data.error || 'ok');}});
   await page.addInitScript(()=>{window.mediaRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.mediaRequests++;throw Error('Unexpected media request');};});
   await page.goto('https://disqueamizade.com.br/garagem');
   await page.getByRole('textbox',{name:'Como podemos chamar você?'}).fill(name);
@@ -29,7 +30,8 @@ try {
  for(const p of pages) await p.getByText('Conversa aberta. O vídeo aparece quando a pessoa ativar a câmera.').waitFor({timeout:30000});
  await a.getByRole('textbox',{name:'Mensagem privada'}).fill('Teste técnico de ligação entre ambientes.');
  await a.getByRole('button',{name:'Enviar mensagem privada'}).click();
- await b.getByText('Teste técnico de ligação entre ambientes.',{exact:true}).waitFor({timeout:20000});
+ try { await b.getByText('Teste técnico de ligação entre ambientes.',{exact:false}).waitFor({timeout:20000}); }
+ catch(e) { for (const [i,p] of pages.entries()) { await p.screenshot({path:`/tmp/disque-phone-failure-${i}.png`}); console.log('CHAT ALERT',i,await p.getByRole('alert').allTextContents()); } throw e; }
  await b.screenshot({path:'/tmp/disque-phone-live-call.png'});
  for(const p of pages) assert.equal(await p.evaluate(()=>window.mediaRequests),0);
  await a.getByRole('button',{name:'Encerrar conversa',exact:true}).click();

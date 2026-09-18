@@ -63,7 +63,7 @@ export function HousePhones(props: Props) {
       working.current = true;
       try {
         await useAuthStore.getState().initialize();
-        if (!useAuthStore.getState().user) await useAuthStore.getState().signInAsGuest();
+        if (!useAuthStore.getState().user) await useAuthStore.getState().signInAsGuest(latest.current.name);
         if (stopped) return;
         const next = await request();
         if (!stopped) { setState(next); setReady(true); setError(''); }

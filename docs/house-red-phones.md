@@ -13,4 +13,5 @@ Os telefones funcionam online mesmo com exploração local. Isso não transforma
 - `tests/house-phones.sql`: fixtures temporárias, transação revertida; roteamento, aceite único, autorização de mídia e desligamento.
 - `tests/house-phones-online.mjs`: três autenticações anônimas reais, dois atendimentos concorrentes, token LiveKit para ambos, encerramento e acesso direto às tabelas negado. Sem solicitar mídia. IDs das fixtures em `/tmp/disque-phone-test-users.json` para exclusão após o teste.
 - `tests/garage-roulette-entry-browser.mjs`: quatro aparelhos em cada ambiente, modal mobile/desktop, Escape, som, atalho, redirecionamento e zero pedidos de mídia.
+- `tests/house-phones-live-browser.mjs`: sessões independentes no site publicado, toque garagem → sala, atendimento, conexão LiveKit, texto privado sem câmera e encerramento remoto.
 - Regressões de exploração mobile e grupos. Build completo validado na Vercel: o build local ficou limitado pelo disco cheio.
