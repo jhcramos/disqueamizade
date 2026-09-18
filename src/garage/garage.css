@@ -2419,6 +2419,13 @@
   width: 100%;
   padding: 10px;
   border: 1px solid var(--line);
+  border-radius: 8px;
+}
+/* Keep keyboard focus visible inside the composer, clear of the messages. */
+.garage-app .direct-panel input:focus-visible {
+  border-color: var(--rust);
+  outline: 2px solid var(--rust);
+  outline-offset: -2px;
 }
 .direct-history {
   max-height: 180px;
