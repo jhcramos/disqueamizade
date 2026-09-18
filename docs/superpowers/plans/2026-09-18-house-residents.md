@@ -44,3 +44,9 @@ Provider references: https://deepinfra.com/zai-org/GLM-5.3-Flash/api and https:/
 - Deployed `3cdccd8` to disqueamizade.com.br. Resident API returns HTTP 200 with three shared residents. Two independent browser contexts passed pickup, exclusive ownership and return checks.
 - Live provider request returned **401** from DeepInfra. Presence of the environment variable does not establish valid provider authorization. GLM is selected but improvised speech is not verified/active. Asked the user to replace DEEPINFRA_API_KEY in Production, then redeploy and repeat the generatedBy check.
 - Generated speech carries a `generatedBy` marker for verification; prepared lines do not. Provider failure logs include only model and status, never credentials or conversation content. Generation waits for an available speech slot and preserves the shared two-minute budget.
+
+
+## Key replacement and provider compatibility
+The user authorized using the clipboard credential. It was held only in process memory, verified directly with DeepInfra HTTP 200, then installed in Vercel Production with `vercel env add --sensitive --force` (CLI update rejects an existing sensitive variable). No secret value was printed or saved to a local file.
+
+Live validation exposed a model-specific issue: GLM-5.3-Flash requires thinking enabled according to https://docs.z.ai/guides/vlm/glm-5.3-flash . The initial generic `reasoning_effort: none` request produced incomplete analysis text. Changed to `low`, maximum 256 output tokens and accept only completed `finish_reason: stop` content without thinking tags. A direct low-effort request returned a complete Portuguese line in 2.47 seconds (36 completion tokens). Provider timeout is 15 seconds, client poll timeout 20 seconds, function maximum duration 30 seconds; shared generation cadence stays two minutes.

@@ -6,12 +6,12 @@ import {createLife} from '../src/garage3d/residents/model.ts';
 
 test('resident API guards requests and owns anonymous identity independently of visitor input',async()=>{
  const saved={url:process.env.SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,ai:process.env.DEEPINFRA_API_KEY},originalFetch=globalThis.fetch;
- const generations=[];let providerStatus=200;
+ const generations=[];let providerStatus=200,finishReason='stop';
  let row={revision:0,payload:{state:createLife(),visitors:{},at:Date.now(),nextAI:Date.now()+120000,commands:{}}};
  globalThis.fetch=async(request,init)=>{
   if(String(request)==='https://api.deepinfra.com/v1/openai/chat/completions'){
    generations.push(JSON.parse(init.body));
-   return new Response(JSON.stringify(providerStatus===200?{choices:[{message:{content:'O café esfriou, mas a fofoca continua quentinha.'}}]}:{error:'unavailable'}),{status:providerStatus});
+   return new Response(JSON.stringify(providerStatus===200?{choices:[{finish_reason:finishReason,message:{content:'O café esfriou, mas a fofoca continua quentinha.'}}]}:{error:'unavailable'}),{status:providerStatus});
   }
   assert.match(String(request),/^https:\/\/resident-test\.invalid\/rest\/v1\/house_resident_world/);
   if(init?.method==='PATCH'){row={...row,...JSON.parse(init.body)};return new Response(JSON.stringify([{revision:row.revision}]),{status:200});}
@@ -41,7 +41,7 @@ test('resident API guards requests and owns anonymous identity independently of 
   assert.equal(generated.status,200);assert.equal(generated.body.generative,true);
   assert.equal(generations.length,1);
   assert.equal(generations[0].model,'zai-org/GLM-5.3-Flash');
-  assert.equal(generations[0].reasoning_effort,'none');assert.equal(generations[0].max_tokens,100);
+  assert.equal(generations[0].reasoning_effort,'low');assert.equal(generations[0].max_tokens,256);
   assert.equal(generated.body.state.speech.generatedBy,'zai-org/GLM-5.3-Flash');
   assert.equal(generated.body.state.speech.text,'O café esfriou, mas a fofoca continua quentinha.');
   assert.ok(row.payload.nextAI>Date.now()+110000);
@@ -51,6 +51,8 @@ test('resident API guards requests and owns anonymous identity independently of 
   delete row.payload.state.speech;providerStatus=503;
   assert.equal((await invoke()).status,200,'Provider failures do not interrupt household actions');
   await invoke();assert.equal(generations.length,2,'No immediate retries after provider failure');
+  providerStatus=200;finishReason='length';row.payload.nextAI=0;delete row.payload.state.speech;
+  const truncated=await invoke();assert.equal(truncated.body.state.speech,undefined,'Incomplete output must not be displayed as dialogue');
  }finally{
   globalThis.fetch=originalFetch;
   for(const [key,value]of Object.entries({SUPABASE_URL:saved.url,SUPABASE_SERVICE_ROLE_KEY:saved.key,DEEPINFRA_API_KEY:saved.ai})){if(value===undefined)delete process.env[key];else process.env[key]=value;}
