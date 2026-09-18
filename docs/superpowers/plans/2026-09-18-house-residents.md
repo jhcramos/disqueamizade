@@ -9,7 +9,7 @@
 - [x] Create local coordinator transport with validated snapshots, tab ownership, bounded persisted state and cleanup.
 - [x] Integrate scene selection, walk-to action, contextual buttons and transient speech; retain chat/cinema controls and prevent acting when frozen.
 - [x] Verify unit tests and build; browser exercise pickup, deliver, pet and fetch, mobile overlay and persistence.
-- [ ] Review changes, scan staged patch for secrets, commit and push authorized origin; deploy and smoke test if available.
+- [x] Review changes, scan staged patch for secrets, commit and push authorized origin; deploy and smoke test.
 
 
 ## Activation and verification
@@ -25,3 +25,6 @@ Pending online activation:
 4. Redeploy; verify two distinct browser contexts see the same residents and cannot acquire the same item. Exercise reconnect, return, fetch and an actual Gemma response. Record latency and provider spend before raising cadence/capacity.
 
 With no configured service the house uses prepared routines and local tab coordination, clearly labeled in its controls. Server mode currently supports one shared house with up to 100 recent resident visitors. It does not replace the existing real-visitor presence system. It is not a continuously running process: simulation advances on active visitor polls; there are no AI calls when nobody visits. No voice, current-news retrieval, unrestricted visitor/AI chat, model training or open-ended model-selected actions are included. Memories keep the last 12 completed events.
+
+
+Deployment validation: production updated to `c350802` on 2026-09-18. Fixed TypeScript-to-ESM import rewriting for server functions; verified emitted JavaScript boots successfully. The live endpoint now returns the expected `503 {configured:false}` until the database is activated, rather than an invocation failure. Local fallback also handles initial HTTP 500 responses. Two-tab browser verification passed shared object ownership, duplicate pickup rejection, leave cleanup and coordinator takeover. No provider keys or unrelated database resources were modified.
