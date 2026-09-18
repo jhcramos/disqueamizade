@@ -82,7 +82,7 @@ class LocalConversation {
       room: "garage",
       busy: false,
     };
-    this.channel = new BroadcastChannel("disque-garagem-local-v2");
+    this.channel = new BroadcastChannel("disque-house-3d-v1");
     this.channel.onmessage = (e) => {
       const m = e.data;
       if (

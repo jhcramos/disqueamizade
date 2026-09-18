@@ -21,6 +21,7 @@ type Props = {
   onSeat: (id?: string) => void;
   frozen: boolean;
   connected: boolean;
+  spatial?:boolean;
 };
 export function BarPlay({
   self,
@@ -31,6 +32,7 @@ export function BarPlay({
   onSeat,
   frozen,
   connected,
+  spatial=false,
 }: Props) {
   const [pending, setPending] = useState<string>(),
     [notice, setNotice] = useState(
@@ -153,7 +155,7 @@ export function BarPlay({
       : undefined;
   return (
     <>
-      <div className="bar-seats" aria-label="Lugares do bar">
+      {!spatial&&<div className="bar-seats" aria-label="Lugares do bar">
         {BAR_SEATS.map((s) => {
           const owner = occupied(s.id),
             mine = self.seat === s.id;
@@ -173,8 +175,9 @@ export function BarPlay({
           );
         })}
       </div>
-      {powered && <div className="bar-jukebox-glow" aria-hidden="true" />}
-      {toast && (
+      }
+      {!spatial && powered && <div className="bar-jukebox-glow" aria-hidden="true" />}
+      {!spatial && toast && (
         <div
           className="bar-toast"
           role="status"
@@ -215,7 +218,7 @@ export function BarPlay({
             <Wine size={14} />
             Brindar
           </button>
-          {self.seat && (
+          {!spatial && self.seat && (
             <button
               disabled={frozen}
               onClick={() => {

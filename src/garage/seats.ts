@@ -1,92 +1,14 @@
 import type { Point, RoomId } from "./model.ts";
-export type BarSeat = {
-  id: string;
-  name: string;
-  point: Point;
-  seatY: number;
-  rotation: number;
-};
-export const BAR_SEATS: BarSeat[] = [
-  {
-    id: "counter-1",
-    name: "Balcão · banco 1",
-    point: { x: 0.341, y: 0.442 },
-    seatY: 0.334,
-    rotation: -2.5,
-  },
-  {
-    id: "counter-2",
-    name: "Balcão · banco 2",
-    point: { x: 0.405, y: 0.403 },
-    seatY: 0.295,
-    rotation: -2.5,
-  },
-  {
-    id: "counter-3",
-    name: "Balcão · banco 3",
-    point: { x: 0.46, y: 0.365 },
-    seatY: 0.262,
-    rotation: -2.5,
-  },
-  ...[
-    [
-      [0.61, 0.466, 0.407],
-      [0.726, 0.477, 0.42],
-      [0.603, 0.553, 0.486],
-      [0.723, 0.567, 0.5],
-    ],
-    [
-      [0.263, 0.607, 0.551],
-      [0.401, 0.625, 0.566],
-      [0.252, 0.717, 0.647],
-      [0.374, 0.731, 0.657],
-    ],
-    [
-      [0.616, 0.704, 0.643],
-      [0.753, 0.725, 0.661],
-      [0.615, 0.828, 0.756],
-      [0.752, 0.838, 0.764],
-    ],
-  ].flatMap((rows, t) =>
-    rows.map(([x, y, seatY], i) => ({
-      id: `table-${t + 1}-${i + 1}`,
-      name: `Mesa ${t + 1} · lugar ${i + 1}`,
-      point: { x, y },
-      seatY,
-      rotation: i % 2 ? -1.2 : 1.2,
-    })),
-  ),
-];
-export function normalizeSeat(raw: unknown, room: unknown) {
-  return (room === "bar" || room === "garage" || room === "living") &&
-    typeof raw === "string" &&
-    seatsForRoom(room).some((s) => s.id === raw)
-    ? raw
-    : undefined;
-}
-// Seat positions refer to the feet; seatY is the visible cushion height.
-export const HOUSE_SEATS = [
-  { room: 'garage', spot: 'garage-music', name: 'Roda do som', x: .44, y: .48 },
-  { room: 'garage', spot: 'garage-chairs', name: 'Papo nas cadeiras', x: .57, y: .76 },
-  { room: 'living', spot: 'living-sofa', name: 'Roda do sofá', x: .40, y: .56 },
-  { room: 'living', spot: 'living-coffee', name: 'Cantinho do café', x: .64, y: .72 },
-].flatMap(group => [-1, 1].flatMap(row => [-1, 1].map((side, i) => ({
-  id: `${group.spot}-${row < 0 ? i + 1 : i + 3}`,
-  room: group.room as RoomId, spot: group.spot,
-  name: `${group.name} · assento ${row < 0 ? i + 1 : i + 3}`,
-  point: { x: group.x + side * .052, y: group.y + row * .06 },
-  seatY: group.y + row * .06 - .062,
-  rotation: row < 0 ? side * -.3 : Math.PI + side * .3,
-}))));
-export function seatsForRoom(room: RoomId) {
-  return room === 'bar' ? BAR_SEATS : HOUSE_SEATS.filter(s => s.room === room);
-}
-export function seatWinner(
-  people: { id: string; seat?: string }[],
-  seat: string,
-) {
-  return people
-    .filter((p) => p.seat === seat)
-    .map((p) => p.id)
-    .sort()[0];
-}
+import { seatsFor, approachSeat } from "../garage3d/layout.ts";
+export type BarSeat={id:string;name:string;point:Point;seatY:number;rotation:number;worldIndex:number};
+const shared=(p:{x:number;z:number})=>({x:(p.x+5)/10,y:(p.z+4)/8});
+export const BAR_SEATS:BarSeat[]=seatsFor('bar').map((s,i)=>({id:i<3?`counter-${i+1}`:`table-${Math.floor((i-3)/4)+1}-${(i-3)%4+1}`,name:s.name,point:shared(approachSeat(s)),seatY:shared(s).y,rotation:s.angle,worldIndex:i}));
+export const HOUSE_SEATS=(['garage','living'] as RoomId[]).flatMap(room=>seatsFor(room).map((s,i)=>{
+  const first=room==='garage'?i<4:i<3||i===6;
+  const group=room==='garage'?(first?'garage-music':'garage-chairs'):(first?'living-sofa':'living-coffee');
+  const number=room==='garage'?i%4+1:first?(i===6?4:i+1):(i===7?4:i-2);
+  return{id:`${group}-${number}`,room,spot:group,name:s.name,point:shared(approachSeat(s)),seatY:shared(s).y,rotation:s.angle,worldIndex:i};
+}));
+export function seatsForRoom(room:RoomId){return room==='bar'?BAR_SEATS:HOUSE_SEATS.filter(s=>s.room===room);}
+export function normalizeSeat(raw:unknown,room:unknown){return (room==='bar'||room==='garage'||room==='living')&&typeof raw==='string'&&seatsForRoom(room).some(s=>s.id===raw)?raw:undefined;}
+export function seatWinner(people:{id:string;seat?:string}[],seat:string){return people.filter(p=>p.seat===seat).map(p=>p.id).sort()[0];}

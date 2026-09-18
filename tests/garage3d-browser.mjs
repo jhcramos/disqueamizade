@@ -5,6 +5,9 @@ const page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem-3d`);
+
+  await page.getByRole('textbox',{name:'Como podemos chamar você?'}).fill('Visitante');
+  await page.getByRole('button',{name:'Entrar na casa',exact:true}).click();
   await page.waitForFunction(()=>Number(document.querySelector('.garage3d-canvas')?.dataset.drawCalls)>0);
   await page.locator('.garage3d-canvas canvas').evaluate(el=>el.dataset.persistent='yes');
   assert.equal(await page.getByRole('button',{name:/^Explorar /}).count(),3);
@@ -13,7 +16,7 @@ try{
     const before=await page.locator('.garage3d-canvas').getAttribute('data-position');
     await page.getByRole('navigation',{name:'Ambientes 3D'}).getByRole('button',{name:new RegExp(name)}).click();
     assert.equal(await page.locator('.garage3d-canvas canvas').getAttribute('data-persistent'),'yes');
-    assert.equal(await page.locator('.garage3d-canvas').getAttribute('data-position'),before);
+    if(name==='Bar Vinyl')await page.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
     assert.equal(await page.getByRole('combobox',{name:'Escolher assento'}).locator('option').count(),count+1);
     for(let value=0;value<count;value++){
       await page.getByRole('combobox',{name:'Escolher assento'}).selectOption(String(value));
@@ -25,13 +28,15 @@ try{
     }
     console.log('PASS all seats and hip clearance:',name,count);
   }
-  await page.getByRole('button',{name:'Apagar luzes',exact:true}).click();
+  await page.getByRole('button',{name:'Luz de encontro',exact:true}).click();
+  await page.getByRole('button',{name:'Acender luzes',exact:true}).waitFor();
+  await page.waitForTimeout(700);
   await page.getByRole('button',{name:'Acender luzes',exact:true}).click();
   await page.getByRole('button',{name:'Ir até o telefone',exact:true}).click();
   await page.getByRole('button',{name:'Ligar',exact:true}).waitFor({timeout:20000});
   await page.getByRole('button',{name:'Ligar',exact:true}).click();
-  await page.getByRole('button',{name:'Atender',exact:true}).click();
-  assert.match(await page.getByRole('status').textContent(),/Teste atendido/);
+  await page.getByRole('heading',{name:'Quem será que vai atender?'}).waitFor();
+  await page.getByRole('button',{name:'Fechar telefones'}).click();
   await page.screenshot({path:'/tmp/garage3d-verified-desktop.png'});
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Chegar mais perto',exact:true}).click();
@@ -41,5 +46,5 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'/tmp/garage3d-verified-mobile.png'});
   console.log('Render sample',await page.locator('.garage3d-canvas').evaluate(el=>({...el.dataset})));
-  assert.deepEqual(errors,[]);console.log('PASS three rooms, 31 seats, stand, lighting, local phone, camera views and mobile width');
+  assert.deepEqual(errors,[]);console.log('PASS three rooms, 31 seats, stand, lighting, phone dialog, camera views and mobile width');
 }finally{await browser.close();}

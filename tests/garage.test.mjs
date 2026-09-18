@@ -17,7 +17,7 @@ test("walls, furniture perimeter and malformed positions cannot be movement targ
   for (const p of [
     { x: 0, y: 0 },
     { x: 1, y: 1 },
-    { x: 0.1, y: 0.5 },
+    { x: 0.22, y: 0.58125 },
     { x: NaN, y: 0.6 },
     { x: 0.5, y: Infinity },
   ])
@@ -69,9 +69,9 @@ import {
   sameRoom,
 } from "../src/garage/model.ts";
 test("swept collision prevents walking through someone even on a long frame", () => {
-  const a = { x: 0.45, y: 0.65 },
-    b = { x: 0.74, y: 0.65 },
-    obstacle = { x: 0.6, y: 0.65 };
+  const a = { x: 0.45, y: 0.85 },
+    b = { x: 0.74, y: 0.85 },
+    obstacle = { x: 0.6, y: 0.85 };
   assert.deepEqual(safeStep(a, b, 10, [obstacle]), a);
   let current = a;
   for (let i = 0; i < 300; i++) {
@@ -81,14 +81,14 @@ test("swept collision prevents walking through someone even on a long frame", ()
   assert.ok(current.x < obstacle.x);
 });
 test("head-on walkers stop with personal space and can back away", () => {
-  let a = { x: 0.45, y: 0.65 },
-    b = { x: 0.74, y: 0.65 };
+  let a = { x: 0.45, y: 0.85 },
+    b = { x: 0.74, y: 0.85 };
   for (let i = 0; i < 300; i++) {
-    a = safeStep(a, { x: 0.74, y: 0.65 }, 0.05, [b]);
-    b = safeStep(b, { x: 0.45, y: 0.65 }, 0.05, [a]);
+    a = safeStep(a, { x: 0.74, y: 0.85 }, 0.05, [b]);
+    b = safeStep(b, { x: 0.45, y: 0.85 }, 0.05, [a]);
     assert.ok(distance(a, b) >= PERSONAL_SPACE);
   }
-  assert.ok(safeStep(a, { x: 0.45, y: 0.65 }, 0.05, [b]).x < a.x);
+  assert.ok(safeStep(a, { x: 0.45, y: 0.85 }, 0.05, [b]).x < a.x);
 });
 test("arrivals choose free floor space and report a full floor", () => {
   const positions = [];
@@ -114,8 +114,8 @@ test("separate rooms cannot initiate proximity conversations", () => {
 test("visible side, back and front floor is walkable in both rooms", () => {
   for (const room of ["garage", "living"]) {
     for (const point of [
-      { x: 0.28, y: 0.6 },
-      { x: 0.6, y: 0.39 },
+      { x: 0.3, y: 0.85 },
+      { x: 0.6, y: 0.45 },
       { x: 0.65, y: 0.93 },
     ])
       assert.equal(
@@ -125,7 +125,7 @@ test("visible side, back and front floor is walkable in both rooms", () => {
       );
   }
   assert.equal(
-    inside({ x: 0.76, y: 0.4 }, "living"),
+    inside({ x: 0.725, y: 0.58125 }, "living"),
     false,
     "sofa stays blocked",
   );
@@ -133,9 +133,9 @@ test("visible side, back and front floor is walkable in both rooms", () => {
 
 import { planRoute, clearPath } from "../src/garage/model.ts";
 test("route goes around another avatar instead of stopping on a direct line", () => {
-  const from = { x: 0.30, y: 0.6 },
-    to = { x: 0.7, y: 0.6 },
-    obstacles = [{ x: 0.52, y: 0.6 }];
+  const from = { x: 0.30, y: 0.85 },
+    to = { x: 0.7, y: 0.85 },
+    obstacles = [{ x: 0.52, y: 0.85 }];
   for (const room of ["garage", "living"]) {
     const path = planRoute(from, to, obstacles, room);
     assert.ok(path.length > 1);
@@ -148,7 +148,7 @@ test("route goes around another avatar instead of stopping on a direct line", ()
   }
 });
 test("route around living room furniture stays on the floor", () => {
-  const from = { x: 0.6, y: 0.39 },
+  const from = { x: 0.6, y: 0.45 },
     to = { x: 0.84, y: 0.61 };
   const path = planRoute(from, to, [], "living");
   assert.ok(path.length > 1);
@@ -158,7 +158,7 @@ test("route around living room furniture stays on the floor", () => {
     previous = next;
   }
   assert.deepEqual(path.at(-1), to);
-  assert.deepEqual(planRoute(from, { x: 0.76, y: 0.4 }, [], "living"), []);
+  assert.deepEqual(planRoute(from, { x: 0.725, y: 0.58125 }, [], "living"), []);
 });
 test("room arrivals can accommodate twelve initial visitors without overlap", () => {
   for (const room of ["garage", "living"]) {
@@ -176,12 +176,12 @@ const { approachRadius, personalSpace } = await import(
 );
 test("close conversation approach is reachable while bodies still cannot overlap", () => {
   for (const room of ["garage", "living", "bar"]) {
-    const other = { x: 0.55, y: 0.6 },
+    const other = { x: 0.55, y: 0.85 },
       goal = { x: other.x - approachRadius(room), y: other.y };
     assert.ok(approachRadius(room) <= 0.061);
     assert.ok(approachRadius(room) > personalSpace(room));
     assert.ok(nearby(goal, other));
-    assert.ok(planRoute({ x: 0.4, y: 0.65 }, goal, [other], room).length);
+    assert.ok(planRoute({ x: 0.4, y: 0.85 }, goal, [other], room).length);
     let current = goal;
     for (let i = 0; i < 100; i++) {
       current = safeStep(current, other, 0.016, [other], room);

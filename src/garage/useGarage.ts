@@ -277,7 +277,7 @@ export function useGarage(
         channel.close();
       };
     } else if (userId) {
-      const channel = supabase.channel("garage:prototype-v1", {
+      const channel = supabase.channel("garage:house-3d-v1", {
         config: { presence: { key: identity } },
       });
       channel

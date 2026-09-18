@@ -1,3 +1,4 @@
+import { seatsFor } from "../src/garage3d/layout.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BAR_SEATS, HOUSE_SEATS, normalizeSeat, seatWinner } from "../src/garage/seats.ts";
@@ -36,7 +37,8 @@ test('garage and living seats are reachable, room-scoped and avoid chair backs',
       assert.ok(planRoute(START, seat.point, [], room).length, seat.id);
       assert.equal(normalizeSeat(seat.id, room), seat.id);
       assert.equal(normalizeSeat(seat.id, 'bar'), undefined);
-      assert.equal(inside({x:seat.point.x, y:seat.point.y-.035}, room), false);
+      const physical=seatsFor(room)[seat.worldIndex];
+      assert.equal(inside({x:(physical.x+5)/10,y:(physical.z+4)/8},room),false);
     }
   }
 });
@@ -45,12 +47,13 @@ test("all fifteen seats are reachable and distinct without overlap", () => {
     assert.ok(inside(s.point, "bar"), s.id);
     assert.ok(planRoute(START, s.point, [], "bar").length, s.id);
     for (const other of BAR_SEATS.slice(i + 1))
-      assert.ok(distance(s.point, other.point) >= personalSpace("bar"));
+      // Seat approaches may share an aisle; seated bodies occupy the actual furniture.
+      assert.ok(Math.hypot(seatsFor('bar')[s.worldIndex].x-seatsFor('bar')[other.worldIndex].x,seatsFor('bar')[s.worldIndex].z-seatsFor('bar')[other.worldIndex].z)>=personalSpace('bar')*10);
   }
   for (const p of [
-    { x: 0.664, y: 0.51 },
-    { x: 0.325, y: 0.67 },
-    { x: 0.683, y: 0.773 },
+    { x: 0.255, y: 0.60625 },
+    { x: 0.535, y: 0.60625 },
+    { x: 0.81, y: 0.60625 },
   ])
     assert.equal(inside(p, "bar"), false);
 });

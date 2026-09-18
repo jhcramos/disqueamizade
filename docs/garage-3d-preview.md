@@ -1,25 +1,27 @@
-# Casa 3D — prévia dos três ambientes
+# Casa 3D — experiência principal
 
-Rota independente: `/garagem-3d`. A casa atual permanece em `/garagem`.
+A entrada pública continua em `/garagem`; `/garagem-3d` redireciona para ela. A home já encaminha para essa entrada. A seleção de avatar, conta e amigos, chat público, mensagens privadas, convites, máscaras e chamadas continuam sob `GaragePage`. `HouseScene` adapta esses dados para a cena tridimensional, sem um segundo estado de sessão.
 
-A prévia abre na visão da casa inteira: garagem ao fundo, sala à frente à esquerda e bar à direita, numa única cena 3D. Os ambientes compartilham passagens navegáveis. As abas e placas aproximam a câmera sem recriar o cenário ou teleportar o avatar. A garagem tem oito lugares, a sala de estar tem oito, e o bar tem três mesas de quatro lugares e três bancos no balcão. Cada ambiente tem quatro telefones. Não é uma reprodução final do acabamento artístico da imagem.
+A casa abre inteira: garagem ao fundo, sala à frente à esquerda e bar à direita, numa única cena. Há passagens navegáveis, 8 assentos na garagem, 8 na sala e 15 no bar (três mesas de quatro e três bancos no balcão). Os 12 telefones ficam sobre móveis. Entrar no bar, por menu ou pelo piso, exige a confirmação de idade existente. Os assentos físicos não alteram o limite de quatro participantes da conversa.
 
-Nesta etapa: caminhar com desvio de móveis, escolher assentos pelos móveis ou pela lista, sentar, levantar, aproximar a câmera, alterar iluminação e tocar/atender um telefone de demonstração. As placas identificam os móveis e quantos lugares oferecem. Não há presença compartilhada, vídeo ou ligação real nesta rota. O telefone não solicita câmera nem microfone. As contagens são de assentos físicos, não de capacidade de chamada.
+As posições de presença são normalizadas por ambiente e convertidas para o mapa global em `coordinates.ts`. Colisões, assentos, pontos de conversa, nascimento e animações usam esse mapa. As abordagens de cadeiras podem compartilhar uma passagem; os avatares sentados usam a posição e altura física do móvel. A troca de ambiente desfaz a pose sentada. Canais de presença e brincadeiras têm nova versão para não misturar coordenadas de abas antigas.
 
-O encaixe sentado considera a altura do quadril do modelo já escalado, o topo da almofada e a espessura da coxa; há deslocamento para a frente para os joelhos saírem do assento. Os rodapés ficam à frente das paredes, sem faces coplanares que disputem o buffer de profundidade.
+O botão “Ligar” aparece a até 1,15 unidade de um telefone do ambiente atual. O aparelho abre o `HousePhones` existente, com o número correto e o fluxo de Supabase/LiveKit; a cena não simula uma chamada. Os telefones que recebem chamadas balançam. Câmera e microfone continuam desligados até consentimento. O teste privado de câmera e máscara permanece disponível antes de conversar.
 
-Peças fixas e detalhes de cada móvel interativo são agrupados por material para reduzir chamadas de renderização. A resolução é limitada a 1,5 vezes a resolução CSS; há um único mapa de sombras de 2048 px cobrindo a casa. A preferência por movimento reduzido é respeitada. Os testes em Chromium com viewport mobile não substituem medição em aparelhos físicos.
+“Primeira pessoa” usa perspectiva na altura dos olhos, esconde o próprio avatar e restaura tetos e paredes externas da maquete. Arrastar gira o olhar; W/A/S/D e controles de toque movimentam; Esc volta à visão geral. Colisões usam pequenos passos. Perda de foco e abertura de conversas interrompem controles. No celular, a casa ocupa a área principal, com chat, rodas, pessoas e interações no painel inferior.
 
-O mapa global transforma as posições locais dos móveis em coordenadas da casa. A navegação bloqueia paredes, limites externos e o espaço vazio ao lado da garagem; permite atravessar apenas as duas passagens físicas. Os testes verificam trajetos até os 31 assentos, incluindo segmentos entre pontos, e a preservação do canvas/posição ao mudar o enquadramento.
+Bola, almofada, luzes, dança, som, TV e controles do bar mantêm os eventos existentes. Objetos móveis agora são renderizados no mapa 3D. O áudio exige ativação explícita. Cartas de perguntas oferecem assuntos sem publicar automaticamente no chat.
 
-Próximos critérios antes de substituir o cenário: aprovação artística, teste em celulares reais, integração de presença/câmeras, movimentação compartilhada e paridade das interações atuais. A qualidade final da referência exige refinamento de modelos, materiais e iluminação.
+## Disponibilidade de rede
 
-## Proximidade e exploração
+Esta promoção do cenário **não ativa presença online pública entre navegadores**. A entrada permanece com a disponibilidade anterior: exploração e presença/conversas entre abas no transporte local; o modo online continua restrito às ferramentas de desenvolvimento. Os avisos existentes de disponibilidade permanecem. Os telefones têm serviço online próprio e dependem da configuração e disponibilidade desse serviço. Cadastro/perfil mantêm o serviço existente. Não houve migração de banco ou alteração de permissões nesta entrega.
 
-O botão “Ligar” aparece quando o avatar está a até 1,15 unidade de um telefone do mesmo cômodo. Tocar num aparelho distante planeja um caminho até uma posição livre ao redor da mesinha. O botão “Ir até o telefone” oferece uma alternativa acessível aos alvos pequenos. A ligação continua sendo uma demonstração local, identificada no próprio aviso; nenhum dispositivo de mídia é solicitado.
+## Verificação
 
-“Primeira pessoa” usa uma câmera em perspectiva na altura dos olhos, esconde o próprio avatar e restaura os tetos e paredes externas retirados da maquete. Arrastar gira o olhar, W/A/S/D movimentam, as setas laterais giram e os botões na tela funcionam enquanto pressionados. Esc ou “Sair da primeira pessoa” restaura a visão geral sem teletransporte. O botão de recentralizar olha para dentro do cômodo. Movimento é validado em pequenos passos contra os mesmos obstáculos; cancelamento de toque, perda de foco e troca de aba liberam os controles.
+- Testes unitários: mapa, colisões, todos os assentos, telefones, coordenadas, presença, grupos e privacidade de câmera.
+- `garage3d-browser.mjs`: entrada principal, 31 assentos e altura do quadril, troca de cômodos, luzes, diálogo real do telefone e largura mobile.
+- `garage3d-exploration-browser.mjs`: proximidade, primeira pessoa, teclado, arraste, controles mobile, dança, áudio opt-in e cartas.
+- `house-transition-browser.mjs`: redirecionamento antigo, travessia física da porta, atualização de ambiente, confirmação 18+ e mídia desligada.
+- `garage-room-chat-browser.mjs`, `garage-gatherings-browser.mjs` e `garage-group-browser.mjs`: chat e isolamento de salas, convites/aceites/capacidade, quatro vídeos e áudios com fontes de teste, encerramento das trilhas.
 
-Para explorar sozinho: som instrumental gerado localmente (somente após ativação explícita), dança e cartas de perguntas. O som para ao ocultar a página ou sair da rota. Não há reprodução de músicas comerciais ou dependência de serviços externos. Movimento reduzido suprime a animação da dança. As cartas não publicam mensagens no chat.
-
-Verificação adicional: `tests/garage3d-exploration-browser.mjs` cobre a aparição/desaparição do convite por proximidade, demonstração de telefone, teclado, saída da primeira pessoa, controles mantidos/soltos no mobile, arraste, dança, som e cartas. Os testes de layout verificam acesso aos 12 telefones e colisões durante movimento direto.
+A renderização agrupa peças fixas por material, limita a resolução e respeita movimento reduzido. O modo de menor qualidade desliga sombras e reduz a resolução sem recriar a sessão. Testes de viewport mobile em Chromium não substituem avaliação em aparelhos físicos. O acabamento 3D continua sendo uma interpretação da referência, não uma reprodução idêntica.

@@ -2881,3 +2881,19 @@
 .mobile-people-picks button { padding: 10px 14px; border: 1px solid #deceb7; border-radius: 18px; margin: 4px; background: #f5ebdb; color: var(--ink); }
 .is-mobile-house .garage-call .group-video-grid { grid-template-columns: 1fr; }
 @media (prefers-reduced-motion: reduce) { .house-viewport.is-settled .house-world-camera { transition: none; } }
+
+/* The primary 3D house keeps the existing social shell, with less chrome above it. */
+@media(min-width:701px){
+  .garage-app:not(.garage-entry) .garage-heading{padding:16px 0 12px}
+  .garage-app:not(.garage-entry) .garage-heading h1{font-size:30px}
+  .garage-app:not(.garage-entry) .house-rooms{margin-bottom:12px;gap:8px}
+  .garage-app:not(.garage-entry) .house-rooms>button{padding:8px 12px}
+  .garage-app:not(.garage-entry) .house-rooms>p{display:none}
+  .gathering-places{padding:9px 14px;display:flex;align-items:center;gap:14px}
+  .gathering-places p{font-size:12px;margin:0;white-space:nowrap}
+  .gathering-places p small{display:none}
+  .gathering-places>div{flex:1}
+  .gathering-places button{min-height:44px;padding:6px 10px;border-radius:9px}
+}
+.entry-picture:has(img[src="/garage/whole-house.webp"]){background:#f4ede0}
+.entry-picture img[src="/garage/whole-house.webp"]{object-fit:contain;object-position:center 10%;height:74%}

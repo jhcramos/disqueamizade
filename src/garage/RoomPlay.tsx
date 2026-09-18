@@ -35,6 +35,7 @@ type Props = {
   onApproach: (p: Point) => void;
   frozen: boolean;
   connected: boolean;
+  spatial?:boolean;
 };
 export function RoomPlay({
   self,
@@ -44,6 +45,7 @@ export function RoomPlay({
   onApproach,
   frozen,
   connected,
+  spatial=false,
 }: Props) {
   const room = self.room || "garage",
     living = room === "living";
@@ -69,6 +71,8 @@ export function RoomPlay({
     if (kind === "ball") return ball;
     if (kind === "cushion")
       return ownCushion ? self.position : holder?.position || cushion;
+    if(spatial&&(kind==="lights"||kind==="perform"))return self.position;
+    if(spatial&&kind==="screen")return {x:.78,y:.23};
     if (kind === "lights") return { x: 0.66, y: 0.4 };
     if (kind === "perform")
       return living ? { x: 0.65, y: 0.52 } : { x: 0.57, y: 0.56 };
@@ -276,14 +280,14 @@ export function RoomPlay({
     ],
     [
       "perform",
-      living ? "Pular no sofá" : "Dançar",
+      living&&!spatial ? "Pular no sofá" : "Dançar",
       living ? Armchair : Sparkles,
       living ? { x: 0.76, y: 0.43 } : { x: 0.56, y: 0.43 },
     ],
   ];
   return (
     <>
-      <div className="play-hotspots" aria-label="Objetos interativos">
+      {!spatial&&<div className="play-hotspots" aria-label="Objetos interativos">
         {actions.map(([kind, label, Icon, p]) => (
           <button
             key={kind}
@@ -299,7 +303,8 @@ export function RoomPlay({
           </button>
         ))}
       </div>
-      {living && powered && (
+      }
+      {!spatial && living && powered && (
         <div className="room-tv-screen" aria-hidden="true">
           <span>
             CANAL
@@ -308,7 +313,7 @@ export function RoomPlay({
           </span>
         </div>
       )}
-      {!living && powered && (
+      {!spatial && !living && powered && (
         <div className="stereo-on" aria-hidden="true">
           ● ● ●
         </div>

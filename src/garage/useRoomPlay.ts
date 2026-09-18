@@ -37,14 +37,14 @@ export function useRoomPlay(room: RoomId, mode: "local" | "online") {
     };
     let cleanup = () => {};
     if (mode === "local") {
-      const channel = new BroadcastChannel(`disque-house-play-v1:${room}`);
+      const channel = new BroadcastChannel(`disque-house-play-3d-v1:${room}`);
       channel.onmessage = (e) => receive(e.data);
       send.current = (data) => channel.postMessage(data);
       setConnected(true);
       send.current({ type: "hello" });
       cleanup = () => channel.close();
     } else {
-      const channel = supabase.channel(`garage:play-v1:${room}`);
+      const channel = supabase.channel(`garage:play-3d-v1:${room}`);
       channel
         .on("broadcast", { event: "play" }, ({ payload }) => receive(payload))
         .subscribe((status) => {

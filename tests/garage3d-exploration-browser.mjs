@@ -5,15 +5,18 @@ try{
   const page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem-3d`);
+
+  await page.getByRole('textbox',{name:'Como podemos chamar você?'}).fill('Visitante');
+  await page.getByRole('button',{name:'Entrar na casa',exact:true}).click();
   const scene=page.locator('.garage3d-canvas');
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='overview');
   assert.equal(await page.getByRole('button',{name:'Ligar',exact:true}).count(),0);
   await page.getByRole('button',{name:'Ir até o telefone',exact:true}).click();
   await page.getByRole('button',{name:'Ligar',exact:true}).waitFor({timeout:15000});
-  assert.equal(await scene.getAttribute('data-near-phone'),'living-3');
+  assert.equal(await scene.getAttribute('data-near-phone'),'garage-3');
   await page.getByRole('button',{name:'Ligar',exact:true}).click();
-  await page.getByRole('button',{name:'Atender',exact:true}).click();
-  assert.match(await page.getByRole('status').textContent(),/Teste atendido/);
+  await page.getByRole('heading',{name:'Quem será que vai atender?'}).waitFor();
+  await page.getByRole('button',{name:'Fechar telefones'}).click();
   await page.getByRole('button',{name:'Primeira pessoa',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.camera==='first-person');
   const before=await scene.getAttribute('data-position');
@@ -25,11 +28,13 @@ try{
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.camera==='overview');
   await page.getByRole('button',{name:'Dançar',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.dancing==='true');
-  await page.getByRole('button',{name:'Parar de dançar',exact:true}).click();
-  await page.getByRole('button',{name:'Ligar som da casa',exact:true}).click();
-  await page.getByRole('button',{name:'Desligar som',exact:true}).click();
+  await page.waitForTimeout(700);
+  await page.getByRole('button',{name:'Ligar som',exact:true}).click();
+  await page.getByRole('button',{name:'Ouvir ritmo',exact:true}).waitFor({timeout:25000});
+  await page.getByRole('button',{name:'Ouvir ritmo',exact:true}).click();
+  await page.getByRole('button',{name:'Silenciar',exact:true}).click();
   await page.getByRole('button',{name:'Tirar uma carta',exact:true}).click();
-  const card=await page.locator('blockquote').textContent();await page.getByRole('button',{name:'Tirar uma carta',exact:true}).click();assert.notEqual(await page.locator('blockquote').textContent(),card);
+  const card=await page.locator('.garage3d-pastimes blockquote').textContent();await page.getByRole('button',{name:'Tirar uma carta',exact:true}).click();assert.notEqual(await page.locator('.garage3d-pastimes blockquote').textContent(),card);
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Primeira pessoa',exact:true}).click();
   const turn=page.getByRole('button',{name:'Virar à esquerda',exact:true});await turn.scrollIntoViewIfNeeded();
@@ -40,5 +45,5 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'/tmp/house-first-person-mobile.png'});
   await page.getByRole('button',{name:'Sair da primeira pessoa',exact:true}).click();
-  assert.deepEqual(errors,[]);console.log('PASS proximity prompt, phone demo, keyboard movement, exit, dance, opt-in music, cards, mobile hold/release and drag, no errors');
+  assert.deepEqual(errors,[]);console.log('PASS proximity prompt, phone dialog, keyboard movement, exit, dance, opt-in music, cards, mobile hold/release and drag, no errors');
 }finally{await browser.close();}

@@ -39,7 +39,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { GarageScene } from "./GarageScene";
+import { GarageScene } from "../garage3d/HouseScene";
 import {
   AVATARS,
   ROOMS,
@@ -122,8 +122,8 @@ export default function GaragePage() {
       <div className="entry-layout">
         <section className="entry-picture">
           <img
-            src="/garage/garage-background.webp"
-            alt="Uma garagem brasileira com luzes de festa e som dos anos 80"
+            src="/garage/whole-house.webp"
+            alt="Nossa casa: garagem, sala de estar e Bar Vinyl conectados"
           />
           <div className="entry-story">
             <span className="eyebrow">A CASA ESTÁ ABERTA</span>
@@ -351,7 +351,9 @@ function GarageRoom({
     };
   }, [immersive, mobileHouse]);
   const [rouletteOpen, setRouletteOpen] = useState(() => new URLSearchParams(window.location.search).has('phones'));
-  const [phoneTarget, setPhoneTarget] = useState<HTMLDivElement|null>(null);
+  const [selectedPhone,setSelectedPhone]=useState<string>();
+  const [ringingPhones,setRingingPhones]=useState<string[]>([]);
+  const [barPosition,setBarPosition]=useState<typeof START>();
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
@@ -503,22 +505,23 @@ function GarageRoom({
       net.update(target.point);
     }
   }
-  function changeRoom(next: RoomId, confirmed = false) {
-    if (next === room || net.invite) return;
+  function changeRoom(next: RoomId, confirmed = false, at?: typeof START) {
+    if (next === room || net.invite || phoneBusy || social.session) return false;
     if (next === "bar" && !adultConfirmed && !confirmed) {
+      setBarPosition(at);
       setBarGate(true);
-      return;
+      return false;
     }
     const spawn = freeSpawn(
       net.people
         .filter((p) => (p.room || "garage") === next)
         .map((p) => p.position),
-      START,
+      at || START,
       next,
     );
     if (!spawn) {
       net.setError("Este ambiente está cheio. Aguarde um lugar ficar livre.");
-      return;
+      return false;
     }
     stopPreview();
     setSelected(null);
@@ -527,6 +530,7 @@ function GarageRoom({
     setPosition(spawn);
     setDestination(spawn);
     net.update(spawn, next);
+    return true;
   }
   const move = (p: typeof START) => {
     if (call || seat) return;
@@ -677,21 +681,14 @@ function GarageRoom({
               </button>
             )}</div>
           </nav>}
-          <MobileHouseViewport active={mobileHouse} position={position} room={`${room}-${arrival}`}>
+          <MobileHouseViewport active={false} position={position} room={`${room}-${arrival}`}>
           <GarageScene
-            gatheringMarkers={<>
-              {mode === 'local' && gatheringPlaces.map(({ spot, status, occupied, disabled }) =>
-                <button className="conversation-place" data-occupied={occupied} key={spot.id} disabled={disabled} style={{ left: `${spot.point.x * 100}%`, top: `${spot.point.y * 100}%` }} onClick={() => selectGathering(spot, occupied)} aria-label={`${spot.name}: ${status}`}>
-                  <Users size={13}/><span>{spot.name}<small>{occupied ? status : 'Começar conversa'}</small></span>
-                </button>
-              )}
-              {HOUSE_SEATS.filter(s => s.room === room).map(s => {
-                const owner = [self, ...roomPeople].find(p => p.seat === s.id);
-                const mine = owner?.id === self.id;
-                return <button key={s.id} className={`house-seat-target${mine ? ' is-seated' : ''}`} style={{ left: `${s.point.x * 100}%`, top: `${s.seatY * 100}%` }} disabled={!!net.invite || (!!owner && !mine)} onClick={() => chooseSeat(mine ? undefined : s.id)} aria-label={`${mine ? 'Levantar de' : owner ? 'Ocupado:' : 'Sentar em'} ${s.name}`} title={mine ? 'Levantar' : owner ? `${owner.name} está aqui` : 'Sentar'}><Armchair size={13}/><span>{mine ? 'Levantar' : owner ? 'Ocupado' : 'Sentar'}</span></button>;
-              })}
-            </>}
-            phoneControls={<div className="house-phones-anchor" ref={setPhoneTarget}/>}
+            revision={arrival}
+            onRoom={(next,point)=>changeRoom(next,false,point)}
+            onSeat={chooseSeat}
+            onPhone={id=>{setSelectedPhone(id);setRouletteOpen(true);}}
+            ringingPhones={ringingPhones}
+            onPlay={roomPlay.act}
             preferences={social.preferences}
             chatBubbles={{
               ...roomChat.bubbles,
@@ -707,30 +704,29 @@ function GarageRoom({
             play={roomPlay.state}
             playControls={
               room === "bar" ? (
-                <BarPlay
+                <BarPlay spatial
                   self={self}
                   people={people}
                   state={roomPlay.state}
                   act={roomPlay.act}
                   onApproach={setDestination}
                   onSeat={chooseSeat}
-                  frozen={!!net.invite || settings || barGate}
+                  frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
                   connected={roomPlay.connected}
                 />
               ) : (
-                <RoomPlay
+                <RoomPlay spatial
                   key={room}
                   self={self}
                   people={people}
                   state={roomPlay.state}
                   act={roomPlay.act}
                   onApproach={setDestination}
-                  frozen={!!net.invite || settings || barGate}
+                  frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
                   connected={roomPlay.connected}
                 />
               )
             }
-            key={`${room}-${arrival}`}
             destination={destination}
             bubbleOwner={net.invite?.from}
             bubble={
@@ -772,7 +768,7 @@ function GarageRoom({
               ) : undefined
             }
             self={self}
-            people={people}
+            people={net.people}
             onMove={move}
             onSelect={(id) => {
               if (mobileHouse) setMobilePanel('people');
@@ -786,7 +782,7 @@ function GarageRoom({
                 }
               } else setSelected(id);
             }}
-            frozen={!!net.invite || settings || barGate}
+            frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
             low={low}
           />
           </MobileHouseViewport>
@@ -795,7 +791,7 @@ function GarageRoom({
               <Footprints size={17} />
               {call
                 ? "Sua conversa está aberta"
-                : "Clique no piso ou use as setas para andar"}
+                : "Toque no piso para andar · experimente a vista em primeira pessoa"}
             </span>
             <button onClick={() => setList(!list)}>
               <List size={17} />
@@ -1056,7 +1052,7 @@ function GarageRoom({
           ))}
         </section>
       )}
-      <HousePhones room={room} name={name} adult={adultConfirmed} busy={!!net.invite || !!social.session || !!net.group} target={phoneTarget} open={rouletteOpen} onClose={() => setRouletteOpen(false)} onBusy={setPhoneBusy}/>
+      <HousePhones room={room} name={name} adult={adultConfirmed} busy={!!net.invite || !!social.session || !!net.group} target={null} open={rouletteOpen} onClose={() => {setRouletteOpen(false);setSelectedPhone(undefined);}} onBusy={setPhoneBusy} selectedPhone={selectedPhone} onRings={setRingingPhones}/>
       {barGate && (
         <div className="avatar-editor-backdrop">
           <section
@@ -1100,7 +1096,7 @@ function GarageRoom({
                 onClick={() => {
                   setAdultConfirmed(true);
                   setBarGate(false);
-                  changeRoom("bar", true);
+                  changeRoom("bar", true, barPosition);
                 }}
               >
                 Tenho 18 anos ou mais

@@ -98,16 +98,17 @@ export function houseWalkable(p:Place){
   if(Math.abs(p.x)<.25&&p.z>-4&&(p.z<2.15||p.z>3.45))return false;
   return !houseObstacles.some(o=>Math.abs(p.x-o.x)<o.w/2+.13&&Math.abs(p.z-o.z)<o.d/2+.13);
 }
-export function houseRoute(from:Place,to:Place):Place[]{
-  if(!houseWalkable(to))return[];
+export function houseRoute(from:Place,to:Place,people:Place[]=[]):Place[]{
+  const clear=(p:Place)=>houseWalkable(p)&&people.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=.54);
+  if(!clear(to))return[];
   const step=.2,key=(p:Place)=>`${Math.round(p.x/step)},${Math.round(p.z/step)}`;
   const origin={x:Math.round(from.x/step)*step,z:Math.round(from.z/step)*step};
   const queue=[origin],seen=new Set([key(origin)]),previous=new Map<string,Place>();
   for(let i=0;i<queue.length;i++){
     const p=queue[i];
-    if(Math.hypot(p.x-to.x,p.z-to.z)<.25&&[.25,.5,.75].every(t=>houseWalkable({x:p.x+(to.x-p.x)*t,z:p.z+(to.z-p.z)*t}))){
+    if(Math.hypot(p.x-to.x,p.z-to.z)<.25&&[.25,.5,.75].every(t=>clear({x:p.x+(to.x-p.x)*t,z:p.z+(to.z-p.z)*t}))){
       const path=[to];let cursor=p;while(key(cursor)!==key(origin)){path.unshift(cursor);cursor=previous.get(key(cursor))!;}return path;
     }
-    for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){const n={x:p.x+dx,z:p.z+dz},id=key(n);if(!seen.has(id)&&houseWalkable(n)){seen.add(id);previous.set(id,p);queue.push(n);}}
+    for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){const n={x:p.x+dx,z:p.z+dz},id=key(n);if(!seen.has(id)&&clear(n)){seen.add(id);previous.set(id,p);queue.push(n);}}
   }return[];
 }

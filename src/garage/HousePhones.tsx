@@ -11,7 +11,7 @@ import { HOUSE_PHONES, type PhoneState } from './phoneModel';
 import { ROOMS, type RoomId } from './model';
 import './housePhones.css';
 
-type Props = { room: RoomId; name: string; adult: boolean; busy: boolean; target: HTMLElement|null; open: boolean; onClose: () => void; onBusy: (busy: boolean) => void };
+type Props = { room: RoomId; name: string; adult: boolean; busy: boolean; target: HTMLElement|null; open: boolean; onClose: () => void; onBusy: (busy: boolean) => void; selectedPhone?:string;onRings?:(phones:string[])=>void };
 const configured = () => isLiveKitConfigured() && !!import.meta.env.VITE_SUPABASE_URL;
 const errorText = (error: unknown) => {
   const message = String((error as {message?:string})?.message || error);
@@ -92,6 +92,8 @@ export function HousePhones(props: Props) {
     return () => { cancelled = true; };
   }, [mine?.id, mine?.status, identity]);
   const ringKey = rings.map(r => r.id).join(',');
+  useEffect(()=>{props.onRings?.(rings.map(r=>r.phone));},[ringKey,props.onRings]);
+  useEffect(()=>{if(props.open&&props.selectedPhone&&HOUSE_PHONES[props.room].some(p=>p.id===props.selectedPhone))setSelected(props.selectedPhone);},[props.open,props.selectedPhone,props.room]);
   useEffect(() => {
     const unlock = () => { if (!muted && configured()) { audio.current ||= new AudioContext(); void audio.current.resume().catch(() => {}); } };
     document.addEventListener('pointerdown', unlock);

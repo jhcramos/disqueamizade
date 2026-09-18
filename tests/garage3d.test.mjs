@@ -53,3 +53,8 @@ test('first person movement stops at shared walls and crosses only their opening
   const crossing=moveInHouse({x:-.5,z:2.8},2,0);assert.ok(crossing.x>0);assert.ok(houseWalkable(crossing));
   const outside=moveInHouse({x:8,z:2.8},5,0);assert.ok(outside.x<9.82);assert.ok(houseWalkable(outside));
 });
+test('the integrated route detours around another person with body clearance',()=>{
+  const from={x:-6,z:2.8},to={x:-3,z:2.8},people=[{x:-4.5,z:2.8}];
+  const path=houseRoute(from,to,people);assert.ok(path.length);assert.deepEqual(path.at(-1),to);
+  for(const p of path)assert.ok(Math.hypot(p.x-people[0].x,p.z-people[0].z)>=.52);
+});

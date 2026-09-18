@@ -123,7 +123,7 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   }else if(roomId==='living'){
     box(root,'#89633e',2.8,.47,-3.2,2.75,.94,.7);
     box(root,'#473e32',2.8,1.35,-3.2,1.7,.95,.36);
-    box(root,'#859a85',2.7,1.35,-2.99,1.32,.69,.035);
+    const screen=box(root,'#859a85',2.7,1.35,-2.99,1.32,.69,.035);screen.name='television-screen';screen.userData.kind='screen';
     for(let i=0;i<18;i++)box(root,['#536953','#a26547','#d0b17d'][i%3],1.55+i*.14,.43,-2.83,.065,.6,.24);
     cylinder(root,'#6d5131',4,1.05,-3.2,.09,.35);ball(root,'#ecd4a3',4,1.4,-3.2,.24,.22,.24);
   }else{
@@ -210,7 +210,7 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   }
   if(roomId!=='living')box(interior,'#d9b58d',4.95,1.85,.35,.18,2.4,7.3);
   interior.traverse(o=>{if(o instanceof T.Mesh)o.castShadow=false;});
-  return {root,floor,phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
+  return {root,floor,screen:(on:boolean)=>{const mesh=root.getObjectByName('television-screen') as T.Mesh|undefined;if(mesh){const mat=mesh.material as T.MeshStandardMaterial;mat.emissive.set(on?'#4d9b83':'#000000');mat.emissiveIntensity=on?.7:0;}},phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
     const geometries=new Set<T.BufferGeometry>(originals),mats=new Set<T.Material>(),textures=new Set<T.Texture>();
     root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){mats.add(m);if(m.map)textures.add(m.map);}}});
     geometries.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());scene.remove(root);
