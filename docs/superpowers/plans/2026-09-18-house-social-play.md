@@ -12,9 +12,12 @@
 - [x] Integrate signed server identities and local transport, expose only each visitor's invitations, and preserve existing poker state.
 - [x] Add contextual buttons, discreet invitation card and shared-meeting navigation, respecting mobile layout and reduced motion.
 - [x] Update resident mission prompt without adding language-model calls.
-- [ ] Run unit/API and browser checks, scan for secrets, commit, push, deploy and verify production.
+- [x] Run unit/API and browser checks, scan for secrets, commit, push, deploy and verify production.
 
 ## Verification
 - 24 focused simulation/API tests passed, including signed invitation ownership and poker-state preservation.
 - TypeScript and production build passed (499 prerendered pages).
 - Browser checks passed for fetch/return, two independent visitors, consent, meeting navigation, solo mode and mobile layout.
+- Full history (521 commits) and versioned-tree secret scans passed; only exact, unchanged truncated documentation examples were excluded.
+- Implementation committed/pushed as `75260db` and published to disqueamizade.com.br.
+- Production browser smoke passed: shared residents API, host actions, solo preference persistence, mobile bounds and no page errors.
