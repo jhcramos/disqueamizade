@@ -18,6 +18,8 @@ import { createResidentVisuals, addResidentFixtures } from './residents/visuals'
 import { createLife, targetPosition, approach, ITEMS, NAMES, heldItem, type LifeAction } from './residents/model';
 import { createResidentTransport, type Connection } from './residents/transport';
 import { ResidentPanel } from './residents/ResidentPanel';
+import {PokerPanel} from './poker/PokerPanel';
+import type {Visitor} from './residents/model';
 import './garage3d.css';
 
 type View='house'|RoomId;
@@ -26,6 +28,9 @@ const questions=['Qual música faz você levantar para dançar?','Que lugar da s
 export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const [life,setLife]=useState(()=>createLife()),[lifeMode,setLifeMode]=useState<Connection>('connecting'),[residentTarget,setResidentTarget]=useState<string|null>(null),[lifeMessage,setLifeMessage]=useState(''),[quietResidents,setQuietResidents]=useState(false);
   const residentLabels=useRef(new Map<string,HTMLButtonElement>()),residentAction=useRef<(action:LifeAction,target:string)=>void>();
+  const [pokerOpen,setPokerOpen]=useState(false);
+  const pokerSeat=useRef<number|null>(null);
+  const pokerVisitor=useRef<()=>Visitor>(()=>({id:previewVisitor.current,name:'Visitante',position:{x:-5,z:2.8}}));
   const previewVisitor=useRef(crypto.randomUUID());
   const live=useRef(session);live.current=session;
   const personLabels=useRef(new Map<string,HTMLButtonElement>()),inviteLabel=useRef<HTMLDivElement>(null);
@@ -38,7 +43,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const seats=seatsFor(roomId);
   const basicMarkers=furniture[roomId].map((f,i)=>({name:f.name,x:f.x+Math.sin(f.angle)*.7,z:f.z+Math.cos(f.angle)*.7,indices:seats.map((s,n)=>s.group===i?n:-1).filter(n=>n>=0)}));
   const pair=roomId==='garage'?[basicMarkers[1],basicMarkers[2]]:[basicMarkers[2],basicMarkers[3]];
-  const markers=roomId==='bar'?[{name:'Balcão',x:-1.35,z:-1.1,indices:[0,1,2]},...barTables.map((p,i)=>({...p,z:p.z+1.02,name:`Mesa ${i+1}`,indices:[3+i*4,4+i*4,5+i*4,6+i*4]}))]:[basicMarkers[0],basicMarkers[roomId==='garage'?3:1],{name:'Poltronas',x:(pair[0].x+pair[1].x)/2,z:(pair[0].z+pair[1].z)/2,indices:pair.flatMap(p=>p.indices)}];
+  const markers=roomId==='bar'?[{name:'Balcão',x:-1.35,z:-1.1,indices:[0,1,2]},...barTables.map((p,i)=>({...p,z:p.z+1.02,name:i===1?'Pôquer · fichas grátis':`Mesa ${i+1}`,indices:[3+i*4,4+i*4,5+i*4,6+i*4]}))]:[basicMarkers[0],basicMarkers[roomId==='garage'?3:1],{name:'Poltronas',x:(pair[0].x+pair[1].x)/2,z:(pair[0].z+pair[1].z)/2,indices:pair.flatMap(p=>p.indices)}];
   const visibleMarkers=view==='house'?roomIds.map(id=>({...worldPoint({x:0,z:1},id),name:roomNames[id],room:id,indices:[]})):markers.map(m=>({...m,...worldPoint(m,roomId),room:roomId}));
   const projectedMarkers=useRef(visibleMarkers);projectedMarkers.current=visibleMarkers;
   const [close,setClose]=useState(!!session),[seated,setSeated]=useState(false),[lit,setLit]=useState(true);
@@ -81,6 +86,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     const residentVisuals=createResidentVisuals(scene),residentFixtures=addResidentFixtures(scene);
     let gestureUntil=0,pendingResident:{action:LifeAction;target:string;started:number}|null=null;
     const lifeTransport=createResidentTransport(()=>({id:live.current?.self.id??previewVisitor.current,name:live.current?.self.name??'Visitante',position:{x:actor.position.x,z:actor.position.z},frozen:!!(live.current?.frozen||live.current?.cinema)}),(s,mode)=>{setLife(s);setLifeMode(mode);},message=>{setLifeMessage(message);gestureUntil=performance.now()+2500;});
+    pokerVisitor.current=()=>({id:live.current?.self.id??previewVisitor.current,name:live.current?.self.name??'Visitante',position:{x:actor.position.x,z:actor.position.z},frozen:!!(live.current?.frozen||live.current?.cinema)});
     let quality=live.current?.low??false;
     let ownKey='',syncKey='',seatKey:string|undefined,lastDestination='',lastEmit=0,crossGoal:Place|null=null,roomTransition=false;
     let fp=false,yaw=Math.PI,pitch=-.08,dragging=false,dragX=0,dragY=0,dance=false,nearestKey='',near:HousePhone|null=null;
@@ -107,6 +113,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     controls.current={enteredRoom:id=>{currentView=id;targetZoom=3;},focus:v=>{first(false);currentView=v;targetZoom=v==='house'?1:roomZoom();if(v!=='house')setLit(lights[v]);},view:v=>{targetZoom=v?3:currentView==='house'?1:roomZoom();},seat:sit,stand,light:id=>{const next=live.current?live.current.play.lights?.on===false:!lights[id];if(!play('lights',next))return;lights[id]=next;rooms[id].lights(next);setLit(next);},phone,approachPhone:id=>goToPhone(3,id),answer,firstPerson:first,lookInside,move:(key,pressed)=>{if(pressed)keys.add(key);else keys.delete(key);},dance:()=>{if(live.current?.frozen)return;const next=!dance;if(!play('perform',next))return;stand();dance=next;setDancing(next);if(next){first(false);setStatus('Solta o passinho! Toque no piso para continuar andando.');}}};
     residentAction.current=(action,target)=>{
       if(live.current?.frozen||live.current?.cinema)return;
+      if(['placeBed','cancelBed'].includes(action)){lifeTransport.command(action,target);return;}
       stand();const item=lifeTransport.state.items.find(i=>i.id===target);
       const destination=action==='return'&&item?ITEMS[item.id].position:targetPosition(lifeTransport.state,target);
       if(!destination)return;
@@ -122,6 +129,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       const hits=raycaster.intersectObjects([...roomIds.map(id=>rooms[id].root),...residentVisuals.roots.values(),residentFixtures.root],true).filter(hit=>{let node:T.Object3D|null=hit.object;while(node){if(!node.visible)return false;node=node.parent;}return true;});
       for(const hit of hits){let residentNode:T.Object3D|null=hit.object;while(residentNode&&!residentNode.userData.residentTarget)residentNode=residentNode.parent;if(residentNode?.userData.residentTarget){setResidentTarget(String(residentNode.userData.residentTarget));setLifeMessage('');return;}let root:T.Object3D=hit.object;while(root.parent&&!root.userData.roomId)root=root.parent;const id=root.userData.roomId as RoomId;if(!id)return;
         const seats=allSeats[id];let o:T.Object3D|null=hit.object;while(o&&o!==root){
+        if(o.userData.kind==='poker'){if(pokerSeat.current===null)sit(10,'bar');setPokerOpen(true);return;}
         if(o.userData.kind==='television'){live.current?.onTelevision?.(id);return;}
         if(o.userData.kind==='seat'){const nearest=(o.userData.indices as number[]).reduce((a,b)=>Math.hypot(seats[a].x-hit.point.x,seats[a].z-hit.point.z)<Math.hypot(seats[b].x-hit.point.x,seats[b].z-hit.point.z)?a:b);sit(nearest,id);return;}
         if(o.userData.kind==='phone'){const index=o.userData.index as number;const near=nearbyPhone(actor.position);if(near?.index===index&&near.room===id){if(ringing?.index===index&&ringing.room===id)answer();else setStatus('Você está perto do telefone. Toque em “Ligar” para conversar.');}else goToPhone(index,id);return;}o=o.parent;}
@@ -178,9 +186,12 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       const residentState=lifeTransport.state;
       const visualItems=residentState.items.map(item=>{const holder=item.holder===state?.self.id?actor:remote.actors.get(item.holder??'')?.root;return holder?{...item,position:{x:holder.position.x+.2,z:holder.position.z+.2},height:.85}:item;});
       residentVisuals.sync(residentState.residents,visualItems,now,dt,reduced);
+      residentFixtures.sync(residentState,residentState.bed.holder===(state?.self.id??previewVisitor.current)?actor:remote.actors.get(residentState.bed.holder??'')?.root);
+      el.dataset.bedCarried=String(residentState.bed.holder===(state?.self.id??previewVisitor.current));
       for(const r of residentState.residents){const label=residentLabels.current.get(r.id);if(!label)continue;const display=residentVisuals.roots.get(r.id)?.position??new T.Vector3(r.position.x,0,r.position.z);const p=new T.Vector3(display.x,r.id==='biscoito'?.95:1.9,display.z).project(fp?eyeCamera:camera);label.style.left=`${(p.x+1)*50}%`;label.style.top=`${(1-p.y)*50}%`;label.hidden=Math.abs(p.x)>.9||Math.abs(p.y)>.8||p.z>1||p.z< -1;}
       el.dataset.residentMode=lifeTransport.mode;el.dataset.residents=String(residentState.residents.length);el.dataset.carried=heldItem(residentState,state?.self.id??previewVisitor.current)?.id??'';
       animateAdult(avatar,(moving||dance)&&!reduced,now/1000*(dance?1.6:1),sitting,dt);
+      if(residentState.bed.holder===(state?.self.id??previewVisitor.current)){for(const name of ['adult-arm-left','adult-arm-right']){const arm=avatar.getObjectByName(name);if(arm)arm.rotation.x=-1.05;}}
       if(!moving&&!sitting&&now<gestureUntil&&!reduced){const arm=avatar.getObjectByName('adult-arm-right');if(arm)arm.rotation.x=-1.05;}
       avatar.rotation.z=dance&&!reduced?Math.sin(now*.007)*.07:0;avatar.position.y=avatarBaseY+(dance&&!reduced?Math.abs(Math.sin(now*.007))*.05:0);
       zoom+=(targetZoom-zoom)*(reduced?1:Math.min(1,dt*5));camera.zoom=zoom;
@@ -243,8 +254,9 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       {session&&[session.self,...session.people].map(person=>{const pref=session.preferences[person.id],intent=INTENTIONS[person.appearance?.intention??'hidden'],mine=person.id===session.self.id;return <button key={person.id} ref={node=>{if(node)personLabels.current.set(person.id,node);else personLabels.current.delete(person.id);}} className={`house3d-person${mine?' is-self':''}`} title={[person.name,pref?.text?'Aceita mensagens':'',pref?.video?'Aceita vídeo':'',pref?.orientation,person.busy?'Em conversa':''].filter(Boolean).join(' · ')} onClick={()=>{if(person.room!==session.self.room&&person.room){session.onRoom(person.room);return;}session.onSelect(person.id);}} aria-label={`Ver ${mine?'meu perfil':person.name}`}><span className="house3d-name">{intent?.symbol} <strong>{mine?'Você':person.name}</strong>{!mine&&<span className="house3d-availability" aria-hidden="true">{pref?.text&&<MessageCircle size={11}/>} {pref?.video&&<Video size={11}/>}</span>}</span>{session.chatBubbles[person.id]&&<span className="room-speech">{session.chatBubbles[person.id]}</span>}</button>;})}
       {ready&&life.residents.map(r=><button key={r.id} ref={node=>{if(node)residentLabels.current.set(r.id,node);else residentLabels.current.delete(r.id);}} className="resident-label" aria-label={`Interagir com ${NAMES[r.id]}`} onClick={()=>{setResidentTarget(r.id);setLifeMessage('');}}>{NAMES[r.id]} <small>· virtual</small>{!quietResidents&&life.speech?.owner===r.id&&life.speech.until>Date.now()&&<span className="resident-speech">{life.speech.text}</span>}</button>)}
       {ready&&<ResidentPanel state={life} visitor={session?.self.id??previewVisitor.current} selected={residentTarget} mode={lifeMode} disabled={!!session?.frozen} message={lifeMessage} muted={quietResidents} onMute={()=>setQuietResidents(v=>!v)} onSelect={id=>{setResidentTarget(id);setLifeMessage('');}} onAction={(action,target)=>residentAction.current?.(action,target)}/>}
+      {ready&&<PokerPanel open={pokerOpen} onClose={()=>setPokerOpen(false)} getVisitor={()=>pokerVisitor.current()} onSeat={seat=>{pokerSeat.current=seat;if(seat!==null)controls.current?.seat(7+seat,'bar');}}/>}
       {session?.bubble&&<div className="house3d-invite" ref={inviteLabel}>{session.bubble}</div>}
-      {ready&&visibleMarkers.map((m,i)=><button key={`${view}-${i}`} ref={el=>{if(el)markerRefs.current.set(i,el);else markerRefs.current.delete(i);}} className={`garage3d-seat-marker ${view==='house'?'garage3d-room-marker':''}`} onClick={()=>view==='house'?focus(m.room):controls.current?.seat(m.indices.find(i=>!session?.people.some(p=>p.seat===seatsForRoom(m.room).find(s=>s.worldIndex===i)?.id))??m.indices[0],m.room)} aria-label={view==='house'?`Explorar ${m.name}`:`Sentar: ${m.name}`}><Armchair size={14}/><span>{m.name}<small>{view==='house'?'Aproximar →':`${m.indices.length} lugares · Sentar`}</small></span></button>)}
+      {ready&&visibleMarkers.map((m,i)=><button key={`${view}-${i}`} ref={el=>{if(el)markerRefs.current.set(i,el);else markerRefs.current.delete(i);}} className={`garage3d-seat-marker ${view==='house'?'garage3d-room-marker':''}`} onClick={()=>view==='house'?focus(m.room):m.room==='bar'&&m.name.startsWith('Pôquer')?((pokerSeat.current===null&&controls.current?.seat(10,'bar')),setPokerOpen(true)):controls.current?.seat(m.indices.find(i=>!session?.people.some(p=>p.seat===seatsForRoom(m.room).find(s=>s.worldIndex===i)?.id))??m.indices[0],m.room)} aria-label={view==='house'?`Explorar ${m.name}`:`Sentar: ${m.name}`}><Armchair size={14}/><span>{m.name}<small>{view==='house'?'Aproximar →':m.name.startsWith('Pôquer')?'4 lugares · Jogar':`${m.indices.length} lugares · Sentar`}</small></span></button>)}
       <div className="garage3d-camera"><button disabled={!ready} aria-pressed={firstPerson} onClick={()=>controls.current?.firstPerson(!firstPerson)}><Eye size={16}/>{firstPerson?'Sair da primeira pessoa':'Primeira pessoa'}</button>{!firstPerson&&<><button disabled={!ready} onClick={()=>{setClose(!close);controls.current?.view(!close);}}><Maximize2 size={16}/>{close?'Ver ambiente inteiro':'Chegar mais perto'}</button><button aria-label="Restaurar câmera" onClick={()=>{setClose(false);controls.current?.view(false);}}><RotateCcw size={16}/></button></>}</div>
       {firstPerson&&<button className="garage3d-look-reset" onClick={()=>controls.current?.lookInside()} aria-label="Olhar para dentro do ambiente"><RotateCcw size={16}/></button>}
       {nearPhone&&<div className="garage3d-phone-prompt"><Phone size={19}/><span>Telefone · {roomNames[nearPhone.room]}<small>{session?'Disque Surpresa · encontro 1 a 1':'Demonstração nesta prévia'}</small></span><button disabled={session?.frozen} onClick={()=>session?controls.current?.phone():ring!==null?controls.current?.answer():controls.current?.phone()}>{(session?session.ringingPhones.includes(`${nearPhone.room}-${nearPhone.index+1}`):ring!==null)?'Atender':'Ligar'}</button></div>}
@@ -255,6 +267,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       <div className="garage3d-actions">{!session&&<button disabled={!ready} onClick={()=>controls.current?.light(roomId)}><Lightbulb size={18}/>{lit?'Apagar luzes':'Acender luzes'}</button>}
       <button disabled={!ready} onClick={()=>{if(seated)controls.current?.stand();else controls.current?.seat(0,roomId);}}>{seated?<Footprints size={18}/>:<Armchair size={18}/>} {seated?'Levantar':roomId==='bar'?'Sentar no balcão':'Sentar no sofá'}</button>
       <button disabled={!ready} onClick={()=>controls.current?.approachPhone(roomId)}><Phone size={18}/>Ir até o telefone</button>
+      {roomId==='bar'&&<button disabled={!ready||session?.frozen} onClick={()=>{if(pokerSeat.current===null)controls.current?.seat(10,'bar');setPokerOpen(true);}}>♠ Jogar pôquer</button>}
       <select aria-label="Escolher assento" disabled={!ready} defaultValue="" onChange={e=>{controls.current?.seat(Number(e.target.value),roomId);e.target.value='';}}><option value="" disabled>Escolher um lugar</option>{seats.map((s,i)=><option key={s.name} value={i} disabled={session?.people.some(p=>p.seat===seatsForRoom(roomId).find(s=>s.worldIndex===i)?.id)}>{s.name}{session?.people.some(p=>p.seat===seatsForRoom(roomId).find(s=>s.worldIndex===i)?.id)?" · ocupado":""}</option>)}</select></div>
       <p role="status">{status}</p>
     </section>

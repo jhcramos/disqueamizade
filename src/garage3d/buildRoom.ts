@@ -133,7 +133,14 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
       box(root,'#6d472e',-2.3,y,-3.7,4.9,.1,.42);
       for(let i=0;i<16;i++){const x=-4.5+i*.29;cylinder(root,i%3?'#3f5a3b':'#98763a',x,y+.2,-3.63,.065,.3);cylinder(root,'#c7aa6c',x,y+.40,-3.63,.028,.13);}
     }
-    for(const t of barTables){cylinder(root,'#825a38',t.x,1.08,t.z,.52,.10);cylinder(root,'#4d3c2d',t.x,.54,t.z,.09,1.02);cylinder(root,'#4d3c2d',t.x,.06,t.z,.32,.1);cylinder(root,'#efd19b',t.x,1.21,t.z,.06,.15);}
+    for(const [index,t] of barTables.entries()){
+      const table=new T.Group();root.add(table);if(index===1)table.userData.kind='poker';
+      cylinder(table,'#825a38',t.x,1.08,t.z,.52,.10);cylinder(table,'#4d3c2d',t.x,.54,t.z,.09,1.02);cylinder(table,'#4d3c2d',t.x,.06,t.z,.32,.1);
+      if(index===1){cylinder(table,'#29644f',t.x,1.136,t.z,.46,.013);
+        for(let i=0;i<3;i++)box(table,'#fff0d4',t.x-.12+i*.12,1.149,t.z,.095,.008,.14);
+        for(const side of [-1,1])for(let i=0;i<3;i++)cylinder(table,side<0?'#b74431':'#ded0a7',t.x+side*.3,1.15+i*.014,t.z+.12,.038,.012);
+      }else cylinder(table,'#efd19b',t.x,1.21,t.z,.06,.15);
+    }
   }
   // Physical TVs are hit targets; the official video player opens outside the canvas.
   const tv=new T.Group();tv.userData.kind='television';root.add(tv);

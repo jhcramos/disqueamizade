@@ -2,6 +2,8 @@ import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { createAdultAvatar, animateAdult } from '../../garage/adultAvatar';
 import { presetAppearance } from '../../garage/avatarPresets';
+import { createResidentMotion } from './motion';
+import { type LifeState } from './model';
 import { disposeAvatar } from '../remoteActors';
 
 export type VisualResident = {
@@ -138,7 +140,7 @@ function createItem(kind: VisualItem['kind']) {
   return root;
 }
 
-type Actor = { root: T.Group; model: T.Group; baseY: number; kind: string };
+type Actor = { root: T.Group; model: T.Group; baseY: number; kind: string; stride:number; motion:ReturnType<typeof createResidentMotion> };
 
 export function createResidentVisuals(scene: T.Scene) {
   const roots = new Map<string, T.Group>(), actors = new Map<string, Actor>();
@@ -154,7 +156,7 @@ export function createResidentVisuals(scene: T.Scene) {
     root.add(model);
     scene.add(root);
     roots.set(id, root);
-    const actor = { root, model, baseY: model.position.y, kind };
+    const actor = { root, model, baseY: model.position.y, kind, stride: id==='dora'?.7:id==='teo'?2.6:4.1, motion:createResidentMotion() };
     actors.set(id, actor);
     return actor;
   }
@@ -165,7 +167,7 @@ export function createResidentVisuals(scene: T.Scene) {
       for (const id of roots.keys()) if (!ids.has(id)) remove(id);
       const seconds = now / 1000, frameDelta = Number.isFinite(dt) ? Math.max(0, dt) : 0;
       const blend = 1 - Math.exp(-frameDelta * 10);
-      const travelBlend = reduced ? 1 : 1 - Math.exp(-frameDelta * 5);
+
       for (const resident of residents) {
         let actor = actors.get(resident.id);
         const fresh = !actor;
@@ -185,43 +187,37 @@ export function createResidentVisuals(scene: T.Scene) {
           actor = add(resident.id, model, resident.id);
         }
         const { root, model } = actor;
-        const dx = resident.position.x - root.position.x, dz = resident.position.z - root.position.z;
-        const distance = Math.hypot(dx, dz), teleport = fresh || distance > 6;
-        // Network snapshots are sparse; keep walking while the displayed actor catches up.
-        const moving = !teleport && distance > .005 && !reduced;
-        if (teleport || distance <= .005 || reduced) {
-          root.position.set(resident.position.x, 0, resident.position.z);
-        } else {
-          root.position.x += dx * travelBlend;
-          root.position.z += dz * travelBlend;
-        }
-        if (teleport || reduced) root.rotation.y = resident.angle;
-        else {
-          const turn = Math.atan2(Math.sin(resident.angle - root.rotation.y), Math.cos(resident.angle - root.rotation.y));
-          root.rotation.y += turn * blend;
-        }
-        const activity = resident.activity.toLowerCase();
+        actor.motion.sample(resident,now);
+        const display=actor.motion.at(now)??resident;
+        const distance=Math.hypot(display.position.x-root.position.x,display.position.z-root.position.z);
+        const teleport=fresh||distance>3;
+        const moving=!teleport&&distance>.0001;
+        root.position.set(display.position.x,0,display.position.z);
+        if(!teleport)actor.stride+=distance*(resident.id==='biscoito'?17:12);
+        if(teleport||reduced)root.rotation.y=display.angle;
+        else root.rotation.y+=Math.atan2(Math.sin(display.angle-root.rotation.y),Math.cos(display.angle-root.rotation.y))*blend;
+        const activity=display.activity.toLowerCase();
         if (resident.id === 'biscoito') {
           const resting = /rest|sleep|nap|descans|dorm/.test(activity);
           const happy = /pet|fetch|bring|play|carinh|brinc/.test(activity);
-          const phase = seconds * (happy ? 13 : 9);
+          const phase = actor.stride;
           for (let i = 0; i < 4; i++) {
             const leg = model.getObjectByName(`dog-leg-${i}`)!;
-            const target = moving ? Math.sin(phase + (i === 0 || i === 3 ? 0 : Math.PI)) * .42 : resting ? -1.1 : 0;
+            const target = moving && !reduced ? Math.sin(phase + (i === 0 || i === 3 ? 0 : Math.PI)) * .42 : resting ? -1.1 : 0;
             leg.rotation.x = T.MathUtils.lerp(leg.rotation.x, target, reduced ? 1 : blend);
             leg.position.y = resting ? .15 : .28;
           }
           const body = model.getObjectByName('dog-body')!;
-          body.position.y = resting ? .20 : .35 + (moving ? Math.sin(phase * 2) * .012 : 0);
+          body.position.y = resting ? .20 : .35 + (moving && !reduced ? Math.sin(phase * 2) * .012 : 0);
           const head = model.getObjectByName('dog-head')!;
           head.rotation.x = resting ? .15 : happy && !reduced ? -.1 + Math.sin(seconds * 3) * .055 : 0;
           head.rotation.z = happy && !moving && !reduced ? Math.sin(seconds * 2) * .09 : 0;
           model.getObjectByName('dog-tail')!.rotation.z = reduced || resting ? 0 : Math.sin(seconds * (happy ? 13 : 5)) * (happy ? .55 : .18);
-          for (const side of [-1, 1]) model.getObjectByName(`dog-ear-${side}`)!.rotation.x = moving ? Math.sin(phase) * .1 : 0;
+          for (const side of [-1, 1]) model.getObjectByName(`dog-ear-${side}`)!.rotation.x = moving && !reduced ? Math.sin(phase) * .1 : 0;
         } else {
           const dancing = !moving && /dance|danç/.test(activity) && !reduced;
-          animateAdult(model, moving || dancing, seconds * (dancing ? 1.3 : 1), false, reduced ? 1 : frameDelta);
-          model.position.y = actor.baseY;
+          animateAdult(model, (moving || dancing)&&!reduced, dancing ? seconds*1.3+actor.stride/8 : actor.stride/8, false, reduced ? 1 : frameDelta);
+          model.position.y = actor.baseY + (moving&&!reduced?Math.abs(Math.sin(actor.stride))*.012:0);
           const right = model.getObjectByName('adult-arm-right')!;
           const carrying = /coffee|drink|water|record|vinyl|caf[eé]|reg|disco/.test(activity);
           const greeting = /greet|wave|hello|saud|cumprim/.test(activity);
@@ -289,5 +285,5 @@ export function addResidentFixtures(scene: T.Scene) {
   const rim = s.ring(bowl, '#c9c6a8', 0, .14, 0, .162, .013);
   rim.rotation.x = Math.PI / 2;
   let disposed = false;
-  return { root, dispose() { if (!disposed) { disposed = true; scene.remove(root); disposeAvatar(root); } } };
+  return { root, sync(state:LifeState,carrier?:T.Object3D){const p=carrier?.position??state.bed.position;const yaw=carrier?.rotation.y??0;bed.position.set(p.x+(state.bed.holder?Math.sin(yaw)*.42:0),state.bed.holder?.6:0,p.z+(state.bed.holder?Math.cos(yaw)*.42:0));bed.rotation.y=state.bed.holder?yaw:0;bed.rotation.z=state.bed.holder?-.12:0;}, dispose() { if (!disposed) { disposed = true; scene.remove(root); disposeAvatar(root); } } };
 }
