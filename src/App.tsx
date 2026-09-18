@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { HomePage } from './pages/HomePage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -13,7 +13,6 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ defaul
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })))
 const RoomPage = lazy(() => import('./rooms/RoomPage').then(m => ({ default: m.RoomPage })))
 const VideoFiltersPage = lazy(() => import('./pages/VideoFiltersPage').then(m => ({ default: m.VideoFiltersPage })))
-const RoulettePage = lazy(() => import('./pages/RoulettePage').then(m => ({ default: m.RoulettePage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const LegalPage = lazy(() => import('./pages/LegalPage').then(m => ({ default: m.LegalPage })))
@@ -47,7 +46,7 @@ function App() {
         <Route path="/garagem" element={<GaragePage />} />
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/room/:roomId" element={<RoomPage />} />
-        <Route path="/roulette" element={<RoulettePage />} />
+        <Route path="/roulette" element={<Navigate to="/garagem?phones=1" replace />} />
         {/* cabines removed — simplifying */}
         
         

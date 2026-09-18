@@ -62,6 +62,7 @@ class LocalConversation {
   pending: Pending | null = null;
   knockTimes = new Map<string, number>();
   acceptedPending = false;
+  externalBusy = false;
   links = new Map<string, Link>();
   media: MediaStream | null = null;
   generation = 0;
@@ -125,7 +126,7 @@ class LocalConversation {
       ...(room ? { room } : {}),
       id: this.id,
       gathering,
-      busy: !!this.group || this.acceptedPending,
+      busy: this.externalBusy || !!this.group || this.acceptedPending,
     };
     this.send("person", this.self);
   }
@@ -294,7 +295,7 @@ class LocalConversation {
     }
     if (event === "invite") {
       const p = this.seen.get(from)?.person;
-      if (this.group || this.pending || !p || !sameRoom(this.self, p)) return;
+      if (this.externalBusy || this.group || this.pending || !p || !sameRoom(this.self, p)) return;
       if (
         typeof data.id !== "string" ||
         data.id.length > 80 ||
@@ -450,6 +451,7 @@ class LocalConversation {
     }
   }
   request = async (person: Person) => {
+    if (this.externalBusy) return;
     const peer = this.seen.get(person.id)?.person;
     if (
       !peer ||
@@ -684,6 +686,7 @@ export function useLocalGroup(
   enabled: boolean,
   appearance: Appearance,
   seat?: string,
+  externalBusy = false,
 ) {
   const [identity] = useState(() => crypto.randomUUID());
   const [state, setState] = useState(initial);
@@ -702,6 +705,9 @@ export function useLocalGroup(
       controller.current = null;
     };
   }, [identity, enabled]);
+  useEffect(() => {
+    if (controller.current) { controller.current.externalBusy = externalBusy; controller.current.update(); }
+  }, [externalBusy, enabled]);
   useEffect(() => {
     controller.current?.update(undefined, undefined, {
       name,

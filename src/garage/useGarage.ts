@@ -33,8 +33,10 @@ export function useGarage(
   userId?: string,
   appearance: Appearance = DEFAULT_APPEARANCE,
   seat?: string,
+  externalBusy = false,
 ) {
-  const local = useLocalGroup(name, avatar, mode === "local", appearance, seat);
+  const local = useLocalGroup(name, avatar, mode === "local", appearance, seat, externalBusy);
+  const external = useRef(externalBusy); external.current = externalBusy;
   const [id] = useState(() => crypto.randomUUID()),
     identity = mode === "online" && userId ? userId : id;
   const [people, setPeople] = useState<Person[]>([]),
@@ -73,7 +75,7 @@ export function useGarage(
       ...(room
         ? { room, ...(room !== self.current.room ? { seat: undefined } : {}) }
         : {}),
-      busy: currentInvite.current?.status === "accepted",
+      busy: external.current || currentInvite.current?.status === "accepted",
     };
     send.current("person", self.current);
   };
@@ -173,6 +175,7 @@ export function useGarage(
       }
       const i = currentInvite.current;
       if (event === "invite") {
+        if (external.current) return;
         const p = seen.get(from)?.person;
         if (
           i ||
@@ -426,8 +429,9 @@ export function useGarage(
   }, [identity, mode, userId]);
   useEffect(() => {
     update();
-  }, [name, avatar, appearance, seat, invite?.status]);
+  }, [name, avatar, appearance, seat, invite?.status, externalBusy]);
   const request = async (person: Person) => {
+    if (external.current) return;
     if (
       currentInvite.current ||
       pendingAction.current ||

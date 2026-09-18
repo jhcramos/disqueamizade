@@ -1,4 +1,4 @@
-import { SurpriseDialog } from "./SurpriseStation";
+import { HousePhones } from "./HousePhones";
 import { HouseTrayContext, MobileHouseViewport, useMobileHouse } from './MobileHouseViewport';
 import { GatheringPanel } from './GatheringPanel';
 import { CONVERSATION_SPOTS, type ConversationSpot } from './gatherings';
@@ -349,7 +349,9 @@ function GarageRoom({
       document.documentElement.style.removeProperty("--house-screen-height");
     };
   }, [immersive, mobileHouse]);
-  const [rouletteOpen, setRouletteOpen] = useState(false);
+  const [rouletteOpen, setRouletteOpen] = useState(() => new URLSearchParams(window.location.search).has('phones'));
+  const [phoneTarget, setPhoneTarget] = useState<HTMLDivElement|null>(null);
+  const [phoneBusy, setPhoneBusy] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
     [destination, setDestination] = useState(START),
@@ -360,7 +362,7 @@ function GarageRoom({
     [list, setList] = useState(false),
     [low, setLow] = useState(false),
     [previewOpen, setPreviewOpen] = useState(false);
-  const net = useGarage(name, avatar, mode, userId, appearance, seat);
+  const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy);
   const roomPlay = useRoomPlay(room, mode);
   const roomPeople = net.people.filter((p) => (p.room || "garage") === room);
   const people = roomPeople;
@@ -386,7 +388,7 @@ function GarageRoom({
     seat,
     position,
     room,
-    busy: call,
+    busy: call || phoneBusy,
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
   const [lastSeenMessage, setLastSeenMessage] = useState<string>();
@@ -401,7 +403,7 @@ function GarageRoom({
   useEffect(() => {
     if (mobileHouse && net.knocks.some(k => !social.isBlocked(k.from))) setMobilePanel('rods');
   }, [net.knocks.length]);
-  const canGather = social.preference.video && !social.session;
+  const canGather = social.preference.video && !social.session && !phoneBusy;
   useEffect(() => {
     if (!canGather && net.gathering) net.setGathering(undefined);
   }, [canGather]);
@@ -545,7 +547,9 @@ function GarageRoom({
           <button onClick={() => setMobilePanel(mobilePanel === 'menu' ? null : 'menu')} aria-label="Meu perfil e opções"><UserRound size={20} /></button>
         </header>
         {mobilePanel && <button className="mobile-sheet-close" onClick={() => setMobilePanel(null)} aria-label="Fechar painel e voltar à casa"><X size={18} /> Voltar à casa</button>}
-        <div className="mobile-play-sheet" ref={setTrayTarget} onClick={e => { if ((e.target as HTMLElement).closest('button')) setMobilePanel(null); }} />
+        <div className="mobile-play-sheet" ref={setTrayTarget} onClick={e => { if ((e.target as HTMLElement).closest('button')) setMobilePanel(null); }}>
+          <button className="mobile-phone-shortcut" disabled={!!net.invite || !!social.session} onClick={() => setRouletteOpen(true)}>Disque Surpresa · telefones vermelhos</button>
+        </div>
         <footer className="mobile-house-dock">
           {latestMessage && mobilePanel !== 'chat' && <button className="mobile-last-message" onClick={() => setMobilePanel('chat')}><strong>{latestMessage.name}</strong> {latestMessage.text}</button>}
           <nav aria-label="Ferramentas da casa">
@@ -650,7 +654,7 @@ function GarageRoom({
         >
           <Sparkles size={20} />
           <span>
-            Disque Surpresa<small>Roleta · encontro 1 a 1</small>
+            Disque Surpresa<small>Telefones · encontro 1 a 1</small>
           </span>
         </button>
         <p>
@@ -677,10 +681,7 @@ function GarageRoom({
                 <span aria-hidden="true">{mobileHouse ? `${spot.name} · ${occupied ? status : '4 vagas'}` : index + 1}</span>
               </button>;
             }) : null}
-            rouletteDisabled={!!social.session}
-            onRoulette={() => {
-              if (!net.invite && !social.session) setRouletteOpen(true);
-            }}
+            phoneControls={<div className="house-phones-anchor" ref={setPhoneTarget}/>}
             preferences={social.preferences}
             chatBubbles={{
               ...roomChat.bubbles,
@@ -1045,9 +1046,7 @@ function GarageRoom({
           ))}
         </section>
       )}
-      {rouletteOpen && (
-        <SurpriseDialog onClose={() => setRouletteOpen(false)} />
-      )}
+      <HousePhones room={room} name={name} adult={adultConfirmed} busy={!!net.invite || !!social.session || !!net.group} target={phoneTarget} open={rouletteOpen} onClose={() => setRouletteOpen(false)} onBusy={setPhoneBusy}/>
       {barGate && (
         <div className="avatar-editor-backdrop">
           <section
