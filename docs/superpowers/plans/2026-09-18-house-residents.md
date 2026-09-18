@@ -50,3 +50,7 @@ Provider references: https://deepinfra.com/zai-org/GLM-5.3-Flash/api and https:/
 The user authorized using the clipboard credential. It was held only in process memory, verified directly with DeepInfra HTTP 200, then installed in Vercel Production with `vercel env add --sensitive --force` (CLI update rejects an existing sensitive variable). No secret value was printed or saved to a local file.
 
 Live validation exposed a model-specific issue: GLM-5.3-Flash requires thinking enabled according to https://docs.z.ai/guides/vlm/glm-5.3-flash . The initial generic `reasoning_effort: none` request produced incomplete analysis text. Changed to `low`, maximum 256 output tokens and accept only completed `finish_reason: stop` content without thinking tags. A direct low-effort request returned a complete Portuguese line in 2.47 seconds (36 completion tokens). Provider timeout is 15 seconds, client poll timeout 20 seconds, function maximum duration 30 seconds; shared generation cadence stays two minutes.
+
+
+## Final production verification
+Deployment `8d59df4` is live on disqueamizade.com.br. A fresh public API request returned HTTP 200, three residents, and a completed Portuguese line attributed to Dora with `generatedBy: "zai-org/GLM-5.3-Flash"`. This confirms the protected credential, authorized database, provider request and persisted/shared dialogue path together. The earlier 401 blocker is resolved. Eleven targeted tests and frontend typecheck passed before deployment; the Vercel build succeeded. No secrets were stored in the repository or output.
