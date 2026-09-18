@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const context=await browser.newContext({viewport:{width:1440,height:1000}});
+await context.route('**/api/house-residents',route=>route.fulfill({status:500,body:'Unavailable during this test'}));
 const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem`);
