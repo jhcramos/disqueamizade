@@ -2784,7 +2784,18 @@
 .gathering-places button { display: flex; align-items: center; gap: 8px; min-height: 60px; padding: 10px; text-align: left; border: 1px solid #ceba9e; border-radius: 12px; color: var(--ink); background: #f6eedf; cursor: pointer; }
 .gathering-places strong { display: block; font-size: 13px; }
 .gathering-places button small { display: block; font-size: 12px; color: #3f614b; margin-top: 3px; }
-.gathering-place-number { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: #ae492e; color: #fffaf3; font-weight: 700; }
+.conversation-place { position: absolute; z-index: 9; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 5px 9px; border: 1px solid #e4d5b8; border-radius: 9px; background: #fff8e9ee; color: #513d2c; box-shadow: 0 2px 6px #24170f20; cursor: pointer; font-size: 11px; text-align: left; white-space: nowrap; }
+.conversation-place small { display: block; margin-top: 2px; font-size: 9px; color: #56704e; }
+.conversation-place[data-occupied="true"] { background: #edf2df; border-color: #98ae80; }
+.house-seat-target { position: absolute; z-index: 8; transform: translate(-50%, -50%); width: 44px; height: 44px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; color: #fff8e9; }
+.house-seat-target svg { padding: 4px; box-sizing: content-box; border-radius: 50%; background: #3e3029a6; }
+.house-seat-target span { display: none; position: absolute; top: 35px; font-size: 10px; padding: 3px 7px; border-radius: 5px; background: #fff8e9; color: #493926; white-space: nowrap; }
+.house-seat-target:hover span, .house-seat-target:focus-visible span, .house-seat-target.is-seated span { display: block; }
+.house-seat-target:disabled { opacity: .45; cursor: default; }
+.house-seat-target.is-seated svg { background: #466549; }
+.house-seat-target:focus-visible, .conversation-place:focus-visible { outline: 2px solid #f7d895; outline-offset: 2px; }
+.conversation-place:disabled { opacity: .65; cursor: default; }
+.is-overview .house-seat-target, .is-overview .conversation-place { visibility: hidden; pointer-events: none; }
 .gathering-marker { position: absolute; transform: translateX(-50%); z-index: 9; display: grid; place-items: center; width: 44px; height: 44px; border: 2px dashed #ae492e; border-radius: 50%; background: #fff9eae8; color: #87371f; box-shadow: 0 2px 8px #0003; font-size: 17px; font-weight: 700; cursor: pointer; }
 .gathering-marker[data-occupied="true"] { border-style: solid; border-color: #4d7252; background: #e8f1dc; color: #334a35; }
 .gathering-marker:disabled, .gathering-places button:disabled { opacity: .5; cursor: not-allowed; }

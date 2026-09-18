@@ -11,7 +11,7 @@ import { useRoomChat } from "./useRoomChat";
 import { CameraPreview } from "./CameraPreview";
 import { AVATAR_PRESETS, presetAppearance } from "./avatarPresets";
 import { BarPlay } from "./BarPlay";
-import { BAR_SEATS, seatWinner } from "./seats";
+import { HOUSE_SEATS, seatsForRoom, seatWinner } from "./seats";
 import { personalSpace } from "./model";
 import { AvatarCustomizer } from "./AvatarCustomizer";
 import { readSavedAvatar, saveAvatar, type Appearance } from "./avatarStyle";
@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown,
+  Armchair,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -409,9 +410,10 @@ function GarageRoom({
   }, [canGather]);
   function openGathering(spot: ConversationSpot) {
     if (net.invite?.status === 'pending' || (net.group && net.group.host !== net.identity) || social.session || !canGather || mode !== 'local') return;
-    const point = freeSpawn(roomPeople.map(p => p.position), spot.point, room);
+    const freeSeat = HOUSE_SEATS.find(s => s.spot === spot.id && !roomPeople.some(p => p.seat === s.id));
+    const point = freeSeat?.point || freeSpawn(roomPeople.map(p => p.position), spot.point, room);
     if (!point) { net.setError('Não há lugar livre aqui agora. Tente outra roda.'); return; }
-    setSeat(undefined);
+    setSeat(freeSeat?.id);
     setPosition(point);
     setDestination(point);
     net.update(point, room);
@@ -447,9 +449,10 @@ function GarageRoom({
   const gatheringHost = roomPeople.find(p => p.id === net.group?.host && p.gathering);
   useEffect(() => {
     if (!net.group || net.group.host === net.identity || !gatheringHost) return;
-    const point = freeSpawn(roomPeople.map(p => p.position), gatheringHost.position, room);
+    const freeSeat = HOUSE_SEATS.find(s => s.spot === gatheringHost.gathering?.spot && !roomPeople.some(p => p.seat === s.id));
+    const point = freeSeat?.point || freeSpawn(roomPeople.map(p => p.position), gatheringHost.position, room);
     if (!point) return;
-    setSeat(undefined);
+    setSeat(freeSeat?.id);
     setPosition(point);
     setDestination(point);
     net.update(point, room);
@@ -491,7 +494,7 @@ function GarageRoom({
   }, [seat, net.people]);
   function chooseSeat(id?: string) {
     if (net.invite) return;
-    const target = BAR_SEATS.find((s) => s.id === id);
+    const target = seatsForRoom(room).find((s) => s.id === id);
     if (target && roomPeople.some((p) => p.seat === id)) return;
     setSeat(id);
     if (target) {
@@ -666,21 +669,28 @@ function GarageRoom({
       <div className={`garage-layout${call ? " is-chatting" : ""}`}>
         <section className="garage-world">
           {mode === 'local' && <nav className="gathering-places" aria-label="Lugares para conversar">
-            <p><Users size={16} /> Escolha um lugar para conversar <small>Toque para começar ou ver a roda.</small></p>
-            <div>{gatheringPlaces.map(({ spot, index, status, occupied, disabled }) =>
+            <p><Armchair size={16} /> Puxe uma cadeira <small>Escolha um cantinho para começar ou participar de uma conversa.</small></p>
+            <div>{gatheringPlaces.map(({ spot, status, occupied, disabled }) =>
               <button key={spot.id} disabled={disabled} onClick={() => selectGathering(spot, occupied)}>
-                <span className="gathering-place-number" aria-hidden="true">{index + 1}</span>
+                <Armchair size={20} aria-hidden="true" />
                 <span><strong>{spot.name}</strong><small>{status}</small></span>
               </button>
             )}</div>
           </nav>}
           <MobileHouseViewport active={mobileHouse} position={position} room={`${room}-${arrival}`}>
           <GarageScene
-            gatheringMarkers={mode === 'local' ? gatheringPlaces.map(({ spot, index, status, occupied, disabled }) => {
-              return <button className="gathering-marker" data-occupied={occupied} key={spot.id} disabled={disabled} style={{ left: `${spot.point.x * 100}%`, top: `${spot.point.y * 100 + 5}%` }} onClick={() => selectGathering(spot, occupied)} aria-label={`${spot.name}: ${status}`}>
-                <span aria-hidden="true">{mobileHouse ? `${spot.name} · ${occupied ? status : '4 vagas'}` : index + 1}</span>
-              </button>;
-            }) : null}
+            gatheringMarkers={<>
+              {mode === 'local' && gatheringPlaces.map(({ spot, status, occupied, disabled }) =>
+                <button className="conversation-place" data-occupied={occupied} key={spot.id} disabled={disabled} style={{ left: `${spot.point.x * 100}%`, top: `${spot.point.y * 100}%` }} onClick={() => selectGathering(spot, occupied)} aria-label={`${spot.name}: ${status}`}>
+                  <Users size={13}/><span>{spot.name}<small>{occupied ? status : 'Começar conversa'}</small></span>
+                </button>
+              )}
+              {HOUSE_SEATS.filter(s => s.room === room).map(s => {
+                const owner = [self, ...roomPeople].find(p => p.seat === s.id);
+                const mine = owner?.id === self.id;
+                return <button key={s.id} className={`house-seat-target${mine ? ' is-seated' : ''}`} style={{ left: `${s.point.x * 100}%`, top: `${s.seatY * 100}%` }} disabled={!!net.invite || (!!owner && !mine)} onClick={() => chooseSeat(mine ? undefined : s.id)} aria-label={`${mine ? 'Levantar de' : owner ? 'Ocupado:' : 'Sentar em'} ${s.name}`} title={mine ? 'Levantar' : owner ? `${owner.name} está aqui` : 'Sentar'}><Armchair size={13}/><span>{mine ? 'Levantar' : owner ? 'Ocupado' : 'Sentar'}</span></button>;
+              })}
+            </>}
             phoneControls={<div className="house-phones-anchor" ref={setPhoneTarget}/>}
             preferences={social.preferences}
             chatBubbles={{

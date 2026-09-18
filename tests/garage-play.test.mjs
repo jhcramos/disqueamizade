@@ -59,7 +59,7 @@ test("throws stay on floor in both rooms including near furniture", () => {
   for (const room of ["garage", "living"])
     for (const from of [
       { x: 0.58, y: 0.7 },
-      { x: 0.6, y: 0.34 },
+      { x: 0.6, y: 0.39 },
       { x: 0.7, y: 0.82 },
     ]) {
       const target = throwTarget(from, { x: from.x - 0.12, y: from.y }, room);

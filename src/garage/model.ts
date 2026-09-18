@@ -1,4 +1,5 @@
-import { normalizeSeat } from "./seats.ts";
+import { normalizeSeat, HOUSE_SEATS } from "./seats.ts";
+import { HOUSE_PHONES } from './phoneModel.ts';
 import { normalizeGathering, type Gathering } from './gatherings.ts';
 import { normalizeAppearance, type Appearance } from "./avatarStyle.ts";
 export type Point = { x: number; y: number };
@@ -110,6 +111,11 @@ export const FLOORS: Record<RoomId, Point[]> = {
 export const FLOOR = FLOORS.garage;
 export function inside(p: Point, room: RoomId = "garage") {
   const FLOOR = FLOORS[room];
+  // Keep the chair backs out of walking paths; the feet/seat entry stays reachable.
+  if (HOUSE_SEATS.some(s => s.room === room &&
+    Math.hypot((p.x - s.point.x) / .025, (p.y - (s.point.y - .035)) / .022) < 1)) return false;
+  if (HOUSE_PHONES[room].some(phone =>
+    Math.hypot((p.x - phone.x) / .032, (p.y - (phone.y + .105)) / .024) < 1)) return false;
   if (
     room === "bar" &&
     [

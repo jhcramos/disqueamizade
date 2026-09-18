@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BAR_SEATS, normalizeSeat, seatWinner } from "../src/garage/seats.ts";
+import { BAR_SEATS, HOUSE_SEATS, normalizeSeat, seatWinner } from "../src/garage/seats.ts";
 import {
   inside,
   planRoute,
@@ -26,6 +26,19 @@ test("bar has three tables of four and three independent counter stools", () => 
       4,
     );
   assert.equal(BAR_SEATS.filter((s) => s.id.startsWith("counter")).length, 3);
+});
+test('garage and living seats are reachable, room-scoped and avoid chair backs', () => {
+  for (const room of ['garage', 'living']) {
+    const seats = HOUSE_SEATS.filter(s => s.room === room);
+    assert.equal(seats.length, 8);
+    for (const seat of seats) {
+      assert.ok(inside(seat.point, room), seat.id);
+      assert.ok(planRoute(START, seat.point, [], room).length, seat.id);
+      assert.equal(normalizeSeat(seat.id, room), seat.id);
+      assert.equal(normalizeSeat(seat.id, 'bar'), undefined);
+      assert.equal(inside({x:seat.point.x, y:seat.point.y-.035}, room), false);
+    }
+  }
 });
 test("all fifteen seats are reachable and distinct without overlap", () => {
   for (const [i, s] of BAR_SEATS.entries()) {

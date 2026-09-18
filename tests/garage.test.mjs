@@ -115,7 +115,7 @@ test("visible side, back and front floor is walkable in both rooms", () => {
   for (const room of ["garage", "living"]) {
     for (const point of [
       { x: 0.28, y: 0.6 },
-      { x: 0.6, y: 0.34 },
+      { x: 0.6, y: 0.39 },
       { x: 0.65, y: 0.93 },
     ])
       assert.equal(
@@ -133,7 +133,7 @@ test("visible side, back and front floor is walkable in both rooms", () => {
 
 import { planRoute, clearPath } from "../src/garage/model.ts";
 test("route goes around another avatar instead of stopping on a direct line", () => {
-  const from = { x: 0.34, y: 0.6 },
+  const from = { x: 0.30, y: 0.6 },
     to = { x: 0.7, y: 0.6 },
     obstacles = [{ x: 0.52, y: 0.6 }];
   for (const room of ["garage", "living"]) {
@@ -148,7 +148,7 @@ test("route goes around another avatar instead of stopping on a direct line", ()
   }
 });
 test("route around living room furniture stays on the floor", () => {
-  const from = { x: 0.6, y: 0.34 },
+  const from = { x: 0.6, y: 0.39 },
     to = { x: 0.84, y: 0.61 };
   const path = planRoute(from, to, [], "living");
   assert.ok(path.length > 1);

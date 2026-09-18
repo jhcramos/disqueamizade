@@ -1,4 +1,4 @@
-import type { Point } from "./model.ts";
+import type { Point, RoomId } from "./model.ts";
 export type BarSeat = {
   id: string;
   name: string;
@@ -58,11 +58,28 @@ export const BAR_SEATS: BarSeat[] = [
   ),
 ];
 export function normalizeSeat(raw: unknown, room: unknown) {
-  return room === "bar" &&
+  return (room === "bar" || room === "garage" || room === "living") &&
     typeof raw === "string" &&
-    BAR_SEATS.some((s) => s.id === raw)
+    seatsForRoom(room).some((s) => s.id === raw)
     ? raw
     : undefined;
+}
+// Seat positions refer to the feet; seatY is the visible cushion height.
+export const HOUSE_SEATS = [
+  { room: 'garage', spot: 'garage-music', name: 'Roda do som', x: .44, y: .48 },
+  { room: 'garage', spot: 'garage-chairs', name: 'Papo nas cadeiras', x: .57, y: .76 },
+  { room: 'living', spot: 'living-sofa', name: 'Roda do sofá', x: .40, y: .56 },
+  { room: 'living', spot: 'living-coffee', name: 'Cantinho do café', x: .64, y: .72 },
+].flatMap(group => [-1, 1].flatMap(row => [-1, 1].map((side, i) => ({
+  id: `${group.spot}-${row < 0 ? i + 1 : i + 3}`,
+  room: group.room as RoomId, spot: group.spot,
+  name: `${group.name} · assento ${row < 0 ? i + 1 : i + 3}`,
+  point: { x: group.x + side * .052, y: group.y + row * .06 },
+  seatY: group.y + row * .06 - .062,
+  rotation: row < 0 ? side * -.3 : Math.PI + side * .3,
+}))));
+export function seatsForRoom(room: RoomId) {
+  return room === 'bar' ? BAR_SEATS : HOUSE_SEATS.filter(s => s.room === room);
 }
 export function seatWinner(
   people: { id: string; seat?: string }[],

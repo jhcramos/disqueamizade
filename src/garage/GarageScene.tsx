@@ -2,7 +2,8 @@ import type { SocialPreference } from "./useSocialChat";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { createAdultAvatar, animateAdult } from "./adultAvatar";
-import { BAR_SEATS } from "./seats";
+import { seatsForRoom } from "./seats";
+import { createSceneFurniture } from './sceneFurniture';
 import { INTENTIONS } from "./avatarStyle";
 import { appearanceKey } from "./avatarStyle";
 import { createPlayObjects } from "./playObjects";
@@ -80,6 +81,7 @@ export function GarageScene(props: Props) {
     light.position.set(-3, 7, 6);
     scene.add(light);
     const toys = createPlayObjects(scene);
+    const furniture = createSceneFurniture(scene, props.self.room || 'garage');
     const reducedMotion = matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -192,9 +194,7 @@ export function GarageScene(props: Props) {
         const a = actors.get(person.id)!,
           isSelf = person.id === self.id;
         const seat =
-          person.room === "bar"
-            ? BAR_SEATS.find((s) => s.id === person.seat)
-            : undefined;
+          seatsForRoom(person.room || 'garage').find((s) => s.id === person.seat);
         if (seat) a.position = { ...seat.point };
         const dest = seat
           ? a.position
@@ -357,6 +357,7 @@ export function GarageScene(props: Props) {
         m.dispose();
       });
       toys.dispose();
+      furniture.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };

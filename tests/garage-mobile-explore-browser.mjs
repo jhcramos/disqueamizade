@@ -40,6 +40,8 @@ try {
   assert.deepEqual(await position(), before);
   await p.getByRole('button', { name: 'Voltar ao meu avatar' }).click();
   await p.screenshot({ path: '/tmp/disque-mobile-close.png' });
+  await p.getByRole('button', { name: /Levantar de Roda do som/ }).click();
+  await p.getByRole('button', { name: /Levantar de Roda do som/ }).waitFor({ state: 'detached' });
   await p.getByRole('button', { name: 'Ver ambiente inteiro' }).click();
   await p.waitForTimeout(250);
   const whole = await p.locator('.garage-scene').boundingBox();
@@ -50,7 +52,8 @@ try {
     const r = el.getBoundingClientRect();
     for (const [x, y] of [[.70, .66], [.65, .62], [.38, .72], [.5, .7]]) {
       const point = { x: r.left + r.width * x, y: r.top + r.height * y };
-      if (!document.elementFromPoint(point.x, point.y)?.closest('button')) return point;
+      const target = document.elementFromPoint(point.x, point.y);
+      if (target?.closest('.garage-scene') && !target.closest('button')) return point;
     }
   });
   assert.ok(floor, 'Overview must have unobstructed walkable floor');
