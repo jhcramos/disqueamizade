@@ -18,7 +18,7 @@ Implemented `api/house-residents.ts` with server-issued signed anonymous identit
 
 Local validation: 19 unit/API tests; frontend and API typechecks; production build (499 prerendered pages); Chrome pickup/fetch/return/mobile layout/session renewal test. API database operations use a test double; no real database or provider request was used for these tests.
 
-Pending online activation:
+Initial activation checklist (resolved below except provider authorization):
 1. Connect the authorized Supabase project for Disque Amizade. The currently available connector only exposes an unrelated project; it must not receive this schema.
 2. Apply `supabase/migrations/20260918111017_house_residents.sql` to the correct database. Its state table is service-role-only, with RLS and no anonymous/authenticated grants.
 3. Configure `DEEPINFRA_API_KEY` in the protected Vercel production environment, plus the matching server `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Never use a VITE_ prefix for these secrets.
@@ -33,6 +33,14 @@ Deployment validation: production updated to `c350802` on 2026-09-18. Fixed Type
 ## Provider selection update — GLM-5.3-Flash
 User selected `zai-org/GLM-5.3-Flash` instead of Gemma. The request uses `reasoning_effort: "none"`, 100 maximum output tokens, the existing 6.5-second timeout and a shared two-minute reservation. Provider failures retain prepared household behavior and do not trigger immediate retries. The API test verifies model selection, direct-answer mode, shared request cadence, generated speech and failure fallback with an HTTP test double.
 
-`DEEPINFRA_API_KEY` is confirmed present in Vercel Production (value never read or printed). The Supabase connector still exposes only Urbix Agents. Activation of the actual database-backed generation remains pending; do not claim a successful live GLM response until it is verified.
+`DEEPINFRA_API_KEY` is confirmed present in Vercel Production (value never read or printed). The project list initially exposed only Urbix Agents; the user subsequently identified uquztttljpswheiikbkw and direct access to that authorized project succeeded. See the activation result below.
 
 Provider references: https://deepinfra.com/zai-org/GLM-5.3-Flash/api and https://docs.deepinfra.com/chat/reasoning
+
+
+## Live activation result
+- User supplied the authorized Disque Amizade project `uquztttljpswheiikbkw`; applied the committed house_residents migration there.
+- Confirmed RLS enabled, anonymous reads denied, authenticated writes denied and service-role access allowed. The advisor reports no RLS policies for this table; this is intentional because it is exclusively accessed by the service role (no browser-role grants).
+- Deployed `3cdccd8` to disqueamizade.com.br. Resident API returns HTTP 200 with three shared residents. Two independent browser contexts passed pickup, exclusive ownership and return checks.
+- Live provider request returned **401** from DeepInfra. Presence of the environment variable does not establish valid provider authorization. GLM is selected but improvised speech is not verified/active. Asked the user to replace DEEPINFRA_API_KEY in Production, then redeploy and repeat the generatedBy check.
+- Generated speech carries a `generatedBy` marker for verification; prepared lines do not. Provider failure logs include only model and status, never credentials or conversation content. Generation waits for an available speech slot and preserves the shared two-minute budget.
