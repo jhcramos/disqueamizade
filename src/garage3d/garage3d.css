@@ -24,3 +24,9 @@
 .is-mobile-house .is-live-house .garage3d-rooms button{flex:0 0 auto;padding:7px 12px}
 .desktop-play-sheet .garage3d-actions{display:flex;flex-wrap:wrap}
 .desktop-play-sheet .garage3d-actions select{max-width:100%;min-height:40px;background:#fffaf0;border:1px solid #d9c9b0;border-radius:9px;padding:8px;font-size:12px}
+/* A dedicated front-on camera makes the official player fit the physical screen. */
+.house3d-tv-slot{position:absolute;pointer-events:none}
+.is-cinema .garage3d-stage>:not(.garage3d-canvas):not(.house3d-tv-slot){display:none!important}
+.is-cinema .garage3d-rooms>button:not(.cinema-exit){display:none}
+.is-cinema .garage3d-canvas{pointer-events:none}
+.is-cinema .garage3d-stage.is-first-person{border:0;border-radius:0;max-height:none}

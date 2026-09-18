@@ -9,7 +9,8 @@ Only one official YouTube player can be mounted for a visitor, outside the 3D ca
 
 1. Open the TV and assume the remote control. Other visitors may submit requests.
 2. Paste an HTTPS YouTube link and give the item a readable name.
-3. Choose `Colocar na tela`; each viewer explicitly chooses `Assistir junto` to load YouTube.
+3. Choose `Colocar na tela`; each viewer explicitly chooses `Assistir junto` (panel) or
+   `Assistir na TV` (scene) to load YouTube.
 4. The remote holder can pause/resume the session, skip, remove requests, or pass the remote.
 5. Volume and native player controls are personal. `Acompanhar a sala` returns to the shared
    timeline. Advertisements, buffering and restrictions can cause playback differences.
@@ -70,3 +71,26 @@ Documentation checked:
 - A separate browser check loaded and played the official YouTube IFrame API demo video
   using the real player; this does not guarantee availability of arbitrary videos.
 - `tests/house-workspace-browser.mjs` protects the existing house layout and group controls.
+
+## Watching on the physical television
+
+`Assistir na TV` switches to a front-on orthographic camera focused on the current room's
+screen. The official iframe stays mounted in the same DOM node; only its CSS rectangle
+changes to match the projected screen. Returning to the panel preserves that same player,
+local volume and playback. No video is copied into a WebGL texture or extracted from YouTube.
+`Voltar à casa` restores the previous overview/first-person camera without moving the avatar.
+Scene controls and avatar labels are hidden while watching so they cannot cover the player.
+The wide house view displays a static screen and current title instead of multiple videos.
+
+A screen projection observer, resize observer and scroll listener keep the iframe aligned.
+Screens below 200 × 200 automatically return to the panel with an explanation, preserving
+the player. Desktop chat remains beside the house; mobile controls use a compact lower
+sheet, with the chat dock available (opening chat closes playback). Background scene drawing
+is capped at 30 FPS while watching. Narrow scene viewports use pixel ratio 1 and no shadows;
+leaving restores the visitor's prior quality setting. Hidden/offscreen players pause rather
+than continuing autoplay; layout transitions have a short settling delay.
+
+`tests/house-cinema-browser.mjs` checks all three TV projections, one persistent iframe,
+minimum dimensions, viewport/occlusion, desktop/fullscreen/mobile alignment, chat visibility,
+small-screen fallback, avatar position, camera restoration and cleanup. Browser tests use
+a simulated YouTube SDK to exercise layout independently of network/advertisements.

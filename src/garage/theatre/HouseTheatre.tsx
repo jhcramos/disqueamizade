@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ExternalLink, ListMusic, Pause, Play, Plus, SkipForward, Tv, X } from 'lucide-react';
 import { ROOMS, type Person, type RoomId } from '../model';
 import { youtubeId } from './model';
@@ -6,10 +6,15 @@ import type { useScreening } from './useScreening';
 import { YouTubeScreen } from './YouTubeScreen';
 import './theatre.css';
 
-export function HouseTheatre({ screening, self, people, room, onClose }: { screening: ReturnType<typeof useScreening>; self: Person; people: Person[]; room: RoomId; onClose: () => void }) {
+export function HouseTheatre({ screening, self, people, room, onClose, cinema, onCinema, tvSurface }: { cinema: boolean; onCinema: (value: boolean) => void; tvSurface: HTMLDivElement | null; screening: ReturnType<typeof useScreening>; self: Person; people: Person[]; room: RoomId; onClose: () => void }) {
   const { state, ready, send, error, available } = screening;
   const mine = state.dj === self.id, dj = [self, ...people].find(p => p.id === state.dj);
   const [watching, setWatching] = useState(false), [url, setUrl] = useState(''), [title, setTitle] = useState(''), [formError, setFormError] = useState(''), [pending, setPending] = useState<string | null>(null);
+  const [displayNote, setDisplayNote] = useState('');
+  const fallback = useCallback(() => { onCinema(false); setDisplayNote('A tela está pequena para os controles do YouTube. Continue assistindo no painel.'); }, [onCinema]);
+  function watchOnTV() { setDisplayNote(''); setWatching(true); onCinema(true); }
+  const panel = useRef<HTMLElement>(null);
+  useEffect(() => { if (cinema && panel.current) panel.current.scrollTop = 0; }, [cinema]);
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus({ preventScroll: true }); }, []);
   const confirmed = !!pending && (state.queue.some(c => c.id === pending) || state.current?.id === pending);
@@ -28,14 +33,16 @@ export function HouseTheatre({ screening, self, people, room, onClose }: { scree
     if (state.current?.video === video || state.queue.some(c => c.video === video)) { setFormError('Esse vídeo já está na programação.'); return; }
     const id=crypto.randomUUID(); setPending(id); setFormError(''); send({ kind: 'add', video, title: title.trim(), id });
   }
-  return <section className="house-theatre" aria-label={`Televisão · ${ROOMS[room].name}`} onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
+  return <section ref={panel} className="house-theatre" aria-label={`Televisão · ${ROOMS[room].name}`} onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}>
     <header><div><span><Tv size={15} /> A TV DA CASA</span><h2>{ROOMS[room].name}</h2></div><button ref={close} className="theatre-close" onClick={onClose} aria-label="Fechar televisão"><X size={19} /></button></header>
     {!available ? <p>A programação compartilhada ainda não está disponível nesta conexão.</p> : <>
       <div className="theatre-program">
         {state.current ? <>
           <div className="theatre-now"><small>{state.started === null ? 'SESSÃO PAUSADA' : 'NA TELA AGORA'}</small><h3>{state.current.title}</h3><span>Pedido de {state.current.name} · YouTube</span></div>
-          {watching ? <YouTubeScreen state={state} onEnded={id => { if (mine) send({ kind: 'next', expected: id }); }} /> : <div className="theatre-watch"><Play size={30} /><p>Um vídeo, uma boa companhia.</p><button className="theatre-primary" onClick={() => setWatching(true)}><Play size={16} /> Assistir junto</button><small>Ao assistir, você carrega o player do YouTube. Seu volume é individual.</small></div>}
-          <div className="theatre-video-links"><a href={`https://www.youtube.com/watch?v=${state.current.video}`} target="_blank" rel="noopener noreferrer">Abrir no YouTube <ExternalLink size={12} /></a>{watching && <button onClick={() => setWatching(false)}>Parar de assistir</button>}</div>
+          {watching ? <YouTubeScreen state={state} surface={cinema ? tvSurface : null} onSmallSurface={fallback} onEnded={id => { if (mine) send({ kind: 'next', expected: id }); }} /> : <div className="theatre-watch"><Play size={30} /><p>Um vídeo, uma boa companhia.</p><button className="theatre-primary" onClick={() => setWatching(true)}><Play size={16} /> Assistir junto</button><button onClick={watchOnTV}><Tv size={16} /> Assistir na TV</button><small>Ao assistir, você carrega o player do YouTube. Seu volume é individual.</small></div>}
+          {watching && <div className="theatre-display"><button className="theatre-primary" onClick={() => { setDisplayNote(''); onCinema(!cinema); }}><Tv size={16} />{cinema ? 'Assistir no painel' : 'Assistir na TV'}</button>{cinema && <small>O vídeo está na televisão do ambiente.</small>}</div>}
+          {displayNote && <p role="status">{displayNote}</p>}
+          <div className="theatre-video-links"><a href={`https://www.youtube.com/watch?v=${state.current.video}`} target="_blank" rel="noopener noreferrer">Abrir no YouTube <ExternalLink size={12} /></a>{watching && <button onClick={() => { setWatching(false); onCinema(false); }}>Parar de assistir</button>}</div>
         </> : <div className="theatre-empty"><Tv size={30} /><h3>O que vamos assistir?</h3><p>Clipes, um show ou aquele vídeo que rende conversa. Escolha um link e coloque na fila.</p></div>}
       </div>
       <div className="theatre-host"><p>{dj ? <><strong>{mine ? 'Você' : dj.name}</strong> no controle</> : 'O controle está livre'}<small>{state.queue.length}/12 vídeos na fila</small></p>

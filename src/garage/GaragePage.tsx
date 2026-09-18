@@ -319,6 +319,8 @@ function GarageRoom({
   userId?: string;
   onLeave: () => void;
 }) {
+  const [cinema, setCinema] = useState(false);
+  const [tvSurface, setTVSurface] = useState<HTMLDivElement | null>(null);
   const [theatreOpen, setTheatreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [desktopPanel,setDesktopPanel]=useState<'rods'|'play'|null>(null);
@@ -407,9 +409,10 @@ function GarageRoom({
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
   const screening = useScreening(room, mode, self, roomPeople);
+  useEffect(() => { if (!theatreOpen || !screening.state.current) setCinema(false); }, [theatreOpen, screening.state.current?.id]);
   function openTheatre() { if (net.invite || phoneBusy || social.session) return; setTheatreOpen(true); setDesktopPanel(null); setMobilePanel(null); }
   useEffect(() => { setTheatreOpen(false); }, [room]);
-  useEffect(() => { if (mobilePanel || call || phoneBusy || previewOpen || accountOpen) setTheatreOpen(false); }, [mobilePanel, call, phoneBusy, previewOpen, accountOpen]);
+  useEffect(() => { if (mobilePanel || call || phoneBusy || previewOpen || accountOpen || net.invite) setTheatreOpen(false); }, [mobilePanel, call, phoneBusy, previewOpen, accountOpen, net.invite]);
   const [lastSeenMessage, setLastSeenMessage] = useState<string>();
   const latestMessage = roomChat.messages[roomChat.messages.length - 1];
   useEffect(() => { if (mobilePanel === 'chat') setLastSeenMessage(latestMessage?.id); }, [mobilePanel, latestMessage?.id]);
@@ -536,7 +539,7 @@ function GarageRoom({
 
   return (
     <HouseTrayContext.Provider value={trayTarget}>
-    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'} data-desktop-panel={desktopPanel||'none'} data-theatre={theatreOpen}>
+    <main className={`garage-app${immersive ? " is-immersive" : ""}${mobileHouse ? ' is-mobile-house' : ''}`} data-mobile-panel={mobilePanel || 'none'} data-desktop-panel={desktopPanel||'none'} data-theatre={theatreOpen} data-cinema={cinema && theatreOpen}>
       {mobileHouse && <>
         <header className="mobile-house-header">
           <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
@@ -678,6 +681,10 @@ function GarageRoom({
             revision={arrival}
             onRoom={(next,point)=>changeRoom(next,false,point)}
             onTelevision={id=>{if(id===room)openTheatre();else if(changeRoom(id))setTimeout(()=>setTheatreOpen(true),0);}}
+            cinema={cinema && theatreOpen}
+            onExitCinema={()=>setCinema(false)}
+            onTVSurface={setTVSurface}
+            televisionTitle={screening.state.current?.title}
             televisionOn={!!screening.state.current}
             onSeat={chooseSeat}
             onPhone={id=>{setSelectedPhone(id);setRouletteOpen(true);}}
@@ -776,7 +783,7 @@ function GarageRoom({
                 }
               } else setSelected(id);
             }}
-            frozen={!!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
+            frozen={cinema || !!net.invite || settings || barGate || phoneBusy || rouletteOpen || previewOpen || !!social.session}
             low={low}
           />
           </MobileHouseViewport>
@@ -835,7 +842,7 @@ function GarageRoom({
           </div>
         </section>
         <aside className="garage-sidebar">
-          {theatreOpen && <HouseTheatre key={room} screening={screening} self={self} people={roomPeople} room={room} onClose={()=>setTheatreOpen(false)} />}
+          {theatreOpen && <HouseTheatre key={room} cinema={cinema} onCinema={setCinema} tvSurface={tvSurface} screening={screening} self={self} people={roomPeople} room={room} onClose={()=>setTheatreOpen(false)} />}
           {mobileHouse && <div className="mobile-people-picks"><h2>Pessoas neste ambiente</h2>
             {roomPeople.length ? roomPeople.map(p => <button key={p.id} onClick={() => setSelected(p.id)}>{p.name}{p.busy ? ' · em conversa' : ''}</button>) : <p>Você chegou primeiro. Explore a casa enquanto a conversa começa.</p>}
           </div>}

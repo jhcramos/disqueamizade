@@ -233,7 +233,14 @@ export function buildRoom(scene:T.Scene, roomId:RoomId='garage', integrated=fals
   const dividerMaterials=new Set<T.Material>(),dividerSources=new Set<T.Material>();
   divider.traverse(o=>{if(o instanceof T.Mesh){dividerSources.add(o.material as T.Material);o.material=(o.material as T.Material).clone();dividerMaterials.add(o.material);}});
   let cut=false;
-  return {root,floor,cutaway:(enabled:boolean)=>{if(cut===enabled)return;cut=enabled;dividerMaterials.forEach(m=>{m.transparent=enabled;m.opacity=enabled?.16:1;m.depthWrite=!enabled;m.needsUpdate=true;});},screen:(on:boolean)=>{const mesh=root.getObjectByName('television-screen') as T.Mesh|undefined;if(mesh){const mat=mesh.material as T.MeshStandardMaterial;mat.emissive.set(on?'#4d9b83':'#000000');mat.emissiveIntensity=on?.7:0;}},phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
+  let caption='';
+  function screenCaption(title?:string){
+    const next=title??'';if(next===caption)return;caption=next;
+    pen.fillStyle='#213f3c';pen.fillRect(32,122,576,77);pen.fillStyle='#f5dfb3';pen.textAlign='center';
+    pen.font=title?'26px Georgia':'italic 46px Georgia';
+    pen.fillText(title?(title.length>37?title.slice(0,36)+'…':title):roomId==='garage'?'Cinema de garagem':roomId==='living'?'A TV da sala':'Na tela do Vinyl',320,171,568);tvTexture.needsUpdate=true;
+  }
+  return {root,floor,television,screenCaption,cutaway:(enabled:boolean)=>{if(cut===enabled)return;cut=enabled;dividerMaterials.forEach(m=>{m.transparent=enabled;m.opacity=enabled?.16:1;m.depthWrite=!enabled;m.needsUpdate=true;});},screen:(on:boolean)=>{const mesh=root.getObjectByName('television-screen') as T.Mesh|undefined;if(mesh){const mat=mesh.material as T.MeshStandardMaterial;mat.emissive.set(on?'#4d9b83':'#000000');mat.emissiveIntensity=on?.7:0;}},phones:telephoneGroups,disco,interior,lights:(on:boolean)=>{lamp.intensity=on?16:0;bulbs.forEach(b=>(b.material as T.MeshStandardMaterial).emissiveIntensity=on?2:0);},dispose(){
     const geometries=new Set<T.BufferGeometry>(originals),mats=new Set<T.Material>(dividerSources),textures=new Set<T.Texture>();
     root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){mats.add(m);if(m.map)textures.add(m.map);}}});
     geometries.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());scene.remove(root);

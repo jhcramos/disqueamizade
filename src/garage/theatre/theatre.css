@@ -48,3 +48,14 @@
 .garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat form{flex-shrink:0;margin:0;padding:8px 12px}
 .garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-count{flex-shrink:0;padding:0 12px 8px}
 .garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat:has(.room-chat-toggle[aria-expanded=false]){flex:0 0 auto;min-height:0}
+/* The iframe stays mounted once; its screen rectangle follows the TV camera. */
+.theatre-display{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.theatre-display small{font-size:11px;color:#817568}
+.is-mobile-house[data-theatre=true][data-cinema=true]{--cinema-controls:min(250px,30dvh)}
+.is-mobile-house[data-theatre=true][data-cinema=true] .garage-layout{bottom:calc(var(--dock-height) + var(--cinema-controls) + 16px)}
+.is-mobile-house[data-theatre=true][data-cinema=true] .house-theatre{top:auto;height:var(--cinema-controls);padding:12px 16px}
+.is-mobile-house[data-cinema=true] .house-theatre header{margin-bottom:8px}
+.is-mobile-house[data-cinema=true] .house-theatre h2{font-size:20px}
+.is-mobile-house[data-cinema=true] .theatre-now{margin:6px 0}
+.is-mobile-house[data-cinema=true] .theatre-now h3{font-size:14px}
+.is-mobile-house[data-cinema=true] .theatre-now>small,.is-mobile-house[data-cinema=true] .theatre-now>span{display:none}

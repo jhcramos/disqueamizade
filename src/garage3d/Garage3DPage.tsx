@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as T from 'three';
 import { ArrowLeft, Armchair, Footprints, Lightbulb, Maximize2, Phone, RotateCcw, Eye, Music2, Sparkles, ArrowUp, ArrowDown, ArrowRight, MessageCircle, Video, Tv } from 'lucide-react';
@@ -22,6 +22,8 @@ const questions=['Qual música faz você levantar para dançar?','Que lugar da s
 export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const live=useRef(session);live.current=session;
   const personLabels=useRef(new Map<string,HTMLButtonElement>()),inviteLabel=useRef<HTMLDivElement>(null);
+  const tvSlot=useRef<HTMLDivElement|null>(null);
+  const attachTV=useCallback((node:HTMLDivElement|null)=>{tvSlot.current=node;live.current?.onTVSurface?.(node);},[]);
   const host=useRef<HTMLDivElement>(null),controls=useRef<Controls>();
   const markerRefs=useRef(new Map<number,HTMLButtonElement>());
   const [view,setView]=useState<View>(session?.self.room??'house');
@@ -50,7 +52,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     renderer.setPixelRatio(Math.min(devicePixelRatio,live.current?.low?1:1.5));renderer.shadowMap.enabled=!live.current?.low;renderer.shadowMap.type=T.PCFSoftShadowMap;
     renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
     el.appendChild(renderer.domElement);
-    const scene=new T.Scene(),camera=new T.OrthographicCamera(),eyeCamera=new T.PerspectiveCamera(65,1,.05,80);
+    const scene=new T.Scene(),camera=new T.OrthographicCamera(),cinemaCamera=new T.OrthographicCamera(-1,1,1,-1,.01,15),eyeCamera=new T.PerspectiveCamera(65,1,.05,80);
     scene.background=new T.Color('#f4ede0');
     const initial=live.current?toWorld(live.current.self.position,live.current.self.room??'garage'):{x:-2,z:-3.5};
     const cameraFocus=new T.Vector3(initial.x,.65,initial.z);
@@ -121,10 +123,11 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     function endDrag(){dragging=false;}
     el.addEventListener('pointerdown',onDown);el.addEventListener('pointermove',onMove);el.addEventListener('pointerup',onUp);el.addEventListener('pointercancel',release);el.addEventListener('lostpointercapture',endDrag);
     window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);window.addEventListener('blur',release);document.addEventListener('visibilitychange',visibility);
-    function tick(now:number){if(!active)return;const dt=Math.min((now-last)/1000,.05);last=now;let moving=false;roomTransition=false;
+    let lastTVProjection='';
+    function tick(now:number){if(!active)return;if(live.current?.cinema&&now-last<1000/30){frame=requestAnimationFrame(tick);return;}const dt=Math.min((now-last)/1000,.05);last=now;let moving=false;roomTransition=false;
       const state=live.current;
       if(state){const own=state.self,room=own.room??'garage',key=`${own.id}:${room}:${state.revision}`;
-        if(state.low!==quality){quality=state.low;renderer.setPixelRatio(Math.min(devicePixelRatio,quality?1:1.5));renderer.shadowMap.enabled=!quality;resize();}
+        if((state.low||!!state.cinema&&el.clientWidth<700)!==quality){quality=state.low||!!state.cinema&&el.clientWidth<700;renderer.setPixelRatio(Math.min(devicePixelRatio,quality?1:1.5));renderer.shadowMap.enabled=!quality;resize();}
         if(key!==syncKey){sitting=false;pendingSeat=null;setSeated(false);const p=toWorld(own.position,room);actor.position.set(p.x,0,p.z);path=crossGoal?houseRoute(p,crossGoal):[];crossGoal=null;syncKey=key;seatKey=undefined;lastDestination=JSON.stringify(state.destination);}
         const look=`${own.avatar}:${appearanceKey(own.appearance)}`;
         if(look!==ownKey){actor.remove(avatar);disposeAvatar(avatar);avatar=createAdultAvatar(own.avatar,own.appearance);const box=new T.Box3().setFromObject(avatar),scale=1.5/(box.max.y-box.min.y);avatar.scale.setScalar(scale);avatar.position.y=-box.min.y*scale;avatarBaseY=avatar.position.y;hipHeight=avatar.position.y+avatar.getObjectByName('adult-leg-left')!.position.y*scale;avatar.visible=!fp;actor.add(avatar);ownKey=look;}
@@ -163,7 +166,26 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       room.phones.forEach((p,i)=>{const rings=state?state.ringingPhones.includes(`${id}-${i+1}`):ringing?.index===i&&ringing.room===id;p.rotation.z=rings&&!reduced?Math.sin(now*.04)*.10:0;});});
       if(ringing!==null&&now>ringUntil){ringing=null;setRing(null);setStatus('O telefone parou de tocar. Você pode testar novamente.');}
       rooms.living.cutaway(!fp&&targetZoom===3&&actor.position.z< -4);
-      renderer.render(scene,fp?eyeCamera:camera);el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.camera=fp?'first-person':'overview';el.dataset.nearPhone=nearestKey;el.dataset.yaw=yaw.toFixed(2);el.dataset.dancing=String(dance);
+      let activeCamera:T.Camera=fp?eyeCamera:camera;
+      if(state?.cinema){
+        const tv=rooms[state.self.room??'garage'].television,center=new T.Vector3();tv.getWorldPosition(center);
+        const dimensions=tv.geometry.parameters as {width:number;height:number};
+        const w=el.clientWidth,h=el.clientHeight;
+        // Head-on orthographic framing lets the official iframe line up with the physical screen.
+        const targetWidth=Math.min(w-12,Math.max(356,w*.78),(h-24)*dimensions.width/dimensions.height);
+        const unitsPerPixel=dimensions.width/Math.max(1,targetWidth);
+        cinemaCamera.left=-w*unitsPerPixel/2;cinemaCamera.right=w*unitsPerPixel/2;
+        cinemaCamera.top=h*unitsPerPixel/2;cinemaCamera.bottom=-h*unitsPerPixel/2;
+        cinemaCamera.position.copy(center).add(new T.Vector3(0,0,1));cinemaCamera.lookAt(center);cinemaCamera.updateProjectionMatrix();cinemaCamera.updateMatrixWorld();
+        activeCamera=cinemaCamera;
+        const a=tv.localToWorld(new T.Vector3(-dimensions.width/2,dimensions.height/2,0)).project(cinemaCamera);
+        const b=tv.localToWorld(new T.Vector3(dimensions.width/2,-dimensions.height/2,0)).project(cinemaCamera);
+        const rect=[(a.x+1)*w/2,(1-a.y)*h/2,(b.x-a.x)*w/2,(a.y-b.y)*h/2].map(n=>`${n.toFixed(2)}px`),projection=rect.join(',');
+        if(tvSlot.current&&projection!==lastTVProjection){lastTVProjection=projection;Object.assign(tvSlot.current.style,{left:rect[0],top:rect[1],width:rect[2],height:rect[3]});}
+      }
+      else if(tvSlot.current&&lastTVProjection){lastTVProjection='';tvSlot.current.style.width='0px';tvSlot.current.style.height='0px';}
+      roomIds.forEach(id=>rooms[id].screenCaption(id===state?.self.room?state.televisionTitle:undefined));
+      renderer.render(scene,activeCamera);el.dataset.drawCalls=String(renderer.info.render.calls);el.dataset.triangles=String(renderer.info.render.triangles);el.dataset.camera=state?.cinema?'cinema':fp?'first-person':'overview';el.dataset.pixelRatio=String(renderer.getPixelRatio());el.dataset.shadows=String(renderer.shadowMap.enabled);el.dataset.nearPhone=nearestKey;el.dataset.yaw=yaw.toFixed(2);el.dataset.dancing=String(dance);
       el.dataset.position=`${actor.position.x.toFixed(2)},${actor.position.z.toFixed(2)}`;
       el.dataset.people=String(state?.people.length??0);el.dataset.televisions='3';
       el.dataset.seated=String(sitting);el.dataset.hipHeight=(actor.position.y+hipHeight).toFixed(3);el.dataset.seatHeight=pendingSeat!==null?String(allSeats[pendingSeat.room][pendingSeat.index].height):'';el.dataset.view=currentView;el.dataset.zoom=zoom.toFixed(2);
@@ -173,15 +195,17 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     return()=>{active=false;cancelAnimationFrame(frame);observer.disconnect();controls.current=undefined;music.current?.stop();window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',release);document.removeEventListener('visibilitychange',visibility);el.removeEventListener('pointermove',onMove);el.removeEventListener('pointercancel',release);el.removeEventListener('lostpointercapture',endDrag);el.removeEventListener('pointerdown',onDown);el.removeEventListener('pointerup',onUp);roomIds.forEach(id=>rooms[id].dispose());sun.shadow.map?.dispose();
       remote.dispose();playObjects.dispose();disposeAvatar(avatar);renderer.dispose();renderer.domElement.remove();};
   },[]);
-  return <div className={`garage3d-page${session?' is-live-house':''}`}>
+  return <div className={`garage3d-page${session?' is-live-house':''}${session?.cinema?' is-cinema':''}`}>
     <header><Link to="/garagem"><ArrowLeft size={17}/> Voltar à casa</Link><span>DISQUE AMIZADE <i>/</i> ESTUDO 3D</span><span className="garage3d-version">{view==='house'?'Casa inteira · 31 lugares':`${roomNames[roomId]} · ${seats.length} lugares`}</span></header>
     <section className="garage3d-intro"><div><p>A MESMA CASA. UMA NOVA DIMENSÃO.</p><h1>Entre. Fique à vontade.</h1></div><p>Um cantinho para ouvir música,<br/>puxar uma cadeira e encontrar sua turma.</p></section>
     <nav className="garage3d-rooms" aria-label="Enquadramento da casa">
+      {session?.cinema&&<button className="cinema-exit" onClick={session.onExitCinema}><ArrowLeft size={14}/> Voltar à casa</button>}
       <button aria-pressed={close} onClick={()=>{setClose(true);setView(roomId);controls.current?.focus(roomId);controls.current?.view(true);}}>Meu avatar</button>
       {session?.onTelevision&&<button disabled={session.frozen} onClick={()=>session.onTelevision?.(roomId)}><Tv size={14}/> Televisão</button>}
       <button aria-pressed={view==='house'&&!close} onClick={()=>focus('house')}>Casa inteira</button>
     </nav>
     <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada">
+      <div className="house3d-tv-slot" ref={attachTV} aria-hidden="true" />
       <div ref={host} className="garage3d-canvas" aria-label="Toque no chão para caminhar e nos móveis para interagir"/>
       {!ready&&!error&&<div className="garage3d-loading">Preparando a casa…</div>}
       {error&&<p className="garage3d-loading">{error} <Link to="/rooms">Ver salas online</Link></p>}

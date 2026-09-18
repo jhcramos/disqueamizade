@@ -40,7 +40,7 @@ try{
  // A late joiner receives the existing queue, host and playhead.
  const c=await enter('Caio');await c.locator('.theatre-now h3').getByText('Segundo vídeo').waitFor();await c.locator('.theatre-host').getByText('Ana',{exact:true}).waitFor();
  await a.getByRole('button',{name:'✕ Sair da tela cheia',exact:true}).click();
- await a.getByRole('navigation',{name:'Ambientes da casa'}).getByRole('button',{name:/Sala de estar/}).click();assert.equal(await a.locator('.house-theatre').count(),0);assert.equal(await a.locator('.theatre-player iframe').count(),0);
+ await a.getByRole('navigation',{name:'Ambientes da casa'}).getByRole('button',{name:/Sala de estar/}).click();await a.locator('.house-theatre').waitFor({state:'detached'});assert.equal(await a.locator('.house-theatre').count(),0);assert.equal(await a.locator('.theatre-player iframe').count(),0);
  await a.getByRole('button',{name:'Televisão',exact:true}).click();await a.getByRole('heading',{name:'O que vamos assistir?'}).waitFor();
  await b.getByRole('button',{name:'Assumir o controle',exact:true}).waitFor({timeout:15000});
  // Mobile gets a readable player, accessible close action and no overflow.
