@@ -5,20 +5,22 @@
 .red-phone-body i{position:absolute;right:4px;top:7px;width:4px;height:4px;background:#66312a;border-radius:50%}
 .house-red-phone:hover .red-phone-body,.house-red-phone:focus-visible .red-phone-body{filter:brightness(1.2)}
 .house-red-phone:focus-visible{outline:2px solid #fff6d8;border-radius:12px;outline-offset:3px}
-.house-red-phone.is-ringing .red-phone-body{animation:phone-glow 1.6s ease-in-out infinite}
+.house-red-phone.is-ringing .red-phone-body{animation:phone-glow 1.6s ease-in-out infinite,phone-bell 1.6s ease-in-out infinite;transform-origin:50% 80%}
 .house-red-phone.is-ringing .red-phone-body i{background:#fff1a5;box-shadow:0 0 10px #ffd24d}
 .red-phone-answer{position:absolute;top:54px;left:50%;transform:translateX(-50%);background:#fff2d3;color:#702721;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:700;white-space:nowrap}
 @keyframes phone-glow{50%{box-shadow:0 0 0 9px #ffdb6340,0 0 24px #f79d42}}
+@keyframes phone-bell{0%,42%,100%{rotate:0deg}7%,21%,35%{rotate:-9deg}14%,28%{rotate:9deg}}
+@keyframes phone-ring-wave{0%{transform:scale(.85);opacity:0}15%{opacity:.55}100%{transform:scale(1.5);opacity:0}}
+.house-red-phone.is-ringing:before,.house-red-phone.is-ringing:after,.phone-dialog-art.is-ringing:before,.phone-dialog-art.is-ringing:after{content:'';position:absolute;inset:6px;border:2px solid #db8a4a;border-radius:50%;pointer-events:none;opacity:0;animation:phone-ring-wave 1.6s ease-out infinite}
+.house-red-phone.is-ringing:after,.phone-dialog-art.is-ringing:after{animation-delay:.8s}
+.phone-dialog-art.is-ringing>svg{animation:phone-bell 1.6s ease-in-out infinite;transform-origin:50% 70%}
 .house-phone-dialog{width:min(530px,calc(100vw - 28px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #ddc7ac;border-radius:24px;background:#fbf5e9;color:#39233d;padding:32px;text-align:center;box-shadow:0 24px 90px #25132b55}
 .house-phone-dialog::backdrop{background:#211a28a6;backdrop-filter:blur(4px)}
 .house-phone-close{position:absolute;right:12px;top:12px;padding:8px;border:0;background:transparent;cursor:pointer}
 .phone-eyebrow{font-size:10px;letter-spacing:.16em;color:#91674e}
 .house-phone-dialog h2{font:36px/1.1 Georgia,serif;margin:12px 10px 22px}
 .house-phone-dialog p{line-height:1.6;margin:16px 0;font-size:15px}
-.phone-dialog-art{color:#b83a2b;width:88px;height:88px;background:#f0e1cb;border-radius:50%;display:grid;place-items:center;margin:auto}
-.phone-picker{display:flex;justify-content:center;gap:10px;margin:22px 0}
-.phone-picker button{display:flex;align-items:center;gap:6px;min-width:52px;min-height:44px;border:1px solid #d7c2a9;border-radius:12px;background:#fffaf2;justify-content:center;cursor:pointer}
-.phone-picker button[aria-pressed=true]{border-color:#b6402c;background:#f2dbcd}
+.phone-dialog-art{position:relative;color:#b83a2b;width:88px;height:88px;background:#f0e1cb;border-radius:50%;display:grid;place-items:center;margin:auto}
 .phone-primary{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;background:#b8492e;color:white;border:0;border-radius:12px;margin:16px 0;cursor:pointer}
 .phone-primary:disabled{opacity:.55;cursor:default}
 .house-phone-dialog small{display:block;color:#7c7069;font-size:12px;line-height:1.5}
@@ -29,7 +31,7 @@
 .house-phone-dialog.has-call{width:min(1120px,calc(100vw - 24px));background:#211c2b;color:#fff;height:min(760px,calc(100dvh - 24px));padding:20px}
 .house-phone-dialog.has-call h2{font-size:26px;margin:8px 0 18px}
 .house-phone-video{height:calc(100% - 90px);min-height:450px;text-align:left}
-@media(prefers-reduced-motion:reduce){.house-red-phone.is-ringing .red-phone-body{animation:none;outline:3px solid #ffcd69}}
+@media(prefers-reduced-motion:reduce){.house-red-phone.is-ringing .red-phone-body,.phone-dialog-art.is-ringing>svg{animation:none}.house-red-phone.is-ringing .red-phone-body,.phone-dialog-art.is-ringing{outline:3px solid #ffcd69}.house-red-phone.is-ringing:before,.house-red-phone.is-ringing:after,.phone-dialog-art.is-ringing:before,.phone-dialog-art.is-ringing:after{animation:none;opacity:0}}
 @media(max-width:700px){.house-phone-dialog{padding:28px 20px}.house-phone-dialog h2{font-size:29px}.house-phone-video{height:auto;min-height:600px}.phone-ring-notice{gap:6px;padding:12px;font-size:12px}}
 .mobile-phone-shortcut{margin:16px 16px 0;padding:12px 16px;border:1px solid #d5b59e;border-radius:12px;background:#fff7ec;color:#9d3328;font-size:14px;cursor:pointer}
 .house-phones-anchor{position:absolute;inset:0;pointer-events:none;container-type:inline-size}

@@ -16,7 +16,7 @@ try {
  await p.screenshot({path:'/tmp/disque-red-phones-mobile.png'});
  await p.getByRole('button',{name:/Telefone vermelho 1:/}).click();
  await p.getByRole('dialog').waitFor();
- assert.equal(await p.locator('.phone-picker button').count(),4);
+ assert.equal(await p.locator('.phone-picker').count(),0);
  assert.ok(await p.getByText('Disponível para receber ligações').isVisible());
  await p.getByRole('button',{name:'Silenciar toque',exact:true}).click();
  await p.getByRole('button',{name:'Ativar toque',exact:true}).waitFor();

@@ -142,9 +142,8 @@ export function HousePhones(props: Props) {
       {mine?.status==='accepted' && token?.id===mine.id && identity && mine.roomId && mine.peer ?
         <div className="house-phone-video"><CameraSetupProvider><RouletteCall roomId={mine.roomId} token={token.value} identity={identity} displayName={props.name} peerId={mine.peer} isGuest={true} onEnd={ending} onNext={ending} onReport={peer => {void reportUser({reportedIdentity:peer,reporterIdentity:identity,reason:'inappropriate_content',roomSlug:mine.roomId!}); ending();}}/></CameraSetupProvider></div>
       : <>
-        <div className="phone-dialog-art" aria-hidden="true"><Phone size={46}/></div>
+        <div className={`phone-dialog-art${incoming || mine?.status === 'ringing' ? ' is-ringing' : ''}`} aria-hidden="true"><Phone size={46}/></div>
         <p>{mine ? mine.status==='accepted'?'Conectando a conversa…':'Um telefone foi sorteado. Ele está tocando em '+ROOMS[mine.target.split('-')[0] as RoomId].name+'.' : incoming?'Toque em atender para começar uma conversa só entre vocês.':'Ligue para um dos telefones da casa. O destino é sorteado entre ambientes com alguém disponível.'}</p>
-        {!active && <div className="phone-picker" aria-label="Escolher telefone">{HOUSE_PHONES[props.room].map((p,i) => <button key={p.id} aria-pressed={chosen===p.id} onClick={() => setSelected(p.id)}><Phone size={18}/>{i+1}</button>)}</div>}
         {state.notice==='empty' && <p role="status">Ninguém disponível para atender agora. Continue na casa e tente novamente daqui a pouco.</p>}
         {!configured() && <p role="status">As ligações precisam da conexão online da casa.</p>}
         {error && <p role="alert">{error}</p>}
