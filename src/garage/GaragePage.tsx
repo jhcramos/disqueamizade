@@ -366,6 +366,7 @@ function GarageRoom({
   const [selectedPhone,setSelectedPhone]=useState<string>();
   const [ringingPhones,setRingingPhones]=useState<string[]>([]);
   const [barPosition,setBarPosition]=useState<typeof START>();
+  const [pokerTalking,setPokerTalking]=useState(false);
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [avatar, setAvatar] = useState(initialAvatar),
     [position, setPosition] = useState(START),
@@ -377,7 +378,7 @@ function GarageRoom({
     [list, setList] = useState(false),
     [low, setLow] = useState(false),
     [previewOpen, setPreviewOpen] = useState(false);
-  const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy);
+  const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy || pokerTalking);
   useEffect(()=>{setDesktopPanel(null);},[room]);
   useEffect(()=>{if(desktopPanel)setTheatreOpen(false);},[desktopPanel]);
   const roomPlay = useRoomPlay(room, mode);
@@ -405,12 +406,12 @@ function GarageRoom({
     seat,
     position,
     room,
-    busy: call || phoneBusy,
+    busy: call || phoneBusy || pokerTalking,
   };
   const roomChat = useRoomChat(room, mode, self, roomPeople);
   const screening = useScreening(room, mode, self, roomPeople);
   useEffect(() => { if (!theatreOpen || !screening.state.current) setCinema(false); }, [theatreOpen, screening.state.current?.id]);
-  function openTheatre() { if (net.invite || phoneBusy || social.session) return; setTheatreOpen(true); setDesktopPanel(null); setMobilePanel(null); }
+  function openTheatre() { if (net.invite || phoneBusy || pokerTalking || social.session) return; setTheatreOpen(true); setDesktopPanel(null); setMobilePanel(null); }
   useEffect(() => { setTheatreOpen(false); }, [room]);
   useEffect(() => { if (mobilePanel || call || phoneBusy || previewOpen || accountOpen || net.invite) setTheatreOpen(false); }, [mobilePanel, call, phoneBusy, previewOpen, accountOpen, net.invite]);
   const [lastSeenMessage, setLastSeenMessage] = useState<string>();
@@ -426,7 +427,7 @@ function GarageRoom({
   useEffect(() => {
     if(net.knocks.some(k => !social.isBlocked(k.from))){if(mobileHouse)setMobilePanel('rods');else setDesktopPanel('rods');}
   }, [net.knocks.length]);
-  const canGather = social.preference.video && !social.session && !phoneBusy;
+  const canGather = social.preference.video && !social.session && !phoneBusy && !pokerTalking;
   useEffect(() => {
     if (!canGather && net.gathering) net.setGathering(undefined);
   }, [canGather]);
@@ -501,7 +502,7 @@ function GarageRoom({
     }
   }
   function changeRoom(next: RoomId, confirmed = false, at?: typeof START) {
-    if (next === room || net.invite || phoneBusy || social.session) return false;
+    if (next === room || net.invite || phoneBusy || pokerTalking || social.session) return false;
     if (next === "bar" && !adultConfirmed && !confirmed) {
       setBarPosition(at);
       setBarGate(true);
@@ -677,7 +678,7 @@ function GarageRoom({
             <div className="desktop-play-sheet" ref={setTrayTarget}/>
           </>}
           <MobileHouseViewport active={false} position={position} room={`${room}-${arrival}`}>
-          <GarageScene
+          <GarageScene onPokerCall={setPokerTalking}
             revision={arrival}
             onRoom={(next,point)=>changeRoom(next,false,point)}
             onTelevision={id=>{if(id===room)openTheatre();else if(changeRoom(id))setTimeout(()=>setTheatreOpen(true),0);}}
@@ -1054,7 +1055,7 @@ function GarageRoom({
           ))}
         </section>
       )}
-      <HousePhones room={room} name={name} adult={adultConfirmed} busy={!!net.invite || !!social.session || !!net.group} target={null} open={rouletteOpen} onClose={() => {setRouletteOpen(false);setSelectedPhone(undefined);}} onBusy={setPhoneBusy} selectedPhone={selectedPhone} onRings={setRingingPhones}/>
+      <HousePhones room={room} name={name} adult={adultConfirmed} busy={pokerTalking || !!net.invite || !!social.session || !!net.group} target={null} open={rouletteOpen} onClose={() => {setRouletteOpen(false);setSelectedPhone(undefined);}} onBusy={setPhoneBusy} selectedPhone={selectedPhone} onRings={setRingingPhones}/>
       {barGate && (
         <div className="avatar-editor-backdrop">
           <section
