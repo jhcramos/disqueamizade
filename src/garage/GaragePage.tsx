@@ -1,3 +1,4 @@
+import {setCameraAvatar} from './cameraAvatar';
 import { HouseTheatre } from "./theatre/HouseTheatre";
 import { useScreening } from "./theatre/useScreening";
 import { HousePhones } from "./HousePhones";
@@ -367,6 +368,7 @@ function GarageRoom({
     [list, setList] = useState(false),
     [low, setLow] = useState(false),
     [previewOpen, setPreviewOpen] = useState(false);
+  useEffect(()=>setCameraAvatar(avatar,appearance),[avatar,appearance]);
   const net = useGarage(name, avatar, mode, userId, appearance, seat, phoneBusy || pokerTalking);
   useEffect(()=>{setDesktopPanel(null);},[room]);
   useEffect(()=>{if(desktopPanel)setTheatreOpen(false);},[desktopPanel]);

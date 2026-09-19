@@ -1,3 +1,4 @@
+import {readCameraMaskChoice} from './cameraPreference';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Phone, PhoneOff, Volume2, VolumeX, X } from 'lucide-react';
@@ -140,7 +141,7 @@ export function HousePhones(props: Props) {
       {!active && <button className="house-phone-close" aria-label="Fechar telefones" onClick={close}><X/></button>}
       <header><span className="phone-eyebrow">DISQUE SURPRESA · 1 A 1</span><h2 id="house-phone-title">{mine?.status==='accepted'?'Alô, nova companhia.':mine?'Tem alguém do outro lado?':incoming?'Tem uma ligação para a casa.':'Quem será que vai atender?'}</h2></header>
       {mine?.status==='accepted' && token?.id===mine.id && identity && mine.roomId && mine.peer ?
-        <div className="house-phone-video"><CameraSetupProvider><RouletteCall roomId={mine.roomId} token={token.value} identity={identity} displayName={props.name} peerId={mine.peer} isGuest={true} onEnd={ending} onNext={ending} onReport={peer => {void reportUser({reportedIdentity:peer,reporterIdentity:identity,reason:'inappropriate_content',roomSlug:mine.roomId!}); ending();}}/></CameraSetupProvider></div>
+        <div className="house-phone-video"><CameraSetupProvider initialMask={readCameraMaskChoice()?"meu-avatar":null}><RouletteCall roomId={mine.roomId} token={token.value} identity={identity} displayName={props.name} peerId={mine.peer} isGuest={true} onEnd={ending} onNext={ending} onReport={peer => {void reportUser({reportedIdentity:peer,reporterIdentity:identity,reason:'inappropriate_content',roomSlug:mine.roomId!}); ending();}}/></CameraSetupProvider></div>
       : <>
         <div className={`phone-dialog-art${incoming || mine?.status === 'ringing' ? ' is-ringing' : ''}`} aria-hidden="true"><Phone size={46}/></div>
         <p>{mine ? mine.status==='accepted'?'Conectando a conversa…':'Um telefone foi sorteado. Ele está tocando em '+ROOMS[mine.target.split('-')[0] as RoomId].name+'.' : incoming?'Toque em atender para começar uma conversa só entre vocês.':'Ligue para um dos telefones da casa. O destino é sorteado entre ambientes com alguém disponível.'}</p>

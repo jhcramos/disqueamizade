@@ -1,7 +1,8 @@
+import {readCameraAvatar} from './cameraAvatar';
 import { safeHelmetPose } from "./helmetCoverage";
 import * as T from "three";
 import { createAdultAvatar } from "./adultAvatar";
-import { readSavedAvatar, type Appearance } from "./avatarStyle";
+import { type Appearance } from "./avatarStyle";
 import type { FacePose } from "@/vision/facePose";
 /** Uses the exact same head meshes as the walking avatar. */
 export class AvatarMaskRenderer {
@@ -11,7 +12,7 @@ export class AvatarMaskRenderer {
   owner: T.Group;
   head: T.Object3D;
   constructor(index?: number, appearance?: Appearance) {
-    const saved = readSavedAvatar();
+    const saved = readCameraAvatar();
     this.owner = createAdultAvatar(
       index ?? saved.avatar,
       appearance ?? saved.appearance,

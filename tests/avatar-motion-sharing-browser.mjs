@@ -8,13 +8,13 @@ try{
  async function enter(name){
   const context=await browser.newContext({permissions:['camera'],viewport:{width:1280,height:900}});
   await context.addInitScript(()=>{
-   window.__media=0;window.__tracks=[];const get=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+   window.__poseUp=true;window.__media=0;window.__tracks=[];const get=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
    navigator.mediaDevices.getUserMedia=async options=>{window.__media++;const stream=await get(options);window.__tracks.push(...stream.getTracks());return stream;};
    const Native=Worker;window.Worker=class{
     constructor(url,...args){if(!String(url).includes('avatar-pose-worker'))return new Native(url,...args);}
     postMessage(data){data.bitmap?.close();setTimeout(()=>{if(this.stopped)return;
      if(data.type==='init')this.onmessage?.({data:{type:'ready'}});
-     else {const p=Array.from({length:33},()=>({x:.5,y:.5,z:0,visibility:0}));p[12]={x:.4,y:.4,z:0,visibility:1};p[14]={x:.2,y:.4,z:0,visibility:1};p[16]={x:.2,y:.2,z:0,visibility:1};this.onmessage?.({data:{type:'pose',points:p,ms:5}});}
+     else {const p=Array.from({length:33},()=>({x:.5,y:.5,z:0,visibility:0}));p[12]={x:.4,y:.4,z:0,visibility:1};p[14]={x:.2,y:.4,z:0,visibility:1};p[16]={x:.2,y:.2,z:0,visibility:1};if(!window.__poseUp){p[14]={x:.4,y:.6,z:0,visibility:1};p[16]={x:.4,y:.8,z:0,visibility:1};}this.onmessage?.({data:{type:'pose',points:p,ms:5}});}
     },5);}
     terminate(){this.stopped=true;}
    };
@@ -28,9 +28,11 @@ try{
  await a.getByRole('button',{name:'Movimentar avatar · teste'}).click();const share=a.getByRole('checkbox',{name:'Compartilhar meus gestos com a sala'});assert.equal(await share.isChecked(),false);
  await a.getByRole('button',{name:'Ativar câmera só para movimentos'}).click();await a.waitForFunction(()=>document.querySelector('.motion-panel video')?.srcObject?.active);await a.waitForTimeout(1800);
  assert.equal(sent.some(r=>r.messages?.some(m=>m.data.type==='pose'&&m.data.pose)),false,'local preview sends no gestures');
+ if(process.env.EXPECT_REALTIME)await a.waitForFunction(()=>document.querySelector('.motion-panel')?.dataset.realtime==='true');
  await share.check();await b.waitForFunction(()=>document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]')?.dataset.motionActive==='true'&&Number(document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]').dataset.armAngle)<-.5);
  await b.waitForTimeout(1800);assert.equal(await b.locator('.house3d-person[aria-label="Ver Ana Gesto"]').getAttribute('data-motion-active'),'true','an active capture keeps animating');
  const samples=sent.flatMap(r=>r.messages??[]).filter(m=>m.data.type==='pose'&&m.data.pose);assert.ok(samples.length);assert.ok(samples.every(m=>m.data.pose.length===5&&m.data.pose.every(Number.isFinite)&&Object.keys(m.data).sort().join(',')==='captured,from,pose,type'));
+ if(process.env.EXPECT_REALTIME){await a.evaluate(()=>window.__poseUp=false);await b.waitForFunction(()=>Math.abs(Number(document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]').dataset.armAngle))<.1);const start=Date.now();await a.evaluate(()=>window.__poseUp=true);await b.waitForFunction(()=>Number(document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]').dataset.armAngle)<-.5);const latency=Date.now()-start;console.log('Realtime gesture change visible after',latency,'ms');assert.ok(latency<900,'gesture should bypass slow polling');}
  assert.equal(await b.evaluate(()=>window.__media),0,'receiver never opens a webcam');
  await share.uncheck();await b.waitForFunction(()=>document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]')?.dataset.motionActive==='false'&&Math.abs(Number(document.querySelector('.house3d-person[aria-label="Ver Ana Gesto"]').dataset.armAngle))<.02);
  assert.equal(await a.locator('.motion-panel video').evaluate(v=>v.srcObject.active),true,'turning off sharing keeps the private preview');

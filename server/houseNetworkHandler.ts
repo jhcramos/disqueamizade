@@ -1,3 +1,4 @@
+import {motionCredentials} from './motionCredentials.ts';
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import {createClient} from '@supabase/supabase-js';
 import {residentIdentity} from './residentIdentity.ts';
@@ -16,6 +17,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
   const {data,error}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();
   if(error||!data)return res.status(503).json({error:'unavailable'});
   const network=(data.payload.network??emptyNetwork()) as NetworkState;
+  if(body.motionConnect===true){const credentials=await motionCredentials(network.members[body.id],identity.id,body.id,body.room,Date.now());return credentials?res.status(200).json(credentials):res.status(403).json({error:'motion_unavailable'});}
   let result;try{result=exchangeNetwork(network,identity.id,body,Date.now());}catch(e){const reason=(e as Error).message;return res.status(reason==='identity'?403:reason==='slow_down'||reason==='capacity'?429:400).json({error:reason});}
   const {data:written,error:failed}=await db.from('house_resident_world').update({revision:data.revision+1,payload:{...data.payload,network},updated_at:new Date().toISOString()}).eq('id','main').eq('revision',data.revision).select('revision');
   if(failed)return res.status(503).json({error:'unavailable'});if(!written?.length)continue;

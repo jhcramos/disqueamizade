@@ -36,3 +36,9 @@ O teste `tests/avatar-motion-sharing-browser.mjs` verifica duas sessões isolada
 ## Bolinha
 
 Layla recebe lançamentos de até 5 unidades da casa, antes limitados a 1,8. O código busca a maior distância livre entre 24 direções, reduzindo o alcance perto de móveis/paredes. Verifica o trajeto e a rota da cachorra, evita aterrissar sobre visitantes e conserva a reserva e a devolução da única bolinha.
+
+## Canal rápido
+
+LiveKit transmite apenas cinco ângulos, até 12 vezes por segundo, em um canal de dados por ambiente. Tokens vinculados ao visitante não permitem publicar ou assinar câmera/microfone. A consulta HTTP continua como alternativa. Mensagens de parada são confiáveis; amostras intermediárias usam entrega sem retransmissão para não formar fila. A interface indica quando o canal rápido está conectado. Esta conexão usa o serviço LiveKit existente e conta como conexão de participante, mesmo sem vídeo.
+
+Desative com `VITE_ENABLE_AVATAR_MOTION_REALTIME=false` e publique novamente para retornar apenas ao transporte anterior. O teste `avatar-motion-sharing-browser.mjs` aceita `EXPECT_REALTIME=1 LIVE_HOUSE=1` para verificar a mudança visível abaixo de 900 ms; medições dependem da rede e aparelho.

@@ -48,6 +48,7 @@ export class HouseChannel{
   if(!usesHouseNetwork()){this.local=new BroadcastChannel(name);this.local.onmessage=e=>this.onmessage?.(e);return;}
   const hub=shared??(shared=new Hub());this.hub=hub;hub.channels.add(this);if(owner)hub.id=owner;hub.schedule(0);
  }
+ async motionCredentials(room:string){if(!this.hub?.token||!this.hub.id)throw new Error("House connecting");return this.hub.request({motionConnect:true,id:this.hub.id,room});}
  get connected(){return this.local?true:this.hub?.status==='online';}
  postMessage(data:unknown){if(!data||typeof data!=='object'||Array.isArray(data))return;if(this.local)this.local.postMessage(data);else this.hub?.push(this.name,structuredClone(data) as Data);}
  close(){this.local?.close();const hub=this.hub;if(hub){hub.channels.delete(this);if(!hub.channels.size)hub.close();}this.hub=undefined;this.onmessage=null;this.onconnectionchange=null;}
