@@ -240,18 +240,7 @@ export default function GaragePage() {
           <p className="garage-note">
             <VideoOff size={15} /> Câmera e microfone começam desligados.
           </p>
-          {mode === "local" && (
-            <div className="entry-availability">
-              <p>
-                Por enquanto, você pode explorar a casa. Os encontros online
-                nesses ambientes estarão disponíveis em breve.
-              </p>
-              <Link to="/rooms">
-                Quer conversar agora? Conheça as salas online{" "}
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-          )}
+
         </section>
       </div>
       {previewOpen && (
@@ -545,7 +534,7 @@ function GarageRoom({
         <header className="mobile-house-header">
           <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
             {(['garage', 'living', 'bar'] as RoomId[]).map(id => <option key={id} value={id}>{ROOMS[id].name}{id === 'bar' ? ' · 18+' : ''}</option>)}
-          </select><small>{roomPeople.length + 1} {roomPeople.length ? 'pessoas' : 'pessoa'} aqui</small></label>
+          </select><small>{net.connected ? `${roomPeople.length + 1} ${roomPeople.length ? 'pessoas' : 'pessoa'} aqui` : 'Reconectando à casa…'}</small></label>
           {(call || social.session) && <button onClick={() => setMobilePanel('people')}>Conversa</button>}
           <button onClick={() => setMobilePanel(mobilePanel === 'menu' ? null : 'menu')} aria-label="Meu perfil e opções"><UserRound size={20} /></button>
         </header>
@@ -620,7 +609,7 @@ function GarageRoom({
         </div>
         <span className="garage-status">
           <span className={net.connected ? "online-dot" : "offline-dot"} />
-          {mode === "local" ? "Explorando a casa" : "Na casa"} ·{" "}
+          {net.connected ? "Na casa" : "Reconectando à casa"} ·{" "}
           {net.people.length + 1}{" "}
           {net.people.length ? "pessoas na casa" : "pessoa na casa"}
         </span>

@@ -1,3 +1,4 @@
+import {HouseChannel} from "./network/HouseChannel";
 import { useEffect, useRef, useState } from "react";
 import { type Appearance } from "./avatarStyle";
 import {
@@ -56,10 +57,11 @@ const initial = (): State => ({
 // Explicit leave/pagehide messages still remove the peer immediately.
 const LOCAL_PRESENCE_TIMEOUT_MS = 90_000;
 
-// Local prototype transport. Group membership is controlled by the inviter;
+// Shared house protocol (server in production, same-browser in development).
+// Group membership is controlled by the inviter;
 // media signaling is accepted only from members of the approved revision.
 class LocalConversation {
-  channel: BroadcastChannel;
+  channel: HouseChannel;
   state = initial();
   self: Person;
   seen = new Map<string, { person: Person; time: number }>();
@@ -87,7 +89,7 @@ class LocalConversation {
       room: "garage",
       busy: false,
     };
-    this.channel = new BroadcastChannel("disque-house-3d-v1");
+    this.channel = new HouseChannel("disque-house-3d-v1", id);
     this.channel.onmessage = (e) => {
       const m = e.data;
       if (
@@ -104,7 +106,8 @@ class LocalConversation {
         }),
       );
     };
-    this.patch({ connected: true });
+    this.channel.onconnectionchange = connected => this.patch({connected,error:connected?'':'Reconectando à casa. Seus encontros aguardam a conexão voltar.'});
+    this.patch({ connected: this.channel.connected });
     this.send("hello", this.self);
     this.update();
     this.timer = setInterval(() => this.tick(), 1500);
@@ -456,7 +459,7 @@ class LocalConversation {
     }
   }
   request = async (person: Person) => {
-    if (this.externalBusy) return;
+    if (this.externalBusy || !this.state.connected) return;
     const peer = this.seen.get(person.id)?.person;
     if (
       !peer ||

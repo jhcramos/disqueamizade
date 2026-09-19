@@ -1,3 +1,4 @@
+import {HouseChannel} from "./network/HouseChannel";
 import { useEffect, useRef, useState } from "react";
 import type { Person, RoomId } from "./model";
 export type SocialPreference = {
@@ -41,7 +42,7 @@ export function useSocialChat(
     { id: string; name: string; text: string }[]
   >([]);
   const [notice, setNotice] = useState("");
-  const channel = useRef<BroadcastChannel | null>(null);
+  const channel = useRef<HouseChannel | null>(null);
   const state = useRef({ self, people, preference, session });
   state.current = { self, people, preference, session };
   const blocked = useRef(new Set<string>());
@@ -62,7 +63,7 @@ export function useSocialChat(
     setMessages([]);
     state.current.session = null;
     if (mode !== "local") return;
-    const bus = new BroadcastChannel(`disque-social-v1:${room}`);
+    const bus = new HouseChannel(`disque-social-v1:${room}`);
     channel.current = bus;
     const announce = () =>
       bus.postMessage({

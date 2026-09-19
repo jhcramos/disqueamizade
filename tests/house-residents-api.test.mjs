@@ -7,7 +7,7 @@ import {createLife} from '../src/garage3d/residents/model.ts';
 test('resident API guards requests and owns anonymous identity independently of visitor input',async()=>{
  const saved={url:process.env.SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,ai:process.env.DEEPINFRA_API_KEY},originalFetch=globalThis.fetch;
  const generations=[];let providerStatus=200,finishReason='stop';
- let row={revision:0,payload:{state:createLife(),visitors:{},at:Date.now(),nextAI:Date.now()+120000,commands:{}}};
+ let row={revision:0,payload:{network:{seq:7,members:{},packets:[]},state:createLife(),visitors:{},at:Date.now(),nextAI:Date.now()+120000,commands:{}}};
  globalThis.fetch=async(request,init)=>{
   if(String(request)==='https://api.deepinfra.com/v1/openai/chat/completions'){
    generations.push(JSON.parse(init.body));
@@ -32,6 +32,7 @@ test('resident API guards requests and owns anonymous identity independently of 
   assert.equal((await invoke({headers:{host:'example.invalid','x-resident-session':'forged'}})).status,401);
   const claimed=randomUUID();
   const response=await invoke({body:{visitor:{id:claimed,name:'Teste',position:{x:-5,z:2.8}}}});
+  assert.deepEqual(row.payload.network,{seq:7,members:{},packets:[]},'residents preserve network state');assert.equal(response.body.network,undefined);
   assert.equal(response.status,200);assert.equal(response.body.generative,false);
   assert.notEqual(response.body.identity.id,claimed);
   assert.ok(row.payload.visitors[response.body.identity.id]);assert.equal(row.payload.visitors[claimed],undefined);

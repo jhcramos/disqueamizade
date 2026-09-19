@@ -1,3 +1,4 @@
+import {HouseChannel} from "./network/HouseChannel";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/services/supabase/client";
 import { mergePlay, parsePlay, type PlayAction, type PlayState } from "./play";
@@ -37,7 +38,7 @@ export function useRoomPlay(room: RoomId, mode: "local" | "online") {
     };
     let cleanup = () => {};
     if (mode === "local") {
-      const channel = new BroadcastChannel(`disque-house-play-3d-v1:${room}`);
+      const channel = new HouseChannel(`disque-house-play-3d-v1:${room}`);
       channel.onmessage = (e) => receive(e.data);
       send.current = (data) => channel.postMessage(data);
       setConnected(true);

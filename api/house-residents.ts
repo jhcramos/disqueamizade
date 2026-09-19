@@ -9,7 +9,7 @@ import {roomAt} from '../src/garage3d/layout.ts';
 import {residentIdentity} from '../server/residentIdentity.ts';
 import {handlePoker} from '../server/housePoker.ts';
 import type {PokerState} from '../src/garage3d/poker/model.ts';
-type World={pokerCall?:import('../server/pokerCall.ts').PokerCall;poker?:PokerState;pokerCommands?:Record<string,string>;state:LifeState;visitors:Record<string,{visitor:Visitor;seen:number}>;at:number;nextAI:number;commands:Record<string,string>};
+type World={network?:import('../server/houseNetwork.ts').NetworkState;pokerCall?:import('../server/pokerCall.ts').PokerCall;poker?:PokerState;pokerCommands?:Record<string,string>;state:LifeState;visitors:Record<string,{visitor:Visitor;seen:number}>;at:number;nextAI:number;commands:Record<string,string>};
 const ACTIONS=new Set([...HOST_ACTIONS,'pick','return','coffee','water','record','throw','pet','greet','fill','rest','talk','moveBed','placeBed','cancelBed']);
 const TARGETS=new Set(['dora','teo','biscoito','plant','coffee','watering','record','toy','bed','bowl']);
 // A global persisted reservation bounds model calls to at most one per two minutes.
@@ -45,7 +45,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
   const {data,error}=await db.from('house_resident_world').select('revision,payload').eq('id','main').single();
   if(error||!data)return res.status(503).json({configured:false});
   const saved=data.payload as Partial<World>,state=parseLife(saved.state)??createLife(now);
-  const world:World={pokerCall:saved.pokerCall,poker:saved.poker,pokerCommands:saved.pokerCommands,state,visitors:saved.visitors??{},at:saved.at??now,nextAI:saved.nextAI??now+15000,commands:saved.commands??{}};
+  const world:World={network:saved.network,pokerCall:saved.pokerCall,poker:saved.poker,pokerCommands:saved.pokerCommands,state,visitors:saved.visitors??{},at:saved.at??now,nextAI:saved.nextAI??now+15000,commands:saved.commands??{}};
   for(const[id,p]of Object.entries(world.visitors))if(now-p.seen>90000){delete world.visitors[id];releaseBed(state,id);state.items.filter(i=>i.holder===id).forEach(returnItem);}
   if(Object.keys(world.visitors).length>=100&&!world.visitors[visitor.id])return res.status(429).json({error:'capacity'});
   const previous=world.visitors[visitor.id];

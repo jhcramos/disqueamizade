@@ -1,3 +1,4 @@
+import {HouseChannel} from "./network/HouseChannel";
 import { useEffect, useRef, useState } from "react";
 import type { Person, RoomId } from "./model";
 
@@ -19,7 +20,7 @@ export function useRoomChat(
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [now, setNow] = useState(Date.now());
   const [error, setError] = useState("");
-  const channel = useRef<BroadcastChannel | null>(null);
+  const channel = useRef<HouseChannel | null>(null);
   const roster = useRef([self, ...people]);
   roster.current = [self, ...people];
   const last = useRef(0);
@@ -28,7 +29,7 @@ export function useRoomChat(
     setError("");
     last.current = 0;
     if (mode !== "local") return;
-    const bus = new BroadcastChannel(`disque-room-chat-v1:${room}`);
+    const bus = new HouseChannel(`disque-room-chat-v1:${room}`);
     channel.current = bus;
     const seen = new Set<string>();
     const limits = new Map<string, number>();
@@ -74,6 +75,7 @@ export function useRoomChat(
     };
   }, [room, mode]);
   function send(text: string) {
+    if(channel.current&&!channel.current.connected){setError('Reconectando à casa. Aguarde antes de enviar.');return false;}
     const clean = text.trim();
     if (!channel.current || !clean || clean.length > 280) return false;
     if (Date.now() - last.current < 1000) {

@@ -1,3 +1,4 @@
+import {HouseChannel} from "../network/HouseChannel";
 import { useEffect, useRef, useState } from 'react';
 import type { Person, RoomId } from '../model';
 import { changeScreening, emptyScreening, parseScreening, type Command, type Screening } from './model';
@@ -12,7 +13,7 @@ export function useScreening(room: RoomId, mode: 'local' | 'online', self: Perso
   useEffect(() => {
     setReady(false); setError(''); current.current = emptyScreening(); setState(current.current);
     if (mode !== 'local') return;
-    const bus = new BroadcastChannel(`disque-screening-v1:${room}`);
+    const bus = new HouseChannel(`disque-screening-v1:${room}`);
     let active = true, settled = false, leader = '', nonce = 0;
     const seen = new Set<string>(), limits = new Map<string, number>();
     const members = () => roster.current.filter(p => (p.room ?? 'garage') === room);
