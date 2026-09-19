@@ -1,6 +1,6 @@
 import {Group} from 'three';
 import type {BodyPose} from './pose';
-/** Lazy grouping only on the local test avatar; normal NPC/mask rigs stay untouched. */
+/** Lazy grouping for opted-in visitor motion; NPC and camera-mask rigs stay untouched. */
 export function applyBodyPose(model:Group,pose:BodyPose){
  let upper=model.getObjectByName('motion-upper-body');
  if(!upper){

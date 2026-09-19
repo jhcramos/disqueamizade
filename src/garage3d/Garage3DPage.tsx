@@ -1,3 +1,4 @@
+import {useSharedMotion} from './motion/useSharedMotion';
 import {MotionExperiment,type MotionFrame} from './motion/MotionExperiment';
 import {neutralPose,smoothPose} from './motion/pose';
 import {applyBodyPose} from './motion/rig';
@@ -35,6 +36,8 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const [life,setLife]=useState(()=>createLife()),[lifeMode,setLifeMode]=useState<Connection>('connecting'),[residentTarget,setResidentTarget]=useState<string|null>(null),[lifeMessage,setLifeMessage]=useState(''),[quietResidents,setQuietResidents]=useState(false);
   const residentLabels=useRef(new Map<string,HTMLButtonElement>()),residentAction=useRef<(action:LifeAction,target:string,request?:string)=>void>();
   const motionFrame=useRef<MotionFrame|null>(null);
+  const sharedMotion=useSharedMotion(session?.self.room??'garage',session?.self.id,!!session&&import.meta.env.VITE_ENABLE_AVATAR_MOTION!=='false'&&import.meta.env.VITE_ENABLE_AVATAR_MOTION_SHARING!=='false');
+  const motionShare=useRef(sharedMotion);motionShare.current=sharedMotion;
   const [pokerOpen,setPokerOpen]=useState(false);
   const [nearHost,setNearHost]=useState<NearbyHost|null>(null),dismissNearby=useRef<(host?:NearbyHost)=>void>();
   const interactionUI=useRef({residentTarget,pokerOpen,quietResidents});interactionUI.current={residentTarget,pokerOpen,quietResidents};
@@ -187,7 +190,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
         const destination=JSON.stringify(state.destination);if(destination!==lastDestination){lastDestination=destination;if(!own.seat)path=houseRoute(actor.position,toWorld(state.destination,room));}
         if(state.frozen||state.cinema){pendingResident=null;path=[];keys.clear();dance=false;setDancing(false);}
         if(crossSeat&&crossSeat.room===room){const target=crossSeat;crossSeat=null;if(!state.frozen&&!state.cinema)sit(target.index,target.room);}
-        remote.sync(state.people,now,dt,reduced,state.play.perform);
+        remote.sync(state.people,now,dt,reduced,state.play.perform,motionShare.current.frames.current);
         playObjects.sync(state,now);
         dance=!state.frozen&&!!state.play.perform?.on&&state.play.perform.actor===own.id&&!sitting&&Date.now()-state.play.perform.at<6000;
         rooms[room].screen(state.televisionOn===true||state.play.screen?.on===true);
@@ -226,6 +229,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       avatar.rotation.z=dance&&!reduced?Math.sin(now*.007)*.07:0;avatar.position.y=avatarBaseY+(dance&&!reduced?Math.abs(Math.sin(now*.007))*.05:0);
       const motion=motionFrame.current;
       const canPose=!moving&&!dance&&!sitting&&!state?.frozen&&!state?.cinema&&!state?.self.busy&&!heldItem(residentState,visitorId)&&residentState.bed.holder!==visitorId;
+      motionShare.current.publish(motion&&canPose&&now-motion.at<500?motion.pose:null);
       if(motion||motionUsed){motionUsed=true;smoothPose(motionPose,motion&&canPose&&now-motion.at<500?motion.pose:neutralPose(),dt);applyBodyPose(avatar,motionPose);}
       zoom+=(targetZoom-zoom)*(reduced?1:Math.min(1,dt*5));camera.zoom=zoom;
       const focus=manualFocus??(targetZoom===3?new T.Vector3(actor.position.x,.65,actor.position.z):currentView==='house'?new T.Vector3(-2,.5,-3.5):new T.Vector3(roomOffsets[currentView].x,.5,roomOffsets[currentView].z));
@@ -233,7 +237,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       camera.updateMatrixWorld();
       eyeCamera.position.set(actor.position.x,sitting?actor.position.y+1.25:1.35,actor.position.z);eyeCamera.lookAt(eyeCamera.position.x+Math.sin(yaw)*Math.cos(pitch),eyeCamera.position.y+Math.sin(pitch),eyeCamera.position.z+Math.cos(yaw)*Math.cos(pitch));eyeCamera.updateMatrixWorld();
       projectedMarkers.current.forEach((m,i)=>{const button=markerRefs.current.get(i);if(!button)return;const p=new T.Vector3(m.x,.13,m.z).project(camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;const obscuresPerson=[actor,...Array.from(remote.actors.values()).map(a=>a.root)].some(root=>{const q=root.position.clone().add(new T.Vector3(0,.9,0)).project(camera);return Math.abs(p.x-q.x)*el.clientWidth/2<90&&Math.abs(p.y-q.y)*el.clientHeight/2<100;});button.hidden=fp||obscuresPerson||p.x<-.9||p.x>.9||p.y<-.85||p.y>.85;});
-      if(state){for(const person of [state.self,...state.people]){const root=person.id===state.self.id?actor:remote.actors.get(person.id)?.root,button=personLabels.current.get(person.id);if(!root||!button)continue;const p=root.position.clone().add(new T.Vector3(0,1.85,0)).project(fp?eyeCamera:camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;const head=root.position.clone().add(new T.Vector3(0,1.5,0)).project(fp?eyeCamera:camera);button.dataset.headY=String((1-head.y)*el.clientHeight/2);button.hidden=(fp&&person.id===state.self.id)||p.z>1||p.z< -1||Math.abs(p.x)>.96||Math.abs(p.y)>.9;
+      if(state){for(const person of [state.self,...state.people]){const root=person.id===state.self.id?actor:remote.actors.get(person.id)?.root,button=personLabels.current.get(person.id);if(!root||!button)continue;const p=root.position.clone().add(new T.Vector3(0,1.85,0)).project(fp?eyeCamera:camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;const head=root.position.clone().add(new T.Vector3(0,1.5,0)).project(fp?eyeCamera:camera);button.dataset.headY=String((1-head.y)*el.clientHeight/2);button.dataset.motionActive=String(!!root.userData.motionActive);button.dataset.armAngle=Number(root.userData.armAngle??0).toFixed(2);button.hidden=(fp&&person.id===state.self.id)||p.z>1||p.z< -1||Math.abs(p.x)>.96||Math.abs(p.y)>.9;
         if(inviteLabel.current&&state.bubbleOwner===person.id){inviteLabel.current.style.left=button.style.left;inviteLabel.current.style.top=button.style.top;}}
       }
       near=nearbyPhone(actor.position);const key=near?`${near.room}-${near.index}`:'';if(key!==nearestKey){nearestKey=key;setNearPhone(near);}
@@ -280,7 +284,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       {session?.onTelevision&&<button disabled={session.frozen} onClick={()=>session.onTelevision?.(roomId)}><Tv size={14}/> Televisão</button>}
       <button aria-pressed={view==='house'&&!close} onClick={()=>focus('house')}>Casa inteira</button>
     </nav>
-    {import.meta.env.VITE_ENABLE_AVATAR_MOTION!=='false'&&<MotionExperiment frame={motionFrame} blocked={!!(session?.frozen||session?.cinema||session?.self.busy||pokerOpen)} onFocus={()=>{dismissNearby.current?.();setResidentTarget(null);setClose(true);setFirstPerson(false);controls.current?.firstPerson(false);controls.current?.view(true);}}/>}
+    {import.meta.env.VITE_ENABLE_AVATAR_MOTION!=='false'&&<MotionExperiment frame={motionFrame} sharing={sharedMotion.sharing} shareAvailable={!!session&&import.meta.env.VITE_ENABLE_AVATAR_MOTION_SHARING!=='false'} shareConnected={sharedMotion.connected} onShare={sharedMotion.choose} onStop={()=>sharedMotion.publish(null)} blocked={!!(session?.frozen||session?.cinema||session?.self.busy||pokerOpen)} onFocus={()=>{dismissNearby.current?.();setResidentTarget(null);setClose(true);setFirstPerson(false);controls.current?.firstPerson(false);controls.current?.view(true);}}/>}
     <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada">
       <div className="house3d-tv-slot" ref={attachTV} aria-hidden="true" />
       <div ref={host} className="garage3d-canvas" aria-label="Toque para andar. Arraste para mover a vista. Use dois dedos para dar zoom."/>

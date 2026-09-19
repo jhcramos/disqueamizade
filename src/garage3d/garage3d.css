@@ -40,3 +40,5 @@
 .motion-panel p{margin:5px 0 10px}.motion-panel button{padding:9px 12px;margin:2px 6px 2px 0;border:1px solid #bc4c2b;border-radius:10px;color:#843c28;background:#fffaf2;min-height:40px}
 .motion-panel video{width:120px;height:90px;object-fit:cover;transform:scaleX(-1);border-radius:12px;flex-shrink:0}
 @media(max-width:600px){.motion-panel{font-size:12px}.motion-panel video{width:80px;height:80px}.motion-panel button{padding:8px;font-size:12px}}
+
+.motion-share{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}.motion-share input{width:18px;height:18px;accent-color:#af4930;flex-shrink:0}

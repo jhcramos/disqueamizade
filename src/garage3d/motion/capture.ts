@@ -48,7 +48,7 @@ export function createPoseCapture(video:HTMLVideoElement,onPose:(p:Point[])=>voi
      frames++;average=frames===1?data.ms:average*.8+data.ms*.2;
      if(frames>8){if(average>75)hz=6;slow=average>200?slow+1:0;}
      if(slow>=12){fail('Este aparelho ficou sobrecarregado. O teste foi desligado automaticamente.');return;}
-     onPose(data.points);onStatus({phase:'active',message:data.points.length?'Movimentos ativos · apenas na sua prévia':'Enquadre os braços para o avatar acompanhar.',ms:Math.round(average),hz});
+     onPose(data.points);onStatus({phase:'active',message:data.points.length?'Movimentos detectados':'Enquadre os braços para o avatar acompanhar.',ms:Math.round(average),hz});
      // Leave processing headroom for the house even when inference is slow.
      timer=setTimeout(()=>void frame(),Math.max(data.ms*.75,1000/hz-data.ms));
     }

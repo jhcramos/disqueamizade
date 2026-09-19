@@ -8,7 +8,7 @@ class Hub{
  timer:ReturnType<typeof setTimeout>|undefined;abort:AbortController|undefined;last=0;
  notify(s:Status){if(s===this.status)return;this.status=s;for(const c of this.channels)c.onconnectionchange?.(s==='online');}
  push(channel:string,data:Data){
-  const coalesce=['person','hello'].includes(data.event)||['preference','state','snapshot'].includes(data.type);
+  const coalesce=['person','hello'].includes(data.event)||['preference','state','snapshot','pose'].includes(data.type);
   if(coalesce)this.queue=this.queue.filter(p=>p.channel!==channel||p.data.event!==data.event||p.data.type!==data.type);
   if(this.queue.length>=128){this.notify('reconnecting');return;}
   this.queue.push({id:crypto.randomUUID(),channel,data});
@@ -29,6 +29,7 @@ class Hub{
    this.known=fresh;
    for(const person of roster)this.deliver('disque-house-3d-v1',{event:'person',from:person.id,data:person});
    for(const [room,state]of Object.entries(result.screenings??{}))this.deliver(`disque-screening-v1:${room}`,{type:'state',from:'house-server',state,serverNow:result.serverNow});
+   for(const c of this.channels)if(c.name.startsWith('disque-avatar-motion-'))c.onmessage?.({data:{type:'snapshot',poses:result.motions??[]}});
    for(const packet of result.packets??[])if(!(packet.channel==='disque-house-3d-v1'&&['person','hello','leave'].includes(packet.data.event)))this.deliver(packet.channel,packet.data);
   }catch{if(!this.closed)this.notify('reconnecting');}
   finally{clearTimeout(timeout);this.busy=false;this.schedule((this.status==='online'?800:2000)+Math.random()*200);}

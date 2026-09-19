@@ -1,20 +1,21 @@
+import {parseWirePose,POSE_TTL,type WirePose} from '../src/garage3d/motion/wire.ts';
 import {parsePerson, type RoomId} from '../src/garage/model.ts';
 import {changeScreening,emptyScreening,type Screening} from '../src/garage/theatre/model.ts';
 export type Packet={id:string;channel:string;data:Record<string,any>;seq:number;at:number;from:string;to?:string};
-type Member={owner:string;seen:number;person:Record<string,any>};
+type Member={owner:string;seen:number;person:Record<string,any>;motion?:{pose:WirePose|null;at:number;captured:number}};
 export type NetworkState={seq:number;members:Record<string,Member>;packets:Packet[];departed?:Record<string,number>;screenings?:Partial<Record<RoomId,Screening>>};
 export const emptyNetwork=():NetworkState=>({seq:0,members:{},packets:[]});
 function releaseAbsentDJs(s:NetworkState){
  for(const [room,state]of Object.entries(s.screenings??{}))if(state.dj&&s.members[state.dj]?.person.room!==room){state.dj=null;state.revision++;}
 }
 const MAIN='disque-house-3d-v1';
-export const validChannel=(c:unknown):c is string=>typeof c==='string'&&(c===MAIN||/^disque-(room-chat-v1|social-v1|house-play-3d-v1|screening-v1):(garage|living|bar)$/.test(c));
+export const validChannel=(c:unknown):c is string=>typeof c==='string'&&(c===MAIN||/^disque-(room-chat-v1|social-v1|house-play-3d-v1|screening-v1|avatar-motion-v1):(garage|living|bar)$/.test(c));
 const uuid=(id:unknown):id is string=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
 const targetedHouse=new Set(['invite','accept','decline','cancel','roster','knock','knock-declined','ready','offer','answer','ice','media','end','exit']);
 /** Sender ownership and private addressing are enforced before storage/delivery. */
 export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number){
  if(!uuid(body.id)||!Array.isArray(body.messages)||body.messages.length>32||!Array.isArray(body.channels)||body.channels.length>8||!body.channels.every(validChannel))throw new Error('input');
- for(const [id,m]of Object.entries(s.members))if(now-m.seen>90000)delete s.members[id];
+ for(const [id,m]of Object.entries(s.members)){if(now-m.seen>90000)delete s.members[id];else if(m.motion&&now-m.motion.at>=POSE_TTL)m.motion.pose=null;}
  s.packets=s.packets.filter(p=>now-p.at<60000).slice(-1500);
  const previous=s.members[body.id];if(previous&&previous.owner!==owner)throw new Error('identity');
  s.departed=Object.fromEntries(Object.entries(s.departed??{}).filter(([,until])=>until>now));
@@ -33,12 +34,17 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
   if(raw.channel===MAIN){
    if(['person','hello'].includes(d.event)){
     const person=parsePerson({...d.data,id:body.id});if(!person)continue;
-    me={owner,seen:now,person};s.members[body.id]=me;d.data=person;
+    me={...me,owner,seen:now,person};if(me.motion&&(person.busy||person.seat||previous?.person.room!==person.room))me.motion.pose=null;s.members[body.id]=me;d.data=person;
    }else if(d.event==='leave'){if(!me)continue;}
    else if(targetedHouse.has(d.event)){if(!uuid(d.to))continue;to=d.to;}
    else continue;
   }else{
    if(!me||!raw.channel.endsWith(`:${me.person.room??'garage'}`))continue;
+   if(raw.channel.startsWith('disque-avatar-motion-')){
+    const pose=parseWirePose(d.pose);
+    if(d.type!=='pose'||(!pose&&d.pose!==null)||!Number.isFinite(d.captured)||d.captured<=0||d.captured<=(me.motion?.captured??0))continue;
+    me.motion={pose:me.person.busy||me.person.seat?null:pose,at:now,captured:d.captured};continue;
+   }
    if(raw.channel.startsWith('disque-screening-')){
     // Browsers submit commands only. Shared snapshots are issued by the server.
     if(d.type!=='command')continue;
@@ -69,5 +75,6 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
  releaseAbsentDJs(s);
  const room=(me?.person.room??'garage') as RoomId;
  const screenings=me&&body.channels.includes(`disque-screening-v1:${room}`)?{[room]:s.screenings?.[room]??emptyScreening()}:{};
- return {cursor:s.seq,packets,roster,screenings,serverNow:now};
+ const motions=me&&body.channels.includes(`disque-avatar-motion-v1:${room}`)?Object.entries(s.members).flatMap(([id,m])=>id!==body.id&&m.person.room===room&&!m.person.busy&&!m.person.seat&&m.motion?.pose&&now-m.motion.at<POSE_TTL?[{id,pose:m.motion.pose,age:Math.max(0,now-m.motion.at),room}]:[]):[];
+ return {cursor:s.seq,packets,roster,screenings,serverNow:now,motions};
 }
