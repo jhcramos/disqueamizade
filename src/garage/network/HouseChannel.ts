@@ -14,7 +14,7 @@ class Hub{
   this.queue.push({id:crypto.randomUUID(),channel,data});
  }
  schedule(ms=800){clearTimeout(this.timer);if(!this.closed)this.timer=setTimeout(()=>void this.poll(),ms);}
- async request(body:unknown){const r=await fetch('/api/house-network',{method:'POST',headers:{'Content-Type':'application/json',...(this.token?{'X-House-Session':this.token}:{})},body:JSON.stringify(body),signal:this.abort?.signal});if(!r.ok)throw new Error(String(r.status));return r.json();}
+ async request(body:unknown){const r=await fetch('/api/house-residents',{method:'POST',headers:{'Content-Type':'application/json',...(this.token?{'X-House-Session':this.token}:{})},body:JSON.stringify({...body as Data,feature:"network"}),signal:this.abort?.signal});if(!r.ok)throw new Error(String(r.status));return r.json();}
  async poll(){
   if(this.busy||this.closed||!this.id)return;this.busy=true;this.abort=new AbortController();const timeout=setTimeout(()=>this.abort?.abort(),12000);
   const batch=this.queue.slice(0,32);const channels=[...new Set([...this.channels].map(c=>c.name))];
@@ -34,7 +34,7 @@ class Hub{
  }
  deliver(name:string,data:Data){for(const c of this.channels)if(c.name===name)c.onmessage?.({data});}
  close(){this.closed=true;clearTimeout(this.timer);this.abort?.abort();
-  if(this.token&&this.id)void fetch('/api/house-network',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-House-Session':this.token},body:JSON.stringify({id:this.id,depart:true,cursor:this.cursor,channels:['disque-house-3d-v1'],messages:[]})}).catch(()=>{});
+  if(this.token&&this.id)void fetch('/api/house-residents',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-House-Session':this.token},body:JSON.stringify({feature:"network",id:this.id,depart:true,cursor:this.cursor,channels:['disque-house-3d-v1'],messages:[]})}).catch(()=>{});
   this.queue=[];shared=undefined;}
 }
 /** Same event protocol in development and on the server; production never silently falls back to same-browser delivery. */

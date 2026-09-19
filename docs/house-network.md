@@ -2,7 +2,7 @@
 
 The public house previously always entered the modern `local` protocol, whose BroadcastChannel transport only connected tabs in one browser. The older `online` protocol does not implement all current group/chat/theatre features, so switching the entry flag alone is not a compatible fix.
 
-`HouseChannel` now routes the modern protocol through `/api/house-network` in production. Local development uses BroadcastChannel; append `?network=1` when running with the API (the browser integration test supplies real handlers and a fake database). There is no silent production fallback to local-only presence.
+`HouseChannel` now routes the modern protocol through `/api/house-residents` (`feature: "network"`) in production. Local development uses BroadcastChannel; append `?network=1` when running with the API (the browser integration test supplies real handlers and a fake database). There is no silent production fallback to local-only presence. The network handler shares the existing function to stay within the current Vercel Hobby function limit.
 
 ## Server boundaries
 

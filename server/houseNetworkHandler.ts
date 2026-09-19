@@ -1,7 +1,7 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import {createClient} from '@supabase/supabase-js';
-import {residentIdentity} from '../server/residentIdentity.ts';
-import {emptyNetwork,exchangeNetwork,type NetworkState} from '../server/houseNetwork.ts';
+import {residentIdentity} from './residentIdentity.ts';
+import {emptyNetwork,exchangeNetwork,type NetworkState} from './houseNetwork.ts';
 export default async function handler(req:VercelRequest,res:VercelResponse){
  res.setHeader('Cache-Control','no-store');if(req.method!=='POST')return res.status(405).json({error:'method'});
  if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return res.status(403).json({error:'origin'});}catch{return res.status(403).json({error:'origin'});}}

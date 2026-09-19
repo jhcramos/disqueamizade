@@ -1,3 +1,4 @@
+import houseNetwork from '../server/houseNetworkHandler.ts';
 import {concierge,companyCandidates,applyCompanyDecision,preparedDecision,quickPreference} from '../src/garage3d/residents/concierge.ts';
 import {chooseCompany,invitationLine} from '../server/houseConcierge.ts';
 import {normalizeSeat} from '../src/garage/seats.ts';
@@ -23,6 +24,7 @@ async function improvise(state:LifeState){
  return typeof text==='string'&&text.trim()?{owner:speaker.id,text:text.trim().slice(0,160),until:Date.now()+9000,generatedBy:'zai-org/GLM-5.3-Flash'}:null;
 }
 export default async function handler(req:VercelRequest,res:VercelResponse){
+ if(req.body?.feature==='network')return houseNetwork(req,res);
  res.setHeader('Cache-Control','no-store');
  if(req.method!=='POST')return res.status(405).json({error:'method'});
  const origin=req.headers.origin;

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import network from '../api/house-network.ts';import residents from '../api/house-residents.ts';import {createLife} from '../src/garage3d/residents/model.ts';
+import residents from '../api/house-residents.ts';import {createLife} from '../src/garage3d/residents/model.ts';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 process.env.SUPABASE_URL='https://network-test.invalid';process.env.SUPABASE_SERVICE_ROLE_KEY='fake-network-unit-only';delete process.env.DEEPINFRA_API_KEY;delete process.env.TYPESAFE_API_KEY;
 let row={revision:1,payload:{state:createLife(),visitors:{},commands:{},at:Date.now(),nextAI:Date.now()+120000}};
@@ -11,10 +11,11 @@ try{
  for(const name of ['Ana Rede','Bruno Rede','Cris Rede']){
   // Separate storage/network contexts: BroadcastChannel cannot connect these sessions.
   const context=await browser.newContext({viewport:{width:1440,height:1100}});
-  for(const [path,handler]of [['house-network',network],['house-residents',residents]])await context.route(`**/api/${path}`,async route=>{
-   if(path==='house-network'&&blocked.has(name)){await route.abort();return;}
-   const req=route.request(),out={status:200};await handler({method:'POST',headers:{...req.headers(),host:'localhost:3000'},body:req.postDataJSON()},{setHeader(){},status(n){out.status=n;return this;},json(body){out.body=body;return this;}});
-   if(path==='house-network')packets.push({name,body:out.body});await route.fulfill({status:out.status,contentType:'application/json',body:JSON.stringify(out.body)});
+  await context.route('**/api/house-residents',async route=>{
+   const isNetwork=route.request().postDataJSON()?.feature==='network';
+   if(isNetwork&&blocked.has(name)){await route.abort();return;}
+   const req=route.request(),out={status:200};await residents({method:'POST',headers:{...req.headers(),host:'localhost:3000'},body:req.postDataJSON()},{setHeader(){},status(n){out.status=n;return this;},json(body){out.body=body;return this;}});
+   if(isNetwork)packets.push({name,body:out.body});await route.fulfill({status:out.status,contentType:'application/json',body:JSON.stringify(out.body)});
   });
   const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto('http://localhost:3000/garagem?network=1');
   await p.getByRole('textbox',{name:'Como podemos chamar você?'}).fill(name);await p.getByRole('button',{name:'Entrar na casa',exact:true}).click();pages.push(p);

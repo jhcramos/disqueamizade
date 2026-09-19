@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-import handler from '../api/house-network.ts';
+import handler from '../api/house-residents.ts';
 
 test('relay requires a signed session, preserves other world domains and retries concurrent writes',async()=>{
  const saved={url:process.env.SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY},original=globalThis.fetch;
@@ -16,7 +16,7 @@ test('relay requires a signed session, preserves other world domains and retries
   reads++;return new Response(JSON.stringify(row));
  };
  const invoke=async(body,token,extra={})=>{
-  const out={status:200};await handler({method:'POST',headers:{host:'example.invalid',origin:'https://example.invalid',...(token?{'x-house-session':token}:{})},body,...extra},{setHeader(){},status(n){out.status=n;return this;},json(value){out.body=value;return this;}});return out;
+  const out={status:200};await handler({method:'POST',headers:{host:'example.invalid',origin:'https://example.invalid',...(token?{'x-house-session':token}:{})},body:{...body,feature:"network"},...extra},{setHeader(){},status(n){out.status=n;return this;},json(value){out.body=value;return this;}});return out;
  };
  try{
   const id=randomUUID(),body={id,messages:[],channels:['disque-house-3d-v1'],cursor:0};
