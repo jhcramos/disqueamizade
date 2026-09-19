@@ -9,4 +9,4 @@ Architecture: server-authoritative fetch preserves the only ball. Search clear l
 - [x] Lazy CPU worker: one pose, no segmentation, 12Hz upper bound, 6Hz slow tier, stop sustained overload.
 - [x] Local camera panel: activate, indicator, framing guidance, latency, stop. Off by default. Rollback: VITE_ENABLE_AVATAR_MOTION=false and rebuild.
 - [x] Synthetic pose tests, cancellation/cleanup, actual worker with fake browser camera, privacy/fetch regressions, TypeScript/build.
-- [ ] Scan staged patch, commit/push, deploy. Real phone motion quality/thermal load require device testing.
+- [x] Scan staged patch, commit/push, deploy. Real phone motion quality/thermal load require device testing.
