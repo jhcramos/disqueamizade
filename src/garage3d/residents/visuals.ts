@@ -86,9 +86,10 @@ function createDog() {
     s.box(ear, '#ddcfb9', side * .023, -.075, 0, .10, .19, .095);
     s.box(ear, '#cba99a', side * .023, -.09, .048, .055, .10, .01);
   }
-  const collar = s.ring(body, '#3a8a85', 0, .045, .185, .144, .026);
+  const collar = s.ring(body, '#ec6a9e', 0, .045, .185, .169, .033);
+  collar.name = 'dog-collar';
   collar.scale.x = 1.03;
-  s.ball(body, '#d7a14b', 0, -.065, .217, .025, .033, .009);
+  s.ball(body, '#ffd6e4', 0, -.13, .217, .034, .041, .012);
   for (let i = 0; i < 4; i++) {
     const leg = new T.Group();
     leg.name = `dog-leg-${i}`;

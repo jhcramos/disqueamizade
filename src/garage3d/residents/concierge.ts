@@ -2,7 +2,7 @@ import {approachSeat,houseRoute,roomAt,seatsFor,worldPoint,type RoomId} from '..
 import {seatsForRoom} from '../../garage/seats.ts';
 import type {Command,LifeState,Visitor} from './model.ts';
 
-export const ACTIVITIES={music:'Escolher a trilha da casa',coffee:'Café e papo tranquilo',stories:'Trocar histórias',play:'Brincar com Biscoito'} as const;
+export const ACTIVITIES={music:'Escolher a trilha da casa',coffee:'Café e papo tranquilo',stories:'Trocar histórias',play:'Brincar com Layla'} as const;
 export const TOPICS={song:'Qual música merece entrar na trilha da casa?',small:'Que pequena coisa deixou seu dia melhor?',discovery:'O que você descobriu por acaso e adorou?',pet:'Qual foi a maior travessura de um bichinho que você conheceu?'} as const;
 export const COMPANY_CHOICES=[{text:'Papo tranquilo',symbol:'💬',activity:'coffee'},{text:'Ouvir música juntos',symbol:'🎵',activity:'music'},{text:'Jogar ou brincar',symbol:'🎲',activity:'play'},{text:'Topo qualquer coisa',symbol:'✨',activity:'any'}] as const;
 export const quickPreference=(text:string)=>COMPANY_CHOICES.find(c=>c.text===text)?.activity;
@@ -58,7 +58,7 @@ export function companyCandidates(s:LifeState,a:Visitor,visitors:Visitor[],now:n
  const rank=(c:Candidate)=>{const other=c.activity??quickPreference(c.request)??explicitActivity(c.request);return (fits(wanted,other)?0:10)+(c.circle?0:1);};
  return choices.sort((a,b)=>rank(a)-rank(b)).slice(0,12);
 }
-function explicitActivity(text:string):Activity|undefined{const t=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();if(/\b(nao|sozinh|quieto|silencio|ninguem)/.test(t))return;if(/music|rock|samba|canc|danc|trilha/.test(t))return'music';if(/cafe|tranquilo|calmo|relax/.test(t))return'coffee';if(/biscoito|bola|cachorr|brinc/.test(t))return'play';if(/historia|conhecer|convers|amizade|papo/.test(t))return'stories';}
+function explicitActivity(text:string):Activity|undefined{const t=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();if(/\b(nao|sozinh|quieto|silencio|ninguem)/.test(t))return;if(/music|rock|samba|canc|danc|trilha/.test(t))return'music';if(/cafe|tranquilo|calmo|relax/.test(t))return'coffee';if(/layla|biscoito|bola|cachorr|brinc/.test(t))return'play';if(/historia|conhecer|convers|amizade|papo/.test(t))return'stories';}
 const fits=(a:Activity|'any'|undefined,b:Activity|'any'|undefined)=>!!a&&!!b&&(a==='any'||b==='any'||a===b||(['coffee','stories'].includes(a)&&['coffee','stories'].includes(b)));
 export function preparedDecision(request:string,candidates:Candidate[]):Decision{
  const wanted=quickPreference(request)??explicitActivity(request);
@@ -119,7 +119,7 @@ export function companyCommand(s:LifeState,cmd:Command,visitors:Visitor[],now:nu
 }
 function waitingNotice(s:LifeState,a:Visitor|undefined,visitors:Visitor[],now:number){
  const others=a&&visitors.some(v=>compatible(a,v)&&requested(s,v,now)&&!busy(s,v.id));
- return others?'Ainda não apareceu uma combinação. Pode passear; aviso quando encontrar.':'Ainda não há outros visitantes disponíveis para este encontro. Pode brincar com Biscoito enquanto espera.';
+ return others?'Ainda não apareceu uma combinação. Pode passear; aviso quando encontrar.':'Ainda não há outros visitantes disponíveis para este encontro. Pode brincar com Layla enquanto espera.';
 }
 export function tickCompany(s:LifeState,visitors:Visitor[],now:number){
  const c=concierge(s),byId=new Map(visitors.map(v=>[v.id,v]));

@@ -12,11 +12,11 @@ export function CompanyRequestForm(p:Props&{onMinimize?:()=>void;onPet?:()=>void
   <strong>{current.pending?'Procurando companhia…':'Vou avisar quando encontrar companhia'}</strong>
   <p role="status">{current.notice||'Pode continuar passeando. Seu pedido fica ativo por até 10 minutos.'}</p>
   <small>Seu pedido: {current.text}. Buscamos nos ambientes que você pode acessar.</small>
-  <div><button onClick={p.onMinimize}>Continuar passeando</button><button disabled={p.disabled} onClick={()=>p.onAction('cancelCompany',p.host)}>Cancelar busca</button><button onClick={p.onPet}>Brincar com Biscoito</button></div>
+  <div><button onClick={p.onMinimize}>Continuar passeando</button><button disabled={p.disabled} onClick={()=>p.onAction('cancelCompany',p.host)}>Cancelar busca</button><button onClick={p.onPet}>Brincar com Layla</button></div>
  </section>;
  const text=custom?request.trim():choice;
  return <form className="company-request company-quick" onSubmit={e=>{e.preventDefault();if(!p.disabled&&!sending&&text.length>=3){setSending(true);p.onAction('askCompany',p.host,text);}}}>
-  <fieldset disabled={p.disabled||sending}><legend>O que você topa agora?</legend><div className="company-choice-grid">{COMPANY_CHOICES.map(c=><button type="button" key={c.text} aria-pressed={!custom&&choice===c.text} onClick={()=>{setCustom(false);setChoice(c.text);}}><span aria-hidden="true">{c.symbol}</span><span>{c.text}{c.activity==='play'&&<small>Uma brincadeira com Biscoito</small>}</span></button>)}</div></fieldset>
+  <fieldset disabled={p.disabled||sending}><legend>O que você topa agora?</legend><div className="company-choice-grid">{COMPANY_CHOICES.map(c=><button type="button" key={c.text} aria-pressed={!custom&&choice===c.text} onClick={()=>{setCustom(false);setChoice(c.text);}}><span aria-hidden="true">{c.symbol}</span><span>{c.text}{c.activity==='play'&&<small>Uma brincadeira com Layla</small>}</span></button>)}</div></fieldset>
   <button type="button" className="company-custom-toggle" aria-expanded={custom} onClick={()=>setCustom(!custom)}>Quer algo específico? Conte para {p.host==='dora'?'a Dora':'o Téo'}.</button>
   {custom&&<label>O que você tem vontade de fazer?<input value={request} maxLength={240} placeholder="Ex.: conversar sobre rock brasileiro" onChange={e=>setRequest(e.target.value)} disabled={p.disabled||sending}/><small>Este pedido é analisado por IA e não aparece no chat.</small></label>}
   <button className="company-submit" disabled={p.disabled||sending||text.length<3}>{sending?'Procurando…':'Encontrar companhia'}</button>

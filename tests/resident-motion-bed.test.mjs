@@ -19,7 +19,7 @@ test('carrying follows visitor; cancellation and disconnect release at last plac
  const legacy=createLife();delete legacy.bed;assert.deepEqual(parseLife(legacy).bed.position,BED);
  const bad=createLife();bad.bed.home={x:0,z:2.8};assert.equal(parseLife(bad),null);
 });
-test('Biscoito speaks in first person and routines have independent rhythms',()=>{
+test('Layla speaks in first person and routines have independent rhythms',()=>{
  const s=createLife(0),visitor={...v,position:s.residents[2].position};act(s,'talk','biscoito',100000,visitor);assert.equal(s.speech.owner,'biscoito');const first=s.speech.text;
  act(s,'talk','biscoito',103000,visitor);assert.notEqual(s.speech.text,first);
  assert.equal(new Set(s.residents.map(r=>residentSpeed(r.id))).size,3);assert.equal(new Set(s.residents.map(r=>residentPause(r.id,2))).size,3);

@@ -7,12 +7,12 @@ export type Resident = {id:ResidentId; position:Place; angle:number; activity:st
 export type BallFlight={from:Place;to:Place;start:number;duration:number;fromHeight:number;toHeight:number};
 export type Item = {id:ItemId; kind:ItemId; position:Place; height:number; holder?:string; reserved?:string;flight?:BallFlight};
 export type LifeState = {version:1; social:HostSocial; bed:{position:Place;home:Place;holder?:string}; residents:Resident[]; items:Item[]; memories:string[]; speech?:{owner:ResidentId;text:string;until:number;generatedBy?:string}; cooldown:Record<string,number>; watered:number; coffees:number; dances:number; fetches:number};
-export const NAMES:Record<ResidentId,string>={dora:'Dora',teo:'Téo',biscoito:'Biscoito'};
+export const NAMES:Record<ResidentId,string>={dora:'Dora',teo:'Téo',biscoito:'Layla'};
 export const ITEMS:Record<ItemId,{name:string;position:Place;height:number}>={
  coffee:{name:'Café da casa',position:{x:-5.3,z:.85},height:.53},
  watering:{name:'Regador',position:{x:-8.85,z:-.9},height:.01},
  record:{name:'Disco de vinil',position:{x:-7.8,z:-10.85},height:1.12},
- toy:{name:'Bolinha do Biscoito',position:{x:-6.1,z:2.1},height:.14},
+ toy:{name:'Bolinha da Layla',position:{x:-6.1,z:2.1},height:.14},
 };
 export const PLANT:Place={x:-9.25,z:-.9};
 export const BED:Place={x:-1.4,z:1.85};
@@ -41,11 +41,11 @@ export function options(s:LifeState,target:string,visitor:string):{action:LifeAc
  const held=heldItem(s,visitor),item=s.items.find(i=>i.id===target);
  if(s.bed.holder===visitor&&target!=='bed')return [];
  if(item)return item.holder===visitor?[{action:'return',label:'Guardar no lugar'}]:!item.holder&&!item.reserved&&!held?[{action:'pick',label:`Pegar ${target==='coffee'?'café':target==='watering'?'regador':target==='record'?'disco':'bolinha'}`}]:[];
- if(target==='bed'){if(s.bed.holder)return s.bed.holder===visitor?[{action:'placeBed',label:'Colocar caminha aqui'},{action:'cancelBed',label:'Devolver ao lugar anterior'}]:[];return [...(!['fetch','bring'].includes(s.residents[2].activity)?[{action:'rest' as const,label:'Chamar Biscoito para descansar'}]:[]),...(!held?[{action:'moveBed' as const,label:'Mover caminha'}]:[])];}
+ if(target==='bed'){if(s.bed.holder)return s.bed.holder===visitor?[{action:'placeBed',label:'Colocar caminha aqui'},{action:'cancelBed',label:'Devolver ao lugar anterior'}]:[];return [...(!['fetch','bring'].includes(s.residents[2].activity)?[{action:'rest' as const,label:'Chamar Layla para descansar'}]:[]),...(!held?[{action:'moveBed' as const,label:'Mover caminha'}]:[])];}
  if(target==='bowl')return held?.id==='watering'?[{action:'fill',label:'Encher o potinho'}]:[];
  if(target==='plant')return held?.id==='watering'?[{action:'water',label:'Regar a planta'}]:[];
  if(target==='biscoito'&&['fetch','bring'].includes(s.residents[2].activity))return [];
- if(target==='biscoito')return[{action:'talk',label:'O que foi, Biscoito?'},{action:'pet',label:'Fazer carinho'},...(held?.id==='toy'?[{action:'throw' as const,label:'Jogar para buscar'},{action:'passToy' as const,label:'Passar a vez'}]:[])];
+ if(target==='biscoito')return[...(held?.id==='toy'?[{action:'throw' as const,label:'Jogar bolinha para Layla'},{action:'passToy' as const,label:'Passar a vez'}]:[]),{action:'pet',label:'Fazer carinho'},{action:'talk',label:'O que foi, Layla?'}];
  if(target==='dora'||target==='teo')return[{action:'introduce',label:'Me apresente alguém'},{action:'together',label:'Vamos fazer algo juntos'},{action:s.social.solo[visitor]?'socialOn':'solo',label:s.social.solo[visitor]?'Voltar a receber convites':'Quero explorar sozinho'},{action:'greet',label:'Dar um toque de mãos'},...(held?.id==='coffee'?[{action:'coffee' as const,label:'Oferecer café'}]:[]),...(held?.id==='record'?[{action:'record' as const,label:'Entregar disco e dançar'}]:[])];
  return [];
 }
@@ -72,7 +72,7 @@ export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visit
  if(c.action==='placeBed'){
   if(!bedFits(v.position)||s.residents.some(a=>distance(a.position,v.position)<.7))return 'Escolha um piso livre, longe dos móveis, passagens e moradores.';
   s.bed.position={...v.position};s.bed.home={...v.position};s.bed.holder=undefined;
-  remember(s,`${name} mudou a caminha do Biscoito.`);speak(s,'biscoito','Imóvel aprovado. Agora só falta o serviço de quarto!',now);
+  remember(s,`${name} mudou a caminha da Layla.`);speak(s,'biscoito','Imóvel aprovado. Agora só falta o serviço de quarto!',now);
  }
  if(c.action==='cancelBed')releaseBed(s,v.id);
  if(c.action==='talk'){const n=(s.cooldown['dog-lines']??0)%DOG_LINES.length;speak(s,'biscoito',DOG_LINES[n],now);s.cooldown['dog-lines']=(n+1)%DOG_LINES.length;}
@@ -82,9 +82,9 @@ export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visit
  if(c.action==='coffee'&&held&&r){held.holder=r.id;held.reserved=r.id;r.activity='drink';r.path=[];r.until=now+8000;s.coffees++;speak(s,r.id,s.coffees===1?'Café entregue! Agora a fofoca tem acompanhamento.':'Mais café? Esta casa vai virar uma reunião de condomínio!',now);remember(s,`${name} ofereceu café a ${NAMES[r.id]}.`);}
  if(c.action==='record'&&held&&r){held.holder=r.id;held.reserved=r.id;r.activity='dance';r.path=[];r.until=now+9000;s.dances++;speak(s,r.id,'Você escolheu o disco, eu entro com o passinho!',now);remember(s,`${name} trouxe um disco para ${NAMES[r.id]}.`);}
  if(c.action==='water'&&held){s.watered++;const d=s.residents[0];speak(s,d.id,s.watered===1?'Obrigada! Téo achou que planta de sala vivia de conversa.':'Pronto, ela já bebeu. Vamos deixar um pouco para amanhã!',now);remember(s,`${name} cuidou da planta.`);}
- if(c.action==='fill'&&held){remember(s,`${name} colocou água para Biscoito.`);speak(s,'dora','Obrigada! Biscoito já estava de olho no meu café.',now);}
- if(c.action==='rest'){const dog=s.residents[2];dog.path=houseRoute(dog.position,s.bed.position);dog.activity='walk';dog.until=now+20000;dog.target='bed';remember(s,`${name} preparou um descanso para Biscoito.`);}
- if(c.action==='pet'&&r){r.path=[];r.activity='pet';r.until=now+5500;r.angle=Math.atan2(v.position.x-r.position.x,v.position.z-r.position.z);speak(s,'biscoito','Pode continuar. Minha agenda de carinho está livre o dia inteiro.',now);remember(s,`Biscoito recebeu carinho de ${name}.`);}
+ if(c.action==='fill'&&held){remember(s,`${name} colocou água para Layla.`);speak(s,'dora','Obrigada! Layla já estava de olho no meu café.',now);}
+ if(c.action==='rest'){const dog=s.residents[2];dog.path=houseRoute(dog.position,s.bed.position);dog.activity='walk';dog.until=now+20000;dog.target='bed';remember(s,`${name} preparou um descanso para Layla.`);}
+ if(c.action==='pet'&&r){r.path=[];r.activity='pet';r.until=now+5500;r.angle=Math.atan2(v.position.x-r.position.x,v.position.z-r.position.z);speak(s,'biscoito','Pode continuar. Minha agenda de carinho está livre o dia inteiro.',now);remember(s,`Layla recebeu carinho de ${name}.`);}
  if(c.action==='greet'&&r){r.path=[];r.activity='greet';r.until=now+4500;r.angle=Math.atan2(v.position.x-r.position.x,v.position.z-r.position.z);speak(s,r.id,r.id==='dora'?'Chega mais! Se Téo pedir ajuda com uma invenção, me avisa.':'Bem-vindo! Estou oficialmente ocupado evitando tarefas.',now);}
  if(c.action==='throw'&&held&&r){
   const goals=[{x:v.position.x+1.8,z:v.position.z},{x:v.position.x-1.8,z:v.position.z},{x:v.position.x,z:v.position.z-1.8},{x:v.position.x,z:v.position.z+1.8}];
@@ -92,10 +92,10 @@ export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visit
   if(!goal)return 'Aqui está apertado. Vamos brincar em um espaço livre.';
   held.flight={from:{...v.position},to:{...goal},start:now,duration:2200,fromHeight:.9,toHeight:.14};held.holder=undefined;held.reserved='biscoito';held.position=goal;held.height=.14;r.activity='fetch';r.target=v.id;r.path=houseRoute(r.position,goal,visitors.map(v=>v.position));r.until=now+20000;s.fetches++;speak(s,'biscoito','Eu busco! Mas desta vez você promete não jogar de novo?',now);
  }
- s.cooldown[v.id]=now+1500;return c.action==='moveBed'?'Caminha nas mãos! Caminhe até um piso livre e toque em “Colocar caminha aqui”.':c.action==='placeBed'?'Caminha no novo lugar. Biscoito já pode descansar aqui.':c.action==='cancelBed'?'Caminha devolvida.':c.action==='pick'?'Você está carregando. Aproxime-se de um morador para oferecer ou usar.':c.action==='return'?'Guardado no lugar.':'Boa! A casa ganhou mais uma história.';
+ s.cooldown[v.id]=now+1500;return c.action==='moveBed'?'Caminha nas mãos! Caminhe até um piso livre e toque em “Colocar caminha aqui”.':c.action==='placeBed'?'Caminha no novo lugar. Layla já pode descansar aqui.':c.action==='cancelBed'?'Caminha devolvida.':c.action==='pick'?'Você está carregando. Aproxime-se de um morador para oferecer ou usar.':c.action==='return'?'Guardado no lugar.':'Boa! A casa ganhou mais uma história.';
 }
 const routinePoints:Record<ResidentId,Place[]>={dora:[{x:-7,z:2.5},{x:-8.25,z:-.9},{x:-5,z:-6.5},{x:4.9,z:2.6}],teo:[{x:-5,z:-9.1},{x:-5,z:-5.3},{x:-5,z:2.5},{x:3.8,z:2.6}],biscoito:[BED,{x:-6.1,z:2.1},{x:-5,z:-6.1},{x:-7,z:2.6}]};
-export const DOG_LINES=['Eu não estou dormindo. Estou economizando energia para o próximo petisco.','Téo perdeu o disco. Eu perdi a paciência. A Dora perdeu os dois.','Nesta casa eu sou o único que trabalha: recebo carinho em tempo integral.','Se cair comida no chão, a inspeção é por minha conta.'];
+export const DOG_LINES=['Eu não estou dormindo. Estou economizando energia para o próximo petisco.','Téo perdeu o disco. Eu perdi a paciência. A Dora perdeu os dois.','Nesta casa eu sou a única que trabalha: recebo carinho em tempo integral.','Se cair comida no chão, a inspeção é por minha conta.'];
 const lines:Record<ResidentId,string[]>={dora:['Hoje a festa começa assim que alguém achar o disco certo.','Estou cuidando das plantas. Téo cuida da conversa.','Um café, uma música e já temos um plano.'],teo:['Organizar discos por cor é um método científico. Meu.','Estou ensaiando um passinho que ainda não tem nome.','A Dora pediu ajuda. Vim conferir a acústica primeiro.'],biscoito:DOG_LINES};
 /** Fixed-step caller; only its elected owner advances state. Never invokes a language model. */
 export function tickLife(s:LifeState,dt:number,visitors:Visitor[],now=Date.now()){
@@ -125,7 +125,7 @@ export function tickLife(s:LifeState,dt:number,visitors:Visitor[],now=Date.now()
   }
   if(r.activity==='bring'){
    const toy=s.items.find(i=>i.id==='toy')!,v=visitors.find(v=>v.id===r.target);
-   if(v&&!v.frozen&&distance(r.position,v.position)<1.6&&!heldItem(s,v.id)){toy.holder=v.id;toy.reserved=undefined;remember(s,`Biscoito devolveu a bolinha a ${v.name.slice(0,24)}.`);speak(s,'biscoito','Trouxe de volta! Mais uma?',now);r.activity='idle';r.until=now+10000;}
+   if(v&&!v.frozen&&distance(r.position,v.position)<1.6&&!heldItem(s,v.id)){toy.holder=v.id;toy.reserved=undefined;remember(s,`Layla devolveu a bolinha a ${v.name.slice(0,24)}.`);speak(s,'biscoito','Trouxe de volta! Mais uma?',now);r.activity='idle';r.until=now+10000;}
    else if(v&&now<r.until){r.path=approach(r.position,v.position);}
    else{returnItem(toy);r.activity='idle';r.until=now+6000;}continue;
   }

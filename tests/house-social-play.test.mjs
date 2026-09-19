@@ -4,7 +4,7 @@ import {personalLife,tickSocial} from '../src/garage3d/residents/social.ts';
 import {ballFlightPose} from '../src/garage3d/residents/ball.ts';
 const visitor=(id,x=-5,z=2.8)=>({id,name:id,position:{x,z}}),a=()=>visitor('Ana'),b=()=>visitor('Bia',-4,2.8);
 const command=(s,v,action,target,now,visitors)=>applyCommand(s,{id:randomUUID(),visitor:v,action,target},now,visitors);
-test('Biscoito approaches the holder and waits eagerly, with exactly one reserved fetch and return',()=>{
+test('Layla approaches the holder and waits eagerly, with exactly one reserved fetch and return',()=>{
  const s=createLife(10000),v=visitor('Ana',ITEMS.toy.position.x,ITEMS.toy.position.z);s.residents[2].position={x:-5.2,z:2.1};
  command(s,v,'pick','toy',10000,[v]);tickLife(s,.1,[v],10100);assert.equal(s.residents[2].activity,'eager');
  command(s,v,'throw','biscoito',12500,[v]);const ball=s.items.find(i=>i.id==='toy');assert.ok(ball.flight);assert.equal(ball.reserved,'biscoito');

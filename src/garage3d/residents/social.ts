@@ -15,7 +15,7 @@ function begin(s:LifeState,c:Command,visitors:Visitor[],now:number,kind:'meet'|'
  if((s.cooldown[`host:${a.id}`]??0)>now)return 'Vamos dar um tempinho antes de outro convite.';
  if(kind==='ball'&&!s.items.some(i=>i.id==='toy'&&i.holder===a.id))return 'Pegue a bolinha antes de passar a vez.';
  const b=visitors.filter(v=>available(s,v)&&(s.cooldown[`host:${v.id}`]??0)<=now&&compatible(a,v)&&!involved(s,v.id)&&dist(a.position,v.position)<7&&(kind!=='ball'||(!s.items.some(i=>i.holder===v.id)&&s.bed.holder!==v.id))).sort((x,y)=>dist(a.position,x.position)-dist(a.position,y.position))[0];
- if(!b)return 'Ainda não há alguém disponível por perto. Pode brincar com Biscoito enquanto espera.';
+ if(!b)return 'Ainda não há alguém disponível por perto. Pode brincar com Layla enquanto espera.';
  const host=c.target==='teo'?'teo':'dora';
  s.social.invites=s.social.invites.filter(i=>i.kind!=='welcome'||![a.id,b.id].includes(i.to));
  s.social.invites.push({id:c.id,host,kind,from:a.id,to:b.id,fromName:a.name,toName:b.name,stage:'pending',expires:now+30000,topic:kind==='activity'?(host==='teo'?'Qual música vocês escolheriam para uma festa de garagem?':'Qual história vocês contariam tomando um café?'):'Qual foi a amizade mais inesperada que você já fez?'});
@@ -50,7 +50,7 @@ export function hostCommand(s:LifeState,c:Command,visitors:Visitor[],now:number)
   ball.flight={from:{...from.position},to:{...v.position},start:now,duration:1800,fromHeight:.9,toHeight:.9};ball.holder=v.id;ball.position={...v.position};ball.height=.9;
   s.social.invites=s.social.invites.filter(i=>i!==invite);
   s.speech={owner:'biscoito',text:'Oba, gente nova no meu time de arremessadores!',until:now+6500};
-  return 'Sua vez! Biscoito está esperando você jogar a bolinha.';
+  return 'Sua vez! Layla está esperando você jogar a bolinha.';
  }
  const sharedObject=invite.kind==='activity'?s.items.find(i=>['coffee','record'].includes(i.id)&&!i.holder&&roomAt(i.position)===roomAt(from.position)):undefined;
  const anchor=sharedObject?.position??from.position;
