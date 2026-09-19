@@ -32,3 +32,11 @@
 .is-cinema .garage3d-stage.is-first-person{border:0;border-radius:0;max-height:none}
 /* Only the scene owns gestures. Chat, forms and the rest of the page keep native scrolling. */
 .garage3d-canvas{touch-action:none;user-select:none;cursor:grab}.garage3d-canvas:active{cursor:grabbing}.house-gesture-hint{position:absolute;top:66px;right:6px;font-size:10px;color:#796550;background:#fff8eddd;padding:5px 8px;border-radius:8px;pointer-events:none}.is-first-person .house-gesture-hint{display:none}@media(max-width:700px){.house-gesture-hint{top:60px;right:4px;font-size:9px;padding:4px 6px}}
+
+/* Optional local-only capture; independent from chat camera controls. */
+.motion-experiment{position:relative;padding:6px 14px;background:#faf5eb;color:#3d273e}
+.motion-experiment>button{font-size:12px;border:1px solid #d9c8b2;border-radius:18px;padding:7px 12px;background:#fffaf2;color:inherit}
+.motion-panel{display:flex;gap:12px;max-width:720px;padding:14px 0;font-size:13px;line-height:1.4}
+.motion-panel p{margin:5px 0 10px}.motion-panel button{padding:9px 12px;margin:2px 6px 2px 0;border:1px solid #bc4c2b;border-radius:10px;color:#843c28;background:#fffaf2;min-height:40px}
+.motion-panel video{width:120px;height:90px;object-fit:cover;transform:scaleX(-1);border-radius:12px;flex-shrink:0}
+@media(max-width:600px){.motion-panel{font-size:12px}.motion-panel video{width:80px;height:80px}.motion-panel button{padding:8px;font-size:12px}}

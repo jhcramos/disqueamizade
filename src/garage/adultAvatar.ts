@@ -289,7 +289,10 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
           )
             ? 0.56
             : 0.2;
-          capsule(arm, top, 0, -length / 2 + 0.015, 0, 0.058, length);
+          if (length > .3) {
+            capsule(arm, top, 0, -.135, 0, .058, .3);
+            capsule(arm, top, 0, -.42, 0, .055, .28);
+          } else capsule(arm, top, 0, -length / 2 + 0.015, 0, 0.058, length);
           if (outfit.top === "puff")
             ell(arm, top, 0, -0.06, 0, 0.082, 0.1, 0.075);
         }
@@ -673,6 +676,14 @@ export function createAdultAvatar(index: number, raw?: Appearance): T.Group {
   const neckMesh = root.children.find((o) => o instanceof T.Mesh);
   if (neckMesh) neckMesh.position.y = 1.3;
   for (const arm of arms) {
+    const elbow = new T.Group();
+    elbow.name = arm.name + "-elbow";
+    elbow.position.y = -.3;
+    for (const child of [...arm.children]) if (child.position.y < -.3) {
+      child.position.y += .3;
+      elbow.add(child);
+    }
+    arm.add(elbow);
     arm.position.y = 1.25;
     arm.position.x *= 1.5;
     arm.scale.set(1.6, 0.86, 1.5);

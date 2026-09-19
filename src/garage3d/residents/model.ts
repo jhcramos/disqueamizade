@@ -1,3 +1,4 @@
+import {findThrowTarget} from './throwTarget.ts';
 import {freshSocial,validSocial,hostCommand,tickSocial,HOST_ACTIONS,type HostSocial} from './social.ts';
 import { houseRoute, houseWalkable, type Place } from '../layout.ts';
 export type ResidentId = 'dora' | 'teo' | 'biscoito';
@@ -87,10 +88,10 @@ export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visit
  if(c.action==='pet'&&r){r.path=[];r.activity='pet';r.until=now+5500;r.angle=Math.atan2(v.position.x-r.position.x,v.position.z-r.position.z);speak(s,'biscoito','Pode continuar. Minha agenda de carinho está livre o dia inteiro.',now);remember(s,`Layla recebeu carinho de ${name}.`);}
  if(c.action==='greet'&&r){r.path=[];r.activity='greet';r.until=now+4500;r.angle=Math.atan2(v.position.x-r.position.x,v.position.z-r.position.z);speak(s,r.id,r.id==='dora'?'Chega mais! Se Téo pedir ajuda com uma invenção, me avisa.':'Bem-vindo! Estou oficialmente ocupado evitando tarefas.',now);}
  if(c.action==='throw'&&held&&r){
-  const goals=[{x:v.position.x+1.8,z:v.position.z},{x:v.position.x-1.8,z:v.position.z},{x:v.position.x,z:v.position.z-1.8},{x:v.position.x,z:v.position.z+1.8}];
-  const goal=goals.find(g=>houseWalkable(g)&&houseRoute(r.position,g,visitors.map(v=>v.position)).length);
+  const target=findThrowTarget(v.position,r.position,visitors.map(v=>v.position));
+  const goal=target?.goal;
   if(!goal)return 'Aqui está apertado. Vamos brincar em um espaço livre.';
-  held.flight={from:{...v.position},to:{...goal},start:now,duration:2200,fromHeight:.9,toHeight:.14};held.holder=undefined;held.reserved='biscoito';held.position=goal;held.height=.14;r.activity='fetch';r.target=v.id;r.path=houseRoute(r.position,goal,visitors.map(v=>v.position));r.until=now+20000;s.fetches++;speak(s,'biscoito','Eu busco! Mas desta vez você promete não jogar de novo?',now);
+  held.flight={from:{...v.position},to:{...goal},start:now,duration:Math.round(1400+(target?.range??2)*240),fromHeight:.9,toHeight:.14};held.holder=undefined;held.reserved='biscoito';held.position=goal;held.height=.14;r.activity='fetch';r.target=v.id;r.path=target!.path;r.until=now+30000;s.fetches++;speak(s,'biscoito','Eu busco! Mas desta vez você promete não jogar de novo?',now);
  }
  s.cooldown[v.id]=now+1500;return c.action==='moveBed'?'Caminha nas mãos! Caminhe até um piso livre e toque em “Colocar caminha aqui”.':c.action==='placeBed'?'Caminha no novo lugar. Layla já pode descansar aqui.':c.action==='cancelBed'?'Caminha devolvida.':c.action==='pick'?'Você está carregando. Aproxime-se de um morador para oferecer ou usar.':c.action==='return'?'Guardado no lugar.':'Boa! A casa ganhou mais uma história.';
 }

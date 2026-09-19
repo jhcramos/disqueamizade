@@ -1,3 +1,6 @@
+import {MotionExperiment,type MotionFrame} from './motion/MotionExperiment';
+import {neutralPose,smoothPose} from './motion/pose';
+import {applyBodyPose} from './motion/rig';
 import {createCameraGestures} from './cameraGestures';
 import {createHostProximity,type NearbyHost} from './residents/proximity';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,6 +34,7 @@ const questions=['Qual música faz você levantar para dançar?','Que lugar da s
 export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const [life,setLife]=useState(()=>createLife()),[lifeMode,setLifeMode]=useState<Connection>('connecting'),[residentTarget,setResidentTarget]=useState<string|null>(null),[lifeMessage,setLifeMessage]=useState(''),[quietResidents,setQuietResidents]=useState(false);
   const residentLabels=useRef(new Map<string,HTMLButtonElement>()),residentAction=useRef<(action:LifeAction,target:string,request?:string)=>void>();
+  const motionFrame=useRef<MotionFrame|null>(null);
   const [pokerOpen,setPokerOpen]=useState(false);
   const [nearHost,setNearHost]=useState<NearbyHost|null>(null),dismissNearby=useRef<(host?:NearbyHost)=>void>();
   const interactionUI=useRef({residentTarget,pokerOpen,quietResidents});interactionUI.current={residentTarget,pokerOpen,quietResidents};
@@ -88,6 +92,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     avatar.traverse(o=>{if(o instanceof T.Mesh){o.castShadow=true;o.receiveShadow=true;}});
     const actor=new T.Group();actor.add(avatar);actor.position.set(-5,0,2.8);scene.add(actor);
     let avatarBaseY=avatar.position.y;
+    const motionPose=neutralPose();let motionUsed=false;
     const remote=createRemoteActors(scene),playObjects=createPlayObjects(scene);
     const residentVisuals=createResidentVisuals(scene),residentFixtures=addResidentFixtures(scene);
     let gestureUntil=0,pendingResident:{action:LifeAction;target:string;started:number}|null=null;
@@ -205,7 +210,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       if(keys.size)pendingResident=null;
       const residentState=lifeTransport.state;
       const visitorId=state?.self.id??previewVisitor.current,ui=interactionUI.current;
-      const greeting=hostProximity.update(actor.position,residentState.residents,now,!state?.frozen&&!state?.cinema&&!state?.self.busy&&!ui.pokerOpen&&!ui.residentTarget&&!ui.quietResidents&&!residentState.social.solo[visitorId]&&!moving&&!path.length);
+      const greeting=hostProximity.update(actor.position,residentState.residents,now,!state?.frozen&&!state?.cinema&&!state?.self.busy&&!motionFrame.current&&!ui.pokerOpen&&!ui.residentTarget&&!ui.quietResidents&&!residentState.social.solo[visitorId]&&!moving&&!path.length);
       if(greeting!==lastNearby){lastNearby=greeting;setNearHost(greeting);}
       el.dataset.nearHost=greeting??'';
       const visualItems=residentState.items.map(item=>{const holder=item.holder===state?.self.id?actor:remote.actors.get(item.holder??'')?.root;return holder?{...item,position:{x:holder.position.x+.2,z:holder.position.z+.2},height:.85}:item;});
@@ -219,6 +224,9 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       if(residentState.bed.holder===(state?.self.id??previewVisitor.current)){for(const name of ['adult-arm-left','adult-arm-right']){const arm=avatar.getObjectByName(name);if(arm)arm.rotation.x=-1.05;}}
       if(!moving&&!sitting&&now<gestureUntil&&!reduced){const arm=avatar.getObjectByName('adult-arm-right');if(arm)arm.rotation.x=-1.05;}
       avatar.rotation.z=dance&&!reduced?Math.sin(now*.007)*.07:0;avatar.position.y=avatarBaseY+(dance&&!reduced?Math.abs(Math.sin(now*.007))*.05:0);
+      const motion=motionFrame.current;
+      const canPose=!moving&&!dance&&!sitting&&!state?.frozen&&!state?.cinema&&!state?.self.busy&&!heldItem(residentState,visitorId)&&residentState.bed.holder!==visitorId;
+      if(motion||motionUsed){motionUsed=true;smoothPose(motionPose,motion&&canPose&&now-motion.at<500?motion.pose:neutralPose(),dt);applyBodyPose(avatar,motionPose);}
       zoom+=(targetZoom-zoom)*(reduced?1:Math.min(1,dt*5));camera.zoom=zoom;
       const focus=manualFocus??(targetZoom===3?new T.Vector3(actor.position.x,.65,actor.position.z):currentView==='house'?new T.Vector3(-2,.5,-3.5):new T.Vector3(roomOffsets[currentView].x,.5,roomOffsets[currentView].z));
       cameraFocus.lerp(focus,reduced?1:Math.min(1,dt*4));camera.position.copy(cameraFocus).add(new T.Vector3(18,20,24));camera.lookAt(cameraFocus);camera.updateProjectionMatrix();
@@ -272,6 +280,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       {session?.onTelevision&&<button disabled={session.frozen} onClick={()=>session.onTelevision?.(roomId)}><Tv size={14}/> Televisão</button>}
       <button aria-pressed={view==='house'&&!close} onClick={()=>focus('house')}>Casa inteira</button>
     </nav>
+    {import.meta.env.VITE_ENABLE_AVATAR_MOTION!=='false'&&<MotionExperiment frame={motionFrame} blocked={!!(session?.frozen||session?.cinema||session?.self.busy||pokerOpen)} onFocus={()=>{dismissNearby.current?.();setResidentTarget(null);setClose(true);setFirstPerson(false);controls.current?.firstPerson(false);controls.current?.view(true);}}/>}
     <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada">
       <div className="house3d-tv-slot" ref={attachTV} aria-hidden="true" />
       <div ref={host} className="garage3d-canvas" aria-label="Toque para andar. Arraste para mover a vista. Use dois dedos para dar zoom."/>
