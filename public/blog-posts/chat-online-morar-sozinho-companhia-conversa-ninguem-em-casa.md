@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-22"
 readTime: 9
-image: "/blog-images/chat-online-morar-sozinho-companhia-conversa-ninguem-em-casa.png"
-coverImage: "/blog-images/chat-online-morar-sozinho-companhia-conversa-ninguem-em-casa.png"
+image: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
+coverImage: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
 wordCount: 1250
 lastModified: "2026-07-22"
 relatedSlugs:

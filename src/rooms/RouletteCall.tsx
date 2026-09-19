@@ -111,8 +111,8 @@ const CallInner = ({ roomId, identity, displayName, peerId, onNext, onEnd, onRep
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-5xl mb-3 animate-bounce">🎉</div>
-              <p className="text-sm text-dark-400 animate-pulse">Conectando vídeo…</p>
+              <div className="text-5xl mb-3">☎</div>
+              <p className="text-sm text-dark-400">{connState === ConnectionState.Connected ? 'Conversa aberta. O vídeo aparece quando a pessoa ativar a câmera.' : 'Conectando a conversa…'}</p>
             </div>
           </div>
         )}
@@ -149,8 +149,8 @@ const CallInner = ({ roomId, identity, displayName, peerId, onNext, onEnd, onRep
           <div ref={endRef} />
         </div>
         <form onSubmit={send} className="p-3 border-t border-white/5 flex gap-2">
-          <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Mensagem…" maxLength={500} className="flex-1 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm focus:outline-none focus:border-primary-500/40" />
-          <button type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
+          <input aria-label="Mensagem privada" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Mensagem…" maxLength={500} className="flex-1 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm focus:outline-none focus:border-primary-500/40" />
+          <button aria-label="Enviar mensagem privada" type="submit" disabled={sending} className="p-2 rounded-xl bg-primary-500 hover:bg-primary-600"><Send className="w-4 h-4" /></button>
         </form>
       </div>
 
@@ -167,17 +167,17 @@ const CallInner = ({ roomId, identity, displayName, peerId, onNext, onEnd, onRep
 
 const ControlBar = ({ cam, onNext, onEnd }: { cam: ReturnType<typeof useStageCamera>; onNext: () => void; onEnd: () => void }) => (
   <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-dark-900/90 border border-white/10 backdrop-blur">
-    <button onClick={cam.toggleCamera} className={`p-2.5 rounded-xl border ${cam.isCameraOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
+    <button aria-label={cam.isCameraOn ? 'Desligar câmera' : 'Testar e ativar câmera'} onClick={cam.toggleCamera} className={`p-2.5 rounded-xl border ${cam.isCameraOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
       {cam.isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
     </button>
-    <button disabled={!cam.isLive} onClick={cam.toggleMic} className={`p-2.5 rounded-xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
+    <button aria-label={cam.isMicOn ? 'Desligar microfone' : 'Ligar microfone'} disabled={!cam.isLive} onClick={cam.toggleMic} className={`p-2.5 rounded-xl border ${cam.isMicOn ? 'bg-white/5 border-white/10' : 'bg-red-500/20 border-red-500/40'}`}>
       {cam.isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
     </button>
     <button onClick={cam.goLive} className="p-2.5 rounded-xl border border-white/10" title="Ajustar máscara na prévia privada">🎭</button>
     <button onClick={onNext} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm flex items-center gap-1.5">
       <SkipForward className="w-4 h-4" /> Próximo
     </button>
-    <button onClick={onEnd} className="p-2.5 rounded-xl bg-red-500 text-white"><X className="w-5 h-5" /></button>
+    <button aria-label="Encerrar conversa" onClick={onEnd} className="p-2.5 rounded-xl bg-red-500 text-white"><X className="w-5 h-5" /></button>
   </div>
 )
 

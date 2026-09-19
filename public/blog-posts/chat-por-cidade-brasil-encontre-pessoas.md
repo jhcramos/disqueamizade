@@ -20,8 +20,8 @@ tags: [
 author: "Disque Amizade"
 date: "2026-04-11"
 readTime: 6
-image: "/blog-images/chat-por-cidade-brasil-encontre-pessoas.png"
-coverImage: "/blog-images/chat-por-cidade-brasil-encontre-pessoas.png"
+image: "/blog-images/placeholder.svg"
+coverImage: "/blog-images/placeholder.svg"
 wordCount: 724
 lastModified: "2026-04-11"
 relatedSlugs: [

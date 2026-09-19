@@ -90,7 +90,10 @@ export const useVideoFilter = (
         const t0 = performance.now()
         let raw: FaceFrame | null = null
         try {
-          raw = detectFrame(fl, video, t0)
+          if (!sourceContext) { faceRef.current = null; setStatus('error'); return }
+          source.width=video.videoWidth;source.height=video.videoHeight;
+          sourceContext.drawImage(video,0,0,source.width,source.height);
+          raw = detectFrame(fl, source, t0)
         } catch (e) {
           faceRef.current = null
           setStatus('error')
@@ -98,12 +101,10 @@ export const useVideoFilter = (
         }
         skipNext = performance.now() - t0 > SLOW_DETECT_MS
 
-        const frame = raw ? smootherRef.current.push(raw) : null
+        const frame = currentFilter === "meu-avatar" ? raw : raw ? smootherRef.current.push(raw) : null
         if (frame) {
           const w = video.videoWidth, h = video.videoHeight
           if (!sourceContext) { faceRef.current = null; setStatus('error'); return }
-          source.width = w; source.height = h
-          sourceContext.drawImage(video, 0, 0, w, h)
           const pose = computePose(frame, w, h)
           faceRef.current = { frame, pose, w, h, videoTime: video.currentTime, source }
           setStatus('tracking')

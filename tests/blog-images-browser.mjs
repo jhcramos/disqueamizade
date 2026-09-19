@@ -1,0 +1,17 @@
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+import assert from 'node:assert/strict';
+const base=process.env.CHECK_URL || 'http://localhost:3000';
+const b=await chromium.launch({channel:'chrome',headless:true});const p=await b.newPage();
+await p.goto(base+'/blog');await p.locator('h1').waitFor();
+await p.waitForFunction(()=>document.querySelectorAll('img').length>8 && [...document.images].every(i=>i.complete&&i.naturalWidth>0));
+const nav=await p.locator('nav[aria-label="Menu do blog"] a').evaluateAll(as=>as.map(a=>a.getAttribute('href')));
+assert.ok(nav.includes('/garagem'));assert.ok(!nav.includes('/rooms'));assert.ok(!nav.includes('/auth'));
+await p.locator('a[href^="/blog/"]').first().click();await p.locator('article').first().waitFor();
+await p.evaluate(()=>document.querySelectorAll('img').forEach(i=>i.loading='eager'));
+await p.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+assert.equal(await p.locator('a[href^="/rooms"],a[href^="/auth"]').count(),0);
+await p.screenshot({path:'/tmp/blog-images-article.png'});
+await p.setViewportSize({width:390,height:844});await p.goto(base+'/blog');await p.locator('h1').waitFor();
+assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+await p.getByRole('link',{name:'Entrar na casa',exact:true}).click();await p.waitForURL('**/garagem');
+console.log('PASS images, new navigation, article CTAs, mobile width, house entry');await b.close();

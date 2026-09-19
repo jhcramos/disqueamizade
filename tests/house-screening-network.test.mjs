@@ -1,0 +1,21 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
+import {emptyNetwork,exchangeNetwork} from '../server/houseNetwork.ts';
+const A=randomUUID(),B=randomUUID(),C=randomUUID(),MAIN='disque-house-3d-v1',TV='disque-screening-v1:garage';
+const message=(data,channel=TV)=>({id:randomUUID(),channel,data});
+const person=(id,room='garage')=>message({event:'person',data:{id,name:id===A?'Ana':'Bruno',avatar:0,position:{x:.5,y:.85},room,busy:false}},MAIN);
+const request=(id,messages=[],room='garage')=>({id,cursor:0,messages,channels:[MAIN,`disque-screening-v1:${room}`]});
+test('server owns TV programme, late joins, retries and DJ permissions across devices',()=>{
+ const s=emptyNetwork();let now=100000;const send=(id,messages=[],room)=>exchangeNetwork(s,id,request(id,messages,room),now+=1000);
+ send(A,[person(A)]);send(A,[message({type:'command',command:{kind:'claim'}})]);
+ send(A,[message({type:'command',command:{kind:'add',id:'clip',video:'M7lc1UVf-VE',title:'Show'}})]);
+ const next=message({type:'command',command:{kind:'next'}});const started=send(A,[next]);assert.equal(started.screenings.garage.current.title,'Show');
+ assert.equal(send(A,[next]).screenings.garage.current.id,'clip','retry cannot skip the selected video');
+ const late=send(B,[person(B)]);assert.equal(late.screenings.garage.current.video,'M7lc1UVf-VE');assert.equal(late.screenings.garage.dj,A);assert.ok(late.screenings.garage.started<late.serverNow);
+ send(B,[message({type:'state',state:{revision:999,current:null,dj:B}})]);
+ const denied=send(B,[message({type:'command',command:{kind:'pause'}})]);assert.ok(denied.screenings.garage.started!==null);assert.ok(denied.packets.some(p=>p.data.type==='rejected'));
+ send(A,[message({type:'command',command:{kind:'pause'}})]);assert.equal(send(B).screenings.garage.started,null);
+ send(A,[message({type:'command',command:{kind:'resume'}})]);assert.ok(send(B).screenings.garage.started!==null);
+ const isolated=send(C,[person(C,'living')],'living');assert.equal(isolated.screenings.garage,undefined);assert.equal(isolated.screenings.living.current,null);
+ send(A,[person(A,'living')],'living');const released=send(B).screenings.garage;assert.equal(released.dj,null);assert.equal(released.current.id,'clip','programme survives DJ departure');
+ assert.equal(send(B,[message({type:'command',command:{kind:'claim'}})]).screenings.garage.dj,B);
+});
