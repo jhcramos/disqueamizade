@@ -19,9 +19,9 @@ function loadPlayer() {
   });
   return loading;
 }
-export function YouTubeScreen({ state, onEnded, surface, onSmallSurface }: { surface: HTMLDivElement | null; onSmallSurface: () => void; state: Screening; onEnded: (id: string) => void }) {
+export function YouTubeScreen({ state, onEnded, surface, onSmallSurface, now = Date.now }: { now?: () => number; surface: HTMLDivElement | null; onSmallSurface: () => void; state: Screening; onEnded: (id: string) => void }) {
   const mount = useRef<HTMLDivElement>(null), player = useRef<Player>();
-  const latest = useRef({ state, onEnded }); latest.current = { state, onEnded };
+  const latest = useRef({ state, onEnded, now }); latest.current = { state, onEnded, now };
   const [ready, setReady] = useState(false), [error, setError] = useState(''), [note, setNote] = useState(''), [volume, setVolume] = useState(35), [retry, setRetry] = useState(0);
   const volumeRef = useRef(volume); volumeRef.current = volume;
   // Move the existing iframe visually, never reparent it: reparenting reloads YouTube.
@@ -83,7 +83,7 @@ export function YouTubeScreen({ state, onEnded, surface, onSmallSurface }: { sur
       instance = new YT.Player(slot, {
         host: 'https://www.youtube-nocookie.com', videoId: clip.video,
         width: '100%', height: '100%',
-        playerVars: { autoplay: 0, controls: 1, playsinline: 1, origin: location.origin, start: Math.floor(playbackTime(latest.current.state)) },
+        playerVars: { autoplay: 0, controls: 1, playsinline: 1, origin: location.origin, start: Math.floor(playbackTime(latest.current.state,latest.current.now())) },
         events: {
           onReady: () => {
             if (!alive || !instance) return;
@@ -106,7 +106,7 @@ export function YouTubeScreen({ state, onEnded, surface, onSmallSurface }: { sur
   useEffect(() => {
     if (!ready || !player.current) return;
     if (state.started === null || !visible()) player.current.pauseVideo();
-    else { player.current.seekTo(playbackTime(state), true); player.current.playVideo(); }
+    else { player.current.seekTo(playbackTime(state,latest.current.now()), true); player.current.playVideo(); }
   }, [state.started, state.offset, ready]);
   return <div className="theatre-screen">
     <div className="theatre-player" ref={mount} />
@@ -114,7 +114,7 @@ export function YouTubeScreen({ state, onEnded, surface, onSmallSurface }: { sur
     {note && !error && <p role="status">{note}</p>}
     <div className="theatre-personal-controls">
       <label><Volume2 size={15} /><span className="sr-only">Volume do meu vídeo</span><input type="range" min="0" max="100" value={volume} onChange={e => { const n = Number(e.target.value); setVolume(n); player.current?.setVolume(n); }} /><small>{volume}%</small></label>
-      <button disabled={!ready} onClick={() => { player.current?.seekTo(playbackTime(latest.current.state), true); if (latest.current.state.started !== null && visible()) player.current?.playVideo(); setNote(''); }}><RefreshCw size={13} /> Acompanhar a sala</button>
+      <button disabled={!ready} onClick={() => { player.current?.seekTo(playbackTime(latest.current.state,latest.current.now()), true); if (latest.current.state.started !== null && visible()) player.current?.playVideo(); setNote(''); }}><RefreshCw size={13} /> Acompanhar a sala</button>
     </div>
   </div>;
 }

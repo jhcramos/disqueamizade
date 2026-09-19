@@ -28,6 +28,7 @@ class Hub{
    for(const id of this.known)if(!fresh.has(id))this.deliver('disque-house-3d-v1',{event:'leave',from:id});
    this.known=fresh;
    for(const person of roster)this.deliver('disque-house-3d-v1',{event:'person',from:person.id,data:person});
+   for(const [room,state]of Object.entries(result.screenings??{}))this.deliver(`disque-screening-v1:${room}`,{type:'state',from:'house-server',state,serverNow:result.serverNow});
    for(const packet of result.packets??[])if(!(packet.channel==='disque-house-3d-v1'&&['person','hello','leave'].includes(packet.data.event)))this.deliver(packet.channel,packet.data);
   }catch{if(!this.closed)this.notify('reconnecting');}
   finally{clearTimeout(timeout);this.busy=false;this.schedule((this.status==='online'?800:2000)+Math.random()*200);}

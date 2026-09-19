@@ -44,10 +44,10 @@ export function changeScreening(state: Screening, raw: Command, person: { id: st
   }
   return { ...next, revision: state.revision + 1 };
 }
-export function parseScreening(raw: unknown): Screening | null {
+export function parseScreening(raw: unknown, now = Date.now()): Screening | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as Screening;
   const clip = (c: Clip) => c && typeof c.id === 'string' && c.id.length <= 80 && typeof c.video === 'string' && /^[\w-]{11}$/.test(c.video) && typeof c.title === 'string' && c.title.length <= 100 && typeof c.by === 'string' && c.by.length <= 80 && typeof c.name === 'string' && c.name.length <= 24;
-  if (!Number.isSafeInteger(s.revision) || s.revision < 0 || !(s.dj === null || (typeof s.dj === 'string' && s.dj.length <= 80)) || !Array.isArray(s.queue) || s.queue.length > 12 || !s.queue.every(clip) || !(s.current === null || clip(s.current)) || !Number.isFinite(s.offset) || s.offset < 0 || s.offset > 86400 || !(s.started === null || (Number.isFinite(s.started) && s.started > 0 && s.started <= Date.now() + 10000))) return null;
+  if (!Number.isSafeInteger(s.revision) || s.revision < 0 || !(s.dj === null || (typeof s.dj === 'string' && s.dj.length <= 80)) || !Array.isArray(s.queue) || s.queue.length > 12 || !s.queue.every(clip) || !(s.current === null || clip(s.current)) || !Number.isFinite(s.offset) || s.offset < 0 || s.offset > 86400 || !(s.started === null || (Number.isFinite(s.started) && s.started > 0 && s.started <= now + 10000))) return null;
   return { revision: s.revision, dj: s.dj, queue: s.queue, current: s.current, offset: s.offset, started: s.started };
 }

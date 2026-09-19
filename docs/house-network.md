@@ -12,6 +12,14 @@ The public house previously always entered the modern `local` protocol, whose Br
 - The protected `house_resident_world` row stores a bounded `network` relay beside residents and poker. Compare-and-swap revisions preserve concurrent writes. No public database grant or schema change is required. Resident responses and AI inputs do not expose the network relay.
 - Relay packets expire after 60 seconds and have a bounded count; clients batch and coalesce presence updates. Camera images are never sent to this endpoint.
 
+## Shared television
+
+The server owns a separate bounded `screenings` state for each room. Browsers send commands; the server checks membership and DJ ownership and returns the current programme on every subscribed poll. It ignores browser-authored TV snapshots. This removes the browser-coordinator election race that could leave a late joiner with an empty TV. A DJ leaving releases the control without deleting the programme. Retried commands use the relay's packet ID deduplication.
+
+Snapshots include server time so the player can join at the shared position even if the visitor's clock is different. Opening a TV does not load YouTube until the visitor chooses to watch. The programme, queue, pause and resume are shared; volume remains individual. YouTube advertisements, restrictions and network conditions can affect actual playback, so this is not frame-exact synchronization.
+
+Regression: `tests/house-theatre-network-browser.mjs` uses separate browser contexts, a lower-ID late joiner, delayed API responses and an intentionally skewed visitor clock. It exercises the real house API and renderer with a fake database/YouTube player; external YouTube streaming itself is not simulated as verified playback. `tests/house-screening-network.test.mjs` checks authority, retries, room isolation, pause/resume and DJ departure.
+
 ## Operational limits
 
 This repair uses HTTP polling roughly once per second per active browser and a shared database row. It restores cross-device delivery for the present house; it is not a claim of capacity for 1,000 simultaneous visitors. Before scaling, load-test and move the same protocol to room-scoped realtime delivery with server authentication and recipient authorization. The current relay caps active visits at 100 and may encounter write contention well before that under heavy activity.

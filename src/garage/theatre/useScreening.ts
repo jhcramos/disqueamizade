@@ -1,19 +1,39 @@
-import {HouseChannel} from "../network/HouseChannel";
+import {HouseChannel,usesHouseNetwork} from "../network/HouseChannel";
 import { useEffect, useRef, useState } from 'react';
 import type { Person, RoomId } from '../model';
 import { changeScreening, emptyScreening, parseScreening, type Command, type Screening } from './model';
 
-/** The house's local transport. A deterministic coordinator serializes requests;
- * a separate DJ owns playback. Never present this as authenticated online delivery. */
+/** Production uses server-owned programme snapshots. Browser election is only for local development. */
 export function useScreening(room: RoomId, mode: 'local' | 'online', self: Person, people: Person[]) {
   const roster = useRef([self, ...people]); roster.current = [self, ...people];
   const [state, setState] = useState<Screening>(emptyScreening), [ready, setReady] = useState(false), [error, setError] = useState('');
   const command = useRef<(cmd: Command) => void>(() => {});
-  const current = useRef(state);
+  const current = useRef(state), clockOffset = useRef(0);
+  const shared = usesHouseNetwork();
   useEffect(() => {
     setReady(false); setError(''); current.current = emptyScreening(); setState(current.current);
     if (mode !== 'local') return;
     const bus = new HouseChannel(`disque-screening-v1:${room}`);
+    if(shared){
+      let active=true,received=false;
+      bus.onconnectionchange=connected=>{if(active)setReady(connected&&received);};
+      bus.onmessage=({data:m})=>{
+        if(!active||m?.from!=='house-server')return;
+        if(m.type==='state'){
+          const next=parseScreening(m.state,m.serverNow);
+          if(next&&Number.isFinite(m.serverNow)){
+            clockOffset.current=m.serverNow-Date.now();received=true;
+            current.current=next;setState(next);setReady(bus.connected);
+          }
+        }else if(m.type==='rejected'&&m.to===self.id)setError('Pedido não aceito: confira vídeos repetidos, limite da fila e quem está no controle.');
+      };
+      command.current=cmd=>{
+        if(!bus.connected||!received){setError('A televisão está reconectando. Aguarde um instante e tente novamente.');return;}
+        setError('');bus.postMessage({type:'command',command:cmd});
+      };
+      return()=>{active=false;bus.close();command.current=()=>{};};
+    }
+    clockOffset.current=0;
     let active = true, settled = false, leader = '', nonce = 0;
     const seen = new Set<string>(), limits = new Map<string, number>();
     const members = () => roster.current.filter(p => (p.room ?? 'garage') === room);
@@ -58,6 +78,6 @@ export function useScreening(room: RoomId, mode: 'local' | 'online', self: Perso
       } else if (!current.current.revision) bus.postMessage({ type: 'hello', from: self.id });
     }, 800);
     return () => { active = false; clearInterval(timer); bus.close(); command.current = () => {}; };
-  }, [room, mode, self.id]);
-  return { state, ready, error, send: (cmd: Command) => command.current(cmd), available: mode === 'local' };
+  }, [room, mode, self.id, shared]);
+  return { state, ready, error, shared, now:()=>Date.now()+clockOffset.current, send: (cmd: Command) => command.current(cmd), available: mode === 'local' };
 }

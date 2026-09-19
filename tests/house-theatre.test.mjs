@@ -27,3 +27,10 @@ test('queue bounded per sender, removal ownership, untrusted snapshots rejected'
  assert.deepEqual(parseScreening(s),s);
  assert.equal(parseScreening({...s,offset:Infinity}),null);assert.equal(parseScreening({...s,current:{video:'javascript:alert(1)'}}),null);
 });
+
+test('server snapshots validate against server time even when a visitor clock is behind',()=>{
+ const state={...emptyScreening(),started:200000};
+ assert.equal(parseScreening(state,100000),null);
+ assert.deepEqual(parseScreening(state,200500),state);
+ assert.equal(playbackTime(state,201000),1);
+});

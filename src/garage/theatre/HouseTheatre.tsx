@@ -39,7 +39,7 @@ export function HouseTheatre({ screening, self, people, room, onClose, cinema, o
       <div className="theatre-program">
         {state.current ? <>
           <div className="theatre-now"><small>{state.started === null ? 'SESSÃO PAUSADA' : 'NA TELA AGORA'}</small><h3>{state.current.title}</h3><span>Pedido de {state.current.name} · YouTube</span></div>
-          {watching ? <YouTubeScreen state={state} surface={cinema ? tvSurface : null} onSmallSurface={fallback} onEnded={id => { if (mine) send({ kind: 'next', expected: id }); }} /> : <div className="theatre-watch"><Play size={30} /><p>Um vídeo, uma boa companhia.</p><button className="theatre-primary" onClick={() => setWatching(true)}><Play size={16} /> Assistir junto</button><button onClick={watchOnTV}><Tv size={16} /> Assistir na TV</button><small>Ao assistir, você carrega o player do YouTube. Seu volume é individual.</small></div>}
+          {watching ? <YouTubeScreen state={state} now={screening.now} surface={cinema ? tvSurface : null} onSmallSurface={fallback} onEnded={id => { if (mine) send({ kind: 'next', expected: id }); }} /> : <div className="theatre-watch"><Play size={30} /><p>Um vídeo, uma boa companhia.</p><button className="theatre-primary" onClick={() => setWatching(true)}><Play size={16} /> Assistir junto</button><button onClick={watchOnTV}><Tv size={16} /> Assistir na TV</button><small>Ao assistir, você carrega o player do YouTube. Seu volume é individual.</small></div>}
           {watching && <div className="theatre-display"><button className="theatre-primary" onClick={() => { setDisplayNote(''); onCinema(!cinema); }}><Tv size={16} />{cinema ? 'Assistir no painel' : 'Assistir na TV'}</button>{cinema && <small>O vídeo está na televisão do ambiente.</small>}</div>}
           {displayNote && <p role="status">{displayNote}</p>}
           <div className="theatre-video-links"><a href={`https://www.youtube.com/watch?v=${state.current.video}`} target="_blank" rel="noopener noreferrer">Abrir no YouTube <ExternalLink size={12} /></a>{watching && <button onClick={() => { setWatching(false); onCinema(false); }}>Parar de assistir</button>}</div>
@@ -60,7 +60,7 @@ export function HouseTheatre({ screening, self, people, room, onClose, cinema, o
       </details>
       {error && <p role="alert">{error}</p>}
       <p className="theatre-note">O YouTube pode exibir anúncios ou restringir vídeos. A reprodução pode variar entre participantes.</p>
-      <p className="theatre-connection">Modo exploração: a programação fica neste navegador. As sessões entre dispositivos ainda não estão disponíveis.</p>
+      <p className="theatre-connection">{screening.shared ? ready ? 'Programação compartilhada com quem está neste ambiente. Toque em assistir para acompanhar.' : 'Reconectando à programação do ambiente…' : 'Prévia local: a programação é compartilhada entre abas deste navegador.'}</p>
     </>}
   </section>;
 }
