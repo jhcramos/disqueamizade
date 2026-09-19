@@ -28,7 +28,7 @@ export function createRemoteActors(scene:T.Scene){
       a.model.rotation.z=dance&&!reduced?Math.sin(now*.007)*.07:0;
       const frame=motions?.get(person.id),pose=frame&&now-frame.at<POSE_TTL&&!moving&&!seat&&!dance&&!person.busy&&!reduced?frame.pose:null;
       if(pose||a.posed){a.posed=true;smoothPose(a.pose,pose??neutralPose(),dt);applyBodyPose(a.model,a.pose);}
-      a.root.userData.motionActive=!!pose;a.root.userData.armAngle=a.pose.left.shoulder;
+      a.root.userData.motionActive=!!pose;a.root.userData.armAngle=a.pose.left.shoulder;a.root.userData.armForward=a.pose.left.forward;
     }
   },dispose(){for(const id of actors.keys())remove(id);}};
 }

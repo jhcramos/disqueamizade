@@ -14,14 +14,14 @@ export function MotionExperiment({frame,blocked,onFocus,sharing=false,shareAvail
  async function start(){
   const token=++generation.current;setStatus({phase:'loading',message:'Preparando teste…'});
   try{const {createPoseCapture}=await import('./capture');if(token!==generation.current||!video.current)return;
-   capture.current=createPoseCapture(video.current,p=>{frame.current={pose:mapPose(p),at:performance.now()};},s=>{if(s.phase==='off'||s.phase==='error'){frame.current=null;stopShared.current?.();}setStatus(s);});
+   capture.current=createPoseCapture(video.current,(p,world)=>{frame.current={pose:mapPose(p,world),at:performance.now()};},s=>{if(s.phase==='off'||s.phase==='error'){frame.current=null;stopShared.current?.();}setStatus(s);});
    onFocus();void capture.current.start();
   }catch{setStatus({phase:'error',message:'Não foi possível carregar o teste. Tente novamente.'});}
  }
  return <div className="motion-experiment">
   <button disabled={blocked} aria-expanded={open} onClick={()=>{if(open)stop();setOpen(!open);}}> {active?'● Câmera de movimentos ligada':'Movimentar avatar · teste'}</button>
   {open&&<section data-realtime={realtime} className="motion-panel" aria-label="Teste de movimento do avatar">
-   <div><strong>Seu gesto, seu avatar</strong><p>Sua imagem fica neste aparelho. Pare de andar para experimentar os braços e o tronco.</p>
+   <div><strong>Seu gesto, seu avatar</strong><p>Sua imagem fica neste aparelho. Pare de andar, leve os braços à frente ou levante a mão e dê tchau. Enquadre ombros, cotovelos e mãos.</p>
    {shareAvailable&&<label className="motion-share"><input type="checkbox" checked={sharing} onChange={e=>onShare?.(e.target.checked)}/> Compartilhar meus gestos com a sala</label>}
    <p>{sharing?status.phase!=='active'?'Ative a câmera para compartilhar seus gestos.':shareConnected?realtime?'Gestos em tempo real · sem enviar vídeo ou áudio.':'Conexão alternativa · os gestos podem chegar com atraso.':'Aguardando conexão para compartilhar os gestos.':'Prévia só para você. Ninguém recebe seus gestos.'}</p>
    <p role="status">{status.message}{status.ms!==undefined&&` · ${status.ms} ms / leitura · até ${status.hz} por segundo`}</p>

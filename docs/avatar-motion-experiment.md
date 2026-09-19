@@ -8,9 +8,9 @@ O runtime MediaPipe já instalado é copiado para o site pelo build. O modelo Po
 
 ## Compartilhar gestos
 
-Marque **Compartilhar meus gestos com a sala** para transmitir cinco ângulos quantizados: dois ombros, dois cotovelos e inclinação do tronco. A opção começa desligada e não é gravada entre visitas. Desmarcá-la encerra o envio e mantém a prévia privada; parar a câmera, mudar para uma atividade incompatível ou ocultar a aba também interrompe o envio. A outra pessoa não precisa ligar câmera alguma.
+Marque **Compartilhar meus gestos com a sala** para transmitir nove ângulos quantizados: dois eixos por ombro e cotovelo, mais inclinação do tronco. A opção começa desligada e não é gravada entre visitas. Desmarcá-la encerra o envio e mantém a prévia privada; parar a câmera, mudar para uma atividade incompatível ou ocultar a aba também interrompe o envio. A outra pessoa não precisa ligar câmera alguma.
 
-O cliente prepara no máximo quatro amostras por segundo, coalescidas na conexão HTTP existente (aproximadamente uma atualização por segundo, sujeita à rede). Não abre uma conexão de vídeo nem aumenta a frequência das chamadas HTTP. A animação remota interpola os ângulos; isso é uma primeira versão leve, não captura de movimento a 12 fps entre computadores. Gestos muito rápidos podem não chegar. Para dança de baixa latência, será necessária evolução para um transporte em tempo real e medição de capacidade.
+O canal de dados LiveKit transmite até 12 amostras por segundo. Quando indisponível, o cliente prepara até quatro amostras por segundo, coalescidas na conexão HTTP existente (aproximadamente uma atualização por segundo, sujeita à rede). A animação remota interpola os ângulos. A interface informa quando está usando a conexão alternativa.
 
 O servidor valida valores finitos e limites, fixa a identidade pelo visitante autenticado, restringe ao ambiente e apaga ângulos sem atualização após 3,5 segundos. Mantém só a amostra mais recente e um marcador monotônico para descartar repetições. Amostras não entram no histórico do chat. Andar, sentar, dançar, carregar objetos e conversar têm prioridade sobre o gesto capturado. Em primeira pessoa o próprio corpo continua oculto; os outros participantes veem os braços do seu avatar.
 
@@ -31,7 +31,7 @@ O teste de navegador usa câmera artificial para confirmar que o modelo real exe
 
 Referência: https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker/web_js
 
-O teste `tests/avatar-motion-sharing-browser.mjs` verifica duas sessões isoladas, opção desligada por padrão, transmissão de apenas cinco números, animação real do avatar remoto, retorno suave ao repouso e liberação da câmera. Usa câmera artificial e resultado de detecção sintético; não mede a qualidade de reconhecimento de gestos humanos. Pode ser executado com `LIVE_HOUSE=1 BASE_URL=https://disqueamizade.com.br` para validar o servidor publicado.
+O teste `tests/avatar-motion-sharing-browser.mjs` verifica duas sessões isoladas, opção desligada por padrão, transmissão de apenas nove números, animação real do avatar remoto, retorno suave ao repouso e liberação da câmera. Usa câmera artificial e resultado de detecção sintético; não mede a qualidade de reconhecimento de gestos humanos. Pode ser executado com `LIVE_HOUSE=1 BASE_URL=https://disqueamizade.com.br` para validar o servidor publicado.
 
 ## Bolinha
 
@@ -39,6 +39,14 @@ Layla recebe lançamentos de até 5 unidades da casa, antes limitados a 1,8. O c
 
 ## Canal rápido
 
-LiveKit transmite apenas cinco ângulos, até 12 vezes por segundo, em um canal de dados por ambiente. Tokens vinculados ao visitante não permitem publicar ou assinar câmera/microfone. A consulta HTTP continua como alternativa. Mensagens de parada são confiáveis; amostras intermediárias usam entrega sem retransmissão para não formar fila. A interface indica quando o canal rápido está conectado. Esta conexão usa o serviço LiveKit existente e conta como conexão de participante, mesmo sem vídeo.
+LiveKit transmite apenas nove ângulos, até 12 vezes por segundo, em um canal de dados por ambiente. Tokens vinculados ao visitante não permitem publicar ou assinar câmera/microfone. A consulta HTTP continua como alternativa. Mensagens de parada são confiáveis; amostras intermediárias usam entrega sem retransmissão para não formar fila. A interface indica quando o canal rápido está conectado. Esta conexão usa o serviço LiveKit existente e conta como conexão de participante, mesmo sem vídeo.
 
 Desative com `VITE_ENABLE_AVATAR_MOTION_REALTIME=false` e publique novamente para retornar apenas ao transporte anterior. O teste `avatar-motion-sharing-browser.mjs` aceita `EXPECT_REALTIME=1 LIVE_HOUSE=1` para verificar a mudança visível abaixo de 900 ms; medições dependem da rede e aparelho.
+
+## Braços em profundidade e aceno
+
+O mesmo Pose Landmarker Lite fornece landmarks 3D estimados. São usados somente no aparelho para calcular a direção do ombro e o antebraço relativo a ele: braços à frente, cotovelos em profundidade e movimento lateral do antebraço ao dar tchau. Não carrega outro modelo e não reconhece dedos individualmente. Ombro/cotovelo oculto volta ao repouso; punho oculto relaxa o antebraço. Na ausência de coordenadas 3D válidas, mantém o mapeamento plano anterior.
+
+Os pivôs de captura são separados dos pivôs da caminhada para evitar acumulação de rotação e preservar sentar/carregar objetos. Mensagens antigas de cinco ângulos continuam aceitas, com profundidade zero; abas antigas devem ser atualizadas para receber os nove ângulos novos.
+
+Teste de qualidade no aparelho: ficar de frente, mostrar ombros/cotovelos/mãos, estender cada braço em direção à câmera, acenar para ambos os lados, esconder uma mão, parar a captura e andar/sentar. Confirmar os gestos em outro computador com compartilhamento ligado. Profundidade e oclusões de uma única câmera são estimativas; testes sintéticos não substituem essa avaliação humana.

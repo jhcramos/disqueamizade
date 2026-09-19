@@ -24,7 +24,7 @@ Regression: `tests/house-theatre-network-browser.mjs` uses separate browser cont
 
 This repair uses HTTP polling roughly once per second per active browser and a shared database row. It restores cross-device delivery for the present house; it is not a claim of capacity for 1,000 simultaneous visitors. Before scaling, load-test and move the same protocol to room-scoped realtime delivery with server authentication and recipient authorization. The current relay caps active visits at 100 and may encounter write contention well before that under heavy activity.
 
-Cross-device avatar presence and text were tested. Existing peer-to-peer media connectivity still depends on its ICE/TURN configuration; this change does not certify calls across every NAT/network. Camera-driven gestures can optionally share five bounded joint angles through room-scoped ephemeral snapshots; see `avatar-motion-experiment.md` for consent, expiry and rate limits.
+Cross-device avatar presence and text were tested. Existing peer-to-peer media connectivity still depends on its ICE/TURN configuration; this change does not certify calls across every NAT/network. Camera-driven gestures can optionally share nine bounded joint angles through room-scoped ephemeral snapshots; see `avatar-motion-experiment.md` for consent, expiry and rate limits.
 
 ## Verification
 

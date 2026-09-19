@@ -1,7 +1,7 @@
 import type {Point} from './pose';
 export type CaptureStatus={phase:'off'|'loading'|'active'|'error';message:string;ms?:number;hz?:number};
 /** Owns only its private stream. Stop is safe during permission/model/frame awaits. */
-export function createPoseCapture(video:HTMLVideoElement,onPose:(p:Point[])=>void,onStatus:(s:CaptureStatus)=>void){
+export function createPoseCapture(video:HTMLVideoElement,onPose:(p:Point[],world?:Point[])=>void,onStatus:(s:CaptureStatus)=>void){
  let stopped=false,stream:MediaStream|undefined,worker:Worker|undefined,timer:ReturnType<typeof setTimeout>|undefined,watchdog:ReturnType<typeof setTimeout>|undefined;
  let hz=12,slow=0,frames=0,average=0,raf=0,renderFrames=0,renderStart=0,poorWindows=0;
  function stop(message='Câmera de movimentos desligada.',error=false){
@@ -48,7 +48,7 @@ export function createPoseCapture(video:HTMLVideoElement,onPose:(p:Point[])=>voi
      frames++;average=frames===1?data.ms:average*.8+data.ms*.2;
      if(frames>8){if(average>75)hz=6;slow=average>200?slow+1:0;}
      if(slow>=12){fail('Este aparelho ficou sobrecarregado. O teste foi desligado automaticamente.');return;}
-     onPose(data.points);onStatus({phase:'active',message:data.points.length?'Movimentos detectados':'Enquadre os braços para o avatar acompanhar.',ms:Math.round(average),hz});
+     onPose(data.points,data.world);onStatus({phase:'active',message:data.points.length?'Movimentos detectados':'Enquadre os braços para o avatar acompanhar.',ms:Math.round(average),hz});
      // Leave processing headroom for the house even when inference is slow.
      timer=setTimeout(()=>void frame(),Math.max(data.ms*.75,1000/hz-data.ms));
     }

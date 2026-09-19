@@ -22,3 +22,20 @@ test('long throw has a clear corridor and reachable landing point',()=>{
  for(let t=.02;t<=1;t+=.02)assert.ok(houseWalkable({x:from.x+(target.goal.x-from.x)*t,z:from.z+(target.goal.z-from.z)*t}));
  assert.ok(Math.hypot(target.goal.x-from.x,target.goal.z-from.z)<=5.001);
 });
+test('3D arms reach forward, wave to both sides and ignore hidden depth',()=>{
+ const image=Array.from({length:33},()=>({x:.5,y:.5,z:0,visibility:1}));
+ const world=image.map(p=>({...p}));
+ world[12]={x:-.2,y:0,z:0,visibility:1};world[14]={x:-.24,y:.16,z:-.22,visibility:1};world[16]={x:-.24,y:.02,z:-.45,visibility:1};
+ const front=mapPose(image,world);assert.ok(front.left.forward<-.5,'arm reaches towards camera');assert.ok(Math.abs(front.left.elbowForward)>.1,'elbow bends in depth');
+ world[14]={x:-.4,y:0,z:0,visibility:1};world[16]={x:-.5,y:-.25,z:0,visibility:1};const out=mapPose(image,world);
+ world[16].x=-.3;const inward=mapPose(image,world);assert.ok(Math.abs(out.left.elbow-inward.left.elbow)>.5,'forearm follows a wave instead of fixing one angle');
+ image[16].visibility=.1;assert.equal(mapPose(image,world).left.elbowForward,0);assert.equal(mapPose(image,world).left.elbow,0);
+ image[14].visibility=.1;assert.deepEqual(mapPose(image,world).left,neutralPose().left);
+});
+test('forward tracking resets without overriding walking or sitting arms',()=>{
+ const avatar=createAdultAvatar(0),pose=neutralPose();pose.left.forward=-1;pose.left.elbowForward=-.8;
+ applyBodyPose(avatar,pose);const pivot=avatar.getObjectByName('motion-arm-left');assert.ok(pivot);assert.equal(pivot.rotation.x,-1);
+ for(let i=0;i<60;i++){animateAdult(avatar,true,.2);applyBodyPose(avatar,neutralPose());}
+ assert.equal(pivot.rotation.x,0);assert.ok(Math.abs(avatar.getObjectByName('adult-arm-left').rotation.x)>.2);
+ assert.equal(avatar.getObjectByName('adult-arm-left-elbow').rotation.x,0);
+});

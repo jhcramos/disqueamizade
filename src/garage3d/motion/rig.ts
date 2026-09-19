@@ -12,7 +12,16 @@ export function applyBodyPose(model:Group,pose:BodyPose){
  upper.rotation.z=pose.lean;
  for(const [side,sign] of [['left',-1],['right',1]] as const){
   const arm=model.getObjectByName(`adult-arm-${side}`),elbow=model.getObjectByName(`adult-arm-${side}-elbow`);
-  if(arm)arm.rotation.z=sign*.08+pose[side].shoulder;
-  if(elbow)elbow.rotation.z=pose[side].elbow;
+  if(arm){
+   let pivot=model.getObjectByName(`motion-arm-${side}`);
+   if(!pivot){
+    pivot=new Group();pivot.name=`motion-arm-${side}`;pivot.position.copy(arm.position);
+    arm.parent!.add(pivot);pivot.add(arm);arm.position.set(0,0,0);
+   }
+   // Separate from animateAdult's walking/seated rotation: no accumulated pitch.
+   pivot.rotation.set(pose[side].forward,0,pose[side].shoulder,'ZXY');
+   arm.rotation.z=sign*.08;
+  }
+  if(elbow)elbow.rotation.set(pose[side].elbowForward,0,pose[side].elbow,'ZXY');
  }
 }

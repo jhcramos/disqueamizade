@@ -14,7 +14,7 @@ self.onmessage = async ({data}) => {
    self.postMessage({type:'ready'});
   } else if(data.type==='frame') {
    const start=performance.now();
-   try {const result=tracker.detectForVideo(data.bitmap,data.ts);self.postMessage({type:'pose',points:result.landmarks[0]??[],ms:performance.now()-start});}
+   try {const result=tracker.detectForVideo(data.bitmap,data.ts);self.postMessage({type:'pose',points:result.landmarks[0]??[],world:result.worldLandmarks[0]??[],ms:performance.now()-start});}
    finally {data.bitmap.close();}
   }
  } catch (error) {console.warn("[avatar-pose]",error.message);self.postMessage({type:'error'});}
