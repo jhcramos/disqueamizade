@@ -2,7 +2,7 @@ import {freshSocial,validSocial,hostCommand,tickSocial,HOST_ACTIONS,type HostSoc
 import { houseRoute, houseWalkable, type Place } from '../layout.ts';
 export type ResidentId = 'dora' | 'teo' | 'biscoito';
 export type ItemId = 'coffee' | 'watering' | 'record' | 'toy';
-export type Visitor = { seat?:string; id:string; name:string; position:Place; frozen?:boolean; available?:boolean; publicId?:string; blocked?:string[] };
+export type Visitor = { adult?:boolean; seat?:string; id:string; name:string; position:Place; frozen?:boolean; available?:boolean; publicId?:string; blocked?:string[] };
 export type Resident = {id:ResidentId; position:Place; angle:number; activity:string; path:Place[]; until:number; step:number; target?:string};
 export type BallFlight={from:Place;to:Place;start:number;duration:number;fromHeight:number;toHeight:number};
 export type Item = {id:ItemId; kind:ItemId; position:Place; height:number; holder?:string; reserved?:string;flight?:BallFlight};

@@ -1,4 +1,4 @@
-import {concierge,companyCandidates,applyCompanyDecision,preparedDecision} from '../src/garage3d/residents/concierge.ts';
+import {concierge,companyCandidates,applyCompanyDecision,preparedDecision,quickPreference} from '../src/garage3d/residents/concierge.ts';
 import {chooseCompany,invitationLine} from '../server/houseConcierge.ts';
 import {normalizeSeat} from '../src/garage/seats.ts';
 import {HOST_ACTIONS,personalLife} from '../src/garage3d/residents/social.ts';
@@ -34,7 +34,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  if(!body||JSON.stringify(body).length>6000)return res.status(400).json({error:'input'});
  const raw=body.visitor;
  if(!raw||typeof raw.id!=='string'||!/^[a-f0-9-]{36}$/.test(raw.id)||typeof raw.name!=='string'||!Number.isFinite(raw.position?.x)||!Number.isFinite(raw.position?.z)||!roomAt(raw.position))return res.status(400).json({error:'visitor'});
- const visitor:Visitor={id:identity.id,name:raw.name.replace(/[<>\r\n]/g,'').slice(0,24),position:{x:raw.position.x,z:raw.position.z},seat:normalizeSeat(raw.seat,roomAt(raw.position)),frozen:raw.frozen===true,publicId:raw.id,blocked:Array.isArray(raw.blocked)?raw.blocked.filter((id:unknown)=>typeof id==='string'&&id.length<=100).slice(0,100):[]};
+ const visitor:Visitor={adult:raw.adult===true,id:identity.id,name:raw.name.replace(/[<>\r\n]/g,'').slice(0,24),position:{x:raw.position.x,z:raw.position.z},seat:normalizeSeat(raw.seat,roomAt(raw.position)),frozen:raw.frozen===true,publicId:raw.id,blocked:Array.isArray(raw.blocked)?raw.blocked.filter((id:unknown)=>typeof id==='string'&&id.length<=100).slice(0,100):[]};
  visitor.name=visitor.name.trim()||'Visitante';
  if(body.feature==='poker')return handlePoker(body,res,url,key,identity,visitor);
  const command=body.command;
@@ -60,8 +60,8 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
   const selecting=command?.action==='askCompany'&&companyRequest?.id===command.id&&companyRequest.pending;
   const eligible=Object.values(world.visitors).map(p=>({...p.visitor,available:now-p.seen<8000}));
   const candidates=selecting?companyCandidates(state,visitor,eligible,now):[];
-  const evaluate=selecting&&candidates.length>0&&!!process.env.TYPESAFE_API_KEY&&(state.cooldown['company-global']??0)<=now;
-  if(evaluate){state.cooldown['company-global']=now+10000;companyRequest.pending=false;/* Persist the API reservation before any external call. */}
+  const evaluate=selecting&&!quickPreference(companyRequest.text)&&candidates.length>0&&!!process.env.TYPESAFE_API_KEY&&(state.cooldown['company-global']??0)<=now;
+  if(evaluate){state.cooldown[`company-check:${visitor.id}`]=now+10000;state.cooldown['company-global']=now+10000;companyRequest.pending=false;/* Persist the API reservation before any external call. */}
   else if(selecting)applyCompanyDecision(state,visitor.id,command.id,preparedDecision(companyRequest.text,candidates),eligible,now);
   const generate=!selecting&&!!process.env.DEEPINFRA_API_KEY&&now>=world.nextAI&&(!state.speech||state.speech.until<now);
   if(generate)world.nextAI=now+120000;

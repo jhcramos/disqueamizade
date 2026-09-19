@@ -1,4 +1,4 @@
-import {ACTIVITIES,TOPICS,preparedDecision,type Candidate,type Decision} from '../src/garage3d/residents/concierge.ts';
+import {ACTIVITIES,TOPICS,preparedDecision,quickPreference,type Candidate,type Decision} from '../src/garage3d/residents/concierge.ts';
 export const JEV_MODEL='jev-1.13.0';
 export function decisionPayload(request:string,candidates:Candidate[]){
  // Stable, opaque labels keep signed visitor identifiers and names out of provider input.
@@ -11,7 +11,7 @@ export function decisionPayload(request:string,candidates:Candidate[]){
 }
 export async function chooseCompany(request:string,candidates:Candidate[]):Promise<Decision>{
  const fallback=preparedDecision(request,candidates),key=process.env.TYPESAFE_API_KEY;
- if(!key||!candidates.length)return fallback;
+ if(quickPreference(request)||!key||!candidates.length)return fallback;
  const payload=decisionPayload(request,candidates),started=Date.now();
  try{
   const response=await fetch('https://api.typesafe.ai/v1/systemone',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(3000),body:JSON.stringify(payload)});

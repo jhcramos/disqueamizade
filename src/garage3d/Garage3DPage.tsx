@@ -91,13 +91,14 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     const remote=createRemoteActors(scene),playObjects=createPlayObjects(scene);
     const residentVisuals=createResidentVisuals(scene),residentFixtures=addResidentFixtures(scene);
     let gestureUntil=0,pendingResident:{action:LifeAction;target:string;started:number}|null=null;
-    const lifeTransport=createResidentTransport(()=>({id:live.current?.self.id??previewVisitor.current,name:live.current?.self.name??'Visitante',position:{x:actor.position.x,z:actor.position.z},blocked:live.current?.blockedPeople,seat:live.current?.self.seat,frozen:!!(live.current?.frozen||live.current?.cinema||live.current?.self.busy)}),(s,mode)=>{setLife(s);setLifeMode(mode);},message=>{setLifeMessage(message);gestureUntil=performance.now()+2500;});
+    const lifeTransport=createResidentTransport(()=>({id:live.current?.self.id??previewVisitor.current,name:live.current?.self.name??'Visitante',position:{x:actor.position.x,z:actor.position.z},adult:live.current?.adultConfirmed===true,blocked:live.current?.blockedPeople,seat:live.current?.self.seat,frozen:!!(live.current?.frozen||live.current?.cinema||live.current?.self.busy)}),(s,mode)=>{setLife(s);setLifeMode(mode);},message=>{setLifeMessage(message);gestureUntil=performance.now()+2500;});
     pokerVisitor.current=()=>({id:live.current?.self.id??previewVisitor.current,name:live.current?.self.name??'Visitante',position:{x:actor.position.x,z:actor.position.z},frozen:!!(live.current?.frozen||live.current?.cinema)});
     let quality=live.current?.low??false;
     let ownKey='',syncKey='',seatKey:string|undefined,lastDestination='',lastEmit=0,crossGoal:Place|null=null,roomTransition=false;
     let fp=false,yaw=Math.PI,pitch=-.08,dance=false,nearestKey='',near:HousePhone|null=null;
     const keys=new Set<string>();const gestures=createCameraGestures(),hostProximity=createHostProximity();let lastNearby:NearbyHost|null=null;
     dismissNearby.current=host=>{hostProximity.dismiss(performance.now(),host??lastNearby);lastNearby=null;setNearHost(null);};
+    let crossSeat:{index:number;room:RoomId}|null=null;
     let path:Place[]=[],pendingSeat:{index:number;room:RoomId}|null=null,sitting=false,frame=0,last=performance.now(),zoom=live.current?3:1,targetZoom=zoom,currentView:View=live.current?.self.room??'house';
     const lights:Record<RoomId,boolean>={garage:true,living:true,bar:true};
     let ringing:{index:number;room:RoomId}|null=null,ringUntil=0,active=true;
@@ -110,7 +111,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     function stand(){pendingResident=null;if(live.current?.self.seat)live.current.onSeat(undefined);if(sitting&&pendingSeat){const p=approachSeat(allSeats[pendingSeat.room][pendingSeat.index]);actor.position.set(p.x,0,p.z);}
       sitting=false;pendingSeat=null;setSeated(false);path=[];dance=false;setDancing(false);}
     function reservedForOther(id:string){const c=lifeTransport.state.social.concierge,own=live.current?.self.id??previewVisitor.current;return !!c&&(!!c.reservedSeats?.includes(id)||c.circles.some(r=>r.members.some(m=>m.id!==own&&m.seat===id)));}
-    function sit(index:number,id:RoomId){if(live.current?.frozen)return;if(live.current){if(id!==live.current.self.room){live.current.onRoom(id);return;}const seat=seatsForRoom(id).find(s=>s.worldIndex===index);if(!seat||reservedForOther(seat.id)||live.current.people.some(p=>p.seat===seat.id)){setStatus('Esse lugar está ocupado. Escolha outro assento.');return;}}stand();const s=allSeats[id][index];if(!s)return;const goal=approachSeat(s);
+    function sit(index:number,id:RoomId){if(live.current?.frozen)return;if(live.current){if(id!==live.current.self.room){if(live.current.onRoom(id))crossSeat={index,room:id};return;}const seat=seatsForRoom(id).find(s=>s.worldIndex===index);if(!seat||reservedForOther(seat.id)||live.current.people.some(p=>p.seat===seat.id)){setStatus('Esse lugar está ocupado. Escolha outro assento.');return;}}stand();const s=allSeats[id][index];if(!s)return;const goal=approachSeat(s);
       path=houseRoute(actor.position,goal);if(!path.length){setStatus('Escolha um lugar com passagem livre.');return;}pendingSeat={index,room:id};setRoomId(id);setLit(lights[id]);if(currentView!=='house'){currentView=id;setView(id);}setStatus(`Indo até ${s.name.toLowerCase()} em ${roomNames[id]}…`);}
     function goToPhone(index:number,id:RoomId){if(live.current?.frozen)return;if(live.current&&id!==live.current.self.room){live.current.onRoom(id);return;}stand();path=routeToPhone(actor.position,id,index);setStatus(path.length?'Indo até o telefone. Ao chegar perto, toque em “Ligar”.':'Não há passagem até este telefone. Experimente outro.');}
     function phone(){const target=nearbyPhone(actor.position);if(!target||live.current?.frozen)return;if(live.current){live.current.onPhone(`${target.room}-${target.index+1}`);return;}ringing={index:target.index,room:target.room};ringUntil=performance.now()+6000;setRing(target.index);setStatus('Demonstração da ligação: o telefone toca por alguns segundos. Chamadas reais estão na casa atual.');}
@@ -180,6 +181,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
         if(own.seat!==seatKey){seatKey=own.seat;const seat=seatsForRoom(room).find(s=>s.id===own.seat);if(seat){const s=allSeats[room][seat.worldIndex];pendingSeat={room,index:seat.worldIndex};actor.position.set(s.x+Math.sin(s.angle)*.18,seatedOrigin(s.height,hipHeight),s.z+Math.cos(s.angle)*.18);actor.rotation.y=s.angle;sitting=true;path=[];setSeated(true);}else{actor.position.y=0;sitting=false;setSeated(false);pendingSeat=null;const p=toWorld(own.position,room);actor.position.set(p.x,0,p.z);}}
         const destination=JSON.stringify(state.destination);if(destination!==lastDestination){lastDestination=destination;if(!own.seat)path=houseRoute(actor.position,toWorld(state.destination,room));}
         if(state.frozen||state.cinema){pendingResident=null;path=[];keys.clear();dance=false;setDancing(false);}
+        if(crossSeat&&crossSeat.room===room){const target=crossSeat;crossSeat=null;if(!state.frozen&&!state.cinema)sit(target.index,target.room);}
         remote.sync(state.people,now,dt,reduced,state.play.perform);
         playObjects.sync(state,now);
         dance=!state.frozen&&!!state.play.perform?.on&&state.play.perform.actor===own.id&&!sitting&&Date.now()-state.play.perform.at<6000;

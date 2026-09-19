@@ -24,5 +24,6 @@ test('Jev integration reserves calls before fetch, revalidates consent, survives
   await request(a,cmd('acceptCompany',proposal.id));assert.equal(row.payload.state.social.concierge.circles[0].members.length,2);
   const view=await request(other);assert.deepEqual(view.body.state.social.concierge.circles,[]);assert.equal(view.body.state.social.concierge.reservedSeats.length,2);assert.deepEqual(row.payload.poker,{sentinel:'keep'});
   const invalid=await request(a,cmd('askCompany','dora','x'.repeat(241)));assert.equal(invalid.status,400);
+  const c={id:randomUUID(),name:'Carla'},d={id:randomUUID(),name:'Davi'};await request(c);await request(d);await request(c,cmd('askCompany','dora','Papo tranquilo'));const quick=await request(d,cmd('askCompany','dora','Topo qualquer coisa'));assert.equal(calls,1,'Quick choices do not call Jev even when configured');assert.equal(quick.body.state.social.concierge.proposals[0].source,'prepared');
  }finally{globalThis.fetch=fetch;for(const[k,v]of Object.entries(saved)){if(v===undefined)delete process.env[k];else process.env[k]=v;}}
 });

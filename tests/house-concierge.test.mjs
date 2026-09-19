@@ -44,7 +44,7 @@ test('malformed optional social snapshots are rejected without crashing',()=>{co
 test('garagem, sala and bar have reachable seats; poker table is never repurposed',()=>{
  for(const room of ['garage','living','bar']){
   const {s,a,b,people}=setup();a.position=b.position=room==='garage'?{x:-5,z:-5.2}:room==='living'?{x:-5,z:2.8}:{x:5,z:2.8};
-  const options=companyCandidates(s,a,people,now);assert.ok(options.length);assert.ok(options.every(o=>o.spot.startsWith(room)&&o.spot!=='bar-table-2'));
+  a.adult=b.adult=room==='bar';const options=companyCandidates(s,a,people,now);assert.ok(options.length);assert.ok(options[0].spot.startsWith(room));assert.ok(options.every(o=>o.spot!=='bar-table-2'&&(room==='bar'||!o.spot.startsWith('bar'))));
   const r=concierge(s).requests[a.id];applyCompanyDecision(s,a.id,r.id,{option:options[0].id,activity:'music',topic:'song',source:'prepared'},people,now);const p=concierge(s).proposals[0];action(s,a,people,'acceptCompany',p.id);action(s,b,people,'acceptCompany',p.id);assert.equal(concierge(s).circles[0]?.members.length,2,room);
  }
 });

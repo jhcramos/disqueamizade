@@ -678,7 +678,7 @@ function GarageRoom({
             <div className="desktop-play-sheet" ref={setTrayTarget}/>
           </>}
           <MobileHouseViewport active={false} position={position} room={`${room}-${arrival}`}>
-          <GarageScene blockedPeople={people.filter(p=>social.isBlocked(p.id)).map(p=>p.id)} onPokerCall={setPokerTalking}
+          <GarageScene adultConfirmed={adultConfirmed} blockedPeople={people.filter(p=>social.isBlocked(p.id)).map(p=>p.id)} onPokerCall={setPokerTalking}
             revision={arrival}
             onRoom={(next,point)=>changeRoom(next,false,point)}
             onTelevision={id=>{if(id===room)openTheatre();else if(changeRoom(id))setTimeout(()=>setTheatreOpen(true),0);}}
