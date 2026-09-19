@@ -17,7 +17,7 @@ export async function chooseCompany(request:string,candidates:Candidate[]):Promi
   const response=await fetch('https://api.typesafe.ai/v1/systemone',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(3000),body:JSON.stringify(payload)});
   if(!response.ok){console.warn('house_choice',{status:response.status});return fallback;}
   const data=await response.json();
-  const valid=(name:keyof typeof payload.questions)=>{const a=data.answers?.[name],criteria=payload.questions[name].criteria;return a?.type==='choice'&&typeof a.choice==='string'&&Object.hasOwn(criteria,a.choice)&&Number.isFinite(a.confidence)&&a.confidence>=0&&a.confidence<=1&&a.probabilities&&Object.keys(criteria).every(k=>Number.isFinite(a.probabilities[k])&&a.probabilities[k]>=0&&a.probabilities[k]<=1);};
+  const valid=(name:keyof typeof payload.questions)=>{const a=data.answers?.[name],criteria=payload.questions[name].criteria;return a?.type==='choice'&&typeof a.choice==='string'&&Object.prototype.hasOwnProperty.call(criteria,a.choice)&&Number.isFinite(a.confidence)&&a.confidence>=0&&a.confidence<=1&&a.probabilities&&Object.keys(criteria).every(k=>Number.isFinite(a.probabilities[k])&&a.probabilities[k]>=0&&a.probabilities[k]<=1);};
   if(!valid('opportunity')||!valid('activity')||!valid('topic'))return fallback;
   const selected=data.answers.opportunity.choice;
   // This only presents a reversible suggestion, never automatic consent or execution.

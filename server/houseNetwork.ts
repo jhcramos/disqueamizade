@@ -24,7 +24,7 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
  if(s.departed[session])throw new Error('departed');
  if(!previous&&Object.keys(s.members).length>=100)throw new Error('capacity');
  if(previous&&now-previous.seen<250)throw new Error('slow_down');
- let me=previous;
+ let me:Member|undefined=previous;
  const seen=new Set(s.packets.map(p=>p.id));
  // Presence establishes membership before room-specific messages in the same batch.
  const ordered=[...body.messages].sort((a,b)=>Number(b?.channel===MAIN&&['hello','person'].includes(b?.data?.event))-Number(a?.channel===MAIN&&['hello','person'].includes(a?.data?.event)));
