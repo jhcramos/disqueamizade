@@ -124,7 +124,7 @@ export default function GaragePage() {
       <div className="entry-layout">
         <section className="entry-picture">
           <img
-            src="/garage/whole-house.webp"
+            src="/garage/real-house.webp"
             alt="Nossa casa: garagem, sala de estar e Bar Vinyl conectados"
           />
           <div className="entry-story">
