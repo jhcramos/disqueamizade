@@ -38,8 +38,7 @@ const rooms = [
   },
 ];
 export function HomePage() {
-  const [roomIndex, setRoom] = useState(0),
-    [look, setLook] = useState("caio");
+  const [look, setLook] = useState("caio");
   return (
     <main className="house-home">
       <header className="house-nav">
@@ -47,44 +46,47 @@ export function HomePage() {
           <BrandLogo />
         </Link>
         <nav aria-label="Navegação principal">
-          <a href="#a-casa">A casa</a>
-          <a href="#seu-jeito">Avatares</a>
-          <Link to="/rooms">Bate-papo</Link>
+          <Link to="/rooms">Salas de bate-papo</Link>
+          <Link to="/garagem">A Casa</Link>
           <Link to="/blog">Blog</Link>
         </nav>
         <Link className="house-account" to="/minha-conta">
           Meu perfil <ArrowUpRight size={16} />
         </Link>
       </header>
-      <section className="whole-house-hero" aria-labelledby="welcome-title">
-        <div className="whole-house-intro">
-          <p className="house-eyebrow">UM LUGAR PARA ENCONTRAR SUA TURMA</p>
-          <h1 id="welcome-title">Entre. A <em>casa</em><br />também é sua.</h1>
+      <section className="conversation-entry" aria-labelledby="welcome-title">
+        <div className="conversation-intro">
+          <p className="house-eyebrow">DUAS PORTAS. UM BOM COMEÇO.</p>
+          <h1 id="welcome-title">Seu próximo papo<br />começa <em>aqui.</em></h1>
+          <p>Entre numa sala de conversa ou explore a Casa e conheça gente pelo caminho.</p>
         </div>
-        <figure className="whole-house-view">
-          <img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086"
-            alt="Casa em miniatura vista por inteiro, com avatares na sala de estar, na garagem e no Bar Vinyl" />
-          <div className="whole-house-hotspots" role="group" aria-label="Conheça os ambientes">
-            {rooms.map((r, i) => <button key={r.id} className={`house-spot spot-${r.id}`}
-              aria-pressed={roomIndex === i} onClick={() => setRoom(i)}>
-                <span>{r.name}</span><small>{r.label}</small><ArrowUpRight size={13} />
-              </button>)}
-          </div>
-          <figcaption>Uma ilustração da nossa casa. Escolha um ambiente para conhecer.</figcaption>
-        </figure>
-        <aside className="whole-house-entry" aria-label="Conheça a casa">
-          <p className="house-eyebrow"><span /> CORPO REAL. ROSTO DE AVATAR.</p>
-          <h2>Você escolhe<br />como aparecer.</h2>
-          <figure className="whole-house-camera">
-            <img src="/garage/avatar-camera-helmets.webp" alt="Quatro pessoas em uma chamada de vídeo usando os rostos dos seus avatares como máscaras" />
-            <figcaption>A máscara acompanha o rosto e pode ser ligada ou desligada antes da conversa.</figcaption>
-          </figure>
-          <Link className="house-cta" to="/garagem">Entrar na casa <ArrowRight size={20} /></Link>
-          <p className="whole-house-privacy"><CameraOff size={16} /> Câmera desligada ao entrar</p>
-          <p className="whole-house-free">Sem cadastro para explorar.</p>
-          <Link className="house-classic" to="/rooms">Prefere salas de conversa? Ir ao bate-papo →</Link>
-          <p className="whole-house-note">Prévia explorável · encontros online em preparação</p>
-        </aside>
+        <div className="experience-choices">
+          <article className="experience-choice choice-chat">
+            <div className="experience-copy">
+              <span className="experience-number">01 / ESCOLHA UM ASSUNTO</span>
+              <h2>Salas de bate-papo</h2>
+              <p>Converse por texto, fale reservadamente ou ligue a câmera. O primeiro passo é um oi.</p>
+            </div>
+            <div className="chat-illustration" aria-label="Ilustração de uma conversa, com mensagens de exemplo">
+              <div className="chat-illustration-top"><span>♯ Papo Livre</span><small>PRÉVIA ILUSTRATIVA</small></div>
+              <div className="sample-message"><b>OI</b><span>Cheguei. Tem lugar pra mais um?</span></div>
+              <div className="sample-message sample-answer"><span>Tem sim. Qual é o papo de hoje?</span><b>✳</b></div>
+              <div className="chat-illustration-tags"><span>Texto</span><span>Reservado</span><span>Câmera opcional</span></div>
+            </div>
+            <Link className="experience-enter" to="/rooms">Entrar no bate-papo <ArrowRight size={20} /></Link>
+            <small className="experience-footnote">Escolha seu apelido e uma sala para começar.</small>
+          </article>
+          <article className="experience-choice choice-house">
+            <div className="experience-copy">
+              <span className="experience-number">02 / EXPLORE OS AMBIENTES</span>
+              <h2>A Casa</h2>
+              <p>Escolha seu avatar, passe pela garagem, pela sala e pelo bar. Chegue do seu jeito.</p>
+            </div>
+            <div className="house-illustration"><img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086" alt="Casa em miniatura com avatares na garagem, na sala de estar e no bar" /></div>
+            <Link className="experience-enter" to="/garagem">Explorar a Casa <ArrowRight size={20} /></Link>
+            <small className="experience-footnote">Prévia explorável · encontros online em preparação.</small>
+          </article>
+        </div>
       </section>
       <section className="house-manifesto">
         <p>
@@ -349,7 +351,7 @@ export function HomePage() {
           visitas no mesmo navegador. Os encontros online estão em preparação.
         </p>
         <Link className="house-classic" to="/rooms">
-          Ir para as salas online tradicionais <ChevronRight size={16} />
+          Entrar nas salas de bate-papo <ChevronRight size={16} />
         </Link>
       </section>
       <footer className="house-footer">
