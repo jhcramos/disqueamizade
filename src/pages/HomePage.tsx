@@ -82,7 +82,7 @@ export function HomePage() {
               <h2>A Casa</h2>
               <p>Escolha seu avatar, passe pela garagem, pela sala e pelo bar. Chegue do seu jeito.</p>
             </div>
-            <div className="house-illustration"><img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086" alt="Casa em miniatura com avatares na garagem, na sala de estar e no bar" /></div>
+            <div className="house-illustration"><img src="/garage/real-house.webp" fetchPriority="high" width="690" height="550" alt="Captura da Casa 3D real, com garagem, sala de estar e Bar Vinyl" /></div>
             <Link className="experience-enter" to="/garagem">Explorar a Casa <ArrowRight size={20} /></Link>
             <small className="experience-footnote">Prévia explorável · encontros online em preparação.</small>
             <a className="experience-learn" href="#a-casa">Conheça a experiência da Casa ↓</a>
@@ -148,8 +148,8 @@ export function HomePage() {
             <Link to="/garagem" className="house-place" key={r.id}>
               <div>
                 <img
-                  src={`/garage/${r.id}-background.webp`}
-                  alt={r.name}
+                  src={`/garage/real-${r.id}.webp`}
+                  alt={`Captura real de ${r.name} na Casa 3D`}
                   loading="lazy"
                 />
                 <span className="house-place-number">0{i + 1}</span>
@@ -163,7 +163,7 @@ export function HomePage() {
                   {r.id === "bar" ? "18+" : i === 0 ? "LADO A" : "LADO B"}
                 </span>
               </div>
-              <p>{r.label}</p>
+              <p>{r.label} · captura real da Casa 3D</p>
             </Link>
           ))}
         </div>

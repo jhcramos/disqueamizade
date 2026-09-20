@@ -1298,3 +1298,5 @@
 .home-detail-bottom { display:flex; justify-content:space-between; align-items:center; gap:30px; }.home-detail-bottom p { max-width:650px; font-size:12px; line-height:1.7; margin:0; }.home-detail-bottom a { display:flex; gap:16px; align-items:center; padding:16px 20px; background:#402a3e; color:#fff; white-space:nowrap; }
 .house-entry-steps { color:#dce6d5; border-color:#ffffff30; }.home-final-choices { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; }.home-final-choices .house-cta { margin:0; }.home-final-choices .house-cta:last-child { background:#c5dbb4; color:#183422; }
 @media(max-width:700px) { .home-chat-details { padding:44px 20px; }.home-detail-heading,.home-entry-steps,.home-chat-features { grid-template-columns:1fr; }.home-detail-heading { gap:20px; }.home-entry-steps { gap:22px; }.home-detail-bottom { flex-direction:column; align-items:stretch; }.home-detail-bottom a { justify-content:space-between; }.home-chat-features article { padding:22px 0; }.home-final-choices { flex-direction:column; align-items:stretch; }.home-final-choices .house-cta { justify-content:center; } }
+
+.house-illustration img { mix-blend-mode:normal; }

@@ -1,0 +1,1 @@
+Capturas reais da versão publicada em https://disqueamizade.com.br/garagem, feitas em 21/09/2026. real-house: enquadramento Casa inteira; real-garage, real-living e real-bar: ambientes selecionados na interface. Recortes de screenshots, convertidos para WebP; sem geração de cenários. Câmera e microfone não ativados.
