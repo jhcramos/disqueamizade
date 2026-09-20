@@ -8,6 +8,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 // bundle inicial. A Home fica leve. (Plano V4, item 2.4)
 const AccountPage = lazy(() => import('./social/AccountPanel'))
 const GaragePage = lazy(() => import('./garage/GaragePage'))
+const CommunityRoomPage = lazy(() => import('./pages/CommunityRoomPage').then(m => ({ default: m.CommunityRoomPage })))
 const RoomsPage = lazy(() => import('./pages/RoomsPage').then(m => ({ default: m.RoomsPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })))
@@ -46,6 +47,7 @@ function App() {
         <Route path="/garagem" element={<GaragePage />} />
         <Route path="/garagem-3d" element={<Navigate to="/garagem" replace />} />
         <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/comunidade/:slug" element={<CommunityRoomPage />} />
         <Route path="/room/:roomId" element={<RoomPage />} />
         <Route path="/roulette" element={<Navigate to="/garagem?phones=1" replace />} />
         {/* cabines removed — simplifying */}

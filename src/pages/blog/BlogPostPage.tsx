@@ -160,14 +160,7 @@ export const BlogPostPage = () => {
   // Process content
   const processedContent = useMemo(() => {
     if (!post) return { html: '', count: 0 }
-    let html = post.content.replace(/href=(["'])([^"']+)\1/gi, (match, quote, href) => {
-      try {
-        const url = new URL(href, 'https://disqueamizade.com.br')
-        if (['disqueamizade.com.br', 'www.disqueamizade.com.br'].includes(url.hostname)
-          && /^\/(rooms?|auth|profile|salas)(?:\/|$)/.test(url.pathname)) return `href=${quote}/garagem${quote}`
-      } catch { /* Keep unrelated links as authored. */ }
-      return match
-    })
+    let html = post.content
     html = injectHeadingIds(html, toc)
     html = injectLeiaBoxes(html, related.slice(0, 4))
     const result = injectCTAPlaceholders(html)
@@ -182,7 +175,7 @@ export const BlogPostPage = () => {
       const container = document.createElement('div')
       el.replaceWith(container)
       const gradients = ['from-pink-600/20 to-purple-600/20', 'from-cyan-600/20 to-blue-600/20', 'from-amber-600/20 to-orange-600/20']
-      const room = { label: 'A casa é sua', emoji: '🏠', link: '/garagem', desc: 'Escolha seu avatar e explore os ambientes do Disque Amizade.' }
+      const room = { label: 'Escolha seu jeito de conversar', emoji: '🏠', link: '/garagem', desc: 'Explore a Casa com avatares ou encontre sua turma nas salas de bate-papo.' }
       const gradient = gradients[i % gradients.length]
       container.innerHTML = `
         <div class="my-8 p-6 rounded-2xl bg-gradient-to-br ${gradient} border border-white/10 not-prose">
@@ -196,6 +189,7 @@ export const BlogPostPage = () => {
           <a href="${room.link}" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-pink-500/25 no-underline">
             Entrar na casa →
           </a>
+          <a href="/rooms" class="inline-flex px-6 py-3 text-white border border-white/30 rounded-xl no-underline mt-3 sm:ml-3">Ir ao bate-papo →</a>
         </div>
       `
     })
@@ -453,6 +447,7 @@ export const BlogPostPage = () => {
             <Link to="/garagem" className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-xl transition-all">
               Entrar na casa <ChevronRight className="w-4 h-4" />
             </Link>
+            <Link to="/rooms" className="inline-flex px-6 py-3 border border-white/30 rounded-xl mt-3 sm:ml-3">Ir ao bate-papo →</Link>
           </div>
 
           {/* Related articles */}

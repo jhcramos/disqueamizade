@@ -16,6 +16,8 @@ export type AnalyticsEvent =
   | 'camera_on'
   | 'roulette_matched'
   | 'report_sent'
+  | 'community_room_created'
+  | 'community_first_message'
 
 type Props = Record<string, string | number | boolean | undefined>
 

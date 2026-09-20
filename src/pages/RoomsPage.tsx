@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { CommunityCatalog } from '@/components/rooms/CommunityCatalog'
 import { Search, Plus, Flame, Globe, Beer, Heart, Gamepad2, Languages, Crown, MessageCircle, Calendar } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { Footer } from '@/components/common/Footer'
@@ -108,6 +110,7 @@ function mapDbRoom(r: any, hotIds: Set<string>): MockRoom {
     _category: cat,
     _isHot: isHot,
     _slug: r.slug || r.id,
+    slug: r.slug || r.id,
   } as any
 }
 
@@ -115,7 +118,7 @@ export const RoomsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const { rooms: dbRooms, loading, refetch } = useRooms()
+  const { rooms: dbRooms, loading, error: roomsError } = useRooms()
 
   // Generate hot room ids once per page load
   const hotIds = useMemo(() => getHotRoomIds(dbRooms || []), [dbRooms])
@@ -129,11 +132,11 @@ export const RoomsPage = () => {
 
   // Count per category
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: rooms.length, hot: 0 }
+    const counts: Record<string, number> = { all: 0, hot: 0 }
     rooms.forEach((r: any) => {
       const cat = r._category || 'general'
       counts[cat] = (counts[cat] || 0) + 1
-      if (r._isHot) counts.hot++
+      if (cat !== 'adult') { counts.all++; if (r._isHot) counts.hot++ }
     })
     return counts
   }, [rooms])
@@ -141,6 +144,7 @@ export const RoomsPage = () => {
   const filteredRooms = useMemo(() => {
     return rooms.filter((room: any) => {
       const cat = room._category || 'general'
+      if (cat === 'adult' && selectedCategory !== 'adult') return false
       let matchesCat = selectedCategory === 'all'
       if (selectedCategory === 'hot') matchesCat = room._isHot
       else if (selectedCategory !== 'all') matchesCat = cat === selectedCategory
@@ -155,18 +159,10 @@ export const RoomsPage = () => {
 
   const totalOnline = rooms.reduce((acc: number, r: any) => acc + (r.online_count || 0), 0)
 
-  // Sala principal única: com menos de 20 pessoas no total, concentramos todo
-  // mundo na "Geral Brasil" para a conversa começar. As demais só aparecem
-  // quando há gente suficiente para não parecerem vazias. (Plano V4, item 1.5)
-  const MAIN_THRESHOLD = 20
-  const MAIN_SLUG = 'geral-brasil'
-  const concentrated = totalOnline < MAIN_THRESHOLD
-  const visibleRooms = useMemo(() => {
-    if (!concentrated) return filteredRooms
-    const main = rooms.find((r: any) => r._slug === MAIN_SLUG)
-      || [...rooms].sort((a: any, b: any) => (b.online_count || 0) - (a.online_count || 0))[0]
-    return main ? [main] : []
-  }, [concentrated, filteredRooms, rooms])
+  // Keep the first conversation easy to find without hiding explicit searches.
+  const concentrated = totalOnline < 20 && selectedCategory === 'all' && !searchQuery
+  const mainRoom = filteredRooms.find((room: any) => room._slug === 'geral-brasil') || filteredRooms[0]
+  const visibleRooms = concentrated && mainRoom ? [mainRoom] : filteredRooms
 
   return (
     <AgeGate>
@@ -176,18 +172,22 @@ export const RoomsPage = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Salas de Chat</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Bate-papo Disque Amizade</h1>
             <p className="text-dark-500 mt-1 text-sm">
-              {rooms.length} salas • {totalOnline} pessoas online agora 🟢
+              Crie sua sala, convide amigos e encontre sua turma.
             </p>
           </div>
-          <button onClick={() => setShowCreateModal(true)} className="self-start md:self-auto btn-primary flex items-center gap-2 text-sm">
+          <button onClick={() => setShowCreateModal(true)} className="self-start md:self-auto btn-balada flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> Criar Sala
           </button>
         </div>
 
+        <p className="mb-6 text-sm text-gray-300">Aqui você escolhe uma sala e conversa. Para explorar os ambientes com avatares, <Link className="text-primary-300 underline" to="/garagem">entre na Casa</Link>.</p>
+        <CommunityCatalog refresh={0} />
+        <h2 className="mb-4 text-xl font-bold">Salas com vídeo</h2>
+        {roomsError && roomsError !== 'empty' && <p role="alert" className="mb-5 rounded-xl border border-amber-500/30 p-4 text-sm text-amber-200">Não foi possível carregar as salas com vídeo. Tente novamente mais tarde.</p>}
         {/* Live stats bar */}
-        <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-gradient-to-r from-primary-500/[0.06] to-pink-500/[0.06] border border-white/5">
+        {!roomsError && <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-gradient-to-r from-primary-500/[0.06] to-pink-500/[0.06] border border-white/5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-sm font-semibold text-emerald-400">{totalOnline} online</span>
@@ -198,10 +198,10 @@ export const RoomsPage = () => {
           <span className="text-xs text-dark-400">🔞 {categoryCounts.adult || 0} adultas</span>
           <div className="w-px h-4 bg-white/10" />
           <span className="text-xs text-dark-400">🔥 {categoryCounts.hot || 0} em alta</span>
-        </div>
+        </div>}
 
         {/* Search + Category Filters */}
-        {!concentrated && (
+        {(
         <div className="mb-6 space-y-3">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
@@ -237,12 +237,6 @@ export const RoomsPage = () => {
         </div>
         )}
 
-        {concentrated && !loading && (
-          <div className="mb-6 p-4 rounded-xl bg-primary-500/[0.06] border border-primary-500/15 text-sm text-dark-300">
-            👋 Começamos concentrando todo mundo na <b className="text-white">sala principal</b> para a conversa fluir. As outras salas abrem quando passar de 20 pessoas online.
-          </div>
-        )}
-
         {/* Loading */}
         {loading && (
           <div className="text-center py-16">
@@ -260,7 +254,7 @@ export const RoomsPage = () => {
               {selectedCategory === 'adult' && <Heart className="w-5 h-5 text-pink-400" />}
               {selectedCategory === 'drinks' && <Beer className="w-5 h-5 text-amber-400" />}
               <h2 className="text-lg font-bold text-white">
-                {selectedCategory === 'all' ? 'Todas as Salas' :
+                {selectedCategory === 'all' ? (concentrated ? 'Comece pela sala principal' : 'Todas as Salas') :
                  selectedCategory === 'hot' ? '🔥 Rolando Agora — As Mais Movimentadas' :
                  selectedCategory === 'adult' ? '🔞 Salas Adultas — Só pra Maiores' :
                  selectedCategory === 'drinks' ? '🍺 Tá Bebendo? Cola Aqui!' :
@@ -277,7 +271,7 @@ export const RoomsPage = () => {
 
             {/* Subtitle per category */}
             {selectedCategory === 'adult' && (
-              <p className="text-xs text-pink-400/60 mb-4 -mt-2">Conteúdo explícito. Verificação de idade obrigatória. 18+</p>
+              <p className="text-xs text-pink-400/60 mb-4 -mt-2">Área adulta 18+. Respeito e consentimento são obrigatórios.</p>
             )}
             {selectedCategory === 'hot' && (
               <p className="text-xs text-orange-400/60 mb-4 -mt-2">Salas com mais gente agora — a festa tá rolando! 🎉</p>
@@ -298,7 +292,7 @@ export const RoomsPage = () => {
         )}
 
         {/* No rooms */}
-        {!loading && visibleRooms.length === 0 && (
+        {!loading && (!roomsError || roomsError === 'empty') && visibleRooms.length === 0 && (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="text-xl font-bold text-white mb-2">Nenhuma sala encontrada</h3>
@@ -308,7 +302,7 @@ export const RoomsPage = () => {
       </main>
       <Footer />
 
-      <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} userTier="basic" onCreated={refetch} />
+      <CreateRoomModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} userTier="basic" />
     </div>
     </AgeGate>
   )
