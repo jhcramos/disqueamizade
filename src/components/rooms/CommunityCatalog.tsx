@@ -1,133 +1,357 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowUpRight, Search, Users, Video, Heart, Plus } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import {
   communityAction,
   type CommunityRoom,
 } from '@/services/supabase/communityRooms'
+import { CreateRoomModal } from './CreateRoomModal'
+import './catalog.css'
+const themes: Record<string, string> = {
+  all: 'Todos os assuntos',
+  amizade: 'Amizade',
+  paquera: 'Paquera',
+  musica: 'Música',
+  games: 'Games',
+  idiomas: 'Idiomas',
+  cidades: 'Cidades',
+  outros: 'Outros papos',
+}
+type Entry = {
+  id: string
+  name: string
+  description: string
+  theme: string
+  adult: boolean
+  online: number
+  url: string
+  access: string
+  community: boolean
+}
 export function CommunityCatalog({ refresh }: { refresh: number }) {
   const { user, initialized, signInAsGuest } = useAuthStore()
   const [rooms, setRooms] = useState<CommunityRoom[]>([]),
-    [error, setError] = useState(''),
-    [loading, setLoading] = useState(true)
+    [favorites, setFavorites] = useState<string[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState('')
   const [query, setQuery] = useState(''),
-    [adult, setAdult] = useState(false)
+    [adult, setAdult] = useState(false),
+    [theme, setTheme] = useState('all'),
+    [sort, setSort] = useState('online'),
+    [page, setPage] = useState(1),
+    [onlyFavorites, setOnlyFavorites] = useState(false),
+    [create, setCreate] = useState(false)
   useEffect(() => {
     if (!initialized) return
     let cancelled = false
-    async function load() {
+    void (async () => {
       try {
         setLoading(true)
-        setError('')
         if (!user?.id) await signInAsGuest()
-        const data = await communityAction<{ rooms: CommunityRoom[] }>('list')
-        if (!cancelled) setRooms(data.rooms)
+        const data = await communityAction<{
+          rooms: CommunityRoom[]
+          favorites?: string[]
+        }>('list')
+        if (!cancelled) {
+          setRooms(data.rooms)
+          setFavorites(data.favorites || [])
+          setError('')
+        }
       } catch (e) {
         if (!cancelled) setError((e as Error).message)
       } finally {
         if (!cancelled) setLoading(false)
       }
-    }
-    void load()
+    })()
     return () => {
       cancelled = true
     }
   }, [user?.id, initialized, refresh, signInAsGuest])
-  const visible = rooms.filter(
-    (r) =>
-      (adult ? r.theme === 'adulto' : r.theme !== 'adulto') &&
-      (r.name + ' ' + r.description)
-        .toLocaleLowerCase('pt-BR')
-        .includes(query.toLocaleLowerCase('pt-BR')),
+  const entries = useMemo<Entry[]>(
+    () => [
+      ...rooms.map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        theme: r.theme,
+        adult: r.theme === 'adulto',
+        online: r.online || 0,
+        url: '/comunidade/' + r.slug,
+        access: r.access,
+        community: !!r.owner_id,
+      })),
+    ],
+    [rooms],
   )
+  const filtered = entries
+    .filter(
+      (r) =>
+        r.adult === adult &&
+        (theme === 'all' || r.theme === theme) &&
+        (!onlyFavorites || favorites.includes(r.id)) &&
+        `${r.name} ${r.description}`
+          .toLocaleLowerCase('pt-BR')
+          .includes(query.toLocaleLowerCase('pt-BR')),
+    )
+    .sort((a, b) =>
+      sort === 'name'
+        ? a.name.localeCompare(b.name, 'pt-BR')
+        : b.online - a.online || a.name.localeCompare(b.name, 'pt-BR'),
+    )
+  const pages = Math.max(1, Math.ceil(filtered.length / 12)),
+    currentPage = Math.min(page, pages),
+    visible = filtered.slice((currentPage - 1) * 12, currentPage * 12)
   const mine = rooms.find((r) => r.owner_id === user?.id)
+  useEffect(() => {
+    setPage(1)
+  }, [query, adult, theme, sort, onlyFavorites])
   return (
-    <section
-      className="mb-10 border-b border-white/10 pb-8"
-      aria-labelledby="community-title"
-    >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 id="community-title" className="text-xl font-bold">
-            Salas da comunidade
-          </h2>
-          <p className="mt-1 text-sm text-gray-300">
-            Crie um lugar para sua turma. Convide amigos e volte para conversar.
-          </p>
+    <div className="community-catalog">
+      <header className="catalog-header">
+        <Link className="catalog-brand" to="/">
+          <img src="/brand/mark.svg" alt="" />
+          <span>
+            disque
+            <br />
+            amizade
+          </span>
+        </Link>
+        <nav>
+          <Link to="/garagem">Conhecer a Casa ↗</Link>
+          {mine && <Link to={'/comunidade/' + mine.slug}>Minha sala</Link>}
+          <button className="catalog-create" onClick={() => setCreate(true)}>
+            <Plus size={16} /> Criar sala
+          </button>
+        </nav>
+      </header>
+      <main>
+        <section className="catalog-hero">
+          <div>
+            <p className="catalog-kicker">DESLIGUE A PRESSA. LIGUE O PAPO.</p>
+            <h1>
+              Tem alguém
+              <br />
+              na sua <em>sintonia.</em>
+            </h1>
+            <p>
+              Escolha um assunto, entre numa sala e deixe a conversa acontecer.
+            </p>
+          </div>
+          <div className="catalog-poster">
+            <span>
+              ALÔ,
+              <br />
+              GENTE
+              <br />
+              NOVA.
+            </span>
+            <div>
+              <MessageMark />
+              <small>
+                Uma sala.
+                <br />
+                Mil possibilidades.
+              </small>
+            </div>
+          </div>
+        </section>
+        <div className="catalog-experiences">
+          <button
+            aria-pressed={!adult}
+            onClick={() => {
+              setAdult(false)
+              setTheme('all')
+            }}
+          >
+            <span>01 / ENCONTRE SUA TURMA</span>
+            <strong>
+              Boas conversas <ArrowUpRight />
+            </strong>
+            <small>Amizade, interesses e gente de todo lugar</small>
+          </button>
+          <button
+            className="catalog-adult"
+            aria-pressed={adult}
+            onClick={() => {
+              setAdult(true)
+              setTheme('all')
+            }}
+          >
+            <span>02 / SÓ PARA MAIORES</span>
+            <strong>
+              Área adulta <b>18+</b>
+              <ArrowUpRight />
+            </strong>
+            <small>Outro clima. Respeito e consentimento sempre.</small>
+          </button>
         </div>
-        {mine && (
-          <Link className="btn-balada" to={'/comunidade/' + mine.slug}>
-            Minha sala
-          </Link>
-        )}
-      </div>
-      <div className="mb-4 flex flex-wrap gap-3">
-        <input
-          aria-label="Buscar salas da comunidade"
-          className="input flex-1 min-w-48"
-          placeholder="Buscar pelo nome ou assunto"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button
-          aria-pressed={!adult}
-          className="rounded-lg border border-white/20 px-4 py-2 aria-pressed:bg-white/10"
-          onClick={() => setAdult(false)}
-        >
-          Comunidade
-        </button>
-        <button
-          aria-pressed={adult}
-          className="rounded-lg border border-pink-400/40 px-4 py-2 aria-pressed:bg-pink-500/20"
-          onClick={() => setAdult(true)}
-        >
-          Área adulta 18+
-        </button>
-      </div>
-      {adult && (
-        <p className="mb-4 text-sm text-pink-200">
-          Salas para maiores de 18 anos. A entrada exige uma confirmação
-          explícita. Respeito e consentimento continuam obrigatórios.
-        </p>
-      )}
-      {loading ? (
-        <p role="status">Carregando salas da comunidade…</p>
-      ) : error ? (
-        <p
-          role="alert"
-          className="rounded-xl border border-amber-500/30 p-4 text-sm text-amber-200"
-        >
-          {error}
-        </p>
-      ) : visible.length === 0 ? (
-        <p className="py-5 text-gray-300">
-          {query
-            ? 'Nenhuma sala corresponde à busca.'
-            : 'Ainda não há salas nesta seção. Crie a primeira e convide sua turma.'}
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((r) => (
-            <Link
-              className="card-interactive p-5"
-              key={r.id}
-              to={'/comunidade/' + r.slug}
+        <section className="catalog-directory" aria-label="Encontre uma sala">
+          <aside>
+            <h2>Qual é o seu papo?</h2>
+            {Object.entries(themes).map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={theme === key}
+                onClick={() => setTheme(key)}
+              >
+                {label}
+                <span>
+                  {
+                    entries.filter(
+                      (r) =>
+                        r.adult === adult && (key === 'all' || r.theme === key),
+                    ).length
+                  }
+                </span>
+              </button>
+            ))}
+            <button
+              className="catalog-favorites"
+              aria-pressed={onlyFavorites}
+              onClick={() => setOnlyFavorites(!onlyFavorites)}
             >
-              <div className="mb-2 text-xs text-gray-300">
-                {r.online || 0} online
-              </div>
-              <h3 className="font-bold">{r.name}</h3>
-              <p className="mt-2 text-sm text-gray-300 line-clamp-2">
-                {r.description || 'Um espaço para conversar e fazer amizades.'}
+              <Heart size={16} /> Minhas favoritas
+            </button>
+            <div className="catalog-house">
+              <span>UMA OUTRA EXPERIÊNCIA</span>
+              <strong>Entre na Casa.</strong>
+              <p>
+                Explore ambientes com seu avatar e encontre pessoas pelo
+                caminho.
               </p>
-              <div className="mt-4 text-xs text-gray-300">
-                {r.theme === 'adulto' ? 'Adulta 18+' : r.theme} ·{' '}
-                {r.access === 'invite' ? 'Por convite' : 'Pública'}
+              <Link to="/garagem">
+                Abrir a Casa <ArrowUpRight size={16} />
+              </Link>
+            </div>
+          </aside>
+          <div className="catalog-results">
+            <div className="catalog-toolbar">
+              <label>
+                <Search size={18} />
+                <input
+                  aria-label="Buscar salas"
+                  placeholder="Busque uma sala ou assunto…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+              <select
+                aria-label="Ordenar salas"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="online">Mais gente agora</option>
+                <option value="name">Nome: A–Z</option>
+              </select>
+            </div>
+            <div className="catalog-count">
+              <h2>
+                {adult
+                  ? 'Encontros 18+'
+                  : theme === 'all'
+                    ? 'Entre, o papo é seu.'
+                    : themes[theme]}
+              </h2>
+              <span>{filtered.length} salas encontradas</span>
+            </div>
+            {adult && (
+              <p className="catalog-adult-note">
+                Entrada exclusiva para maiores de 18 anos, com confirmação antes
+                de participar.
+              </p>
+            )}
+            {error && <p role="alert">{error}</p>}
+            {loading && <p role="status">Encontrando salas…</p>}
+            {!loading && visible.length === 0 && (
+              <div className="catalog-empty">
+                <h3>
+                  {onlyFavorites
+                    ? 'Seu próximo lugar favorito está por aqui.'
+                    : 'Ainda não tem um papo por aqui.'}
+                </h3>
+                <p>
+                  {query
+                    ? 'Experimente outro nome ou assunto.'
+                    : 'Crie uma sala e convide quem você quer por perto.'}
+                </p>
+                <button onClick={() => setCreate(true)}>
+                  Criar minha sala →
+                </button>
               </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </section>
+            )}
+            <div className="catalog-grid">
+              {visible.map((r, i) => (
+                <Link
+                  className={'catalog-card tone-' + (i % 4)}
+                  key={r.id}
+                  to={r.url}
+                >
+                  <div className="catalog-card-top">
+                    <span>
+                      {r.adult ? '18+' : themes[r.theme] || 'Comunidade'}
+                    </span>
+                    <ArrowUpRight size={19} />
+                  </div>
+                  <h3>{r.name}</h3>
+                  <p>
+                    {r.description ||
+                      'Entre, puxe um assunto e conheça gente nova.'}
+                  </p>
+                  <footer>
+                    <span>
+                      <Users size={14} />
+                      {r.online} online
+                    </span>
+                    <small>
+                      {r.access === 'invite'
+                        ? 'Por convite'
+                        : r.access === 'vip'
+                          ? 'VIP'
+                          : r.community
+                            ? 'Da comunidade'
+                            : 'Sala oficial'}{' '}
+                      <Video size={14} />
+                    </small>
+                  </footer>
+                </Link>
+              ))}
+            </div>
+            {pages > 1 && (
+              <nav className="catalog-pages" aria-label="Páginas de salas">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  ← Anterior
+                </button>
+                <span>
+                  {currentPage} de {pages}
+                </span>
+                <button
+                  disabled={currentPage === pages}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  Próxima →
+                </button>
+              </nav>
+            )}
+          </div>
+        </section>
+      </main>
+      <footer className="catalog-footer">
+        <span>Disque Amizade · um bom papo muda o dia.</span>
+        <Link to="/diretrizes">Regras da comunidade</Link>
+        <Link to="/privacidade">Privacidade</Link>
+      </footer>
+      <CreateRoomModal isOpen={create} onClose={() => setCreate(false)} />
+    </div>
+  )
+}
+function MessageMark() {
+  return (
+    <span aria-hidden="true" className="catalog-asterisk">
+      ✳
+    </span>
   )
 }

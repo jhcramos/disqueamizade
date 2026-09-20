@@ -1,74 +1,79 @@
-# Salas da comunidade — primeira entrega
+# Novo Bate-papo — implementação
 
-A Casa continua em `/garagem`, com sua experiência de avatares. O Bate-papo fica
-em `/rooms`; salas criadas pelos usuários têm endereço `/comunidade/:slug`.
-As salas de vídeo existentes continuam em `/room/:roomId`.
+A Casa permanece em `/garagem`, com a experiência de avatares preservada.
+O catálogo em `/rooms` e o chat em `/comunidade/:slug` seguem o desenho aprovado
+(principal + miniaturas). `/room/:roomId` também abre o novo chat, por slug ou UUID.
+As seis salas oficiais ativas e gratuitas foram copiadas com os mesmos IDs/slugs;
+as tabelas e o histórico do chat legado permanecem intactos.
 
-## Incluído
+## Entrega
 
-- Uma sala gratuita por conta com e-mail confirmado no Supabase Auth; convidados podem entrar.
-- Tema, descrição, regras, acesso público ou por convite. A sala permanece no catálogo mesmo vazia.
-- Área adulta separada na interface e confirmação explícita ao criar/entrar. Essa confirmação é autodeclaração, não verificação documental de idade.
-- Apelido, texto, atalhos editáveis, últimas 50 mensagens e presença com expiração de 45 segundos.
-- Dono, moderadores, bloqueio/desbloqueio, denúncias à moderação da sala e renovação do convite.
-- Convites ficam no fragmento da URL. Renovar invalida novas entradas pelo link antigo; membros já aceitos continuam membros.
-- Links da Casa e Bate-papo na home e artigos, preservando os destinos originais dos links dos artigos.
-- Eventos `community_room_created`, `room_joined` com `experience=community` e `community_first_message` (uma vez por montagem da sala). Nenhum texto, apelido ou tema enviado nesses eventos. Dependem do provedor de analytics já configurado.
+- Catálogo com busca, temas, favoritos, ordenação e páginas de 12 salas; entrada 18+ com destaque equivalente à seção geral. Nenhuma atividade simulada em produção.
+- Uma sala gratuita por conta com e-mail confirmado, pública ou por convite, com apelido, descrição, regras e moderação. Cobrança continua fora desta fase.
+- Chat público, resposta citando mensagem, atalhos que preenchem o rascunho, emoji, favoritos e lista de participantes.
+- Conversas diretas, salas reservadas por convite e vídeo reservado são fluxos distintos. As abas e o compositor indicam o destinatário.
+- Convites recebidos aparecem abaixo das câmeras e na caixa de convites. Aceitar, recusar, cancelar e encerrar são persistidos; pendentes expiram em 5 minutos; reservados aceitos duram 2 horas; conversas diretas duram 30 dias.
+- Bloqueio entre participantes é persistente e impede novas mensagens/convites nas duas direções; encerra chamadas existentes. Banimento da sala também encerra chamadas.
+- Denúncias privadas enviam somente a mensagem escolhida à moderação. Moderadores não recebem o restante da conversa privada.
+- LiveKit: uma câmera principal em alta qualidade, até quatro miniaturas na página em baixa qualidade, demais não assinadas; visibilidade da página e dos elementos controla assinatura. Áudio recebido é opcional e segue a câmera selecionada. Ampliar aumenta o painel.
+- Câmera e microfone desligados ao conectar. A câmera passa por prévia local e confirmação de transmissão. Trocar de conversa desconecta a sessão de vídeo anterior.
+- Administradores existentes foram adicionados como moderadores das salas oficiais. Novas atribuições devem ser provisionadas pelo servidor, nunca por metadados do usuário.
 
-## Integração e publicação
+## Backend publicado
 
-O usuário confirmou o projeto `uquztttljpswheiikbkw`. A migration
-`20260920124107_community_rooms.sql` foi aplicada e a função `community-rooms`
-foi publicada (versão 1). O catálogo real foi carregado como visitante pela
-prévia local. Pedidos sem JWT retornam 401, GET retorna 405 e OPTIONS retorna 200.
+Projeto confirmado: `uquztttljpswheiikbkw`.
 
-A interface está na branch `codex/salas-comunidade`, baseada em
-`feat/garage-proximity-prototype` para preservar a Casa. Ainda não foi publicada
-no domínio. Antes de publicar, validar criação e moderação com duas contas
-confirmadas em uma homologação. Os testes completos de criação, mensagens e
-moderação foram executados em PostgreSQL local; a verificação no projeto real
-cobriu schema, permissões, sessão de visitante e leitura do catálogo.
+- `20260920124107_community_rooms.sql` (primeira entrega).
+- `20260920141803_community_social.sql` (reservados, bloqueios, favoritos, denúncias privadas, autorização de mídia).
+- `20260920141813_community_official_rooms.sql` (salas oficiais existentes).
+- Edge `community-rooms`, versão 2.
 
-Configuração:
+As versões locais foram alinhadas ao registro remoto depois da aplicação. Não reaplicar.
+`SUPABASE_SERVICE_ROLE_KEY`, `LIVEKIT_API_KEY` e `LIVEKIT_API_SECRET` ficam no servidor.
+`LIVEKIT_URL` já está configurada no projeto e é devolvida junto do token de vídeo.
+Tokens de entrada têm validade de 60 segundos; autorização de sala/convite ocorre no servidor.
+Câmera/microfone são as únicas fontes de publicação permitidas; dados de chat não passam pelo LiveKit.
 
-- A função usa `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` somente no servidor.
-- `verify_jwt=false` é intencional: cada JWT é validado com `auth.getUser`,
-  sem depender do formato legado de assinatura do gateway.
-- Login anônimo está funcionando no projeto. Para exigir confirmação real
-  de e-mail, conferir se confirmações estão habilitadas no Auth; o config
-  local atual tem confirmações desativadas.
-- Não aplicar novamente a migration já registrada. O nome local foi alinhado
-  à versão registrada pelo Supabase.
-- O schema legado foi conferido. `service_role` recebeu leitura apenas das
-  colunas `id`, `is_anonymous` e `email_confirmed_at` de `auth.users`;
-  acesso a senhas não foi concedido.
+`verify_jwt=false` é intencional: cada pedido passa por `auth.getUser(jwt)`.
+As tabelas da comunidade têm RLS sem políticas de navegador e permissões revogadas
+para `anon`/`authenticated`. Somente a Edge autenticada chama a RPC com o ator extraído do JWT.
+A fila de revogações de mídia é processada nas mutações e nas consultas de estado;
+falhas do serviço ficam na fila para nova tentativa. A expiração é conferida na
+emissão de tokens e nas consultas de estado, não por um agendador independente.
 
-As quatro tabelas novas têm RLS e nenhuma permissão direta para `anon` ou
-`authenticated`. A função SQL só pode ser executada por `service_role`; o ator
-vem exclusivamente do JWT verificado, nunca do corpo do pedido.
+## Verificação
 
-## Validação local
+- `npm run build`: TypeScript, Vite e 499 páginas pré-renderizadas.
+- `npm run test:community`: 18 testes incluindo isolamento, bloqueio, resposta ao convite, expiração, banimento, favoritos, denúncias e importação de salas oficiais.
+- `npm run test:chat`: 22 testes legados; flag de TypeScript incluída para Node 22.14.
+- `npm run test:camera`: 13 testes existentes de privacidade da câmera.
+- `npx deno check --no-lock supabase/functions/community-rooms/index.ts`.
+- Navegador: paginação, seção adulta, entrada, mensagem rápida, reservado e troca de câmera; layout de 390×844 com participantes em painel.
+- Seis vídeos sintéticos em servidor LiveKit local: principal 1280×720 e miniaturas 320×180 confirmados nos elementos de vídeo. Não foi ligada a câmera/microfone físicos do usuário.
+- Projeto real: catálogo de seis salas, autenticação de visitante, autorização de entrada e emissão de token com fontes limitadas. Nenhuma mensagem de teste enviada a pessoas reais.
 
-- `npm run build`: TypeScript, Vite e pré-renderização.
-- `npm run test:community`: executa a migration real em PostgreSQL via PGlite;
-  cobre privacidade, papéis, convites, limites, denúncias e bloqueios. PGlite usa
-  uma conexão e não substitui teste de carga/concorrência no Supabase.
-- No Node 22.14, testes legados precisam da flag:
-  `node --experimental-strip-types --test tests/chat-client.test.mjs supabase/functions/_shared/*.test.ts`.
-- `npm run test:camera`.
-- Navegação local e bloqueio de criação sem conta verificados no navegador.
-  O catálogo conectado foi validado; o fluxo de dono com conta confirmada permanece pendente.
+### Reproduzir verificação local
 
-## Limites desta entrega
+`node scripts/community-preview.mjs` abre em `http://127.0.0.1:5176/rooms`.
+Usa PostgreSQL PGlite e identidades fictícias; não escreve no Supabase.
+Para vídeo, iniciar o [servidor LiveKit local](https://docs.livekit.io/transport/self-hosting/local/)
+com `--dev --bind 127.0.0.1 --node-ip 127.0.0.1`, e executar o script com `--video`.
+Abrir `/scripts/community-cameras.html` e iniciar as seis transmissões sintéticas.
+`/scripts/community-mobile.html` incorpora o chat em uma tela de 390×844.
+Esses arquivos de teste não são entradas do build de produção.
 
-Salas da comunidade usam texto e consultas a cada 3 segundos. Vídeo, áudio,
-mensagens privadas e cobrança nas salas da comunidade ainda não foram integrados.
-Não há editor/exclusão de sala nesta primeira versão. Silenciar mensagens é local
-à visita. Denúncias aparecem para dono/moderadores; triagem administrativa central
-ainda precisa de interface. Banimento vale para a identidade autenticada: visitantes
-podem obter outra identidade ao limpar a sessão. Planejar controles de abuso antes
-de abrir criação e divulgação em escala.
+## Limites e publicação
 
-Mensagens são persistidas, mas apenas as últimas 50 aparecem. Definir e implementar
-uma política de retenção/expurgo antes de ampliar o uso. Não foi incluído plano pago:
-a criação básica permanece gratuita enquanto validamos uso e retorno.
+Frontend preparado na PR #6, baseado em `feat/garage-proximity-prototype`. A atualização
+não é automaticamente publicação no domínio principal. A prévia Vercel da PR permite revisão.
+
+A consulta de mensagens/presença continua a cada 3 segundos, com as últimas 50 mensagens.
+Paginação do catálogo é feita no navegador; não houve teste de carga com centenas de usuários
+simultâneos. A autodeclaração 18+ não é verificação documental. Bloqueios valem para a identidade
+autenticada; visitantes podem criar outra sessão. Não há edição/exclusão de sala nem expurgo
+programado de mensagens nesta fase. Validação de câmera física, 4G e sessão prolongada em
+aparelhos reais continua recomendada antes da divulgação ampla.
+
+Advisors: as tabelas novas aparecem como “RLS sem política” por serem acessíveis apenas
+pelo servidor ([explicação](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)).
+Alertas de funções legadas e configuração de senhas não foram modificados por esta entrega.

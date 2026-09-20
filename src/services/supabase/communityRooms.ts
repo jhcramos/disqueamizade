@@ -7,10 +7,11 @@ export type CommunityRoom = {
   rules: string
   theme: string
   access: 'public' | 'invite'
-  owner_id: string
+  owner_id: string | null
   online?: number
 }
 export type CommunityMessage = {
+  reply?: { nickname: string; body: string } | null
   id: string
   user_id: string
   nickname: string
@@ -25,13 +26,28 @@ export type CommunityMember = {
   last_seen: string
 }
 export type CommunityState = {
+  threads: CommunityThread[]
+  blocked: string[]
+  favorite: boolean
   room: CommunityRoom
   role: CommunityMember['role']
   members: CommunityMember[]
   messages: CommunityMessage[]
   reports: { id: string; user_id: string; nickname: string; body: string }[]
 }
+export type CommunityThread = {
+  id: string
+  sender: string
+  recipient: string
+  nickname: string
+  kind: 'direct' | 'reserved' | 'video'
+  status: 'pending' | 'accepted' | 'declined' | 'ended'
+  expires_at: string
+}
 const messages: Record<string, string> = {
+  expired: 'Este convite expirou. Envie outro para continuar.',
+  video_unavailable:
+    'As câmeras ainda não estão configuradas. O bate-papo por texto continua disponível.',
   unauthorized: 'Entre novamente para continuar.',
   forbidden: 'Você não tem permissão para esta ação.',
   banned: 'Seu acesso a esta sala está bloqueado.',

@@ -12,7 +12,6 @@ const CommunityRoomPage = lazy(() => import('./pages/CommunityRoomPage').then(m 
 const RoomsPage = lazy(() => import('./pages/RoomsPage').then(m => ({ default: m.RoomsPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const AuthPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })))
-const RoomPage = lazy(() => import('./rooms/RoomPage').then(m => ({ default: m.RoomPage })))
 const VideoFiltersPage = lazy(() => import('./pages/VideoFiltersPage').then(m => ({ default: m.VideoFiltersPage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
@@ -48,7 +47,7 @@ function App() {
         <Route path="/garagem-3d" element={<Navigate to="/garagem" replace />} />
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/comunidade/:slug" element={<CommunityRoomPage />} />
-        <Route path="/room/:roomId" element={<RoomPage />} />
+        <Route path="/room/:roomId" element={<CommunityRoomPage />} />
         <Route path="/roulette" element={<Navigate to="/garagem?phones=1" replace />} />
         {/* cabines removed — simplifying */}
         
