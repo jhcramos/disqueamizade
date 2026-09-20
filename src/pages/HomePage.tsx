@@ -7,7 +7,6 @@ import {
   Check,
   MessageCircle,
   CameraOff,
-  ChevronRight,
 } from "lucide-react";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import "./house-home.css";
@@ -75,6 +74,7 @@ export function HomePage() {
             </div>
             <Link className="experience-enter" to="/rooms">Entrar no bate-papo <ArrowRight size={20} /></Link>
             <small className="experience-footnote">Escolha seu apelido e uma sala para começar.</small>
+            <a className="experience-learn" href="#como-funciona-chat">Como funcionam as salas ↓</a>
           </article>
           <article className="experience-choice choice-house">
             <div className="experience-copy">
@@ -85,39 +85,64 @@ export function HomePage() {
             <div className="house-illustration"><img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086" alt="Casa em miniatura com avatares na garagem, na sala de estar e no bar" /></div>
             <Link className="experience-enter" to="/garagem">Explorar a Casa <ArrowRight size={20} /></Link>
             <small className="experience-footnote">Prévia explorável · encontros online em preparação.</small>
+            <a className="experience-learn" href="#a-casa">Conheça a experiência da Casa ↓</a>
           </article>
         </div>
       </section>
       <section className="house-manifesto">
         <p>
-          Uma casa. Muitos jeitos
+          Seu assunto. Seu jeito
           <br />
           <strong>de se conectar.</strong>
         </p>
         <div>
-          Uma casa para circular, brincar e conversar.
+          Nas salas, vá direto à conversa.
           <br />
-          Com o charme de uma festa de garagem
-          <br />e a liberdade de chegar do seu jeito.
+          Na Casa, experimente circular com seu avatar.
+          <br />Você escolhe por onde começar.
         </div>
         <MoveUpRight strokeWidth={1} />
+      </section>
+      <section className="home-chat-details" id="como-funciona-chat" aria-labelledby="chat-details-title">
+        <div className="home-detail-heading">
+          <div><p className="house-eyebrow">01 / SALAS DE BATE-PAPO</p><h2 id="chat-details-title">Um assunto em comum.<br /><em>O resto é conversa.</em></h2></div>
+          <p>Para quem quer conhecer pessoas pelo papo. Escolha uma sala, entre com seu apelido e acompanhe a conversa antes de mandar seu primeiro oi.</p>
+        </div>
+        <ol className="home-entry-steps">
+          <li><span>01</span><div><strong>Encontre seu assunto</strong><p>Amizade, desabafo, paquera ou um papo com gente de 40 anos ou mais.</p></div></li>
+          <li><span>02</span><div><strong>Escolha um apelido</strong><p>Entre para conversar. Câmera e microfone começam desligados.</p></div></li>
+          <li><span>03</span><div><strong>Puxe uma conversa</strong><p>Escreva para a sala ou escolha alguém para falar reservadamente.</p></div></li>
+        </ol>
+        <div className="home-chat-features">
+          <article><span>CONVERSA PÚBLICA</span><h3>Chegou? Pode dar um oi.</h3><p>Leia o papo da sala, responda a uma mensagem e use as sugestões rápidas para quebrar o gelo.</p></article>
+          <article><span>SÓ ENTRE VOCÊS</span><h3>Um papo mais reservado.</h3><p>Abra uma conversa particular pela lista de participantes. Convites de sala reservada e vídeo podem ser aceitos ou recusados.</p></article>
+          <article><span>CÂMERA OPCIONAL</span><h3>Veja quem está falando.</h3><p>Uma câmera em destaque e miniaturas para trocar de pessoa. Confira sua própria câmera antes de compartilhar.</p></article>
+          <article><span>SEU ESPAÇO</span><h3>Encontre. Volte. Convide.</h3><p>Favorite salas para reencontrá-las. Com uma conta e e-mail confirmado, crie sua sala grátis, pública ou por convite.</p></article>
+        </div>
+        <nav className="home-room-links" aria-label="Escolha uma sala de bate-papo">
+          <Link to="/comunidade/papo-livre">Papo Livre ↗</Link><Link to="/comunidade/desabafa-aqui">Desabafa aqui ↗</Link><Link to="/comunidade/46-plus">Amizade 40+ ↗</Link><Link to="/comunidade/paquera-e-namoro">Paquera e namoro ↗</Link><Link to="/comunidade/paquera-lgbtqia">Paquera LGBTQIA+ ↗</Link><Link to="/comunidade/adult-lounge">Lounge 18+ ↗</Link>
+        </nav>
+        <div className="home-detail-bottom"><p>Você pode bloquear participantes e denunciar mensagens. O Lounge 18+ fica separado em uma área adulta com confirmação antes da entrada.</p><Link to="/rooms">Encontrar minha sala <ArrowRight size={20} /></Link></div>
       </section>
       <section className="house-places" id="a-casa">
         <div className="house-section-head">
           <div>
-            <p className="house-eyebrow">ENCONTRE O CLIMA DA SUA CONVERSA.</p>
+            <p className="house-eyebrow">02 / A CASA · PRÉVIA EXPLORÁVEL</p>
             <h2>
-              É chegar
+              Mais do que entrar.
               <br />
-              <em>em algum lugar.</em>
+              <em>É explorar.</em>
             </h2>
           </div>
           <p>
-            Cada ambiente muda o clima.
-            <br />
-            Você escolhe onde a conversa começa.
+            Para quem gosta de descobrir um lugar: escolha seu avatar, circule pelos ambientes e experimente as interações da Casa, sem cadastro para explorar.
           </p>
         </div>
+        <ol className="home-entry-steps house-entry-steps">
+          <li><span>01</span><div><strong>Monte seu personagem</strong><p>Experimente cabelos, roupas e acessórios para chegar do seu jeito.</p></div></li>
+          <li><span>02</span><div><strong>Circule pela Casa</strong><p>Explore a garagem, a sala de estar e o bar. Descubra os objetos e as interações de cada ambiente.</p></div></li>
+          <li><span>03</span><div><strong>Experimente a prévia</strong><p>Teste os balões de conversa e a câmera com máscara de avatar. Encontros entre pessoas online ainda estão em preparação.</p></div></li>
+        </ol>
         <div className="house-places-grid">
           {rooms.map((r, i) => (
             <Link to="/garagem" className="house-place" key={r.id}>
@@ -343,16 +368,8 @@ export function HomePage() {
           <br />
           <em>Tem lugar pra você.</em>
         </h2>
-        <Link className="house-cta" to="/garagem">
-          Entrar sem cadastro <ArrowUpRight size={23} />
-        </Link>
-        <p>
-          A casa está em prévia: chat de texto e vídeo em grupo funcionam entre
-          visitas no mesmo navegador. Os encontros online estão em preparação.
-        </p>
-        <Link className="house-classic" to="/rooms">
-          Entrar nas salas de bate-papo <ChevronRight size={16} />
-        </Link>
+        <p>Vá direto ao bate-papo online ou descubra a prévia da Casa com seu avatar.</p>
+        <div className="home-final-choices"><Link className="house-cta" to="/rooms">Entrar no bate-papo <ArrowUpRight size={23} /></Link><Link className="house-cta" to="/garagem">Explorar a Casa <ArrowUpRight size={23} /></Link></div>
       </section>
       <footer className="house-footer">
         <Link to="/" aria-label="Disque Amizade início">
