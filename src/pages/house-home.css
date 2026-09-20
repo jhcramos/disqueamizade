@@ -1250,3 +1250,36 @@
 }
 .house-nav .brand-logo img { background:#294432; border-radius:9px; padding:4px; }
 .house-nav .house-account { background:#b64c2a; }
+
+/* Two equally visible ways into Disque Amizade. */
+.conversation-entry { background:#f7f2e9; color:#3d263a; padding:34px 4% 44px; }
+.conversation-intro { max-width:1250px; margin:0 auto 28px; }
+.conversation-intro .house-eyebrow { color:#775f6d; margin-bottom:14px; }
+.conversation-intro h1 { font-family:Georgia,serif; font-size:clamp(42px,4.5vw,66px); line-height:1.03; }
+.conversation-intro em { color:#b64c2a; }
+.conversation-intro > p:last-child { font-size:17px; line-height:1.6; margin:16px 0 0; max-width:660px; }
+.experience-choices { max-width:1250px; margin:auto; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.experience-choice { min-width:0; padding:26px; border:1px solid #d8c9ce; display:flex; flex-direction:column; }
+.choice-chat { background:#ece0ee; }.choice-house { background:#e6ebdf; }
+.experience-number { font-size:10px; letter-spacing:.12em; }
+.experience-copy h2 { font-family:Georgia,serif; font-size:clamp(28px,2.8vw,40px); margin:12px 0; }
+.experience-copy p { font-size:15px; line-height:1.6; margin:0; max-width:450px; }
+.chat-illustration,.house-illustration { height:210px; margin:22px 0; }
+.house-illustration img { height:100%; width:100%; object-fit:contain; mix-blend-mode:multiply; }
+.chat-illustration { background:#fffaf5; border:1px solid #d6c1d7; padding:18px; transform:rotate(-1deg); display:flex; flex-direction:column; justify-content:space-between; }
+.chat-illustration-top { display:flex; justify-content:space-between; align-items:center; gap:8px; font-weight:bold; font-size:13px; }
+.chat-illustration-top small { font-size:8px; letter-spacing:.08em; color:#795b73; }
+.sample-message { display:flex; gap:10px; align-items:center; font-size:13px; }
+.sample-message b { border-radius:50%; background:#ded1ec; width:30px; height:30px; display:grid; place-items:center; flex-shrink:0; font-size:11px; }
+.sample-message > span { background:#eee7f0; padding:10px; border-radius:0 12px 12px; }
+.sample-answer { justify-content:flex-end; }.sample-answer > span { background:#e8eccd; border-radius:12px 0 12px 12px; }
+.chat-illustration-tags { display:flex; flex-wrap:wrap; gap:8px; font-size:10px; }.chat-illustration-tags span { border:1px solid #d4c6cf; padding:5px 9px; border-radius:20px; }
+.house-home .experience-enter { margin-top:auto; background:#452c43; color:#fffaf5; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px; font-size:16px; font-weight:bold; }
+.house-home .choice-house .experience-enter { background:#304b39; }
+.experience-enter:hover { filter:brightness(1.15); }.experience-footnote { display:block; font-size:11px; line-height:1.5; margin-top:12px; color:#64515e; }
+@media(max-width:700px) {
+ .conversation-entry { padding:24px 18px 32px; }.experience-choices { grid-template-columns:1fr; gap:18px; }
+ .experience-choice { padding:20px; }.conversation-intro > p:last-child { font-size:15px; }
+ .chat-illustration,.house-illustration { height:175px; margin:18px 0; }.chat-illustration { padding:12px; }
+ .house-nav nav { flex-wrap:wrap; }.sample-message { font-size:11px; }
+}
