@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-06-24"
 readTime: 8
-image: "/blog-images/amizades-verdadeiras-internet-diferenca-seguidores-amigos.png"
-coverImage: "/blog-images/amizades-verdadeiras-internet-diferenca-seguidores-amigos.png"
+image: "/blog-images/chat-para-casais-atividades-online-juntos.webp"
+coverImage: "/blog-images/chat-para-casais-atividades-online-juntos.webp"
 wordCount: 1200
 lastModified: "2026-06-24"
 relatedSlugs:

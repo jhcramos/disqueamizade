@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo'
 import { Link } from 'react-router-dom'
 import { Heart, Phone } from 'lucide-react'
 
@@ -9,13 +10,7 @@ export const Footer = () => {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-lg">
-                DA
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white leading-none">DISQUE</h3>
-                <h3 className="text-lg font-bold text-primary-light leading-none">AMIZADE</h3>
-              </div>
+              <BrandLogo />
             </div>
             <p className="text-sm text-gray-500 mb-4">
               A evolução do clássico serviço de amizade por telefone. Agora com vídeo, salas temáticas e muito mais.

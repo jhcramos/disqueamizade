@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-01"
 readTime: 9
-image: "/blog-images/chat-online-apos-divorcio-separacao-reconstruir-vida-social-brasil.png"
-coverImage: "/blog-images/chat-online-apos-divorcio-separacao-reconstruir-vida-social-brasil.png"
+image: "/blog-images/chat-para-casais-atividades-online-juntos.webp"
+coverImage: "/blog-images/chat-para-casais-atividades-online-juntos.webp"
 wordCount: 1300
 lastModified: "2026-07-01"
 relatedSlugs:

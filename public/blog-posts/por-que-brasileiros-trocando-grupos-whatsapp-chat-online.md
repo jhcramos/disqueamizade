@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-01"
 readTime: 8
-image: "/blog-images/por-que-brasileiros-trocando-grupos-whatsapp-chat-online.png"
-coverImage: "/blog-images/por-que-brasileiros-trocando-grupos-whatsapp-chat-online.png"
+image: "/blog-images/chat-por-voz-ia-conversacional-tendencias-2026.webp"
+coverImage: "/blog-images/chat-por-voz-ia-conversacional-tendencias-2026.webp"
 wordCount: 1250
 lastModified: "2026-07-01"
 relatedSlugs:

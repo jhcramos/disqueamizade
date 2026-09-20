@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo'
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, User, LogIn, Bell } from 'lucide-react'
@@ -5,7 +6,8 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { useAuthStore } from '@/store/authStore'
 
 const navLinks = [
-  { to: '/rooms', label: 'Salas' },
+  { to: '/garagem', label: 'A Casa' },
+  { to: '/rooms', label: 'Bate-papo' },
   { to: '/roulette', label: 'Roleta 1:1' },
   { to: '/blog', label: 'Blog' },
   { to: '/sobre', label: 'Sobre' },
@@ -50,13 +52,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg group-hover:shadow-card-hover transition-shadow">
-              DA
-            </div>
-            <div className="hidden xs:block">
-              <h1 className="text-lg font-bold text-white leading-none">DISQUE</h1>
-              <h1 className="text-lg font-bold text-primary-400 leading-none">AMIZADE</h1>
-            </div>
+            <BrandLogo />
           </Link>
 
           {/* Desktop Nav */}

@@ -12,8 +12,8 @@ tags:
 author: "Disque Amizade"
 date: "2026-07-01"
 readTime: 9
-image: "/blog-images/chat-online-saude-mental-depressao-ansiedade-apoio-brasil.png"
-coverImage: "/blog-images/chat-online-saude-mental-depressao-ansiedade-apoio-brasil.png"
+image: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
+coverImage: "/blog-images/chat-online-yoga-bem-estar-mindfulness-brasil.webp"
 wordCount: 1350
 lastModified: "2026-07-01"
 relatedSlugs:

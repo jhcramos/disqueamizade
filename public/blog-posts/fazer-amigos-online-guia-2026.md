@@ -14,8 +14,8 @@ tags: [
 author: "Disque Amizade"
 date: "2026-04-11"
 readTime: 7
-image: "/blog-images/fazer-amigos-online-guia-2026.png"
-coverImage: "/blog-images/fazer-amigos-online-guia-2026.png"
+image: "/blog-images/placeholder.svg"
+coverImage: "/blog-images/placeholder.svg"
 wordCount: 812
 lastModified: "2026-04-11"
 relatedSlugs: [

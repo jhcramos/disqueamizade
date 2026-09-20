@@ -1,0 +1,61 @@
+.house-theatre{background:#fbf5e9;border:1px solid #d7c4a8;border-radius:16px;padding:18px;color:#382a32;margin-bottom:16px;min-width:0;box-shadow:0 8px 24px #3b2d1810}
+.house-theatre header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.house-theatre header span{display:flex;gap:7px;align-items:center;font-size:10px;letter-spacing:.14em;color:#866751}
+.house-theatre h2{font-family:Georgia,serif;font-size:26px;line-height:1.15;margin:5px 0 0}
+.house-theatre button,.house-theatre input{font:inherit}
+.house-theatre button{display:inline-flex;gap:6px;align-items:center;justify-content:center;color:inherit;border:1px solid #d6c2a5;border-radius:9px;background:#fffaf2;padding:8px 10px;font-size:12px;min-height:36px;cursor:pointer}
+.house-theatre button:disabled{opacity:.45;cursor:default}
+.house-theatre button:focus-visible,.house-theatre input:focus-visible,.house-theatre summary:focus-visible{outline:2px solid #b74c2f;outline-offset:3px}
+.house-theatre .theatre-close{flex-shrink:0;padding:8px;border-radius:50%;width:36px}
+.house-theatre .theatre-primary{background:#b54d31;color:#fffaf0;border-color:#b54d31}
+.theatre-empty,.theatre-watch{display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 16px;background:#eae0cd;border-radius:10px;color:#554334;gap:10px}
+.theatre-empty h3{font-family:Georgia,serif;font-size:24px;margin:0}
+.theatre-empty p,.theatre-watch p{font-size:13px;line-height:1.6;margin:0}
+.theatre-watch small{font-size:11px;line-height:1.5;max-width:280px}
+.theatre-now{margin:12px 0}.theatre-now small{font-size:9px;letter-spacing:.12em;color:#916448}.theatre-now h3{font-size:16px;line-height:1.3;margin:5px 0;overflow-wrap:anywhere}.theatre-now span{font-size:11px;color:#7b7065}
+.theatre-player{width:100%;height:auto;aspect-ratio:16/9;min-height:200px;background:#151819}
+.theatre-player iframe{display:block;width:100%;height:100%;min-height:200px;border:0}
+.theatre-personal-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;padding-top:8px}
+.theatre-personal-controls label{display:flex;align-items:center;gap:6px;flex:1;min-width:125px}.theatre-personal-controls input{width:70px;accent-color:#aa492f}.theatre-personal-controls small{font-size:10px}
+.theatre-personal-controls button{font-size:10px;padding:5px 7px}
+.theatre-video-links{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin:10px 0;gap:8px}.theatre-video-links a{display:flex;gap:4px;align-items:center;text-decoration:underline;color:#795640}.theatre-video-links button{border:0;background:transparent;font-size:11px;padding:4px}
+.theatre-host{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #e1d3bd;padding:12px 0}.theatre-host p{font-size:12px;margin:0}.theatre-host small{display:block;font-size:10px;color:#817568;margin-top:4px}.theatre-host-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.theatre-queue{border-top:1px solid #e1d3bd;padding-top:10px}.theatre-queue summary{cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;min-height:36px}.theatre-queue summary span{margin-left:auto;background:#e8dbc6;border-radius:50%;min-width:24px;text-align:center;padding:3px}
+.theatre-queue form{display:grid;gap:10px;margin:12px 0}.theatre-queue label{display:grid;gap:5px;font-size:11px}.theatre-queue input{background:#fffdf8;color:#382a32;border:1px solid #d7c4a8;border-radius:8px;padding:10px;min-width:0;width:100%;font-size:13px}.theatre-queue ol{list-style:none;margin:12px 0;padding:0;display:grid;gap:6px}.theatre-queue li{display:flex;align-items:center;gap:8px;background:#f0e6d6;padding:10px;border-radius:8px}.theatre-queue li>span{flex:1;min-width:0}.theatre-queue li strong{font-size:12px;display:block;overflow-wrap:anywhere}.theatre-queue li small{display:block;font-size:10px;color:#7b7065;margin-top:3px}.theatre-queue li button{min-width:36px}
+.theatre-note,.theatre-connection{font-size:10px!important;line-height:1.5;color:#817568;margin:12px 0 0}.theatre-connection{padding-top:10px;border-top:1px solid #e1d3bd}
+.house-theatre [role=alert]{font-size:12px;color:#9e3926;line-height:1.5;margin:10px 0}.house-theatre [role=status]{font-size:11px;line-height:1.5;margin-top:8px}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .garage-layout{grid-template-columns:minmax(0,1fr) minmax(390px,440px)}
+.garage-app.is-immersive:not(.is-mobile-house)[data-theatre=true] .garage-sidebar{display:flex;flex-direction:column;overflow:hidden;gap:10px}
+.is-immersive:not(.is-mobile-house)[data-theatre=true] .house-theatre{flex:1 1 58%;min-height:240px;overflow-y:auto;margin:0;overscroll-behavior:contain}
+.is-immersive:not(.is-mobile-house)[data-theatre=true] .room-chat{flex:1 1 36%;min-height:230px;overflow-y:auto;margin:0}
+.is-immersive:not(.is-mobile-house)[data-theatre=true] .garage-sidebar>*:not(.house-theatre):not(.room-chat):not(.social-chat){display:none}
+.is-mobile-house[data-theatre=true] .house-theatre{display:block;position:fixed;left:8px;right:8px;top:70px;bottom:calc(var(--dock-height) + 8px);z-index:60;margin:0;overflow-y:auto;overscroll-behavior:contain;padding:16px;border-radius:16px}
+.is-mobile-house[data-theatre=true] .garage-sidebar{display:block;padding:0;border:0;height:0;overflow:visible}
+.is-mobile-house[data-theatre=true] .garage-sidebar>*:not(.house-theatre){display:none}
+.is-mobile-house[data-theatre=true] .house-theatre .theatre-player{aspect-ratio:16/9;min-height:200px}
+@media(max-width:450px){.house-theatre input{font-size:16px}.house-theatre button{min-height:42px}}
+/* Both the video and the chat remain reachable in the standard desktop layout too. */
+.garage-app:not(.is-mobile-house):not(.is-immersive)[data-theatre=true] .garage-sidebar{height:max(530px,calc(100dvh - 280px));display:flex;flex-direction:column;overflow:hidden;gap:10px}
+.garage-app:not(.is-mobile-house):not(.is-immersive)[data-theatre=true] .house-theatre{flex:1 1 55%;min-height:230px;overflow-y:auto;margin:0;overscroll-behavior:contain}
+.garage-app:not(.is-mobile-house):not(.is-immersive)[data-theatre=true] .room-chat{flex:1 1 40%;min-height:230px;overflow-y:auto;margin:0}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .garage-sidebar>*:not(.house-theatre):not(.room-chat){display:none}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat{display:flex;flex-direction:column;overflow:hidden}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-toggle{flex-shrink:0}
+.garage-app:not(.is-mobile-house)[data-theatre=true] #room-chat-content{display:flex;flex-direction:column;flex:1;min-height:0}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-history{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-public{flex-shrink:0;padding:8px 12px;margin:0}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-quick{display:none}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat form{flex-shrink:0;margin:0;padding:8px 12px}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat-count{flex-shrink:0;padding:0 12px 8px}
+.garage-app:not(.is-mobile-house)[data-theatre=true] .room-chat:has(.room-chat-toggle[aria-expanded=false]){flex:0 0 auto;min-height:0}
+/* The iframe stays mounted once; its screen rectangle follows the TV camera. */
+.theatre-display{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.theatre-display small{font-size:11px;color:#817568}
+.is-mobile-house[data-theatre=true][data-cinema=true]{--cinema-controls:min(250px,30dvh)}
+.is-mobile-house[data-theatre=true][data-cinema=true] .garage-layout{bottom:calc(var(--dock-height) + var(--cinema-controls) + 16px)}
+.is-mobile-house[data-theatre=true][data-cinema=true] .house-theatre{top:auto;height:var(--cinema-controls);padding:12px 16px}
+.is-mobile-house[data-cinema=true] .house-theatre header{margin-bottom:8px}
+.is-mobile-house[data-cinema=true] .house-theatre h2{font-size:20px}
+.is-mobile-house[data-cinema=true] .theatre-now{margin:6px 0}
+.is-mobile-house[data-cinema=true] .theatre-now h3{font-size:14px}
+.is-mobile-house[data-cinema=true] .theatre-now>small,.is-mobile-house[data-cinema=true] .theatre-now>span{display:none}

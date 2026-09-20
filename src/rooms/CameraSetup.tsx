@@ -5,9 +5,9 @@ import { useCompositeStream } from '@/hooks/useCompositeStream'
 import { FILTER_CSS, CameraMasksButton } from '@/components/camera/CameraMasks'
 import { MASKS } from '@/masks'
 
-function useSetup() {
+function useSetup(initialMask:string|null='pixelado') {
   const media = useCamera({ startMuted: true })
-  const [activeMask, chooseMask] = useState<string | null>('pixelado')
+  const [activeMask, chooseMask] = useState<string | null>(initialMask)
   const [activeFilter, setActiveFilter] = useState('normal')
   const [beautySmooth, setBeautySmooth] = useState(false)
   const [beautyBrighten, setBeautyBrighten] = useState(false)
@@ -53,8 +53,8 @@ export function useCameraSetup() {
   if (!value) throw new Error('CameraSetupProvider required')
   return value
 }
-export function CameraSetupProvider({ children }: { children: ReactNode }) {
-  const camera = useSetup()
+export function CameraSetupProvider({ children,initialMask }: { children: ReactNode;initialMask?:string|null }) {
+  const camera = useSetup(initialMask)
   return <Context.Provider value={camera}>
     {/* Fonte de processamento permanente; nunca é usada como autovisualização. */}
     <video ref={camera.videoRef} autoPlay playsInline muted aria-hidden="true" className="fixed top-0 left-0 w-px h-px opacity-0 pointer-events-none -z-10" />

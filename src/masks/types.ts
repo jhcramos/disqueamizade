@@ -23,6 +23,8 @@ export interface MaskDef {
   description: string
   /** data-URL de prévia (SVG) para o seletor, quando existir */
   thumb?: string
+  /** Avatar mode hides the original frame completely. */
+  opaqueBackground?: boolean
   /** carrega assets (idempotente). Render é no-op até resolver. */
   preload: () => Promise<void>
   render: (mc: MaskContext) => void

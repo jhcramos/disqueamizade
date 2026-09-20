@@ -21,3 +21,5 @@ if (!existsSync(SRC)) {
 mkdirSync(DEST, { recursive: true })
 cpSync(SRC, DEST, { recursive: true })
 console.log(`[mediapipe] ${readdirSync(DEST).length} arquivos WASM copiados para public/mediapipe/wasm`)
+// Classic worker uses the exact installed runtime, loaded only on opt-in.
+cpSync(join(ROOT, 'node_modules', '@mediapipe', 'tasks-vision', 'vision_bundle.cjs'), join(DEST, '..', 'vision-worker.js'))

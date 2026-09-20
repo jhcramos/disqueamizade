@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowUp, Calendar, Clock, Tag, ChevronRight, Copy, Check } from 'lucide-react'
-import { Header } from '@/components/common/Header'
-import { FloatingRoomPicker } from '@/components/blog/FloatingRoomPicker'
+import { BlogHeader } from '@/components/blog/BlogHeader'
+
 import type { BlogPost } from './BlogPage'
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -175,16 +175,7 @@ export const BlogPostPage = () => {
       const container = document.createElement('div')
       el.replaceWith(container)
       const gradients = ['from-pink-600/20 to-purple-600/20', 'from-cyan-600/20 to-blue-600/20', 'from-amber-600/20 to-orange-600/20']
-      const categoryMap: Record<string, { label: string; emoji: string; link: string; desc: string }> = {
-        chat: { label: 'Sala Geral', emoji: '💬', link: '/rooms', desc: 'Bate-papo ao vivo com pessoas de todo o Brasil' },
-        video: { label: 'Sala com Vídeo', emoji: '🎥', link: '/rooms', desc: 'Converse cara a cara com novas amizades' },
-        cidades: { label: 'Salas por Cidade', emoji: '🏙️', link: '/rooms?category=cidade', desc: 'Encontre pessoas da sua cidade agora' },
-        seguranca: { label: 'Sala Moderada', emoji: '🛡️', link: '/rooms', desc: 'Ambiente seguro e moderado para conversar' },
-        dicas: { label: 'Sala Geral', emoji: '💡', link: '/rooms', desc: 'Coloque as dicas em prática agora' },
-        relacionamento: { label: 'Sala Paquera', emoji: '💕', link: '/rooms', desc: 'Conheça pessoas especiais agora' },
-        comparativo: { label: 'Salas Populares', emoji: '🔥', link: '/rooms', desc: 'Descubra por que somos a melhor opção' },
-      }
-      const room = categoryMap[post.category] || { label: 'Salas de Chat', emoji: '💬', link: '/rooms', desc: 'Entre e conheça pessoas incríveis agora' }
+      const room = { label: 'Escolha seu jeito de conversar', emoji: '🏠', link: '/garagem', desc: 'Explore a Casa com avatares ou encontre sua turma nas salas de bate-papo.' }
       const gradient = gradients[i % gradients.length]
       container.innerHTML = `
         <div class="my-8 p-6 rounded-2xl bg-gradient-to-br ${gradient} border border-white/10 not-prose">
@@ -196,8 +187,9 @@ export const BlogPostPage = () => {
             </div>
           </div>
           <a href="${room.link}" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-pink-500/25 no-underline">
-            Entrar na Sala →
+            Entrar na casa →
           </a>
+          <a href="/rooms" class="inline-flex px-6 py-3 text-white border border-white/30 rounded-xl no-underline mt-3 sm:ml-3">Ir ao bate-papo →</a>
         </div>
       `
     })
@@ -307,7 +299,7 @@ export const BlogPostPage = () => {
         />
       </div>
 
-      <Header />
+      <BlogHeader />
 
       {/* Breadcrumb with schema.org */}
       <div className="max-w-7xl mx-auto px-4 pt-6">
@@ -324,7 +316,7 @@ export const BlogPostPage = () => {
       {coverImg && (
         <div className="max-w-5xl mx-auto px-4 mt-6">
           <div className="rounded-2xl overflow-hidden">
-            <img src={coverImg} alt={post.title} className="w-full h-64 md:h-96 object-cover" loading="eager" />
+            <img onError={e => { if (!e.currentTarget.src.endsWith("/blog-images/placeholder.svg")) e.currentTarget.src = "/blog-images/placeholder.svg" }} src={coverImg} alt={post.title} className="w-full h-64 md:h-96 object-cover" loading="eager" />
           </div>
         </div>
       )}
@@ -452,9 +444,10 @@ export const BlogPostPage = () => {
           <div className="mt-10 p-8 rounded-2xl bg-gradient-to-br from-pink-600/20 to-purple-600/20 border border-pink-500/20 text-center">
             <h3 className="text-2xl font-bold text-white mb-2">Pronto pra conversar? 🎉</h3>
             <p className="text-dark-400 mb-6">Entre no Disque Amizade e conheça pessoas incríveis agora mesmo!</p>
-            <Link to="/rooms" className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-xl transition-all">
-              Entrar nas Salas <ChevronRight className="w-4 h-4" />
+            <Link to="/garagem" className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-xl transition-all">
+              Entrar na casa <ChevronRight className="w-4 h-4" />
             </Link>
+            <Link to="/rooms" className="inline-flex px-6 py-3 border border-white/30 rounded-xl mt-3 sm:ml-3">Ir ao bate-papo →</Link>
           </div>
 
           {/* Related articles */}
@@ -466,7 +459,7 @@ export const BlogPostPage = () => {
                   <Link key={r.slug} to={`/blog/${r.slug}`} className="group">
                     <div className="bg-dark-900 rounded-xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all">
                       {(r.coverImage || r.image) && (
-                        <img src={r.coverImage || r.image} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
+                        <img onError={e => { if (!e.currentTarget.src.endsWith("/blog-images/placeholder.svg")) e.currentTarget.src = "/blog-images/placeholder.svg" }} src={r.coverImage || r.image} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
                       )}
                       <div className="p-4">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[r.category] || 'bg-dark-700 text-dark-300'}`}>
@@ -539,7 +532,7 @@ export const BlogPostPage = () => {
       </div>
 
       {/* Floating Room Picker */}
-      <FloatingRoomPicker />
+
 
       {/* Back to top */}
       {showBackToTop && (

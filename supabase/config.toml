@@ -60,3 +60,6 @@ verify_jwt = false
 # Custom JWT validation through auth.getUser, same as send-chat.
 [functions.icebreaker]
 verify_jwt = false
+
+[functions.community-rooms]
+verify_jwt = false
