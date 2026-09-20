@@ -11,6 +11,8 @@ import './catalog.css'
 const themes: Record<string, string> = {
   all: 'Todos os assuntos',
   amizade: 'Amizade',
+  desabafo: 'Desabafo',
+  maduros: '40+',
   paquera: 'Paquera',
   musica: 'Música',
   games: 'Games',
@@ -74,7 +76,7 @@ export function CommunityCatalog({ refresh }: { refresh: number }) {
         id: r.id,
         name: r.name,
         description: r.description,
-        theme: r.theme,
+        theme: !r.owner_id && r.slug === 'desabafa-aqui' ? 'desabafo' : !r.owner_id && r.slug === '46-plus' ? 'maduros' : r.theme,
         adult: r.theme === 'adulto',
         online: r.online || 0,
         url: '/comunidade/' + r.slug,
@@ -84,6 +86,10 @@ export function CommunityCatalog({ refresh }: { refresh: number }) {
     ],
     [rooms],
   )
+  const availableThemes = adult
+    ? { all: 'Todas as salas 18+' }
+    : Object.fromEntries(Object.entries(themes).filter(([key]) =>
+        key === 'all' || entries.some((r) => !r.adult && r.theme === key)))
   const filtered = entries
     .filter(
       (r) =>
@@ -189,7 +195,7 @@ export function CommunityCatalog({ refresh }: { refresh: number }) {
         <section className="catalog-directory" aria-label="Encontre uma sala">
           <aside>
             <h2>Qual é o seu papo?</h2>
-            {Object.entries(themes).map(([key, label]) => (
+            {Object.entries(availableThemes).map(([key, label]) => (
               <button
                 key={key}
                 aria-pressed={theme === key}

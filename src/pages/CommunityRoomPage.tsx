@@ -36,7 +36,7 @@ const kindLabel = (kind: CommunityThread['kind']) =>
 
 export function CommunityRoomPage() {
   const { slug: routeSlug, roomId } = useParams(),
-    slug = routeSlug || roomId || '',
+    slug = ({ karaoke: 'desabafa-aqui', games: 'paquera-e-namoro', 'geral-brasil': 'paquera-lgbtqia' } as Record<string, string>)[routeSlug || roomId || ''] || routeSlug || roomId || '',
     userId = useAuthStore((s) => s.user?.id)
   return (
     <AgeGate>

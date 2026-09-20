@@ -304,6 +304,13 @@ test('community private conversations, invitations and media authorization', asy
         (await db.query('SELECT count(*) FROM rooms')).rows[0].count,
         1,
       )
+      await db.exec(await readFile(new URL('../supabase/migrations/20260920204037_community_catalog_focus.sql', import.meta.url), 'utf8'))
+      const focused = (await act(a, 'preview', { slug: publicId })).room
+      assert.equal(focused.slug, 'paquera-lgbtqia')
+      assert.equal(focused.theme, 'paquera')
+      assert.equal(focused.name, 'Paquera LGBTQIA+')
+      assert.equal((await act(a, 'preview', { slug })).room.name, 'Teste de sala')
+      assert.equal((await db.query('SELECT slug FROM rooms WHERE id=$1', [publicId])).rows[0].slug, 'geral-brasil')
     },
   )
   await t.test(
