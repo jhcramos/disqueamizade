@@ -1,0 +1,2020 @@
+#salon {
+  --plum: #292236;
+  --paper: #faf8f3;
+  --lime: #e5f384;
+  --muted: #79717f;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #211c2b;
+  color: var(--plum);
+  font:
+    14px 'Public Sans',
+    sans-serif;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+#salon[hidden] {
+  display: none;
+}
+#salon * {
+  box-sizing: border-box;
+}
+#salon button {
+  cursor: pointer;
+}
+#salon button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#salon button:focus-visible,
+#salon textarea:focus-visible {
+  outline: 3px solid #9472b8 !important;
+  outline-offset: 3px;
+}
+#salon iconify-icon {
+  font-size: 19px;
+  vertical-align: middle;
+}
+#salon .s-shell {
+  width: 100%;
+  max-width: 1600px;
+  margin: auto;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 274px;
+  border: 1px solid #57485f;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: 0 24px 100px #100a2040;
+}
+#salon .s-left {
+  background: var(--plum);
+  color: #f5effa;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 18px 18px;
+  min-height: 0;
+  overflow: auto;
+}
+#salon .s-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.15;
+  padding: 0 8px 28px;
+}
+#salon .s-brand img {
+  width: 37px;
+  height: 37px;
+}
+#salon .s-brand small {
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 1.8px;
+  display: block;
+  margin-top: 5px;
+  color: #c7b9d5;
+}
+#salon .s-back {
+  font-size: 12px;
+  color: #c7b9d5;
+  text-align: left;
+  padding: 10px 8px;
+  margin-bottom: 24px;
+}
+#salon .s-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: #b9a8c8;
+  margin: 0 10px 12px;
+}
+#salon .s-room {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+#salon .s-room i {
+  font-style: normal;
+  background: #ffffff10;
+  border: 1px solid #ffffff20;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+}
+#salon .s-room.active {
+  background: var(--lime);
+  color: #292236;
+  font-weight: 700;
+}
+#salon .s-room.active i {
+  background: #292236;
+  color: var(--lime);
+}
+#salon .s-room small {
+  display: block;
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 3px;
+}
+#salon .s-private-list {
+  margin-top: 26px;
+}
+#salon .s-inbox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #6c597e;
+  border-radius: 10px;
+  margin-top: 20px;
+  color: #f5effa;
+  font-size: 12px;
+}
+#salon .s-count {
+  border-radius: 50%;
+  background: #ff9d87;
+  color: #292236;
+  min-width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+#salon .s-own {
+  margin-top: auto;
+  padding: 28px 7px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+#salon .s-own small {
+  display: block;
+  font-size: 10px;
+  color: #b9a8c8;
+  margin-top: 3px;
+}
+#salon .s-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #dccbf0;
+  color: #403044;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid #40304412;
+}
+#salon .s-avatar.coral {
+  background: #ffd1be;
+}
+#salon .s-avatar.lime {
+  background: #e5f384;
+}
+#salon .s-avatar.blue {
+  background: #cbdfea;
+}
+#salon .s-center {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--paper);
+}
+#salon .s-head {
+  padding: 24px 28px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e7e1e8;
+}
+#salon .s-title {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  min-width: 0;
+}
+#salon .s-room-symbol {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #39274420;
+  background: #ece5f1;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+#salon .s-title h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+}
+#salon .s-title p {
+  font-size: 11px;
+  color: #79717f;
+  margin-top: 5px;
+}
+#salon .s-head-actions {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+#salon .s-iconbtn {
+  border: 1px solid #ded5e6;
+  border-radius: 10px;
+  padding: 9px;
+  background: #fff;
+  line-height: 1;
+}
+#salon .s-demo {
+  font-size: 9px;
+  color: #786885;
+  text-align: center;
+  letter-spacing: 0.5px;
+  padding: 7px;
+  background: #f0ebf4;
+}
+#salon .s-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid #e7e1e8;
+  overflow: auto;
+  flex-shrink: 0;
+}
+#salon .s-tabs button {
+  padding: 10px 12px 12px;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #827389;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 3px solid transparent;
+}
+#salon .s-tabs button.active {
+  border-color: #74598d;
+  color: #3d2c4c;
+  font-weight: 700;
+}
+#salon .s-tabs .s-new {
+  border: 1px dashed #c0adc9;
+  border-radius: 7px;
+  padding: 6px 10px;
+  align-self: center;
+  margin-bottom: 7px;
+  font-size: 11px;
+}
+#salon .s-incoming {
+  margin: 15px 24px 0;
+  border: 1px solid #dbb9a4;
+  border-radius: 12px;
+  background: #fff0e7;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+#salon .s-incoming[hidden] {
+  display: none;
+}
+#salon .s-incoming strong {
+  font-size: 12px;
+  display: block;
+}
+#salon .s-incoming p {
+  font-size: 10px;
+  color: #806d69;
+  margin-top: 4px;
+}
+#salon .s-incoming .s-invite-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+#salon .s-primary {
+  background: var(--plum);
+  color: white;
+  border: 1px solid var(--plum);
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-size: 11px;
+  font-weight: 700;
+}
+#salon .s-secondary {
+  border: 1px solid #c8bccf;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-size: 11px;
+  background: #fff;
+  color: #49374f;
+}
+#salon .s-stream {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 22px 28px 12px;
+}
+#salon .s-day {
+  font-size: 9px;
+  color: #a397aa;
+  text-align: center;
+  letter-spacing: 1.5px;
+  margin: 0 0 19px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+#salon .s-day:before,
+#salon .s-day:after {
+  content: '';
+  height: 1px;
+  background: #e9e3eb;
+  flex: 1;
+}
+#salon .s-message {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 17px;
+  max-width: 93%;
+}
+#salon .s-message.mine {
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+#salon .s-message .s-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+  border-radius: 11px;
+  margin-top: 1px;
+}
+#salon .s-message-body {
+  min-width: 0;
+}
+#salon .s-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  margin: 0 3px 6px;
+}
+#salon .s-meta strong {
+  font-size: 11px;
+  color: #594663;
+}
+#salon .s-meta time {
+  color: #a091a8;
+  font-size: 9px;
+}
+#salon .s-meta em {
+  font-style: normal;
+  color: #816d96;
+  font-size: 8px;
+  border: 1px solid #d7cbe2;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+#salon .s-bubble {
+  background: white;
+  border: 1px solid #e6dfe9;
+  border-radius: 0 13px 13px 13px;
+  padding: 11px 14px;
+  box-shadow: 0 2px 2px #38213e03;
+}
+#salon .s-bubble p {
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#salon .s-message.mine .s-bubble {
+  background: #edf3cf;
+  border-color: #dce5b8;
+  border-radius: 13px 0 13px 13px;
+}
+#salon .s-message.mine .s-meta {
+  justify-content: end;
+}
+#salon .s-msg-actions {
+  display: flex;
+  gap: 12px;
+  margin: 5px 3px 0;
+}
+#salon .s-msg-actions button {
+  font-size: 9px;
+  color: #907f9b;
+}
+#salon .s-message.mine .s-msg-actions {
+  justify-content: end;
+}
+#salon blockquote {
+  font-size: 11px;
+  border-left: 3px solid #b8a0cd;
+  background: #f1ecf5;
+  border-radius: 4px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  color: #735d80;
+}
+#salon .s-composer {
+  padding: 13px 24px 17px;
+  border-top: 1px solid #e7e1e8;
+  background: #faf8f3;
+  flex-shrink: 0;
+}
+#salon .s-recipient {
+  font-size: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 9px;
+  color: #796788;
+}
+#salon .s-recipient.private {
+  color: #745093;
+  font-weight: 700;
+}
+#salon .s-composebox {
+  border: 1.5px solid #c8bdcf;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  box-shadow: 0 3px 14px #35223a06;
+}
+#salon .s-composebox:focus-within {
+  border-color: #876a9d;
+}
+#salon textarea {
+  display: block;
+  resize: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  min-height: 43px;
+  max-height: 95px;
+}
+#salon .s-compose-bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+#salon .s-compose-bottom span {
+  font-size: 9px;
+  color: #a194aa;
+  margin-left: auto;
+}
+#salon .s-send {
+  background: var(--lime);
+  border: 1px solid #d3e274;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 11px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#salon .s-suggestions {
+  display: flex;
+  gap: 6px;
+  overflow: auto;
+  margin-top: 10px;
+}
+#salon .s-suggestions button {
+  white-space: nowrap;
+  border: 1px solid #ded5e4;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 9px;
+  color: #7b678b;
+}
+#salon .s-right {
+  border-left: 1px solid #e6dfe9;
+  background: #f3eff6;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 17px;
+}
+#salon .s-cover {
+  height: 144px;
+  background: #c9b8ed;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 17px;
+  margin-bottom: 21px;
+}
+#salon .s-cover:before {
+  content: '';
+  position: absolute;
+  border: 22px solid #e5f384;
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  right: -58px;
+  bottom: -53px;
+}
+#salon .s-cover:after {
+  content: '';
+  position: absolute;
+  border: 2px solid #745787;
+  border-radius: 50%;
+  width: 95px;
+  height: 95px;
+  right: -22px;
+  top: -43px;
+}
+#salon .s-cover small {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  display: block;
+}
+#salon .s-cover strong {
+  font-family: 'Barlow Condensed';
+  font-size: 37px;
+  font-weight: 700;
+  line-height: 0.95;
+  display: block;
+  margin-top: 15px;
+  max-width: 130px;
+  position: relative;
+  z-index: 1;
+}
+#salon .s-people-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+#salon .s-people-title small {
+  font-size: 9px;
+  font-weight: 400;
+  color: #94839e;
+}
+#salon .s-person {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #e4dce9;
+}
+#salon .s-person strong {
+  font-size: 11px;
+  display: block;
+}
+#salon .s-person small {
+  font-size: 9px;
+  color: #92809d;
+  display: block;
+  margin-top: 3px;
+}
+#salon .s-person > iconify-icon {
+  margin-left: auto;
+  color: #93839d;
+  font-size: 16px;
+}
+#salon .s-rule-box {
+  padding: 18px 0 0;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #8c7b98;
+}
+#salon .s-rule-box strong {
+  font-size: 11px;
+  color: #624d71;
+  display: block;
+  margin-bottom: 6px;
+}
+#salon .s-rule-box button {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-top: 8px;
+}
+#salon .s-footnote {
+  font-size: 9px;
+  color: #baaac9;
+  text-align: center;
+  padding: 12px 0 0;
+}
+#salon .s-mobile-back,
+#salon .s-drawer-close {
+  display: none;
+}
+#s-reply {
+  font-size: 11px;
+  padding: 7px 10px;
+  background: #eee6f4;
+  border-left: 3px solid #b89bcf;
+  margin-bottom: 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+#s-reply[hidden] {
+  display: none;
+}
+#s-status {
+  font-size: 9px;
+  color: #86718f;
+  min-height: 12px;
+  padding-top: 6px;
+}
+#salon .s-callstage {
+  background: #30263c;
+  padding: 15px 24px;
+  color: white;
+  flex-shrink: 0;
+}
+#salon .s-callstage[hidden] {
+  display: none;
+}
+#salon .s-calltiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#salon .s-calltile {
+  height: 118px;
+  background: #453650;
+  border: 1px solid #715785;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+}
+#salon .s-calltile small {
+  font-size: 9px;
+  color: #b7a6c6;
+}
+#salon .s-callcontrols {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+#salon .s-callcontrols button {
+  border: 1px solid #715785;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+#salon .s-callcontrols button:last-child {
+  background: #e89385;
+  color: #302136;
+  border: 0;
+}
+#s-shade {
+  display: none;
+}
+#s-modal {
+  border: 1px solid #c6b2d4;
+  border-radius: 18px;
+  background: #faf8f3;
+  color: #292236;
+  padding: 0;
+  width: 450px;
+  max-width: calc(100vw - 28px);
+  max-height: 90dvh;
+  overflow: auto;
+  font-family: 'Public Sans';
+}
+#s-modal::backdrop {
+  background: #17101fd0;
+  backdrop-filter: blur(4px);
+}
+#s-modal .m-inner {
+  padding: 28px;
+}
+#s-modal .m-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 17px;
+}
+#s-modal h2 {
+  font-size: 23px;
+  letter-spacing: -0.7px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+#s-modal .m-kicker {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #9479a6;
+  margin-bottom: 8px;
+}
+#s-modal .m-close {
+  border: 1px solid #dbcfdf;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+#s-modal p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #82708e;
+}
+#s-modal .m-action {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 0;
+  border-bottom: 1px solid #e3dbe8;
+  font-size: 12px;
+}
+#s-modal .m-action iconify-icon {
+  font-size: 20px;
+  color: #9678ae;
+}
+#s-modal .m-action small {
+  display: block;
+  font-size: 9px;
+  color: #a28eae;
+  margin-top: 4px;
+}
+#s-modal .m-primary {
+  padding: 12px 16px;
+  background: #292236;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+#s-modal .m-secondary {
+  padding: 12px 16px;
+  border: 1px solid #d2c4db;
+  border-radius: 9px;
+  font-size: 12px;
+}
+#s-modal .m-row {
+  display: flex;
+  gap: 9px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+#s-modal .m-preview {
+  margin: 18px 0;
+  background: #352a40;
+  border-radius: 12px;
+  color: #d9c8e7;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+#s-modal .m-preview iconify-icon {
+  font-size: 35px;
+}
+#s-modal .m-preview p {
+  color: #c5afd4;
+  font-size: 11px;
+}
+#s-modal .m-entry {
+  padding: 14px;
+  border: 1px solid #e3dbe8;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+#s-modal .m-entry strong {
+  font-size: 12px;
+}
+#s-modal .m-entry small {
+  font-size: 10px;
+  color: #9b86a8;
+  display: block;
+  margin: 5px 0 10px;
+}
+#s-modal .m-notice {
+  margin-top: 15px;
+  font-size: 10px;
+}
+#s-modal input,
+#s-modal select {
+  width: 100%;
+  border: 1px solid #cfc0d9;
+  background: white;
+  border-radius: 7px;
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.s-hidden-catalog > div > header,
+.s-hidden-catalog > div > main,
+.s-hidden-catalog > div > footer {
+  visibility: hidden;
+}
+@media (min-width: 1800px) {
+  #salon {
+    padding: 36px;
+  }
+  #salon .s-shell {
+    max-height: 1000px;
+  }
+}
+@media (max-width: 1180px) {
+  #salon {
+    padding: 12px;
+  }
+  #salon .s-shell {
+    grid-template-columns: 190px minmax(0, 1fr) 238px;
+  }
+  #salon .s-left {
+    padding: 20px 12px;
+  }
+  #salon .s-head {
+    padding: 18px;
+  }
+  #salon .s-stream {
+    padding: 20px;
+  }
+  #salon .s-incoming {
+    margin: 12px 16px 0;
+  }
+  #salon .s-incoming .s-avatar {
+    display: none;
+  }
+}
+@media (max-width: 980px) {
+  #salon .s-shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  #salon .s-right {
+    display: none;
+  }
+  #salon .s-right.drawer {
+    display: block;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    bottom: 35px;
+    width: 285px;
+    z-index: 110;
+    border-radius: 14px;
+    box-shadow: -20px 0 90px #17102050;
+  }
+  #salon .s-drawer-close {
+    display: block;
+    float: right;
+    border: 1px solid #c9b8d5;
+    padding: 1px 7px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+  }
+  #s-shade.open {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: #1d12285c;
+    z-index: 109;
+  }
+}
+@media (max-width: 680px) {
+  #salon {
+    padding: 0;
+  }
+  #salon .s-shell {
+    display: flex;
+    border: 0;
+    border-radius: 0;
+    max-height: none;
+  }
+  #salon .s-left {
+    display: none;
+  }
+  #salon .s-center {
+    flex: 1;
+  }
+  #salon .s-footnote {
+    display: none;
+  }
+  #salon .s-head {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  #salon .s-title {
+    gap: 9px;
+  }
+  #salon .s-title h2 {
+    font-size: 18px;
+    max-width: 145px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #salon .s-title p {
+    font-size: 9px;
+  }
+  #salon .s-room-symbol {
+    display: none;
+  }
+  #salon .s-mobile-back {
+    display: block;
+    font-size: 22px;
+  }
+  #salon .s-iconbtn {
+    padding: 7px;
+  }
+  #salon .s-head-actions {
+    gap: 5px;
+  }
+  #salon .s-iconbtn iconify-icon {
+    font-size: 17px;
+  }
+  #salon .s-demo {
+    font-size: 8px;
+    padding: 5px;
+  }
+  #salon .s-tabs {
+    padding: 6px 12px 0;
+    gap: 2px;
+  }
+  #salon .s-tabs button {
+    font-size: 11px;
+    padding: 8px 8px 10px;
+  }
+  #salon .s-tabs .s-new {
+    font-size: 10px;
+  }
+  #salon .s-incoming {
+    margin: 10px 12px 0;
+    padding: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  #salon .s-incoming strong {
+    font-size: 11px;
+  }
+  #salon .s-incoming p {
+    font-size: 9px;
+  }
+  #salon .s-invite-actions button {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+  #salon .s-stream {
+    padding: 17px 14px 8px;
+  }
+  #salon .s-message {
+    max-width: 100%;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  #salon .s-bubble {
+    padding: 9px 11px;
+  }
+  #salon .s-bubble p {
+    font-size: 13px;
+  }
+  #salon .s-composer {
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+  }
+  #salon textarea {
+    font-size: 16px;
+    min-height: 36px;
+    max-height: 76px;
+  }
+  #salon .s-composebox {
+    padding: 10px;
+  }
+  #salon .s-suggestions {
+    margin-top: 7px;
+  }
+  #salon .s-compose-bottom span {
+    display: none;
+  }
+  #salon .s-send {
+    margin-left: auto;
+  }
+  #salon .s-right.drawer {
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 285px;
+    border-radius: 0;
+  }
+  #salon .s-callstage {
+    padding: 10px 12px;
+  }
+  #salon .s-calltile {
+    height: 95px;
+  }
+  #s-modal .m-inner {
+    padding: 22px;
+  }
+  #s-modal h2 {
+    font-size: 21px;
+  }
+}
+
+#salon #s-title:focus {
+  outline: none;
+}
+#salon .s-empty {
+  max-width: 330px;
+  margin: 36px auto;
+  text-align: center;
+  padding: 26px 16px;
+  color: #8d779d;
+}
+#salon .s-empty strong {
+  display: block;
+  font-size: 21px;
+  color: #564060;
+  letter-spacing: -0.7px;
+  margin: 14px 0 10px;
+}
+#salon .s-empty p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+#salon .s-empty .s-avatar {
+  margin: auto;
+  width: 58px;
+  height: 58px;
+  font-size: 23px;
+  border-radius: 22px;
+}
+
+#salon .cam-dock {
+  padding: 15px 24px 10px;
+  background: #30263b;
+  color: #f7f2fb;
+  flex-shrink: 0;
+}
+#salon .cam-dock[hidden] {
+  display: none;
+}
+#salon .cam-dock-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+#salon .cam-dock-head strong {
+  font-size: 13px;
+  display: block;
+}
+#salon .cam-dock-head span {
+  display: block;
+  color: #baa8c9;
+  font-size: 9px;
+  margin-top: 4px;
+}
+#salon .cam-dock-head > div:last-child {
+  display: flex;
+  gap: 6px;
+}
+#salon .cam-dock-head button {
+  font-size: 10px;
+  border: 1px solid #776085;
+  border-radius: 7px;
+  padding: 7px 10px;
+}
+#salon .cam-dock-head button:last-child {
+  background: #e5f384;
+  border-color: #e5f384;
+  color: #292236;
+  font-weight: 700;
+}
+#salon .cam-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+#salon .cam-card {
+  position: relative;
+  border: 1px solid #776185;
+  border-radius: 12px;
+  background: #493953;
+  overflow: hidden;
+  min-width: 0;
+}
+#salon .cam-own {
+  background: #352d40;
+  border-style: dashed;
+}
+#salon .cam-ana {
+  background: #62505e;
+  border-color: #cb9e8d;
+}
+#salon .cam-rafa {
+  background: #384252;
+  border-color: #6a798d;
+}
+#salon .cam-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 11px 0;
+  font-size: 8px;
+  letter-spacing: 0.6px;
+}
+#salon .cam-card-top iconify-icon {
+  font-size: 12px;
+  color: #bcabc9;
+}
+#salon .cam-pill {
+  background: #edb69a;
+  color: #392c35;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+#salon .cam-placeholder {
+  height: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+#salon .cam-placeholder > iconify-icon {
+  font-size: 26px;
+  color: #aa99b9;
+}
+#salon .cam-placeholder > span:last-child {
+  font-size: 9px;
+  color: #d8cadf;
+}
+#salon .cam-monogram {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #c9b7d250;
+  border-radius: 50%;
+  background: #ffffff10;
+  font-size: 19px;
+}
+#salon .cam-card > button {
+  display: block;
+  background: #21172a50;
+  border-top: 1px solid #c9b7d225;
+  padding: 9px;
+  width: 100%;
+  font-size: 10px;
+  color: #f5e9fc;
+  text-align: center;
+}
+#salon .cam-own > button {
+  color: #e5f384;
+}
+#salon .cam-disclaimer {
+  font-size: 8px;
+  color: #ab98bc;
+  margin-top: 8px;
+  text-align: right;
+}
+#salon .cam-dock.expanded .cam-placeholder {
+  height: 190px;
+}
+#salon .s-calltile {
+  height: 190px;
+}
+#salon .s-incoming {
+  margin-top: 10px;
+  padding: 9px 12px;
+}
+#salon .s-head {
+  padding-top: 18px;
+  padding-bottom: 15px;
+}
+#salon .s-stream {
+  padding-top: 16px;
+}
+#salon .s-tabs {
+  padding-top: 7px;
+}
+#salon .s-composer {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+@media (max-height: 850px) and (min-width: 681px) {
+  #salon .cam-placeholder {
+    height: 63px;
+  }
+  #salon .cam-dock.expanded .cam-placeholder {
+    height: 130px;
+  }
+  #salon .s-calltile {
+    height: 135px;
+  }
+}
+@media (max-width: 680px) {
+  #salon .cam-dock {
+    padding: 10px 12px 7px;
+  }
+  #salon .cam-dock-head {
+    margin-bottom: 8px;
+  }
+  #salon .cam-dock-head strong {
+    font-size: 11px;
+  }
+  #salon .cam-dock-head span {
+    font-size: 8px;
+  }
+  #salon .cam-dock-head button {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  #salon .cam-grid {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 3px;
+  }
+  #salon .cam-card {
+    min-width: 145px;
+    flex: 1;
+    scroll-snap-align: start;
+  }
+  #salon .cam-card-top {
+    font-size: 7px;
+    padding: 8px 8px 0;
+  }
+  #salon .cam-placeholder {
+    height: 62px;
+    gap: 5px;
+  }
+  #salon .cam-placeholder > span:last-child {
+    font-size: 8px;
+  }
+  #salon .cam-monogram {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+  #salon .cam-card > button {
+    font-size: 9px;
+    padding: 7px 5px;
+  }
+  #salon .cam-dock.expanded .cam-card {
+    min-width: calc(100% - 10px);
+  }
+  #salon .cam-dock.expanded .cam-placeholder {
+    height: 155px;
+  }
+  #salon .cam-disclaimer {
+    font-size: 7px;
+    margin-top: 4px;
+  }
+  #salon .s-calltile {
+    height: 145px;
+  }
+  #salon .s-incoming {
+    margin-top: 8px;
+    padding: 8px 10px;
+  }
+  #salon .s-incoming p {
+    display: none;
+  }
+  #salon .s-incoming strong {
+    font-size: 10px;
+  }
+  #salon .s-incoming .s-invite-actions button {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  #salon .s-composebox {
+    padding: 8px;
+  }
+  #salon textarea {
+    min-height: 25px;
+    height: 29px;
+  }
+  #salon .s-compose-bottom {
+    margin-top: 3px;
+  }
+  #salon .s-suggestions {
+    margin-top: 5px;
+  }
+}
+
+#salon .cam-spotlight-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 155px;
+  gap: 12px;
+}
+#salon .cam-spotlight {
+  border: 1px solid #80698e;
+  background: #44354e;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+}
+#salon .cam-spotlight-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 13px;
+  font-size: 10px;
+}
+#salon #spotlight-state {
+  font-size: 8px;
+  background: #edb69a;
+  color: #362636;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+#salon .cam-spotlight-body {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  background: #3c3047;
+}
+#salon #spotlight-avatar {
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #d4bfdc22;
+  border: 1px solid #9c80af;
+  font-size: 23px;
+  color: #e6d7ed;
+}
+#salon .cam-spotlight-body strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+#salon .cam-spotlight-body p {
+  font-size: 9px;
+  color: #bda9cd;
+}
+#salon .cam-spotlight-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #2b2034;
+}
+#salon .cam-spotlight-footer > span {
+  font-size: 9px;
+  color: #baa8c7;
+}
+#salon .cam-spotlight-footer iconify-icon {
+  font-size: 13px;
+  margin-right: 5px;
+}
+#salon #spotlight-action {
+  font-size: 10px;
+  background: #e5f384;
+  color: #292236;
+  padding: 7px 11px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+#salon .cam-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+#salon .cam-thumbnails > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #695674;
+  background: #392c44;
+  border-radius: 9px;
+  padding: 9px;
+  text-align: left;
+  color: #ddcfe8;
+}
+#salon .cam-thumbnails > button[aria-pressed='true'] {
+  border-color: #e5f384;
+  box-shadow: inset 0 0 0 1px #e5f384;
+  background: #443d42;
+}
+#salon .thumb-avatar {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #836891;
+  background: #76608040;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+#salon .cam-thumbnails strong {
+  font-size: 10px;
+  display: block;
+}
+#salon .cam-thumbnails small {
+  font-size: 8px;
+  color: #ad98bf;
+  display: block;
+  margin-top: 3px;
+}
+#salon .cam-thumbnails iconify-icon {
+  font-size: 11px;
+  margin-left: auto;
+}
+#salon .cam-thumbnails > p {
+  font-size: 8px;
+  line-height: 1.6;
+  color: #a893bb;
+  margin-top: auto;
+}
+#salon .cam-dock.expanded .cam-spotlight-body {
+  height: 230px;
+}
+#salon .s-calltiles {
+  grid-template-columns: minmax(0, 1fr) 130px;
+}
+#salon .s-calltile:last-child {
+  height: 108px;
+  align-self: start;
+}
+#salon .s-calltile button {
+  font-size: 9px;
+  color: #e5f384;
+  text-decoration: underline;
+}
+#salon .s-calltiles.self-featured {
+  grid-template-columns: 130px minmax(0, 1fr);
+}
+#salon .s-calltiles.self-featured .s-calltile:first-child {
+  height: 108px;
+}
+#salon .s-calltiles.self-featured .s-calltile:last-child {
+  height: 190px;
+}
+@media (max-width: 680px) {
+  #salon .cam-spotlight-layout {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  #salon .cam-spotlight-body {
+    height: 85px;
+    gap: 4px;
+  }
+  #salon #spotlight-avatar {
+    height: 32px;
+    width: 32px;
+    font-size: 16px;
+    border-radius: 11px;
+  }
+  #salon .cam-spotlight-body strong {
+    font-size: 10px;
+  }
+  #salon .cam-spotlight-body p {
+    font-size: 8px;
+  }
+  #salon .cam-spotlight-top {
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+  #salon .cam-spotlight-footer {
+    padding: 6px 8px;
+  }
+  #salon .cam-spotlight-footer > span {
+    font-size: 8px;
+  }
+  #salon #spotlight-action {
+    font-size: 9px;
+    padding: 6px 9px;
+  }
+  #salon .cam-thumbnails {
+    flex-direction: row;
+    gap: 6px;
+    overflow: auto;
+  }
+  #salon .cam-thumbnails > button {
+    flex: 1;
+    min-width: 95px;
+    padding: 6px;
+    gap: 6px;
+  }
+  #salon .thumb-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+    border-radius: 7px;
+  }
+  #salon .cam-thumbnails strong {
+    font-size: 9px;
+  }
+  #salon .cam-thumbnails small {
+    font-size: 7px;
+  }
+  #salon .cam-thumbnails iconify-icon,
+  #salon .cam-thumbnails > p {
+    display: none;
+  }
+  #salon .cam-dock.expanded .cam-spotlight-body {
+    height: 175px;
+  }
+  #salon .s-calltiles {
+    grid-template-columns: minmax(0, 1fr) 95px;
+  }
+  #salon .s-calltile:last-child {
+    height: 95px;
+  }
+  #salon .s-calltiles.self-featured {
+    grid-template-columns: 95px minmax(0, 1fr);
+  }
+  #salon .s-calltiles.self-featured .s-calltile:last-child {
+    height: 145px;
+  }
+  #salon .s-calltiles.self-featured .s-calltile:first-child {
+    height: 95px;
+  }
+}
+/* Production adaptation of the approved salon draft. */
+#salon {
+  font-family: Inter, system-ui, sans-serif;
+  z-index: 40;
+}
+#salon .s-title h1 {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+}
+#salon .s-cover strong {
+  font-family: Impact, 'Arial Narrow', sans-serif;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  font-size: 32px;
+}
+#salon .s-stream {
+  min-height: 130px;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#salon .s-message-content {
+  min-width: 0;
+  max-width: 100%;
+}
+#salon .s-message.own {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+#salon .s-message.own .s-bubble {
+  background: #eaf2b2;
+}
+#salon .s-bubble p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.55;
+}
+#salon .s-bubble blockquote {
+  border-left: 3px solid #ab94bc;
+  padding-left: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #716277;
+}
+#salon .community-message-meta {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  font-size: 12px;
+  margin: 0 0 5px;
+}
+#salon .community-message-meta time {
+  font-size: 10px;
+  color: #887a8c;
+}
+#salon .community-message-actions {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  color: #7b687f;
+  margin-top: 5px;
+}
+#salon .community-error,
+#salon .community-notice {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 10px 18px;
+  background: #ffe2d6;
+  flex-shrink: 0;
+}
+#salon .community-notice {
+  background: #eaf2b2;
+}
+#salon .community-subtle {
+  color: #c5b9cc;
+  font-size: 12px;
+  padding: 8px;
+  line-height: 1.6;
+}
+#salon .community-entry {
+  padding: 40px;
+  overflow: auto;
+  max-width: 650px;
+}
+#salon .community-eyebrow {
+  letter-spacing: 2px;
+  font-size: 11px;
+  color: #80668d;
+  font-weight: 700;
+}
+#salon .community-entry h2 {
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin: 22px 0;
+}
+#salon .community-entry p {
+  line-height: 1.7;
+  color: #7b6b81;
+  margin: 14px 0;
+}
+#salon .community-entry form {
+  margin-top: 30px;
+  display: grid;
+  gap: 15px;
+}
+#salon .community-entry input:not([type='checkbox']) {
+  width: 100%;
+  display: block;
+  padding: 14px;
+  border: 1px solid #cbbcd2;
+  border-radius: 8px;
+  margin-top: 10px;
+  background: white;
+}
+#salon .community-entry small {
+  color: #7b6b81;
+}
+.community-check {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+}
+#salon .primary {
+  background: #e5f384;
+  color: #292236;
+  border: 1px solid #c5d46a;
+  border-radius: 9px;
+  padding: 13px 18px;
+  font-weight: 700;
+}
+#salon .community-compose-label {
+  display: block;
+  font-size: 11px;
+  color: #745581;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+#salon .community-private-label {
+  padding: 10px 20px;
+  background: #e9ddf1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+#salon .community-private-label button {
+  margin-left: auto;
+  text-decoration: underline;
+}
+#salon .community-manage {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #d9cce1;
+  font-size: 12px;
+}
+#salon .community-manage h2 {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+#salon .community-manage button {
+  display: inline-flex;
+  gap: 5px;
+  margin: 7px 10px 7px 0;
+  text-decoration: underline;
+}
+#salon .community-manage article {
+  padding: 10px 0;
+  border-bottom: 1px solid #d9cce1;
+  overflow-wrap: anywhere;
+}
+#salon .community-manage input {
+  width: 100%;
+  padding: 8px;
+  background: white;
+  font-size: 11px;
+}
+#salon .community-leave {
+  display: block;
+  margin-top: 24px;
+  font-size: 12px;
+}
+#salon .community-main-video {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: #201b28;
+  font-size: 12px;
+}
+#salon .community-main-video video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#salon .cam-thumbnails {
+  max-height: 245px;
+  overflow: auto;
+}
+#salon .cam-thumbnails video {
+  width: 64px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+#salon .cam-spotlight-footer button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+}
+#salon .cam-dock-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+#salon .cam-spotlight-body p {
+  text-align: center;
+  padding: 0 10px;
+}
+#salon .community-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #17101fdd;
+  z-index: 150;
+  padding: 20px;
+}
+#salon .community-modal {
+  background: #faf8f3;
+  color: #292236;
+  padding: 24px;
+  max-width: 480px;
+  border-radius: 16px;
+}
+#salon .community-modal h2 {
+  font-size: 24px;
+  font-weight: 750;
+}
+#salon .community-modal p {
+  font-size: 13px;
+  margin: 15px 0;
+  line-height: 1.6;
+}
+#salon .community-modal video {
+  width: 100%;
+  max-height: 260px;
+  background: #201b28;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+#salon .community-modal > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+#salon .community-shade {
+  display: none;
+}
+#salon input:focus-visible,
+#salon a:focus-visible,
+#salon summary:focus-visible {
+  outline: 3px solid #9472b8;
+  outline-offset: 3px;
+}
+#salon .s-incoming .s-invite-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+#salon .s-incoming .s-invite-actions button:last-child {
+  background: #292236;
+  color: white;
+}
+#salon .s-iconbtn {
+  display: flex;
+  position: relative;
+}
+#salon .s-iconbtn sup {
+  background: #ff9d87;
+  border-radius: 10px;
+  padding: 3px;
+  position: absolute;
+  right: -4px;
+  top: -4px;
+}
+#salon #s-modal {
+  margin: auto;
+}
+#salon .s-suggestions button {
+  font-size: 11px;
+}
+#salon .s-person strong {
+  font-size: 13px;
+}
+#salon .s-person small {
+  font-size: 11px;
+}
+#salon .s-rule-box {
+  font-size: 12px;
+}
+#salon .s-tabs button {
+  min-height: 42px;
+}
+@media (max-width: 980px) {
+  #salon .community-shade {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 109;
+    background: #20172c88;
+  }
+}
+@media (max-width: 680px) {
+  #salon .s-title h1 {
+    font-size: 17px;
+    max-width: 145px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #salon .community-entry {
+    padding: 24px;
+  }
+  #salon .community-main-video {
+    height: 135px;
+  }
+  #salon .cam-thumbnails {
+    max-height: 80px;
+  }
+  #salon .cam-thumbnails video {
+    width: 45px;
+    height: 32px;
+  }
+  #salon .s-head-actions {
+    gap: 4px;
+  }
+  #salon .s-iconbtn {
+    padding: 8px;
+  }
+  #salon .s-stream {
+    min-height: 120px;
+  }
+  #salon .s-message {
+    max-width: 95%;
+  }
+  #salon .community-private-label {
+    font-size: 11px;
+  }
+  #salon .cam-dock-head span {
+    max-width: 170px;
+  }
+  #salon .s-composer textarea {
+    height: 40px;
+  }
+  #salon .s-shell {
+    overflow: auto;
+  }
+  #salon .s-center {
+    min-height: 100%;
+  }
+  #salon .s-incoming {
+    flex-wrap: wrap;
+  }
+  #salon .s-incoming p {
+    display: block;
+  }
+}
+@media (max-height: 740px) {
+  #salon .community-main-video {
+    height: 100px;
+  }
+  #salon .cam-dock-head {
+    margin-bottom: 7px;
+  }
+  #salon .s-head {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  #salon .s-suggestions {
+    display: none;
+  }
+}
+#salon .s-invite-actions button {
+  padding: 9px 13px;
+  border: 1px solid #d9b29c;
+  border-radius: 7px;
+  font-size: 12px;
+}
+#salon .s-invite-actions button:last-child {
+  border-color: #292236;
+}
+#salon .s-incoming strong {
+  font-size: 12px;
+}
+#salon .community-preview-dialog {
+  margin: auto;
+  max-width: calc(100vw - 32px);
+  max-height: 90dvh;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: #faf8f3;
+  color: #292236;
+}
+#salon .community-preview-dialog::backdrop {
+  background: #17101fdd;
+}
+.community-catalog {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (max-width: 767px) {
+  .community-catalog {
+    padding-bottom: 80px;
+  }
+}
+#salon .cam-dock.expanded .community-main-video {
+  height: min(40vh, 380px);
+}
+@media (max-width: 680px) {
+  #salon .cam-dock.expanded .community-main-video {
+    height: 220px;
+  }
+  #salon .cam-dock-head > div:last-child {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}

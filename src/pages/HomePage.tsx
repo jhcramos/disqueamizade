@@ -49,6 +49,7 @@ export function HomePage() {
         <nav aria-label="Navegação principal">
           <a href="#a-casa">A casa</a>
           <a href="#seu-jeito">Avatares</a>
+          <Link to="/rooms">Bate-papo</Link>
           <Link to="/blog">Blog</Link>
         </nav>
         <Link className="house-account" to="/minha-conta">
@@ -81,6 +82,7 @@ export function HomePage() {
           <Link className="house-cta" to="/garagem">Entrar na casa <ArrowRight size={20} /></Link>
           <p className="whole-house-privacy"><CameraOff size={16} /> Câmera desligada ao entrar</p>
           <p className="whole-house-free">Sem cadastro para explorar.</p>
+          <Link className="house-classic" to="/rooms">Prefere salas de conversa? Ir ao bate-papo →</Link>
           <p className="whole-house-note">Prévia explorável · encontros online em preparação</p>
         </aside>
       </section>

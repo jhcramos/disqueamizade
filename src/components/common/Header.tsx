@@ -6,7 +6,8 @@ import { useNotificationStore } from '@/store/notificationStore'
 import { useAuthStore } from '@/store/authStore'
 
 const navLinks = [
-  { to: '/rooms', label: 'Salas' },
+  { to: '/garagem', label: 'A Casa' },
+  { to: '/rooms', label: 'Bate-papo' },
   { to: '/roulette', label: 'Roleta 1:1' },
   { to: '/blog', label: 'Blog' },
   { to: '/sobre', label: 'Sobre' },
