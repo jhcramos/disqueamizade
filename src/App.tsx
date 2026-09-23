@@ -7,6 +7,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 // Rotas pesadas/secundárias em lazy: tira LiveKit + MediaPipe + face-api do
 // bundle inicial. A Home fica leve. (Plano V4, item 2.4)
 const AccountPage = lazy(() => import('./social/AccountPanel'))
+const AvatarStudioPage = lazy(() => import('./avatar-studio/AvatarStudioPage'))
 const GaragePage = lazy(() => import('./garage/GaragePage'))
 const CommunityRoomPage = lazy(() => import('./pages/CommunityRoomPage').then(m => ({ default: m.CommunityRoomPage })))
 const RoomsPage = lazy(() => import('./pages/RoomsPage').then(m => ({ default: m.RoomsPage })))
@@ -43,6 +44,7 @@ function App() {
         {/* Salas - requer login */}
         {/* Públicas: entram convidado, sem cadastro (Plano V4 1.4/2.1) */}
         <Route path="/minha-conta" element={<AccountPage />} />
+        <Route path="/avatar-estudio" element={<AvatarStudioPage />} />
         <Route path="/garagem" element={<GaragePage />} />
         <Route path="/garagem-3d" element={<Navigate to="/garagem" replace />} />
         <Route path="/rooms" element={<RoomsPage />} />
