@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/THREE|WebGL|shader|uniform/i.test(m.text()))errors.push(m.text());});
+try{
+ await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem`);
+ await page.getByRole('textbox',{name:'Como podemos chamar você?'}).fill('Visitante');await page.getByRole('button',{name:'Entrar na casa',exact:true}).click();
+ await page.waitForFunction(()=>Number(document.querySelector('.garage3d-canvas')?.dataset.drawCalls)>0);
+ assert.equal(await page.locator('.garage3d-canvas').getAttribute('data-avatar-finish'),'tsl');
+ await page.locator('.garage3d-canvas canvas').evaluate(e=>e.dataset.persistent='yes');
+ for(const [area,seat] of [['pool',14],['alfresco',8],['quiet',16],['media',8]]){
+  await page.getByRole('combobox',{name:'Explorar área da casa'}).selectOption(area);
+  await page.waitForFunction(id=>document.querySelector('.garage3d-canvas')?.dataset.area===id,area);
+  await page.getByRole('button',{name:'Interagir',exact:true}).click();
+  await page.getByRole('combobox',{name:'Escolher assento'}).selectOption(String(seat));
+  await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.seated==='true',null,{timeout:35000});
+  assert.ok(await page.locator('.garage3d-canvas').evaluate(e=>Number(e.dataset.hipHeight)>Number(e.dataset.seatHeight)+.07));
+  await page.getByRole('button',{name:'Levantar',exact:true}).click();
+  await page.getByRole('button',{name:'Fechar painel',exact:true}).click();
+  assert.equal(await page.locator('.garage3d-canvas canvas').getAttribute('data-persistent'),'yes');
+  console.log('PASS',area,'seating and persistent renderer');
+ }
+ await page.getByRole('combobox',{name:'Explorar área da casa'}).selectOption('garage');
+ await page.getByRole('button',{name:'Interagir',exact:true}).click();
+ await page.getByRole('button',{name:'Ir até o telefone',exact:true}).click();
+ await page.getByRole('button',{name:'Ligar',exact:true}).waitFor({timeout:25000});
+ await page.getByRole('button',{name:'Ligar',exact:true}).click();
+ await page.getByRole('heading',{name:'Quem será que vai atender?'}).waitFor();
+ await page.getByRole('button',{name:'Fechar telefones'}).click();
+ await page.getByRole('button',{name:'Fechar painel',exact:true}).click();
+ console.log('PASS physical phone approach and call options');
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('combobox',{name:'Explorar área da casa'}).selectOption('alfresco');
+ await page.getByRole('button',{name:'Casa inteira',exact:true}).click();await page.waitForTimeout(1200);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.screenshot({path:'/tmp/new-house-mobile.png'});
+ assert.deepEqual(errors,[]);console.log('PASS expanded house: TSL, outdoor/lounge/cinema seats, preserved renderer, mobile width, no GPU errors');
+}finally{await browser.close();}

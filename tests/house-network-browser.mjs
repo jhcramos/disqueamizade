@@ -34,7 +34,8 @@ try{
  assert.ok(!packets.filter(p=>p.name==='Cris Rede').some(p=>JSON.stringify(p.body).includes('Teste privado isolado')));
  assert.equal(await c.getByText('Teste privado isolado',{exact:false}).count(),0);
  await b.getByRole('button',{name:'Encerrar mensagens',exact:true}).click();
- await b.getByRole('button',{name:/Sala de estar/}).first().click();
+ await b.getByRole('combobox',{name:'Explorar área da casa'}).selectOption('pool');
+ await b.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.area==='pool');
  await b.waitForTimeout(2200);assert.equal(await a.locator('.house3d-person').count(),3);
  await b.getByRole('button',{name:'Primeira pessoa',exact:true}).click();
  const before=await b.locator('.garage3d-canvas').getAttribute('data-position');

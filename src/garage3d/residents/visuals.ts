@@ -1,3 +1,4 @@
+import {applyAvatarMaterials,type AvatarMaterialScope} from '../avatarFinish';
 import {ballFlightPose} from './ball';
 import type {BallFlight} from './model';
 import * as T from 'three';
@@ -5,7 +6,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { createAdultAvatar, animateAdult } from '../../garage/adultAvatar';
 import { presetAppearance } from '../../garage/avatarPresets';
 import { createResidentMotion } from './motion';
-import { type LifeState } from './model';
+import { BED, BOWL, ITEMS, type LifeState } from './model';
 import { disposeAvatar } from '../remoteActors';
 
 export type VisualResident = {
@@ -146,7 +147,7 @@ function createItem(kind: VisualItem['kind']) {
 
 type Actor = { root: T.Group; model: T.Group; baseY: number; kind: string; stride:number; motion:ReturnType<typeof createResidentMotion> };
 
-export function createResidentVisuals(scene: T.Scene) {
+export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterialScope) {
   const roots = new Map<string, T.Group>(), actors = new Map<string, Actor>();
   function remove(id: string) {
     const root = roots.get(id);
@@ -183,6 +184,7 @@ export function createResidentVisuals(scene: T.Scene) {
             appearance.shirt = dora ? 'clay' : 'ocean';
             appearance.pants = dora ? 'cream' : 'charcoal';
             model = createAdultAvatar(dora ? 5 : 0, appearance);
+            applyAvatarMaterials(model, appearance, dora ? 5 : 0, materials);
             const bounds = new T.Box3().setFromObject(model), scale = 1.5 / (bounds.max.y - bounds.min.y);
             model.scale.setScalar(scale);
             model.position.y = -bounds.min.y * scale;
@@ -264,14 +266,14 @@ export function addResidentFixtures(scene: T.Scene) {
   root.name = 'resident-household-fixtures';
   scene.add(root);
   const tray = new T.Group();
-  tray.position.set(-5.3, .492, .85);
+  tray.position.set(ITEMS.coffee.position.x, .512, ITEMS.coffee.position.z);
   root.add(tray);
   s.box(tray, '#b47d47', 0, .017, 0, .60, .03, .43);
   for (const z of [-.21, .21]) s.box(tray, '#93603a', 0, .037, z, .61, .05, .025);
   for (const x of [-.30, .30]) s.box(tray, '#93603a', x, .037, 0, .025, .05, .42);
   // A slim stand supports the crate at the console's front edge.
   const records = new T.Group();
-  records.position.set(-7.8, 0, -10.85);
+  records.position.set(ITEMS.record.position.x, 0, ITEMS.record.position.z);
   root.add(records);
   for (const x of [-.22, .22]) for (const z of [-.19, .19]) s.box(records, '#62492f', x, .44, z, .045, .88, .045);
   s.box(records, '#a37645', 0, .90, 0, .55, .045, .48);
@@ -281,14 +283,14 @@ export function addResidentFixtures(scene: T.Scene) {
   }
   for (let i = 0; i < 5; i++) s.box(records, ['#54776b', '#bf8150', '#e1c08b'][i % 3], 0, 1.005, -.14 + i * .065, .38, .23, .018);
   const bed = new T.Group();
-  bed.position.set(-1.4, 0, 1.85);bed.userData.residentTarget='bed';
+  bed.position.set(BED.x, 0, BED.z);bed.userData.residentTarget='bed';
   root.add(bed);
   s.box(bed, '#927153', 0, .07, 0, .96, .13, .73);
   s.box(bed, '#b7b798', 0, .13, 0, .80, .14, .59);
   for (const x of [-.43, .43]) s.box(bed, '#7b957f', x, .17, 0, .13, .22, .73);
   s.box(bed, '#7b957f', 0, .17, -.31, .95, .22, .13);
   const bowl = new T.Group();
-  bowl.position.set(-1.25, 0, 2.5);bowl.userData.residentTarget='bowl';
+  bowl.position.set(BOWL.x, 0, BOWL.z);bowl.userData.residentTarget='bowl';
   root.add(bowl);
   s.cylinder(bowl, '#4f8b81', 0, .066, 0, .17, .13, .21);
   s.cylinder(bowl, '#87b6b4', 0, .135, 0, .145, .007);

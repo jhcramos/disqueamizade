@@ -5,8 +5,8 @@ const shared=(p:{x:number;z:number})=>({x:(p.x+5)/10,y:(p.z+4)/8});
 export const BAR_SEATS:BarSeat[]=seatsFor('bar').map((s,i)=>({id:i<3?`counter-${i+1}`:`table-${Math.floor((i-3)/4)+1}-${(i-3)%4+1}`,name:s.name,point:shared(approachSeat(s)),seatY:shared(s).y,rotation:s.angle,worldIndex:i}));
 export const HOUSE_SEATS=(['garage','living'] as RoomId[]).flatMap(room=>seatsFor(room).map((s,i)=>{
   const first=room==='garage'?i<4:i<3||i===6;
-  const group=room==='garage'?(first?'garage-music':'garage-chairs'):(first?'living-sofa':'living-coffee');
-  const number=room==='garage'?i%4+1:first?(i===6?4:i+1):(i===7?4:i-2);
+  const group=s.spot??(room==='garage'?(first?'garage-music':'garage-chairs'):(first?'living-sofa':'living-coffee'));
+  const number=s.spot?seatsFor(room).slice(0,i+1).filter(a=>a.spot===s.spot).length:room==='garage'?i%4+1:first?(i===6?4:i+1):(i===7?4:i-2);
   return{id:`${group}-${number}`,room,spot:group,name:s.name,point:shared(approachSeat(s)),seatY:shared(s).y,rotation:s.angle,worldIndex:i};
 }));
 export function seatsForRoom(room:RoomId){return room==='bar'?BAR_SEATS:HOUSE_SEATS.filter(s=>s.room===room);}

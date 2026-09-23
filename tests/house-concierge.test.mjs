@@ -3,7 +3,7 @@ import {createLife,applyCommand,parseLife} from '../src/garage3d/residents/model
 import {personalLife} from '../src/garage3d/residents/social.ts';
 import {concierge,companyCandidates,preparedDecision,applyCompanyDecision,spotSeats,tickCompany} from '../src/garage3d/residents/concierge.ts';
 import {chooseCompany,decisionPayload} from '../server/houseConcierge.ts';
-const now=Date.now();const visitor=name=>({id:randomUUID(),name,position:{x:-5,z:-5.2},available:true});
+const now=Date.now();const visitor=name=>({id:randomUUID(),name,position:{x:7,z:6.8},available:true});
 const action=(s,v,visitors,a,target='dora',request)=>applyCommand(s,{id:randomUUID(),visitor:v,action:a,target,request},now,visitors);
 function setup(){const s=createLife(now),a=visitor('Ana'),b=visitor('Bruno'),people=[a,b];for(const v of people)action(s,v,people,'askCompany','dora','Quero conhecer gente que curte música');return{s,a,b,people};}
 function propose(s,a,people){const r=concierge(s).requests[a.id],candidates=companyCandidates(s,a,people,now);assert.ok(candidates.length);applyCompanyDecision(s,a.id,r.id,preparedDecision(r.text,candidates),people,now);return concierge(s).proposals[0];}
@@ -43,7 +43,7 @@ test('adapter validates closed choices and handles unavailable service without l
 test('malformed optional social snapshots are rejected without crashing',()=>{const s=createLife(now);concierge(s).requests.bad=null;assert.equal(parseLife(s),null);const other=createLife(now);concierge(other).proposals.push(null);assert.equal(parseLife(other),null);});
 test('garagem, sala and bar have reachable seats; poker table is never repurposed',()=>{
  for(const room of ['garage','living','bar']){
-  const {s,a,b,people}=setup();a.position=b.position=room==='garage'?{x:-5,z:-5.2}:room==='living'?{x:-5,z:2.8}:{x:5,z:2.8};
+  const {s,a,b,people}=setup();a.position=b.position=room==='garage'?{x:7,z:6.8}:room==='living'?{x:-6,z:-1.3}:{x:-3,z:6.5};
   a.adult=b.adult=room==='bar';const options=companyCandidates(s,a,people,now);assert.ok(options.length);assert.ok(options[0].spot.startsWith(room));assert.ok(options.every(o=>o.spot!=='bar-table-2'&&(room==='bar'||!o.spot.startsWith('bar'))));
   const r=concierge(s).requests[a.id];applyCompanyDecision(s,a.id,r.id,{option:options[0].id,activity:'music',topic:'song',source:'prepared'},people,now);const p=concierge(s).proposals[0];action(s,a,people,'acceptCompany',p.id);action(s,b,people,'acceptCompany',p.id);assert.equal(concierge(s).circles[0]?.members.length,2,room);
  }

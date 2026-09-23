@@ -7,9 +7,9 @@ const act=(s,action,target='bed',now=100000,visitor=v)=>applyCommand(s,{id:'test
 test('one bed carrier, placement footprint and passage validation, persisted move and dog destination',()=>{
  const s=createLife(0);act(s,'moveBed');assert.equal(s.bed.holder,'ana');
  assert.match(act(s,'moveBed','bed',103000,{...v,id:'bob'}),/uso/);assert.equal(s.bed.holder,'ana');
- assert.equal(bedFits({x:-5,z:-4}),false);assert.equal(bedFits({x:0,z:2.8}),false);assert.equal(bedFits({x:5.35,z:.85}),false);
- assert.match(act(s,'placeBed','bed',106000,{...v,position:{x:0,z:2.8}}),/livre/);assert.equal(s.bed.holder,'ana');
- const place={x:-6.5,z:-5.6};assert.ok(bedFits(place));act(s,'placeBed','bed',109000,{...v,position:place});assert.equal(s.bed.holder,undefined);assert.deepEqual(s.bed.position,place);assert.ok(parseLife(s));
+ assert.equal(bedFits({x:-12,z:-3}),false);assert.equal(bedFits({x:-2,z:6.4}),false);assert.equal(bedFits({x:-10,z:-10.65}),false);
+ assert.match(act(s,'placeBed','bed',106000,{...v,position:{x:-2,z:6.4}}),/livre/);assert.equal(s.bed.holder,'ana');
+ const place={x:-8.1,z:-1};assert.ok(bedFits(place));act(s,'placeBed','bed',109000,{...v,position:place});assert.equal(s.bed.holder,undefined);assert.deepEqual(s.bed.position,place);assert.ok(parseLife(s));
  act(s,'rest','bed',112000,{...v,position:place});assert.deepEqual(s.residents[2].path.at(-1),place);
 });
 test('carrying follows visitor; cancellation and disconnect release at last placed home',()=>{
@@ -17,7 +17,7 @@ test('carrying follows visitor; cancellation and disconnect release at last plac
  releaseBed(s,'bob');assert.equal(s.bed.holder,'ana');releaseBed(s,'ana');assert.deepEqual(s.bed.position,BED);
  act(s,'moveBed','bed',103000);act(s,'cancelBed','bed',106000);assert.equal(s.bed.holder,undefined);assert.deepEqual(s.bed.position,BED);
  const legacy=createLife();delete legacy.bed;assert.deepEqual(parseLife(legacy).bed.position,BED);
- const bad=createLife();bad.bed.home={x:0,z:2.8};assert.equal(parseLife(bad),null);
+ const bad=createLife();bad.bed.home={x:-2,z:6.4};assert.equal(parseLife(bad),null);
 });
 test('Layla speaks in first person and routines have independent rhythms',()=>{
  const s=createLife(0),visitor={...v,position:s.residents[2].position};act(s,'talk','biscoito',100000,visitor);assert.equal(s.speech.owner,'biscoito');const first=s.speech.text;

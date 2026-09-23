@@ -42,3 +42,9 @@
 @media(max-width:600px){.motion-panel{font-size:12px}.motion-panel video{width:80px;height:80px}.motion-panel button{padding:8px;font-size:12px}}
 
 .motion-share{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}.motion-share input{width:18px;height:18px;accent-color:#af4930;flex-shrink:0}
+
+/* Themed destinations stay available on small screens without covering the house. */
+.house-area-select{max-width:min(100%,310px);min-height:40px;border:1px solid #d7c9b5;border-radius:22px;background:#fff9ee;color:#493644;padding:8px 32px 8px 13px;font:12px inherit}
+@media(max-width:640px){.garage3d-rooms .house-area-select{flex:1 1 100%;max-width:100%;font-size:12px}.garage3d-caption p{max-width:250px;font-size:12px}}
+
+@media(max-width:640px){.garage3d-room-marker{display:none!important}}

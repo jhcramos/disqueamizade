@@ -12,11 +12,11 @@ try{
   await page.locator('.garage3d-canvas canvas').evaluate(el=>el.dataset.persistent='yes');
   assert.ok(Number(await page.locator('.garage3d-canvas').getAttribute('data-zoom'))>=2.99);
   await page.screenshot({path:'/tmp/garage3d-house-desktop.png'});
-  for(const [name,count] of [['Garagem',8],['Sala de estar',8],['Bar Vinyl',15]]){
+  for(const [name,count] of [['Garagem',12],['Sala de estar',28],['Jogos e café',15]]){
     const before=await page.locator('.garage3d-canvas').getAttribute('data-position');
     await page.getByRole('navigation',{name:'Ambientes da casa'}).getByRole('button',{name:new RegExp(name)}).click();
     assert.equal(await page.locator('.garage3d-canvas canvas').getAttribute('data-persistent'),'yes');
-    if(name==='Bar Vinyl')await page.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
+    if(name==='Jogos e café')await page.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
     await page.getByRole('button',{name:'Interagir',exact:true}).click();
     assert.equal(await page.getByRole('combobox',{name:'Escolher assento'}).locator('option').count(),count+1);
     for(let value=0;value<count;value++){
@@ -48,5 +48,5 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'/tmp/garage3d-verified-mobile.png'});
   console.log('Render sample',await page.locator('.garage3d-canvas').evaluate(el=>({...el.dataset})));
-  assert.deepEqual(errors,[]);console.log('PASS three rooms, 31 seats, stand, lighting, phone dialog, camera views and mobile width');
+  assert.deepEqual(errors,[]);console.log('PASS three rooms, 55 seats, stand, lighting, phone dialog, camera views and mobile width');
 }finally{await browser.close();}

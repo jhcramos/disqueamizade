@@ -6,10 +6,10 @@ export type Point = { x: number; y: number };
 export type RoomId = "garage" | "living" | "bar";
 export const ROOMS = {
   bar: {
-    name: "Bar Vinyl",
+    name: "Jogos e café",
     image: "bar-background.webp",
-    label: "BAR VINYL · ENCONTROS 18+",
-    topic: "Qual seria a trilha sonora de um encontro perfeito?",
+    label: "JANTAR · JOGOS E CAFÉ",
+    topic: "Quem topa uma partida ou uma boa história à mesa?",
   },
   garage: {
     name: "Garagem",

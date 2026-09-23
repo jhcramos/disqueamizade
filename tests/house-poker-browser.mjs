@@ -12,7 +12,7 @@ async function enter(name){
  const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem`);await p.getByRole('textbox',{name:'Como podemos chamar você?'}).fill(name);await p.getByRole('button',{name:'Entrar na casa',exact:true}).click();await p.locator('.garage3d-canvas[data-resident-mode=online]').waitFor({timeout:30000});return p;
 }
 async function takeSeat(p){
- await p.getByRole('button',{name:/Bar Vinyl/}).first().click();await p.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
+ await p.getByRole('button',{name:/Jogos e café/}).first().click();await p.getByRole('button',{name:'Tenho 18 anos ou mais'}).click();
  await p.getByRole('button',{name:'Interagir',exact:true}).click();
  await p.getByRole('button',{name:'♠ Jogar pôquer',exact:true}).click();
  const join=p.getByRole('button',{name:'Sentar e receber 1.000 fichas'});await join.waitFor({timeout:40000});await join.click();

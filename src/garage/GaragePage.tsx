@@ -493,7 +493,7 @@ function GarageRoom({
     }
   }
   function changeRoom(next: RoomId, confirmed = false, at?: typeof START) {
-    if (next === room || net.invite || phoneBusy || pokerTalking || social.session) return false;
+    if ((next === room && !at) || net.invite || phoneBusy || pokerTalking || social.session) return false;
     if (next === "bar" && !adultConfirmed && !confirmed) {
       setBarPosition(at);
       setBarGate(true);
@@ -517,6 +517,7 @@ function GarageRoom({
     setPosition(spawn);
     setDestination(spawn);
     net.update(spawn, next);
+    setArrival(n => n + 1);
     return true;
   }
   const move = (p: typeof START) => {

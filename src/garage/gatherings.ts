@@ -7,13 +7,15 @@ export type ConversationSpot = { id: string; name: string; point: Point; questio
 export const CONVERSATION_SPOTS: Record<RoomId, ConversationSpot[]> = {
   garage: [
     { id: 'garage-music', name: 'Roda do som', point: spotPoint('garage-music'), question: 'Qual música faria você levantar para dançar?' },
+    { id:'garage-cinema',name:'Cinema e cultura',point:spotPoint('garage-cinema'),question:'Qual filme você indicaria para esta turma?' },
     { id: 'garage-chairs', name: 'Papo nas cadeiras', point: spotPoint('garage-chairs'), question: 'Qual foi a festa mais divertida que você já viveu?' },
   ],
   living: [
     { id: 'living-sofa', name: 'Roda do sofá', point: spotPoint('living-sofa'), question: 'Que pequena coisa deixa seu dia melhor?' },
+    ...[['alfresco','Amizade 40+','Qual amizade marcou sua vida?'],['pool','Piscina · lazer e viagens','Para onde você viajaria amanhã?'],['escuta','Desabafa Aqui','Você quer conversar ou só ser ouvido?'],['cores','Paquera LGBTQIA+','O que você gostaria de descobrir sobre alguém daqui?'],['encontros','Paquera e namoro','Como seria um encontro que tivesse a sua cara?']].map(([tag,name,question])=>({id:`living-${tag}`,name,question,point:spotPoint(`living-${tag}`)})),
     { id: 'living-coffee', name: 'Cantinho do café', point: spotPoint('living-coffee'), question: 'Qual história sua merece uma segunda xícara de café?' },
   ],
-  bar: [1, 2, 3].map((n) => ({ id: `bar-table-${n}`, name: `Mesa ${n}`, point: BAR_SEATS[3+(n-1)*4].point, question: ['Qual seria a trilha sonora desta mesa?', 'Qual viagem você faria de novo?', 'Qual descoberta recente você indicaria para a gente?'][n - 1] })),
+  bar: [1, 2, 3].map((n) => ({ id: `bar-table-${n}`, name: n===2?'Jantar · pôquer':n===1?'Mesa de jogos':'Café e histórias', point: BAR_SEATS[3+(n-1)*4].point, question: ['Qual seria a trilha sonora desta mesa?', 'Qual viagem você faria de novo?', 'Qual descoberta recente você indicaria para a gente?'][n - 1] })),
 };
 export function normalizeGathering(raw: unknown, room: RoomId): Gathering | undefined {
   if (!raw || typeof raw !== 'object') return;

@@ -1,3 +1,4 @@
+import {TABLE} from '../src/garage3d/poker/model.ts';
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import handler from '../api/house-residents.ts';import {createLife} from '../src/garage3d/residents/model.ts';
 test('poker endpoint uses signed identities, private hands, deduplication and preserves resident state across CAS',async()=>{
@@ -10,7 +11,7 @@ test('poker endpoint uses signed identities, private hands, deduplication and pr
  };
  const request=async(token,action,extra={})=>{
   const output={status:200};const res={setHeader(){},status(n){output.status=n;return this;},json(body){output.body=body;return this;}};
-  const body={feature:'poker',visitor:{id:randomUUID(),name:'Jogador',position:{x:5.35,z:2}},...(action?{command:{id:randomUUID(),action}}:{}),...extra};
+  const body={feature:'poker',visitor:{id:randomUUID(),name:'Jogador',position:{x:TABLE.x,z:TABLE.z+1.3}},...(action?{command:{id:randomUUID(),action}}:{}),...extra};
   await handler({method:'POST',headers:{host:'test.invalid',...(token?{'x-resident-session':token}:{})},body},res);return output;
  };
  try{

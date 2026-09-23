@@ -6,7 +6,7 @@ export const ACTIVITIES={music:'Escolher a trilha da casa',coffee:'Café e papo 
 export const TOPICS={song:'Qual música merece entrar na trilha da casa?',small:'Que pequena coisa deixou seu dia melhor?',discovery:'O que você descobriu por acaso e adorou?',pet:'Qual foi a maior travessura de um bichinho que você conheceu?'} as const;
 export const COMPANY_CHOICES=[{text:'Papo tranquilo',symbol:'💬',activity:'coffee'},{text:'Ouvir música juntos',symbol:'🎵',activity:'music'},{text:'Jogar ou brincar',symbol:'🎲',activity:'play'},{text:'Topo qualquer coisa',symbol:'✨',activity:'any'}] as const;
 export const quickPreference=(text:string)=>COMPANY_CHOICES.find(c=>c.text===text)?.activity;
-export const ROOM_LABELS={garage:'Garagem',living:'Sala de estar',bar:'Bar Vinyl · 18+'};
+export const ROOM_LABELS={garage:'Garagem',living:'Sala de estar',bar:'Jogos e café · 18+'};
 export type Activity=keyof typeof ACTIVITIES;
 export type Topic=keyof typeof TOPICS;
 export type CompanyRequest={id:string;text:string;host:'dora'|'teo';expires:number;pending?:boolean;notice?:string};

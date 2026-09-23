@@ -18,7 +18,7 @@ test('presets have articulated elbows and stopping restores upper body',()=>{
  }
 });
 test('long throw has a clear corridor and reachable landing point',()=>{
- const from={x:-6.1,z:2.1},target=findThrowTarget(from,{x:-5.2,z:2.1},[from]);assert.ok(target);assert.ok(target.range>=3);
+ const from={x:7,z:6.8},target=findThrowTarget(from,{x:8,z:6.8},[from]);assert.ok(target);assert.ok(target.range>=3);
  for(let t=.02;t<=1;t+=.02)assert.ok(houseWalkable({x:from.x+(target.goal.x-from.x)*t,z:from.z+(target.goal.z-from.z)*t}));
  assert.ok(Math.hypot(target.goal.x-from.x,target.goal.z-from.z)<=5.001);
 });

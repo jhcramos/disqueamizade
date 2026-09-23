@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createLife,applyCommand,heldItem,ITEMS,tickLife,approach,parseLife} from '../src/garage3d/residents/model.ts';
+import {createLife,applyCommand,heldItem,ITEMS,BED,BOWL,tickLife,approach,parseLife} from '../src/garage3d/residents/model.ts';
 const visitor=(id,position)=>({id,name:id,position});
 const act=(s,visitor,action,target,now=100000)=>applyCommand(s,{id:'command',visitor,action,target},now);
 test('all new props have reachable approaches through real furniture',()=>{
- for(const item of Object.values(ITEMS))assert.ok(approach({x:-5,z:2.8},item.position).length,item.name);
+ for(const item of Object.values(ITEMS))assert.ok(approach({x:-6,z:-1.3},item.position).length,item.name);
 });
 test('reject distant pickup, double ownership and busy visitors',()=>{
- const s=createLife(0),a=visitor('ana',{x:-5,z:2.8}),b=visitor('bia',ITEMS.coffee.position);
+ const s=createLife(0),a=visitor('ana',{x:-6,z:-1.3}),b=visitor('bia',ITEMS.coffee.position);
  act(s,a,'pick','record');assert.equal(heldItem(s,'ana'),undefined);
  act(s,b,'pick','coffee');assert.equal(heldItem(s,'bia')?.id,'coffee');
  act(s,visitor('ana',ITEMS.coffee.position),'pick','coffee');assert.equal(heldItem(s,'ana'),undefined);
@@ -17,7 +17,7 @@ test('deliver coffee near a resident updates memory and frees cup; distant retur
  const s=createLife(0),a=visitor('ana',ITEMS.coffee.position);act(s,a,'pick','coffee');
  a.position=s.residents[0].position;act(s,a,'coffee','dora',103000);
  assert.equal(s.coffees,1);assert.equal(heldItem(s,'ana'),undefined);assert.match(s.memories.at(-1),/ana/);
- a.position=ITEMS.record.position;act(s,a,'pick','record',106000);a.position={x:-5,z:2.8};
+ a.position=ITEMS.record.position;act(s,a,'pick','record',106000);a.position={x:-6,z:-1.3};
  act(s,a,'return','record',109000);assert.equal(heldItem(s,'ana')?.id,'record');
 });
 test('dog fetch returns one shared toy and pet pauses movement',()=>{
@@ -51,12 +51,12 @@ test('prepared chores reserve and hold actual objects, then release after interr
  assert.ok(!s.items.some(i=>i.holder==='dora'||i.reserved==='dora'));
 });
 test('snapshots reject duplicate ownership, impossible activities and off-floor actors',()=>{
- for(const mutate of [s=>{s.items[0].holder='ana';s.items[1].holder='ana';},s=>{s.residents[0].activity='nonsense';},s=>{s.residents[0].position={x:10.5,z:4.5};}]){const s=createLife();mutate(s);assert.equal(parseLife(s),null);}
+ for(const mutate of [s=>{s.items[0].holder='ana';s.items[1].holder='ana';},s=>{s.residents[0].activity='nonsense';},s=>{s.residents[0].position={x:-10,z:-10.65};}]){const s=createLife();mutate(s);assert.equal(parseLife(s),null);}
 });
 test('watering and preparing dog rest require the appropriate object and proximity',()=>{
- const s=createLife(0),a=visitor('ana',{x:-1.25,z:2.5});
+ const s=createLife(0),a=visitor('ana',{...BOWL});
  assert.match(act(s,a,'fill','bowl'),/objeto/);
  a.position=ITEMS.watering.position;act(s,a,'pick','watering',103000);
- a.position={x:-1.25,z:2.5};act(s,a,'fill','bowl',106000);assert.match(s.memories.at(-1),/água/);
- a.position={x:-1.4,z:1.85};act(s,a,'rest','bed',109000);assert.equal(s.residents[2].activity,'walk');assert.ok(s.residents[2].path.length);
+ a.position={...BOWL};act(s,a,'fill','bowl',106000);assert.match(s.memories.at(-1),/água/);
+ a.position={...BED};act(s,a,'rest','bed',109000);assert.equal(s.residents[2].activity,'walk');assert.ok(s.residents[2].path.length);
 });

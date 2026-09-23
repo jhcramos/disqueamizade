@@ -54,7 +54,7 @@ export function PokerPanel({open,onClose,getVisitor,onSeat,avatar,appearance,una
  const action=(a:PokerAction)=>{if(a==='leave')void call.leave();command.current?.(a);};
  const phase={waiting:'A mesa está aberta',preflop:'Pré-flop',flop:'Flop',turn:'Turn',river:'River',showdown:'Fim da mão'};
  return <>{mediaUI}<section className="house-poker" aria-label="Mesa de pôquer" onPointerDown={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}}}>
-  <header><div><small>BAR VINYL · MESA DO MEIO</small><h2>Uma mão entre amigos.</h2></div><button onClick={onClose} aria-label="Minimizar pôquer">×</button></header>
+  <header><div><small>SALA DE JOGOS · MESA DE PÔQUER</small><h2>Uma mão entre amigos.</h2></div><button onClick={onClose} aria-label="Minimizar pôquer">×</button></header>
   <div className="poker-scroll"><p className="poker-intro">Texas Hold’em · até 4 pessoas · fichas gratuitas, sem dinheiro real</p>
   <div className="poker-table-body"><PokerVideo call={call} seated={!!me&&!me.left} unavailable={unavailable} onPreview={()=>setPreview(true)}/>
   <div className="poker-felt">
@@ -66,7 +66,7 @@ export function PokerPanel({open,onClose,getVisitor,onSeat,avatar,appearance,una
   {me&&me.cards.length===2&&game&&game.board.length>=3&&!me.folded&&<p className="poker-hand">Sua combinação: {handNames[rankHand([...me.cards,...game.board])[0]]}</p>}
   {game?.turn&&<p className="poker-turn">{game.turn===me?.id?'Sua vez':`Vez de ${game.players.find(p=>p.id===game.turn)?.name}`} · {Math.max(0,Math.min(30,Math.ceil((game.deadline-clock)/1000)))}s</p>}
   {message&&<p className="poker-feedback" role="status">{message}</p>}
-  <details><summary>Como funciona</summary><p>Cada pessoa recebe duas cartas privadas. Combine com as cinco cartas da mesa para formar a melhor mão de cinco cartas. Blinds 10/20; aumentos de 20 no pré-flop e flop, e 40 no turn e river, até três aumentos por rodada.</p><p>Você tem 30 segundos por jogada. Ao esgotar o tempo, passa se não houver aposta para pagar, ou desiste. Sair do bar ou perder a conexão por 45 segundos libera seu lugar. Quem chega durante a mão aguarda a próxima. Fichas zeradas são repostas gratuitamente na próxima distribuição.</p></details>
+  <details><summary>Como funciona</summary><p>Cada pessoa recebe duas cartas privadas. Combine com as cinco cartas da mesa para formar a melhor mão de cinco cartas. Blinds 10/20; aumentos de 20 no pré-flop e flop, e 40 no turn e river, até três aumentos por rodada.</p><p>Você tem 30 segundos por jogada. Ao esgotar o tempo, passa se não houver aposta para pagar, ou desiste. Sair da sala de jogos ou perder a conexão por 45 segundos libera seu lugar. Quem chega durante a mão aguarda a próxima. Fichas zeradas são repostas gratuitamente na próxima distribuição.</p></details>
  </div>
   <div className="poker-actions">
    {!me?<button disabled={!online||busy||!near||(game?.players.length??0)>=4} onClick={()=>action('join')}>{!near?'Aproxime-se da mesa':(game?.players.length??0)>=4?'Mesa completa':'Sentar e receber 1.000 fichas'}</button>:<>
