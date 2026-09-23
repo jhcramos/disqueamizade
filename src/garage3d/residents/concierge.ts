@@ -25,7 +25,6 @@ export const SPOTS=[
  {id:'living-sofa',room:'living',name:'Sofá da sala',activity:'coffee'},
  {id:'living-coffee',room:'living',name:'Cantinho do café',activity:'stories'},
  {id:'bar-table-1',room:'bar',name:'Mesa perto dos discos',activity:'music'},
- {id:'bar-table-3',room:'bar',name:'Mesa de histórias',activity:'stories'},
 ] as const;
 export function spotSeats(spot:string){const def=SPOTS.find(s=>s.id===spot);if(!def)return[];return seatsForRoom(def.room).filter(s=>def.room==='bar'?s.id.startsWith(`table-${spot.endsWith('1')?'1':'3'}-`):s.id.startsWith(spot+'-'));}
 export function seatDestination(spot:string,seat:string){const def=SPOTS.find(s=>s.id===spot),s=spotSeats(spot).find(s=>s.id===seat);if(!def||!s)return;return worldPoint(approachSeat(seatsFor(def.room)[s.worldIndex]),def.room);}

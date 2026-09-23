@@ -8,6 +8,14 @@ try{
  await page.waitForFunction(()=>Number(document.querySelector('.garage3d-canvas')?.dataset.drawCalls)>0);
  assert.equal(await page.locator('.garage3d-canvas').getAttribute('data-avatar-finish'),'tsl');
  await page.locator('.garage3d-canvas canvas').evaluate(e=>e.dataset.persistent='yes');
+ await page.getByRole('button',{name:'Vista da planta',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='plan');
+ await page.waitForTimeout(900);
+ assert.equal(await page.locator('.garage3d-room-marker').count(),21);
+ await page.screenshot({path:'/tmp/faithful-house-plan-desktop.png'});
+ await page.getByRole('button',{name:/^Sala de estar/}).first().click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='overview');
+ assert.equal(await page.getByRole('button',{name:'Vista da planta',exact:true}).getAttribute('aria-pressed'),'false');
  for(const [area,seat] of [['pool',14],['alfresco',8],['quiet',16],['media',8]]){
   await page.getByRole('combobox',{name:'Explorar área da casa'}).selectOption(area);
   await page.waitForFunction(id=>document.querySelector('.garage3d-canvas')?.dataset.area===id,area);
@@ -34,5 +42,12 @@ try{
  await page.getByRole('button',{name:'Casa inteira',exact:true}).click();await page.waitForTimeout(1200);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.screenshot({path:'/tmp/new-house-mobile.png'});
+ await page.getByRole('button',{name:'Vista da planta',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='plan');
+ await page.waitForTimeout(900);await page.screenshot({path:'/tmp/faithful-house-plan-mobile.png'});
+ await page.getByRole('combobox',{name:'Explorar área da casa'}).selectOption('living');
+ await page.getByRole('button',{name:'Primeira pessoa',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.ownAvatarVisible==='false');
+ assert.equal(await page.locator('.garage3d-canvas').getAttribute('data-camera'),'first-person');
  assert.deepEqual(errors,[]);console.log('PASS expanded house: TSL, outdoor/lounge/cinema seats, preserved renderer, mobile width, no GPU errors');
 }finally{await browser.close();}

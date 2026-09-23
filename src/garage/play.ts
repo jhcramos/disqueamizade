@@ -18,8 +18,8 @@ export type PlayAction = {
   to: Point;
 };
 export type PlayState = Partial<Record<PlayKind, PlayAction>>;
-export const BALL_START = { x: 0.5, y: 0.85 };
-export const CUSHION_START = { x: 0.59, y: 0.85 };
+export const BALL_START = { x: 0.5, y: 0.65 };
+export const CUSHION_START = { x: 0.56, y: 0.68 };
 export function parsePlay(
   raw: unknown,
   room: RoomId,

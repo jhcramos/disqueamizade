@@ -1,5 +1,6 @@
+import {planPoint} from '../garage3d/areas.ts';
 import { normalizeSeat } from "./seats.ts";
-import { validShared } from "../garage3d/coordinates.ts";
+import { validShared, toShared } from "../garage3d/coordinates.ts";
 import { normalizeGathering, type Gathering } from './gatherings.ts';
 import { normalizeAppearance, type Appearance } from "./avatarStyle.ts";
 export type Point = { x: number; y: number };
@@ -47,7 +48,7 @@ export const AVATARS = [
   "male-d",
   "male-e",
 ];
-export const START: Point = { x: 0.5, y: 0.85 };
+export const START: Point = toShared(planPoint(914,675),'garage');
 export const DEMO: Person = {
   id: "demo-bia",
   name: "Bia",

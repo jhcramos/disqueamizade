@@ -1,3 +1,4 @@
+import {areaById} from '../src/garage3d/areas.ts';
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import handler from '../api/house-residents.ts';import {createLife} from '../src/garage3d/residents/model.ts';
 test('Jev integration reserves calls before fetch, revalidates consent, survives CAS retry, and keeps seat assignments private',async()=>{
@@ -9,7 +10,7 @@ test('Jev integration reserves calls before fetch, revalidates consent, survives
  };
  const request=async(client,command)=>{for(const entry of Object.values(row.payload.visitors))entry.seen=Date.now()-500;
   const out={};const res={setHeader(){},status(n){out.status=n;return this;},json(body){out.body=body;return this;}};
-  await handler({method:'POST',headers:{host:'test.invalid',...(client.token?{'x-resident-session':client.token}:{})},body:{visitor:{id:client.id,name:client.name,position:{x:-5,z:-5.2},blocked:client.blocked},command}},res);if(out.body.identity){client.token=out.body.identity.token;client.serverId=out.body.identity.id;}return out;
+  await handler({method:'POST',headers:{host:'test.invalid',...(client.token?{'x-resident-session':client.token}:{})},body:{visitor:{id:client.id,name:client.name,position:{...areaById('living').arrival},blocked:client.blocked},command}},res);if(out.body.identity){client.token=out.body.identity.token;client.serverId=out.body.identity.id;}return out;
  };
  const cmd=(action,target='dora',text)=>({id:randomUUID(),action,target,request:text});
  try{

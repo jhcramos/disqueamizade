@@ -1,12 +1,11 @@
-import { seatsFor } from "../src/garage3d/layout.ts";
+import {areaById,FIXTURES} from '../src/garage3d/areas.ts';
+import {toWorld,toShared} from '../src/garage3d/coordinates.ts';
+import { seatsFor,houseRoute,worldPoint,barTables } from "../src/garage3d/layout.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BAR_SEATS, HOUSE_SEATS, normalizeSeat, seatWinner } from "../src/garage/seats.ts";
 import {
   inside,
-  planRoute,
-  START,
-  distance,
   personalSpace,
   parsePerson,
   DEMO,
@@ -18,10 +17,10 @@ import {
   DEFAULT_APPEARANCE,
 } from "../src/garage/avatarStyle.ts";
 import { createAdultAvatar, animateAdult } from "../src/garage/adultAvatar.ts";
-test("bar has three tables of four and three independent counter stools", () => {
-  assert.equal(BAR_SEATS.length, 15);
-  assert.equal(new Set(BAR_SEATS.map((s) => s.id)).size, 15);
-  for (let t = 1; t <= 3; t++)
+test("bar has two tables of four and three independent counter stools", () => {
+  assert.equal(BAR_SEATS.length, 11);
+  assert.equal(new Set(BAR_SEATS.map((s) => s.id)).size, 11);
+  for (let t = 1; t <= 2; t++)
     assert.equal(
       BAR_SEATS.filter((s) => s.id.startsWith(`table-${t}-`)).length,
       4,
@@ -31,10 +30,11 @@ test("bar has three tables of four and three independent counter stools", () => 
 test('garage and living seats are reachable, room-scoped and avoid chair backs', () => {
   for (const room of ['garage', 'living']) {
     const seats = HOUSE_SEATS.filter(s => s.room === room);
-    assert.equal(seats.length, 8);
+    assert.equal(seats.length, room==='garage'?12:28);
+    assert.equal(new Set(seats.map(s=>s.id)).size,seats.length);
     for (const seat of seats) {
       assert.ok(inside(seat.point, room), seat.id);
-      assert.ok(planRoute(START, seat.point, [], room).length, seat.id);
+      assert.ok(houseRoute(areaById('garage').arrival,toWorld(seat.point,room)).length, seat.id);
       assert.equal(normalizeSeat(seat.id, room), seat.id);
       assert.equal(normalizeSeat(seat.id, 'bar'), undefined);
       const physical=seatsFor(room)[seat.worldIndex];
@@ -42,20 +42,17 @@ test('garage and living seats are reachable, room-scoped and avoid chair backs',
     }
   }
 });
-test("all fifteen seats are reachable and distinct without overlap", () => {
+test("all eleven game-room seats are reachable and distinct without overlap", () => {
   for (const [i, s] of BAR_SEATS.entries()) {
     assert.ok(inside(s.point, "bar"), s.id);
-    assert.ok(planRoute(START, s.point, [], "bar").length, s.id);
+    assert.ok(houseRoute(areaById('dining').arrival,toWorld(s.point,'bar')).length, s.id);
     for (const other of BAR_SEATS.slice(i + 1))
       // Seat approaches may share an aisle; seated bodies occupy the actual furniture.
       assert.ok(Math.hypot(seatsFor('bar')[s.worldIndex].x-seatsFor('bar')[other.worldIndex].x,seatsFor('bar')[s.worldIndex].z-seatsFor('bar')[other.worldIndex].z)>=personalSpace('bar')*10);
   }
-  for (const p of [
-    { x: 0.255, y: 0.60625 },
-    { x: 0.535, y: 0.60625 },
-    { x: 0.81, y: 0.60625 },
-  ])
-    assert.equal(inside(p, "bar"), false);
+  const island=FIXTURES.find(f=>f.room==='bar'&&f.kind==='island');
+  for(const p of [...barTables.map(t=>worldPoint(t,'bar')),island])
+    assert.equal(inside(toShared(p,'bar'),'bar'),false,'tables and kitchen island remain solid');
 });
 test("seat claims converge regardless of delivery order, release on leaving, reject invalid seats", () => {
   const a = { id: "a", seat: "table-1-1" },

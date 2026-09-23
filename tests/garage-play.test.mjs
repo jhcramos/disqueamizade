@@ -1,3 +1,6 @@
+import {planPoint} from '../src/garage3d/areas.ts';
+import {toShared} from '../src/garage3d/coordinates.ts';
+const point=(room,x,y)=>toShared(planPoint(x,y),room);
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -17,8 +20,8 @@ const action = {
   kind: "ball",
   at: now,
   on: true,
-  from: { x: 0.58, y: 0.85 },
-  to: { x: 0.7, y: 0.85 },
+  from: point('garage',857,671),
+  to: point('garage',957,671),
 };
 test("cosmetic events reject other rooms, future timestamps and malformed coordinates", () => {
   assert.ok(parsePlay(action, "garage", now));
@@ -36,7 +39,7 @@ test("cosmetic events reject other rooms, future timestamps and malformed coordi
   );
 });
 test("concurrent events converge regardless of delivery order", () => {
-  const b = { ...action, id: "event-b", to: { x: 0.65, y: 0.8 } };
+  const b = { ...action, id: "event-b", to: point('garage',930,671) };
   assert.deepEqual(
     mergePlay(mergePlay({}, action), b),
     mergePlay(mergePlay({}, b), action),
@@ -55,15 +58,11 @@ test("late visitors see settled objects rather than replaying old throws", () =>
   const middle = playPosition(action, BALL_START, now + 500);
   assert.ok(middle.x > action.from.x && middle.x < action.to.x);
 });
-test("throws stay on floor in both rooms including near furniture", () => {
-  for (const room of ["garage", "living"])
-    for (const from of [
-      { x: 0.58, y: 0.85 },
-      { x: 0.6, y: 0.45 },
-      { x: 0.7, y: 0.82 },
-    ]) {
-      const target = throwTarget(from, { x: from.x - 0.12, y: from.y }, room);
-      assert.ok(inside(target, room));
-      assert.ok(clearPath(from, target, [], room));
-    }
+test("throws stay on measured floor in both rooms including near furniture", () => {
+  const starts={garage:[[857,671],[900,600],[838,650]],living:[[469,350],[425,365],[515,482]]};
+  for (const room of ["garage", "living"]) for(const [x,y] of starts[room]) {
+    const from=point(room,x,y);assert.ok(inside(from,room),`${room}: valid throw origin ${x},${y}`);
+    const target=throwTarget(from,{x:from.x-.12,y:from.y},room);
+    assert.ok(inside(target,room));assert.ok(clearPath(from,target,[],room));
+  }
 });

@@ -15,7 +15,7 @@ export const CONVERSATION_SPOTS: Record<RoomId, ConversationSpot[]> = {
     ...[['alfresco','Amizade 40+','Qual amizade marcou sua vida?'],['pool','Piscina · lazer e viagens','Para onde você viajaria amanhã?'],['escuta','Desabafa Aqui','Você quer conversar ou só ser ouvido?'],['cores','Paquera LGBTQIA+','O que você gostaria de descobrir sobre alguém daqui?'],['encontros','Paquera e namoro','Como seria um encontro que tivesse a sua cara?']].map(([tag,name,question])=>({id:`living-${tag}`,name,question,point:spotPoint(`living-${tag}`)})),
     { id: 'living-coffee', name: 'Cantinho do café', point: spotPoint('living-coffee'), question: 'Qual história sua merece uma segunda xícara de café?' },
   ],
-  bar: [1, 2, 3].map((n) => ({ id: `bar-table-${n}`, name: n===2?'Jantar · pôquer':n===1?'Mesa de jogos':'Café e histórias', point: BAR_SEATS[3+(n-1)*4].point, question: ['Qual seria a trilha sonora desta mesa?', 'Qual viagem você faria de novo?', 'Qual descoberta recente você indicaria para a gente?'][n - 1] })),
+  bar: [1, 2].map((n) => ({ id: `bar-table-${n}`, name: n===2?'Jantar · pôquer':n===1?'Mesa de jogos':'Café e histórias', point: BAR_SEATS[3+(n-1)*4].point, question: ['Qual seria a trilha sonora desta mesa?', 'Qual viagem você faria de novo?', 'Qual descoberta recente você indicaria para a gente?'][n - 1] })),
 };
 export function normalizeGathering(raw: unknown, room: RoomId): Gathering | undefined {
   if (!raw || typeof raw !== 'object') return;

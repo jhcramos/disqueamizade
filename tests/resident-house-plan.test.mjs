@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLife, parseLife, routinePoints, ITEMS, BED, BOWL, PLANT, bedFits, approach } from '../src/garage3d/residents/model.ts';
 import { houseWalkable, houseRoute } from '../src/garage3d/layout.ts';
-import { HOUSE_AREAS } from '../src/garage3d/areas.ts';
+import { HOUSE_AREAS, areaById, POOL } from '../src/garage3d/areas.ts';
 
 test('residents spawn on valid floors and all routine destinations are mutually reachable', () => {
   const state = createLife(0);
@@ -37,9 +37,9 @@ test('snapshots from the old floor plan are reset; new outdoor snapshots remain 
   delete old.layoutVersion;
   assert.equal(parseLife(old), null, 'Old coordinates must not survive the plan migration');
   const state = createLife(0);
-  state.residents[0].position = { x: -13.8, z: -1.1 };
-  state.residents[0].path = houseRoute(state.residents[0].position, { x: -6, z: -8.6 });
+  state.residents[0].position = {...areaById('alfresco').arrival};
+  state.residents[0].path = houseRoute(state.residents[0].position, areaById('pool').arrival);
   assert.ok(parseLife(state), 'Alfresco and pool deck belong to the valid world');
-  state.residents[0].position = { x: -10, z: -10.65 };
+  state.residents[0].position = {...POOL};
   assert.equal(parseLife(state), null, 'The water surface is not a walking destination');
 });

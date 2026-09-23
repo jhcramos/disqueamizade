@@ -1,3 +1,5 @@
+import {areaById,planPoint,POOL,OPENINGS} from '../src/garage3d/areas.ts';
+import {toShared} from '../src/garage3d/coordinates.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -24,7 +26,7 @@ test('relay requires a signed session, preserves other world domains and retries
   assert.equal((await invoke(body,'forged')).status,401);
   assert.equal((await invoke({hello:true},undefined,{headers:{host:'example.invalid',origin:'https://foreign.invalid'}})).status,403);
   const hello=await invoke({hello:true});assert.equal(hello.status,200);assert.equal(reads,0,'handshake does not claim an avatar before the client receives its token');
-  body.messages=[{id:randomUUID(),channel:'disque-house-3d-v1',data:{event:'hello',data:{id,name:'Teste',avatar:0,room:'garage',position:{x:.5,y:.85},busy:false}}}];
+  body.messages=[{id:randomUUID(),channel:'disque-house-3d-v1',data:{event:'hello',data:{id,name:'Teste',avatar:0,room:'garage',position:toShared(areaById('garage').arrival,'garage'),busy:false}}}];
   const reply=await invoke(body,hello.body.token);assert.equal(reply.status,200);assert.equal(reads,2);
   assert.deepEqual(row.payload.state,{marker:'resident state'});assert.equal(row.payload.poker.marker,'concurrent poker state');
   assert.equal(row.payload.network.members[id].person.name,'Teste');assert.equal(JSON.stringify(reply.body).includes(hello.body.token),false);

@@ -48,3 +48,13 @@
 @media(max-width:640px){.garage3d-rooms .house-area-select{flex:1 1 100%;max-width:100%;font-size:12px}.garage3d-caption p{max-width:250px;font-size:12px}}
 
 @media(max-width:640px){.garage3d-room-marker{display:none!important}}
+
+/* Plan mode prioritizes the measured architecture over social overlays. */
+.is-plan-view .resident-label,.is-plan-view .house3d-person,.is-plan-view .garage3d-phone-prompt{display:none!important}
+.garage3d-page.is-plan-view .garage3d-room-marker{display:block!important;min-height:24px;padding:3px 5px;font:10px Arial,sans-serif;border:0;background:#fff9ebcc;box-shadow:none;border-radius:3px;transform:translate(-50%,-50%);white-space:normal;max-width:100px;text-align:center}
+.is-plan-view .garage3d-room-marker svg,.is-plan-view .garage3d-room-marker small{display:none}
+@media(max-width:640px){.garage3d-page.is-plan-view .garage3d-room-marker{font-size:8px;padding:2px;max-width:55px}.is-mobile-house .is-live-house .garage3d-rooms{flex-wrap:wrap}}
+
+/* Small room names leave the model visible at whole-house scale. */
+.garage3d-page:not(.is-plan-view) .garage3d-room-marker{font:11px Arial,sans-serif;min-height:28px;padding:6px 8px;border-radius:7px;background:#fff9ebeb;box-shadow:0 1px 4px #46332712}
+.garage3d-room-marker svg,.garage3d-room-marker small{display:none}

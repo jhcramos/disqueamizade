@@ -1,3 +1,4 @@
+import {areaById,planPoint,POOL,OPENINGS} from '../src/garage3d/areas.ts';
 import {TABLE} from '../src/garage3d/poker/model.ts';
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import handler from '../api/house-residents.ts';import {createLife} from '../src/garage3d/residents/model.ts';
@@ -17,7 +18,7 @@ test('poker endpoint uses signed identities, private hands, deduplication and pr
  try{
   process.env.SUPABASE_URL='https://poker-test.invalid';process.env.SUPABASE_SERVICE_ROLE_KEY='fake-poker-test-only';delete process.env.DEEPINFRA_API_KEY;
   assert.equal((await request('forged','join')).status,401);
-  assert.equal((await request(null,'join',{visitor:{id:randomUUID(),name:'Teste',position:{x:-5,z:2.8}}})).status,400);
+  assert.equal((await request(null,'join',{visitor:{id:randomUUID(),name:'Teste',position:areaById('garage').arrival}})).status,400);
   const a=await request(null,'join'),b=await request(null,'join');assert.equal(a.status,200);assert.equal(b.body.game.players.length,2);
   const ta=a.body.identity.token,tb=b.body.identity.token;
   const cmd={id:randomUUID(),action:'deal'};conflicts=1;

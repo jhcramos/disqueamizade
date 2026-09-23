@@ -1,6 +1,6 @@
 import {findThrowTarget} from './throwTarget.ts';
 import {freshSocial,validSocial,hostCommand,tickSocial,HOST_ACTIONS,type HostSocial} from './social.ts';
-import { areaAt } from '../areas.ts';
+import { areaAt, areaById, planPoint, OPENINGS } from '../areas.ts';
 import { houseRoute, houseWalkable, type Place } from '../layout.ts';
 export type ResidentId = 'dora' | 'teo' | 'biscoito';
 export type ItemId = 'coffee' | 'watering' | 'record' | 'toy';
@@ -8,24 +8,24 @@ export type Visitor = { adult?:boolean; seat?:string; id:string; name:string; po
 export type Resident = {id:ResidentId; position:Place; angle:number; activity:string; path:Place[]; until:number; step:number; target?:string};
 export type BallFlight={from:Place;to:Place;start:number;duration:number;fromHeight:number;toHeight:number};
 export type Item = {id:ItemId; kind:ItemId; position:Place; height:number; holder?:string; reserved?:string;flight?:BallFlight};
-export type LifeState = {version:1; layoutVersion:2; social:HostSocial; bed:{position:Place;home:Place;holder?:string}; residents:Resident[]; items:Item[]; memories:string[]; speech?:{owner:ResidentId;text:string;until:number;generatedBy?:string}; cooldown:Record<string,number>; watered:number; coffees:number; dances:number; fetches:number};
+export type LifeState = {version:1; layoutVersion:3; social:HostSocial; bed:{position:Place;home:Place;holder?:string}; residents:Resident[]; items:Item[]; memories:string[]; speech?:{owner:ResidentId;text:string;until:number;generatedBy?:string}; cooldown:Record<string,number>; watered:number; coffees:number; dances:number; fetches:number};
 export const NAMES:Record<ResidentId,string>={dora:'Dora',teo:'Téo',biscoito:'Layla'};
 export const ITEMS:Record<ItemId,{name:string;position:Place;height:number}>={
- coffee:{name:'Café da casa',position:{x:-7.55,z:-3.15},height:.55},
- watering:{name:'Regador',position:{x:-10.9,z:-4.1},height:.01},
- record:{name:'Disco de vinil',position:{x:4.2,z:1.15},height:1.12},
- toy:{name:'Bolinha da Layla',position:{x:-5.9,z:-1},height:.14},
+ coffee:{name:'Café da casa',position:planPoint(464,356),height:.55},
+ watering:{name:'Regador',position:planPoint(282,480),height:.01},
+ record:{name:'Disco de vinil',position:planPoint(907,543),height:1.12},
+ toy:{name:'Bolinha da Layla',position:planPoint(475,470),height:.14},
 };
-export const PLANT:Place={x:-11.25,z:-4.9};
-export const BED:Place={x:-3.4,z:-2};
-export const BOWL:Place={x:-3.4,z:-2.8};
+export const PLANT:Place=planPoint(272,491);
+export const BED:Place=planPoint(450,460);
+export const BOWL:Place=planPoint(425,492);
 export type LifeAction = 'askCompany'|'cancelCompany'|'acceptCompany'|'declineCompany'|'leaveCompany'|'pick'|'return'|'coffee'|'water'|'record'|'throw'|'pet'|'greet'|'fill'|'rest'|'talk'|'moveBed'|'placeBed'|'cancelBed'|'introduce'|'together'|'solo'|'socialOn'|'passToy'|'acceptHost'|'declineHost'|'dismissHost';
 export type Command={id:string;visitor:Visitor;action:LifeAction;target:string;request?:string};
 const distance=(a:Place,b:Place)=>Math.hypot(a.x-b.x,a.z-b.z);
-export function createLife(now=Date.now()):LifeState{return{version:1,layoutVersion:2,social:freshSocial(),bed:{position:{...BED},home:{...BED}},residents:[
- {id:'dora',position:{x:-6,z:-1.3},angle:0,activity:'idle',path:[],until:now+12000,step:0},
- {id:'teo',position:{x:7,z:6.8},angle:0,activity:'idle',path:[],until:now+16000,step:0},
- {id:'biscoito',position:{x:-4,z:-.8},angle:0,activity:'idle',path:[],until:now+20000,step:0},
+export function createLife(now=Date.now()):LifeState{return{version:1,layoutVersion:3,social:freshSocial(),bed:{position:{...BED},home:{...BED}},residents:[
+ {id:'dora',position:planPoint(493,445),angle:0,activity:'idle',path:[],until:now+12000,step:0},
+ {id:'teo',position:{...areaById('garage').arrival},angle:0,activity:'idle',path:[],until:now+16000,step:0},
+ {id:'biscoito',position:planPoint(477,451),angle:0,activity:'idle',path:[],until:now+20000,step:0},
 ],items:(Object.keys(ITEMS) as ItemId[]).map(id=>({id,kind:id,position:{...ITEMS[id].position},height:ITEMS[id].height})),memories:[],cooldown:{},watered:0,coffees:0,dances:0,fetches:0};}
 export function remember(s:LifeState,text:string){s.memories=[...s.memories,text].slice(-12);}
 export function speak(s:LifeState,owner:ResidentId,text:string,now:number){s.speech={owner,text,until:now+7500};}
@@ -55,7 +55,7 @@ export function options(s:LifeState,target:string,visitor:string):{action:LifeAc
 export const residentSpeed=(id:ResidentId)=>id==='dora'?.78:id==='teo'?.96:1.32;
 export const residentPause=(id:ResidentId,step:number)=>({dora:11000,teo:7400,biscoito:5300}[id])+((step*1733+{dora:217,teo:1301,biscoito:941}[id])%5100);
 // Keep the hall, lounge doors and cinema/garage passages clear of movable beds.
-const BED_PASSAGES:Place[]=[{x:-12,z:-3},{x:-2,z:-1},{x:.3,z:-2},{x:4.9,z:-2},{x:9.6,z:-2},{x:-2,z:6.4},{x:2,z:6.4}];
+const BED_PASSAGES:Place[]=OPENINGS.filter(o=>o.kind==='door');
 /** Check the cushion's full footprint and the current house's connecting doors. */
 export function bedFits(p:Place){return Number.isFinite(p.x)&&Number.isFinite(p.z)&&[[0,0],[-.49,-.37],[-.49,.37],[.49,-.37],[.49,.37]].every(([x,z])=>houseWalkable({x:p.x+x,z:p.z+z}))&&BED_PASSAGES.every(door=>distance(p,door)>1.15);}
 export function releaseBed(s:LifeState,visitor:string){if(s.bed.holder===visitor){s.bed.holder=undefined;s.bed.position={...s.bed.home};}}
@@ -100,9 +100,9 @@ export function applyCommand(s:LifeState,c:Command,now=Date.now(),visitors:Visit
  s.cooldown[v.id]=now+1500;return c.action==='moveBed'?'Caminha nas mãos! Caminhe até um piso livre e toque em “Colocar caminha aqui”.':c.action==='placeBed'?'Caminha no novo lugar. Layla já pode descansar aqui.':c.action==='cancelBed'?'Caminha devolvida.':c.action==='pick'?'Você está carregando. Aproxime-se de um morador para oferecer ou usar.':c.action==='return'?'Guardado no lugar.':'Boa! A casa ganhou mais uma história.';
 }
 export const routinePoints:Record<ResidentId,Place[]>={
- dora:[{x:-6,z:-1.3},{x:-10.9,z:-4.1},{x:-13.8,z:-1.1},{x:-9.8,z:6.9}],
- teo:[{x:7,z:6.8},{x:0,z:6.5},{x:-6,z:-1.3},{x:-13.8,z:-1.1}],
- biscoito:[BED,{...ITEMS.toy.position},{x:7,z:6.8},{x:-6,z:-8.6}],
+ dora:[areaById('living').arrival,areaById('kitchen').arrival,areaById('alfresco').arrival,areaById('court').arrival],
+ teo:[areaById('garage').arrival,areaById('media').arrival,areaById('living').arrival,areaById('alfresco').arrival],
+ biscoito:[BED,{...ITEMS.toy.position},areaById('garage').arrival,areaById('pool').arrival],
 };
 export const DOG_LINES=['Eu não estou dormindo. Estou economizando energia para o próximo petisco.','Téo perdeu o disco. Eu perdi a paciência. A Dora perdeu os dois.','Nesta casa eu sou a única que trabalha: recebo carinho em tempo integral.','Se cair comida no chão, a inspeção é por minha conta.'];
 const lines:Record<ResidentId,string[]>={dora:['Hoje a festa começa assim que alguém achar o disco certo.','Estou cuidando das plantas. Téo cuida da conversa.','Um café, uma música e já temos um plano.'],teo:['Organizar discos por cor é um método científico. Meu.','Estou ensaiando um passinho que ainda não tem nome.','A Dora pediu ajuda. Vim conferir a acústica primeiro.'],biscoito:DOG_LINES};
@@ -160,7 +160,7 @@ export function tickLife(s:LifeState,dt:number,visitors:Visitor[],now=Date.now()
 /** Persistence and network snapshots are untrusted; only known actors/items and finite coordinates are accepted. */
 export function parseLife(raw:unknown):LifeState|null{
  try{const s=raw as LifeState,valid=(p:Place)=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&!!areaAt(p);
- if(!s||s.version!==1||s.layoutVersion!==2||!Array.isArray(s.residents)||s.residents.length!==3||!Array.isArray(s.items)||s.items.length!==4)return null;
+ if(!s||s.version!==1||s.layoutVersion!==3||!Array.isArray(s.residents)||s.residents.length!==3||!Array.isArray(s.items)||s.items.length!==4)return null;
  if(new Set(s.residents.map(r=>r.id)).size!==3||s.residents.some(r=>!Object.prototype.hasOwnProperty.call(NAMES,r.id)||!valid(r.position)||!houseWalkable(r.position)||!['idle','walk','dance','water','record','rest','drink','greet','pet','fetch','bring','eager'].includes(r.activity)||!Number.isFinite(r.angle)||!Number.isFinite(r.until)||!Number.isInteger(r.step)||typeof r.activity!=='string'||r.activity.length>20||!Array.isArray(r.path)||r.path.length>400||r.path.some(p=>!valid(p)||!houseWalkable(p))))return null;
  if(new Set(s.items.map(i=>i.id)).size!==4||s.items.some(i=>!Object.prototype.hasOwnProperty.call(ITEMS,i.id)||i.kind!==i.id||(i.reserved!==undefined&&!Object.prototype.hasOwnProperty.call(NAMES,i.reserved))||!valid(i.position)||!Number.isFinite(i.height)||i.height<0||i.height>2||(i.holder!==undefined&&(typeof i.holder!=='string'||i.holder.length>100))))return null;
  if(new Set(s.items.filter(i=>i.holder).map(i=>i.holder)).size!==s.items.filter(i=>i.holder).length)return null;

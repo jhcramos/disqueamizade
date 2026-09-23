@@ -1,59 +1,62 @@
-import {HOUSE_AREAS,areaAt,POOL,WALLS,type Place,type RoomId} from './areas.ts';
+import {HOUSE_AREAS,areaAt,areaById,planPoint,POOL,WALLS,FIXTURES,type Place,type RoomId} from './areas.ts';
 export type {Place,RoomId} from './areas.ts';
-export type Furniture = Place & { angle:number; name:string; count:number; color:string; stool?:boolean;spot?:string;area?:string };
+export type Furniture=Place&{angle:number;name:string;count:number;color:string;stool?:boolean;spot?:string;area?:string;scale:number};
 export const roomNames:Record<RoomId,string>={garage:'Garagem',living:'Sala de estar',bar:'Jogos e café'};
-export const roomOffsets:Record<RoomId,Place>={garage:{x:7,z:4},living:{x:-7,z:-4},bar:{x:-7,z:4}};
+export const roomOffsets:Record<RoomId,Place>={garage:areaById('garage'),living:areaById('living'),bar:areaById('dining')};
 export const roomIds:RoomId[]=['garage','living','bar'];
 export type HousePhone=Place&{room:RoomId;index:number};
+const local=(room:RoomId,x:number,y:number)=>{const p=planPoint(x,y);return{x:p.x-roomOffsets[room].x,z:p.z-roomOffsets[room].z};};
+function seat(room:RoomId,x:number,y:number,angle:number,name:string,count=1,color='#78917a',spot?:string,stool=false):Furniture{return{...local(room,x,y),angle,name,count,color,spot,stool,scale:.78};}
+export const barTables=[local('bar',608,603),local('bar',487,604)];
 export const furniture:Record<RoomId,Furniture[]>={
-  garage:[
-    {x:-2.8,z:.65,angle:Math.PI/2,name:'Sofá do som',count:3,color:'#b77d55'},
-    {x:1.7,z:.1,angle:-Math.PI/2,name:'Poltrona verde',count:1,color:'#647557'},
-    {x:1.7,z:1.15,angle:-Math.PI/2,name:'Poltrona caramelo',count:1,color:'#b08350'},
-    {x:.0,z:-1.55,angle:0,name:'Banco da garagem',count:3,color:'#987451'},
-    {x:-7,z:1.6,angle:Math.PI,name:'Sofá do cinema',count:3,color:'#5b746b',spot:'garage-cinema',area:'media'},
-    {x:-7.8,z:-.3,angle:Math.PI/2,name:'Poltrona do cinema',count:1,color:'#b4926f',spot:'garage-cinema',area:'media'},
-  ],
-  living:[
-    {x:-2.8,z:.65,angle:Math.PI/2,name:'Sofá terracota',count:3,color:'#b97861'},
-    {x:2.25,z:.65,angle:-Math.PI/2,name:'Sofá verde',count:3,color:'#768063'},
-    {x:-.85,z:-1.7,angle:0,name:'Poltrona de leitura',count:1,color:'#ba9b67'},
-    {x:.3,z:-1.7,angle:0,name:'Poltrona da janela',count:1,color:'#ba9b67'},
-    {x:-7.7,z:-1.3,angle:Math.PI/2,name:'Banco do alfresco',count:2,color:'#79927a',spot:'living-alfresco',area:'alfresco'},
-    {x:-5.8,z:-1.3,angle:-Math.PI/2,name:'Cadeiras do alfresco',count:2,color:'#baa282',spot:'living-alfresco',area:'alfresco'},
-    {x:-7.8,z:-5.1,angle:Math.PI/2,name:'Cadeiras da piscina',count:2,color:'#ede2ce',spot:'living-pool',area:'pool'},
-    {x:1.85,z:-6,angle:Math.PI/2,name:'Banco do deck',count:2,color:'#c6a57b',spot:'living-pool',area:'pool'},
-    ...[[7.3,'escuta','#a3aa92'],[11.9,'cores','#b78890'],[16.6,'encontros','#bd967d']].flatMap(([x,tag,color])=>[
-      {x:Number(x)-1.1,z:-1.1,angle:Math.PI/2,name:`Sofá · ${tag}`,count:2,color:String(color),spot:`living-${tag}`},
-      {x:Number(x)+1.1,z:-1.1,angle:-Math.PI/2,name:`Poltronas · ${tag}`,count:2,color:String(color),spot:`living-${tag}`},
-    ]),
-  ],
-  bar:[
-    ...[-3.25,-2.25,-1.25].map((x,i)=>({x,z:-1.85,angle:Math.PI,name:`Balcão · banco ${i+1}`,count:1,color:'#56715c',stool:true})),
-    ...[[.9,-2.1],[.9,1.05],[3.35,1.05]].flatMap(([x,z],t)=>[
-      {x:x-.7,z,angle:Math.PI/2},{x:x+.7,z,angle:-Math.PI/2},
-      {x,z:z-.7,angle:0},{x,z:z+.7,angle:Math.PI},
-    ].map((p,i)=>({...p,name:`Mesa ${t+1} · lugar ${i+1}`,count:1,color:'#7c6345',stool:true}))),
-  ],
+ garage:[
+  seat('garage',819,650,Math.PI/2,'Sofá do som',3,'#b77d55'),
+  seat('garage',1008,622,-Math.PI/2,'Poltrona verde'),
+  seat('garage',1008,650,-Math.PI/2,'Poltrona caramelo',1,'#b08350'),
+  seat('garage',919,726,Math.PI,'Banco da garagem',3,'#987451'),
+  seat('garage',732,638,Math.PI,'Sofá do cinema',3,'#5b746b','garage-cinema'),
+  seat('garage',687,594,Math.PI/2,'Poltrona do cinema',1,'#b4926f','garage-cinema'),
+ ],
+ living:[
+  seat('living',405,364,Math.PI/2,'Sofá terracota',3,'#b97861'),
+  seat('living',533,364,-Math.PI/2,'Sofá verde',3,'#768063'),
+  seat('living',442,303,0,'Poltrona de leitura',1,'#ba9b67'),
+  seat('living',487,303,0,'Poltrona da janela',1,'#ba9b67'),
+  seat('living',278,346,Math.PI/2,'Banco do alfresco',2,'#79927a','living-alfresco'),
+  seat('living',365,346,-Math.PI/2,'Cadeiras do alfresco',2,'#baa282','living-alfresco'),
+  seat('living',264,220,Math.PI/2,'Cadeiras da piscina',2,'#ede2ce','living-pool'),
+  seat('living',339,220,-Math.PI/2,'Banco do deck',2,'#c6a57b','living-pool'),
+  seat('living',574,340,Math.PI/2,'Sofá · escuta',2,'#a3aa92','living-escuta'),
+  seat('living',646,340,-Math.PI/2,'Poltronas · escuta',2,'#a3aa92','living-escuta'),
+  seat('living',800,340,Math.PI/2,'Sofá · cores',2,'#b78890','living-cores'),
+  seat('living',875,340,-Math.PI/2,'Poltronas · cores',2,'#b78890','living-cores'),
+  seat('living',966,368,Math.PI/2,'Sofá · encontros',2,'#bd967d','living-encontros'),
+  seat('living',1063,368,-Math.PI/2,'Poltronas · encontros',2,'#bd967d','living-encontros'),
+ ],
+ bar:[
+  ...[322,360,399].map((x,i)=>seat('bar',x,550,0,`Balcão · banco ${i+1}`,1,'#56715c',undefined,true)),
+  ...barTables.flatMap((p,t)=>[
+   {x:p.x-.68,z:p.z,angle:Math.PI/2},{x:p.x+.68,z:p.z,angle:-Math.PI/2},
+   {x:p.x,z:p.z-.68,angle:0},{x:p.x,z:p.z+.68,angle:Math.PI},
+  ].map((p,i)=>({...p,name:`${t===1?'Jantar · pôquer':'Quarto 4 · jogos'} · lugar ${i+1}`,count:1,color:'#7c6345',stool:true,scale:.78}))),
+ ],
 };
 export function seatsFor(room:RoomId){return furniture[room].flatMap((f,group)=>Array.from({length:f.count},(_,i)=>{
-  const offset=(i-(f.count-1)/2)*.8;
-  return {x:f.x+Math.cos(f.angle)*offset,z:f.z-Math.sin(f.angle)*offset,angle:f.angle,
-    name:f.count>1?`${f.name} · lugar ${i+1}`:f.name,group,spot:f.spot,height:f.stool?.76:.665,approach:f.stool?-.6:.88};
+ const offset=(i-(f.count-1)/2)*.8*f.scale;
+ return{x:f.x+Math.cos(f.angle)*offset,z:f.z-Math.sin(f.angle)*offset,angle:f.angle,name:f.count>1?`${f.name} · lugar ${i+1}`:f.name,group,spot:f.spot,height:(f.stool?.76:.665)*f.scale,approach:(f.stool?-.6:.88)*f.scale};
 }));}
 export const seats=seatsFor('garage');
-export const phones=[{x:-3.8,z:-2.3},{x:1.05,z:-2.9},{x:3.95,z:-1.7},{x:-3.65,z:2.9}];
-export const plants=[[-4.25,-.9],[-4.1,3.6],[4,-3.1],[4,3.1]];
-export const barTables=[{x:.9,z:-2.1},{x:.9,z:1.05},{x:3.35,z:1.05}];
-export function obstaclesFor(room:RoomId){return [
-  ...(room==='bar'?[{x:-3.7,z:-2.8,w:2.4,d:1},{x:-4.35,z:.8,w:.65,d:5},...barTables.map((p,i)=>({...p,w:i===1?1.1:.85,d:i===1?1.15:.85}))]:[
-    {x:-3.55,z:-2.85,w:2.2,d:1.25},{x:-1.7,z:-3.15,w:.65,d:.7},
-    {x:2.8,z:-3,w:2.8,d:1.3},{x:-.55,z:.85,w:1.25,d:.9},
-  ]),
-  ...(room==='living'?[{x:-7,z:.9,w:.8,d:1.3},...[7.3,11.9,16.6].map(x=>({x,z:.6,w:.76,d:.76}))]:[]),
-  ...(room==='bar'?[{x:-4.25,z:3.15,w:.85,d:.83}]:[]),
-  ...furniture[room].map(f=>{const w=f.stool?.42:f.count*.8+.2,d=f.stool?.42:.9;return{...f,w:Math.abs(Math.cos(f.angle))*w+Math.abs(Math.sin(f.angle))*d,d:Math.abs(Math.sin(f.angle))*w+Math.abs(Math.cos(f.angle))*d};}),
-  ...plants.map(([x,z])=>({x,z,w:.65,d:.65})),...phones.map(p=>({...p,w:.65,d:.65})),
+const phonePoints:Record<RoomId,number[][]>={garage:[[844,581],[970,544],[992,711],[775,585]],living:[[405,452],[528,464],[838,373],[1010,431]],bar:[[270,532],[434,570],[632,645],[442,694]]};
+export const phonesFor=(room:RoomId)=>phonePoints[room].map(([x,y])=>local(room,x,y));
+export const phones=phonesFor('garage');
+const plantPoints:Record<RoomId,number[][]>={garage:[[1017,536],[822,724]],living:[[399,495],[540,292],[566,293],[792,293],[1071,340],[272,491]],bar:[[539,646],[566,650]]};
+export const plantsFor=(room:RoomId)=>plantPoints[room].map(([x,y])=>{const p=local(room,x,y);return[p.x,p.z];});
+export const plants=plantsFor('garage');
+export function obstaclesFor(room:RoomId){return[
+ ...FIXTURES.filter(f=>f.room===room).map(f=>({...f,x:f.x-roomOffsets[room].x,z:f.z-roomOffsets[room].z})),
+ ...(room==='bar'?barTables.map((p,i)=>({...p,w:i===1?.94:.77,d:i===1?.95:.77})):[]),
+ ...furniture[room].map(f=>{const w=(f.stool?.42:f.count*.8+.2)*f.scale,d=(f.stool?.42:.9)*f.scale;return{...f,w:Math.abs(Math.cos(f.angle))*w+Math.abs(Math.sin(f.angle))*d,d:Math.abs(Math.sin(f.angle))*w+Math.abs(Math.cos(f.angle))*d};}),
+ ...plantsFor(room).map(([x,z])=>({x,z,w:.5,d:.5})),...phonesFor(room).map(p=>({...p,w:.65,d:.65})),
 ];}
 export const obstacles=obstaclesFor('garage');
 export function approachSeat(s:ReturnType<typeof seatsFor>[number]):Place{return{x:s.x+Math.sin(s.angle)*s.approach,z:s.z+Math.cos(s.angle)*s.approach};}
@@ -78,7 +81,7 @@ export function worldPoint(p:Place,room:RoomId):Place{return{x:p.x+roomOffsets[r
 export function roomAt(p:Place):RoomId|undefined{return areaAt(p)?.room;}
 export function nearbyPhone(p:Place):HousePhone|null{
   const room=roomAt(p);if(!room)return null;
-  const candidates=phones.map((phone,index)=>({...worldPoint(phone,room),room,index}));
+  const candidates=phonesFor(room).map((phone,index)=>({...worldPoint(phone,room),room,index}));
   return candidates.filter(phone=>Math.hypot(phone.x-p.x,phone.z-p.z)<=1.15).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]??null;
 }
 /** Small swept steps prevent keyboard/touch movement from tunnelling through furniture. */
@@ -91,7 +94,7 @@ export function moveInHouse(from:Place,dx:number,dz:number):Place{
   }return p;
 }
 export function routeToPhone(from:Place,room:RoomId,index:number):Place[]{
-  const phone=phones[index];if(!phone)return[];
+  const phone=phonesFor(room)[index];if(!phone)return[];
   const center=worldPoint(phone,room);
   const candidates=Array.from({length:12},(_,i)=>({x:center.x+Math.sin(i*Math.PI/6)*.85,z:center.z+Math.cos(i*Math.PI/6)*.85})).filter(houseWalkable).sort((a,b)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(b.x-from.x,b.z-from.z));
   for(const goal of candidates){const path=houseRoute(from,goal);if(path.length)return path;}return[];

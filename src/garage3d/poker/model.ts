@@ -1,8 +1,9 @@
+import {planPoint} from '../areas.ts';
 export type Card=number; // 0..51: rank 2..A, clubs/diamonds/hearts/spades
 export type Player={id:string;name:string;seat:number;chips:number;cards:Card[];bet:number;total:number;folded:boolean;inHand:boolean;acted:boolean;seen:number;left?:boolean};
 export type PokerState={players:Player[];deck:Card[];board:Card[];street:'waiting'|'preflop'|'flop'|'turn'|'river'|'showdown';dealer:number;turn:string|null;deadline:number;currentBet:number;raises:number;hand:number;note:string;winners:string[]};
 export type PokerAction='join'|'leave'|'deal'|'fold'|'call'|'raise';
-export const TABLE={x:-6.1,z:5.05};
+export const TABLE=planPoint(487,604);
 export const createPoker=():PokerState=>({players:[],deck:[],board:[],street:'waiting',dealer:-1,turn:null,deadline:0,currentBet:0,raises:0,hand:0,note:'Duas pessoas já formam uma mesa. Chegue mais!',winners:[]});
 export const activeHand=(s:PokerState)=>!['waiting','showdown'].includes(s.street);
 export const raiseSize=(s:PokerState)=>s.street==='turn'||s.street==='river'?40:20;

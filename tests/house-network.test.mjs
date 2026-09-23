@@ -1,9 +1,11 @@
+import {areaById,planPoint,POOL,OPENINGS} from '../src/garage3d/areas.ts';
+import {toShared} from '../src/garage3d/coordinates.ts';
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import {emptyNetwork,exchangeNetwork} from '../server/houseNetwork.ts';
 const MAIN='disque-house-3d-v1',A=randomUUID(),B=randomUUID(),C=randomUUID();
 const body=(id,messages=[],cursor=0)=>({id,cursor,channels:[MAIN,'disque-room-chat-v1:garage','disque-social-v1:garage'],messages});
 const packet=(data,channel=MAIN)=>({id:randomUUID(),channel,data});
-const person=id=>packet({event:'person',from:'forged',data:{id,name:id===A?'Ana':'Visitante',avatar:0,position:{x:.5,y:.85},room:'garage',busy:false}});
+const person=id=>packet({event:'person',from:'forged',data:{id,name:id===A?'Ana':'Visitante',avatar:0,position:toShared(areaById('garage').arrival,'garage'),room:'garage',busy:false}});
 test('separate sessions see avatars; private messages never reach a third visitor',()=>{
  const s=emptyNetwork();exchangeNetwork(s,'owner-a',body(A,[person(A)]),10000);const b=exchangeNetwork(s,'owner-b',body(B,[person(B)]),10000);assert.equal(b.roster[0].id,A);
  exchangeNetwork(s,'owner-c',body(C,[person(C)]),10000);
@@ -14,7 +16,7 @@ test('separate sessions see avatars; private messages never reach a third visito
 });
 test('retries deduplicate, movements replace presence and expired visitors disappear',()=>{
  const s=emptyNetwork(),p=person(A);exchangeNetwork(s,'owner-a',body(A,[p]),10000);exchangeNetwork(s,'owner-a',body(A,[p]),11000);assert.equal(s.packets.length,1);
- const move=person(A);move.data.data.position.x=.6;exchangeNetwork(s,'owner-a',body(A,[move]),12000);const result=exchangeNetwork(s,'owner-b',body(B,[person(B)]),12000);assert.equal(result.roster[0].position.x,.6);
+ const move=person(A);move.data.data.position=toShared(planPoint(892,650),'garage');exchangeNetwork(s,'owner-a',body(A,[move]),12000);const result=exchangeNetwork(s,'owner-b',body(B,[person(B)]),12000);assert.equal(result.roster[0].position.x,toShared(planPoint(892,650),'garage').x);
  assert.equal(exchangeNetwork(s,'owner-b',body(B),110000).roster.length,0);
 });
 test('private group signaling needs a recipient and rejects forged from',()=>{
