@@ -20,3 +20,10 @@
 - TypeScript and in-memory Vite production build passed. Static scenery is batched; desktop measurement519 draw calls including the original house.
 - Independent review caught and confirmed correction of resident snapshot validation for outdoors. No remaining specification or code-quality blockers.
 - Prices are presented as a proposal, land999 and house2500; house billing modality remains unspecified pending owner's reply. No live purchase, builder or rental contract is claimed.
+
+## Publication
+
+- Implementation committed and pushed as `857d47f` on `feat/garage-proximity-prototype`.
+- Production deployment: https://disqueamizade-g6jt4gc75-jhcramos-projects.vercel.app, aliased to https://disqueamizade.com.br.
+- Re-ran the committed browser checks against production: six plots, physical walk to lot 6, first person, return home, mobile layout and selected-lot landing all passed, without JS/GPU errors.
+- Public entry points: `/garagem?bairro=1` and `/vizinhanca`. Existing default house entry remains unchanged.
