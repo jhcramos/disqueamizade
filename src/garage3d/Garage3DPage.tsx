@@ -2,6 +2,7 @@ import {installAvatarNodeMaterials,applyAvatarMaterials,avatarTslEnabled} from '
 import {buildNeighborhood} from './buildNeighborhood';
 import {NEIGHBORHOOD_LOTS,NEIGHBORHOOD_BOUNDS,lotById} from './neighborhood';
 import {NeighborhoodOverlay} from './NeighborhoodOverlay';
+import {SeatIndicator} from './SeatIndicator';
 import {HOUSE_AREAS,SOCIAL_AREAS,areaAt,areaById,type AreaId} from './areas';
 import {useSharedMotion} from './motion/useSharedMotion';
 import {MotionExperiment,type MotionFrame} from './motion/MotionExperiment';
@@ -56,7 +57,8 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const tvSlot=useRef<HTMLDivElement|null>(null);
   const attachTV=useCallback((node:HTMLDivElement|null)=>{tvSlot.current=node;live.current?.onTVSurface?.(node);},[]);
   const host=useRef<HTMLDivElement>(null),controls=useRef<Controls>();
-  const markerRefs=useRef(new Map<number,HTMLButtonElement>());
+  const markerRefs=useRef(new Map<number,HTMLElement>());
+  const [selectedSeatMarker,setSelectedSeatMarker]=useState<number|null>(null);
   const [planView,setPlanView]=useState(false);
   const [neighborhoodWide,setNeighborhoodWide]=useState(false);
   const [neighborhoodView,setNeighborhoodView]=useState(false),[selectedLot,setSelectedLot]=useState<string|null>(()=>lotById(new URLSearchParams(location.search).get('lote'))?.id??null),[nearLot,setNearLot]=useState<string|null>(null);
@@ -65,22 +67,28 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
   const [activeArea,setActiveArea]=useState<AreaId>(session?.self.room==='bar'?'dining':session?.self.room??'living');
   const [roomId,setRoomId]=useState<RoomId>(session?.self.room??'living');
   const seats=seatsFor(roomId);
-  const markers=roomId==='bar'?[{name:'Balcão da cozinha',x:furniture.bar[1].x,z:furniture.bar[1].z-.5,indices:[0,1,2]},...barTables.map((p,i)=>({...p,z:p.z+1.02,name:i===1?'Pôquer · fichas grátis':i===0?'Mesa de jogos':'Café e histórias',indices:[3+i*4,4+i*4,5+i*4,6+i*4]}))]:furniture[roomId].map((f,i)=>({name:f.name,x:f.x+Math.sin(f.angle)*.7,z:f.z+Math.cos(f.angle)*.7,indices:seats.map((s,n)=>s.group===i?n:-1).filter(n=>n>=0)}));
+  const markers=roomId==='bar'?[{name:'Balcão da cozinha',x:furniture.bar[1].x,z:furniture.bar[1].z-.5,indices:[0,1,2]},...barTables.map((p,i)=>({...p,z:p.z+1.02,name:i===1?'Pôquer · fichas grátis':i===0?'Mesa de jogos':'Café e histórias',indices:[3+i*4,4+i*4,5+i*4,6+i*4]}))]:furniture[roomId].map((f,i)=>({name:f.name,x:f.x,z:f.z,indices:seats.map((s,n)=>s.group===i?n:-1).filter(n=>n>=0)}));
   const visibleMarkers=neighborhoodView?[]:view==='house'?HOUSE_AREAS.filter(a=>planView?!['hall','path'].includes(a.id):['living','dining','garage','alfresco','pool','media'].includes(a.id)).map(a=>({x:planView?a.x:a.arrival.x,z:planView?a.z:a.arrival.z,name:planView?(planLabels[a.id]??a.name):a.name,room:a.room,area:a.id,indices:[] as number[]})):markers.map(m=>({...m,...worldPoint(m,roomId),room:roomId,area:undefined as AreaId|undefined}));
   const projectedMarkers=useRef(visibleMarkers);projectedMarkers.current=visibleMarkers;
+  const occupiedSeatIds=new Set([session?.self,...(session?.people??[])].flatMap(p=>p?.seat?[p.seat]:[]));
+  const concierge=life.social.concierge;
+  const reservedSeatIds=new Set([...(concierge?.reservedSeats??[]),...(concierge?.circles??[]).flatMap(c=>c.members.filter(p=>p.id!==(session?.self.id??previewVisitor.current)).map(p=>p.seat))]);
+  const availableIndices=(room:RoomId,indices:number[])=>indices.filter(index=>{const seat=seatsForRoom(room).find(s=>s.worldIndex===index);return seat&&!occupiedSeatIds.has(seat.id)&&!reservedSeatIds.has(seat.id);});
+
   const [close,setClose]=useState(!!session),[seated,setSeated]=useState(false),[lit,setLit]=useState(true);
   const [status,setStatus]=useState('Toque no piso para passear. Escolha uma poltrona para sentar.');
   const [ring,setRing]=useState<number|null>(null),[error,setError]=useState('');
   const [ready,setReady]=useState(false);
   const [firstPerson,setFirstPerson]=useState(false),[nearPhone,setNearPhone]=useState<HousePhone|null>(null),[dancing,setDancing]=useState(false);
   const [musicOn,setMusicOn]=useState(false),[question,setQuestion]=useState(-1);
+  useEffect(()=>setSelectedSeatMarker(null),[view,roomId,firstPerson,neighborhoodView]);
   const music=useRef<ReturnType<typeof createHouseMusic>>();
   async function toggleMusic(){if(musicOn){music.current?.stop();setMusicOn(false);return;}try{music.current??=createHouseMusic();await music.current.start();setMusicOn(true);}catch{setStatus('Não foi possível ligar o som neste navegador.');}}
   function focus(next:View){if(session?.frozen)return;if(session&&next!=='house'&&next!==session.self.room&&!session.onRoom(next))return;setView(next);setClose(false);setFirstPerson(false);if(next!=='house')setRoomId(next);controls.current?.focus(next);}
   useEffect(()=>{if(session?.self.room){setRoomId(session.self.room);setView(session.self.room);setClose(true);controls.current?.enteredRoom(session.self.room);}},[session?.self.room]);
   useEffect(()=>{if(session?.frozen){music.current?.stop();setMusicOn(false);}},[session?.frozen]);
   useEffect(()=>{
-    setReady(false);setSeated(false);setLit(true);setRing(null);setError('');setStatus('Os móveis marcados têm assentos. Toque em “Sentar” ou escolha um lugar na lista.');
+    setReady(false);setSeated(false);setLit(true);setRing(null);setError('');setStatus('As setas indicam lugares livres. Toque para escolher onde sentar.');
     const el=host.current!;let renderer:T.WebGLRenderer;
     try{renderer=new T.WebGLRenderer({antialias:true,alpha:true});}catch{setError('Este aparelho não conseguiu abrir a casa 3D. O chat e a lista de pessoas continuam disponíveis.');return;}
     const avatarMaterials=installAvatarNodeMaterials(renderer);
@@ -250,7 +258,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       cameraFocus.lerp(focus,reduced?1:Math.min(1,dt*4));camera.position.copy(cameraFocus).add(cameraOffset());camera.lookAt(cameraFocus);camera.updateProjectionMatrix();
       camera.updateMatrixWorld();
       eyeCamera.position.set(actor.position.x,sitting?actor.position.y+1.25:1.35,actor.position.z);eyeCamera.lookAt(eyeCamera.position.x+Math.sin(yaw)*Math.cos(pitch),eyeCamera.position.y+Math.sin(pitch),eyeCamera.position.z+Math.cos(yaw)*Math.cos(pitch));eyeCamera.updateMatrixWorld();
-      projectedMarkers.current.forEach((m,i)=>{const button=markerRefs.current.get(i);if(!button)return;const p=new T.Vector3(m.x,.13,m.z).project(camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;const obscuresPerson=[actor,...Array.from(remote.actors.values()).map(a=>a.root)].some(root=>{const q=root.position.clone().add(new T.Vector3(0,.9,0)).project(camera);return Math.abs(p.x-q.x)*el.clientWidth/2<90&&Math.abs(p.y-q.y)*el.clientHeight/2<100;});button.hidden=fp||(!planMode&&obscuresPerson)||p.x<-.9||p.x>.9||p.y<-.85||p.y>.85;});
+      projectedMarkers.current.forEach((m,i)=>{const button=markerRefs.current.get(i);if(!button)return;const compact=button.classList.contains('garage3d-seat-anchor');const p=new T.Vector3(m.x,compact?1.08:.13,m.z).project(camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;button.dataset.side=p.x<-.45?'left':p.x>.45?'right':'center';button.dataset.below=String(p.y>.4);const obscuresPerson=[actor,...Array.from(remote.actors.values()).map(a=>a.root),...residentVisuals.roots.values()].some(root=>{const q=root.position.clone().add(new T.Vector3(0,1.1,0)).project(camera);return Math.abs(p.x-q.x)*el.clientWidth/2<(compact?26:90)&&Math.abs(p.y-q.y)*el.clientHeight/2<(compact?42:100);});button.hidden=fp||(!planMode&&obscuresPerson&&!button.classList.contains('is-open'))||p.x<-.9||p.x>.9||p.y<-.85||p.y>.85;});
       if(state){for(const person of [state.self,...state.people]){const root=person.id===state.self.id?actor:remote.actors.get(person.id)?.root,button=personLabels.current.get(person.id);if(!root||!button)continue;const p=root.position.clone().add(new T.Vector3(0,1.85,0)).project(fp?eyeCamera:camera);button.style.left=`${(p.x+1)*50}%`;button.style.top=`${(1-p.y)*50}%`;const head=root.position.clone().add(new T.Vector3(0,1.5,0)).project(fp?eyeCamera:camera);button.dataset.headY=String((1-head.y)*el.clientHeight/2);button.dataset.motionActive=String(!!root.userData.motionActive);button.dataset.armAngle=Number(root.userData.armAngle??0).toFixed(2);button.dataset.armForward=Number(root.userData.armForward??0).toFixed(2);button.hidden=planMode||(fp&&person.id===state.self.id)||p.z>1||p.z< -1||Math.abs(p.x)>.96||Math.abs(p.y)>.9;
         if(inviteLabel.current&&state.bubbleOwner===person.id){inviteLabel.current.style.left=button.style.left;inviteLabel.current.style.top=button.style.top;}}
       }
@@ -294,7 +302,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
     return()=>{active=false;cancelAnimationFrame(frame);observer.disconnect();controls.current=undefined;music.current?.stop();window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',release);document.removeEventListener('visibilitychange',visibility);el.removeEventListener('pointermove',onMove);el.removeEventListener('pointercancel',release);el.removeEventListener('lostpointercapture',endDrag);el.removeEventListener('pointerdown',onDown);el.removeEventListener('pointerup',onUp);roomIds.forEach(id=>rooms[id].dispose());neighborhood.dispose();sun.shadow.map?.dispose();
       dismissNearby.current=undefined;lifeTransport.dispose();residentVisuals.dispose();residentFixtures.dispose();residentAction.current=undefined;meetResident.current=undefined;remote.dispose();playObjects.dispose();disposeAvatar(avatar);renderer.dispose();renderer.domElement.remove();};
   },[]);
-  return <div className={`garage3d-page${session?' is-live-house':''}${planView?' is-plan-view':''}${neighborhoodView?' is-neighborhood':''}${neighborhoodWide?' is-neighborhood-wide':''}${selectedLot?' has-selected-lot':''}${session?.cinema?' is-cinema':''}`}>
+  return <div className={`garage3d-page${session?' is-live-house':''}${planView?' is-plan-view':''}${neighborhoodView?' is-neighborhood':''}${neighborhoodWide?' is-neighborhood-wide':''}${selectedLot?' has-selected-lot':''}${selectedSeatMarker!==null?' has-selected-seat':''}${session?.cinema?' is-cinema':''}`}>
     <header><Link to="/garagem"><ArrowLeft size={17}/> Voltar à casa</Link><span>DISQUE AMIZADE <i>/</i> ESTUDO 3D</span><span className="garage3d-version">{view==='house'?'Casa inteira · 51 lugares':`${roomNames[roomId]} · ${seats.length} lugares`}</span></header>
     <section className="garage3d-intro"><div><p>A MESMA CASA. UMA NOVA DIMENSÃO.</p><h1>Entre. Fique à vontade.</h1></div><p>Um cantinho para ouvir música,<br/>puxar uma cadeira e encontrar sua turma.</p></section>
     <nav className="garage3d-rooms" aria-label="Enquadramento da casa">
@@ -307,7 +315,7 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       <select className="house-area-select" aria-label="Explorar área da casa" value={activeArea} disabled={session?.frozen} onChange={e=>controls.current?.area(e.target.value as AreaId)}>{!SOCIAL_AREAS.some(a=>a.id===activeArea)&&<option value={activeArea}>{areaById(activeArea).name}</option>}{SOCIAL_AREAS.map(a=><option key={a.id} value={a.id}>{a.name} · {a.topic}</option>)}</select>
     </nav>
     {import.meta.env.VITE_ENABLE_AVATAR_MOTION!=='false'&&<MotionExperiment frame={motionFrame} sharing={sharedMotion.sharing} shareAvailable={!!session&&import.meta.env.VITE_ENABLE_AVATAR_MOTION_SHARING!=='false'} shareConnected={sharedMotion.connected} realtime={sharedMotion.realtime} onShare={sharedMotion.choose} onStop={()=>sharedMotion.publish(null)} blocked={!!(session?.frozen||session?.cinema||session?.self.busy||pokerOpen)} onFocus={()=>{dismissNearby.current?.();setResidentTarget(null);setClose(true);setFirstPerson(false);controls.current?.firstPerson(false);controls.current?.view(true);}}/>}
-    <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada">
+    <section className={`garage3d-stage ${firstPerson?'is-first-person':''}`} aria-label="Casa tridimensional integrada" onPointerDown={e=>{if(e.target instanceof Element&&!e.target.closest('.garage3d-seat-anchor'))setSelectedSeatMarker(null);}}>
       <div className="house3d-tv-slot" ref={attachTV} aria-hidden="true" />
       <div ref={host} className="garage3d-canvas" aria-label="Toque para andar. Arraste para mover a vista. Use dois dedos para dar zoom."/>
       {!ready&&!error&&<div className="garage3d-loading">Preparando a casa…</div>}
@@ -318,7 +326,14 @@ export default function Garage3DPage({session}:{session?:LiveHouseSession}={}){
       {ready&&<PokerPanel avatar={session?.self.avatar??0} appearance={session?.self.appearance??presetAppearance(0)} unavailable={!!session?.frozen} onCallActive={session?.onPokerCall} open={pokerOpen} onClose={()=>setPokerOpen(false)} getVisitor={()=>pokerVisitor.current()} onSeat={seat=>{pokerSeat.current=seat;if(seat!==null)controls.current?.seat(7+seat,'bar');}}/>}
       {session?.bubble&&<div className="house3d-invite" ref={inviteLabel}>{session.bubble}</div>}
       {ready&&<NeighborhoodOverlay overview={neighborhoodView} selected={selectedLot} nearby={nearLot} frozen={!!session?.frozen} labels={lotLabels.current} onSelect={setSelectedLot} onVisit={id=>controls.current?.lot(id,true)} onInspect={id=>controls.current?.lot(id,false)} onClose={()=>setSelectedLot(null)} onHome={()=>controls.current?.area('garage')}/>}
-      {ready&&visibleMarkers.map((m,i)=><button key={`${view}-${i}`} ref={el=>{if(el)markerRefs.current.set(i,el);else markerRefs.current.delete(i);}} className={`garage3d-seat-marker ${view==='house'?'garage3d-room-marker':''}`} onClick={()=>view==='house'&&m.area?controls.current?.area(m.area):m.room==='bar'&&m.name.startsWith('Pôquer')?((pokerSeat.current===null&&controls.current?.seat(10,'bar')),setPokerOpen(true)):controls.current?.seat(m.indices.find(i=>!session?.people.some(p=>p.seat===seatsForRoom(m.room).find(s=>s.worldIndex===i)?.id))??m.indices[0],m.room)} aria-label={view==='house'?`Explorar ${m.name}`:`Sentar: ${m.name}`}><Armchair size={14}/><span>{m.name}<small>{view==='house'?(planView?'':'Aproximar →'):m.name.startsWith('Pôquer')?'4 lugares · Jogar':`${m.indices.length} lugares · Sentar`}</small></span></button>)}
+      {ready&&visibleMarkers.map((m,i)=>{
+        if(view==='house')return <button key={`${view}-${i}`} ref={el=>{if(el)markerRefs.current.set(i,el);else markerRefs.current.delete(i);}} className="garage3d-seat-marker garage3d-room-marker" onClick={()=>m.area&&controls.current?.area(m.area)} aria-label={`Explorar ${m.name}`}><Armchair size={14}/><span>{m.name}<small>{planView?'':'Aproximar →'}</small></span></button>;
+        const free=availableIndices(m.room,m.indices),poker=m.room==='bar'&&m.name.startsWith('Pôquer');
+        return <SeatIndicator key={`${view}-${i}`} name={m.name} free={free.length} poker={poker} open={selectedSeatMarker===i} disabled={session?.frozen}
+          register={el=>{if(el)markerRefs.current.set(i,el);else markerRefs.current.delete(i);}}
+          onOpen={open=>setSelectedSeatMarker(current=>open?i:current===i?null:current)}
+          onSit={()=>{if(free.length===0||session?.frozen)return;setSelectedSeatMarker(null);if(poker){if(pokerSeat.current===null)controls.current?.seat(free[0],m.room);setPokerOpen(true);}else controls.current?.seat(free[0],m.room);}}/>;
+      })}
       <div className="garage3d-camera"><button disabled={!ready} aria-pressed={firstPerson} onClick={()=>controls.current?.firstPerson(!firstPerson)}><Eye size={16}/>{firstPerson?'Sair da primeira pessoa':'Primeira pessoa'}</button>{!firstPerson&&<><button disabled={!ready} onClick={()=>{setClose(!close);controls.current?.view(!close);}}><Maximize2 size={16}/>{close?'Ver ambiente inteiro':'Chegar mais perto'}</button><button aria-label="Restaurar câmera" onClick={()=>{setClose(false);controls.current?.view(false);}}><RotateCcw size={16}/></button></>}</div>
       {!firstPerson&&<span className="house-gesture-hint">Toque para andar · Arraste a vista · Pinça para zoom</span>}
       {firstPerson&&<button className="garage3d-look-reset" onClick={()=>controls.current?.lookInside()} aria-label="Olhar para dentro do ambiente"><RotateCcw size={16}/></button>}

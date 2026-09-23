@@ -71,3 +71,29 @@
 
 .has-selected-lot .resident-controls,.has-selected-lot .garage3d-phone-prompt{display:none!important}
 @media(max-width:700px){.is-first-person .neighborhood-navigation{bottom:78px}}
+
+/* Seat availability: a quiet pointer over the furniture, details on request. */
+.garage3d-seat-anchor{position:absolute;width:44px;height:44px;transform:translate(-50%,-100%);z-index:2}
+.garage3d-seat-anchor[hidden]{display:none!important}
+.garage3d-seat-anchor.is-open{z-index:5}
+.garage3d-page .garage3d-seat-indicator{width:44px;height:44px;min-height:44px;display:flex;justify-content:center;align-items:center;padding:0;border:0;background:transparent;box-shadow:none;border-radius:50%;touch-action:manipulation}
+.garage3d-page .garage3d-seat-indicator:hover{background:transparent}
+.seat-indicator-symbol{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid #526647;background:#fffaf0ed;color:#435c3b;box-shadow:0 1px 3px #33281a26}
+.seat-indicator-symbol.is-occupied{width:22px;height:22px;border-color:#a19481;color:#756856;background:#efe6d8e6}
+.garage3d-seat-indicator[aria-expanded=true] .seat-indicator-symbol{background:#526647;color:#fffaf0}
+.garage3d-page .garage3d-seat-indicator:focus-visible{outline:2px solid #526647;outline-offset:0}
+.seat-indicator-hint,.garage3d-seat-detail{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);width:max-content;max-width:210px;padding:8px 11px;border:1px solid #d9c9b0;border-radius:10px;background:#fffaf0;color:#503a2c;box-shadow:0 2px 8px #33281a18;font-size:12px;line-height:1.4}
+.seat-indicator-hint{display:none;pointer-events:none;font-size:11px}
+.seat-indicator-hint small,.garage3d-seat-detail small{display:block;margin-top:3px;font-size:11px;color:#526647}
+.garage3d-seat-detail{width:210px;padding:12px}
+.garage3d-seat-detail strong{display:block;font-size:13px;padding-right:30px}
+.garage3d-page .seat-detail-close{position:absolute;right:0;top:0;width:44px;height:44px;padding:0;display:grid;place-items:center;border:0;background:transparent}
+.garage3d-page .seat-detail-action{display:flex;justify-content:center;width:100%;margin-top:10px;background:#526647;color:#fffaf0;border-color:#526647}
+.garage3d-page .seat-detail-action:disabled{cursor:not-allowed}
+.garage3d-seat-anchor[data-side=left]>.seat-indicator-hint,.garage3d-seat-anchor[data-side=left]>.garage3d-seat-detail{left:0;transform:none}
+.garage3d-seat-anchor[data-side=right]>.seat-indicator-hint,.garage3d-seat-anchor[data-side=right]>.garage3d-seat-detail{left:auto;right:0;transform:none}
+.garage3d-seat-anchor[data-below=true]>.seat-indicator-hint,.garage3d-seat-anchor[data-below=true]>.garage3d-seat-detail{bottom:auto;top:100%}
+.garage3d-seat-indicator:focus-visible+.seat-indicator-hint{display:block}
+@media(hover:hover) and (pointer:fine){.garage3d-seat-anchor:hover>.seat-indicator-hint{display:block}.garage3d-seat-indicator:hover .seat-indicator-symbol{background:#526647;color:#fffaf0}}
+
+.has-selected-seat .resident-controls,.has-selected-seat .garage3d-phone-prompt{display:none!important}
