@@ -9,7 +9,7 @@
 - [x] Add top-down plan camera for direct visual comparison; preserve first-person, pinch/pan and avatar follow views.
 - [x] Relocate seats, phones and resident routines with valid approaches; migrate old spatial snapshots by layout version.
 - [x] Verify dimensional anchors, architectural adjacency, all arrival/seat/phone paths, social privacy, poker and residents. Compare rendered top view to reference.
-- [ ] Typecheck/build, scan staged changes, commit/push and publish to verified existing project.
+- [x] Typecheck/build, scan staged changes, commit/push and publish to verified existing project.
 
 The user explicitly rejected architectural simplification. Preserve footprint, room partitions and recesses; cutaway wall height is only a viewing aid, not a change in plan. Furniture scale may adapt to the existing stylized avatars; walls must not move to fit furniture. Readable raster dimensions drive primary scale; this is not a construction-certified CAD model.
 
@@ -22,3 +22,10 @@ The user explicitly rejected architectural simplification. Preserve footprint, r
 - Separate browser contexts passed presence, room chat, private-message consent/isolation, movement, reconnect and departure. Poker passed with two independent visitors, private cards, betting, fold and mobile layout.
 - Rendering geometry is batched without merging interaction boundaries. Measured full-page top view dropped from 1,764 to 484 draw calls on the local test browser; this is not a mobile FPS guarantee.
 - One review finding fixed: switching outer room tabs now exits top-down plan mode.
+
+## Published
+
+- Implementation commit: `6cf06f7`, pushed to `origin/feat/garage-proximity-prototype` after clean staged secret scan.
+- Final combined regression suite: 99/99 passing.
+- Production deployment: `https://disqueamizade-gtsrx8ny6-jhcramos-projects.vercel.app`, aliased to `https://disqueamizade.com.br`.
+- Fresh public-domain browser verification passed: TSL avatar finish, 12 themed areas, 21 architectural labels in plan view, desktop/mobile views and no JavaScript/GPU errors. Temporary test visitor context closed after verification.
