@@ -12,10 +12,12 @@
 - [x] Relocate resident fixtures, routines, spawn points and poker table position; invalidate old spatial snapshots safely through validation.
 - [x] Integrate shared TSL finish for local/remote/resident avatars and renderer compatibility helper.
 - [x] Add spatial regression tests and run actual browser interactions at desktop/mobile sizes. Verify physical phone approach, all seat paths, pool exclusion, world/shared roundtrip and existing consent behavior.
-- [ ] Run TypeScript and production build, scan committed changes, push authorized remote, deploy and inspect public route.
+- [x] Run TypeScript and production build, scan committed changes, push authorized remote, deploy and inspect public route.
 
 Verification completed locally: 70 focused node tests; TypeScript; memory-only Vite production bundle; 20-avatar TSL material/rig/disposal browser test; separate browser sessions for exterior presence, public/private messages and reconnect; two-player dining poker with private cards and mobile controls; real mobile pinch/pan; pool, alfresco, lounge and cinema sitting.
 
 TSL rollback: set `VITE_ENABLE_AVATAR_TSL=false` and rebuild. This restores standard avatar materials without changing geometry, movement, seating or camera permissions.
 
 Reference floorplan is interpreted as a navigable cutaway. Roofs and private service rooms are not reproduced as inaccessible enclosures. The three existing chat/presence channels remain stable and group the ten themed physical areas. Pool is decorative water with safe deck circulation, not a swimming mechanic. Real low-end phone performance remains to be measured.
+
+Publication: implementation `52381ed` pushed to the authorized remote. Vercel production build passed (including static prerender). Deployment `disqueamizade-6dc9vyot0-jhcramos-projects.vercel.app` aliased to the main domain. Public browser check confirmed TSL rendering, ten area choices, pool/alfresco/garage navigation, online residents and no page errors; test visitor exited afterwards.
