@@ -22,7 +22,7 @@ export function findWalkingRoute(from:Place,to:Place,clear:(p:Place)=>boolean):P
   for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){
    const n={x:p.x+dx,z:p.z+dz},id=key(n),cost=p.cost+step;
    if(cost>=(best.get(id)??Infinity)-1e-8)continue;
-   let valid=passable.get(id);if(valid===undefined){valid=clear(n);passable.set(id,valid);}if(!valid)continue;
+   let valid=passable.get(id);if(valid===undefined){valid=clear(n);passable.set(id,valid);}if(!valid||!segment(p,n))continue;
    best.set(id,cost);previous.set(id,p);push({...n,key:id,cost,rank:cost+estimate(n)});
   }
  }

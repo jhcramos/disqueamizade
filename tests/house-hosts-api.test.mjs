@@ -6,7 +6,7 @@ test('host invites bind to signed identities, stay personal and preserve poker s
  globalThis.fetch=async(url,init)=>{assert.match(String(url),/^https:\/\/hosts-test.invalid\/rest/);if(init?.method==='PATCH'){row={...row,...JSON.parse(init.body)};return new Response(JSON.stringify([{revision:row.revision}]));}return new Response(JSON.stringify(row));};
  const request=async(client,command)=>{for(const entry of Object.values(row.payload.visitors))entry.seen=Date.now()-500;
   const out={};const res={setHeader(){},status(n){out.status=n;return this;},json(body){out.body=body;return this;}};
-  await handler({method:'POST',headers:{host:'test.invalid',...(client.token?{'x-resident-session':client.token}:{})},body:{visitor:{id:client.id,name:client.name,position:{x:-5,z:2.8},blocked:client.blocked},command}},res);if(out.body.identity){client.token=out.body.identity.token;client.serverId=out.body.identity.id;}return out;
+  await handler({method:'POST',headers:{host:'test.invalid',...(client.token?{'x-resident-session':client.token}:{})},body:{visitor:{id:client.id,name:client.name,position:{x:-7.8,z:3.2},blocked:client.blocked},command}},res);if(out.body.identity){client.token=out.body.identity.token;client.serverId=out.body.identity.id;}return out;
  };
  const cmd=(action,target)=>({id:randomUUID(),action,target});
  try{

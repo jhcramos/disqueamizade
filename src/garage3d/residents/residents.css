@@ -25,3 +25,5 @@
 .garage3d-page .resident-buttons button:first-child{background:#b64e30;color:#fff;border-color:#b64e30}
 
 .resident-panel.is-dog-fetching{width:250px;box-sizing:border-box}.is-dog-fetching .resident-hint{margin-bottom:0}
+
+.resident-speech.is-thought{border-radius:18px;background:#f4efe4f5;border-style:dashed;color:#675a4e;font-style:italic}.resident-thought-caption{display:block;margin-bottom:3px;font-size:9px!important;letter-spacing:.04em;color:#806c58!important;font-style:normal}.resident-speech.is-thought::after{content:"";position:absolute;bottom:-7px;left:50%;width:6px;height:6px;border:1px solid #cfbfa9;border-radius:50%;background:#f4efe4}.resident-speech.is-thought::before{content:"";position:absolute;bottom:-12px;left:calc(50% + 5px);width:3px;height:3px;border-radius:50%;background:#cfbfa9}

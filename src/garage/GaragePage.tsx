@@ -1,3 +1,5 @@
+import {publicInterestTags} from '../garage3d/residents/welcome';
+import {supabase} from '@/services/supabase/client';
 import {setCameraAvatar} from './cameraAvatar';
 import { HouseTheatre } from "./theatre/HouseTheatre";
 import { useScreening } from "./theatre/useScreening";
@@ -313,6 +315,18 @@ function GarageRoom({
   const [tvSurface, setTVSurface] = useState<HTMLDivElement | null>(null);
   const [theatreOpen, setTheatreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const profileUser=useAuthStore(s=>s.user);
+  const [publicInterests,setPublicInterests]=useState<string[]>([]);
+  useEffect(()=>{
+    setPublicInterests([]);
+    if(!profileUser||profileUser.is_anonymous||accountOpen)return;
+    let active=true;
+    void (async()=>{try{
+      const {data}=await supabase.from('garage_profiles').select('interests').eq('id',profileUser.id).maybeSingle();
+      if(active)setPublicInterests(publicInterestTags(data?.interests));
+    }catch{/* A missing profile still receives a general welcome. */}})();
+    return()=>{active=false;};
+  },[profileUser?.id,profileUser?.is_anonymous,accountOpen]);
   const [desktopPanel,setDesktopPanel]=useState<'rods'|'play'|null>(null);
   const mobileHouse = useMobileHouse();
   const [mobilePanel, setMobilePanel] = useState<'chat' | 'rods' | 'play' | 'people' | 'menu' | null>(null);
@@ -670,7 +684,7 @@ function GarageRoom({
             <div className="desktop-play-sheet" ref={setTrayTarget}/>
           </>}
           <MobileHouseViewport active={false} position={position} room={`${room}-${arrival}`}>
-          <GarageScene adultConfirmed={adultConfirmed} blockedPeople={people.filter(p=>social.isBlocked(p.id)).map(p=>p.id)} onPokerCall={setPokerTalking}
+          <GarageScene publicInterests={publicInterests} adultConfirmed={adultConfirmed} blockedPeople={people.filter(p=>social.isBlocked(p.id)).map(p=>p.id)} onPokerCall={setPokerTalking}
             revision={arrival}
             onRoom={(next,point)=>changeRoom(next,false,point)}
             onTelevision={id=>{if(id===room)openTheatre();else if(changeRoom(id))setTimeout(()=>setTheatreOpen(true),0);}}

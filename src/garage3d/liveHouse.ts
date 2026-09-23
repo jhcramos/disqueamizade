@@ -3,7 +3,7 @@ import type { Person, Point, RoomId } from '../garage/model';
 import type { SocialPreference } from '../garage/useSocialChat';
 import type { PlayAction, PlayState } from '../garage/play';
 export type LiveHouseSession={
-  adultConfirmed?:boolean;blockedPeople?:string[];
+  publicInterests?:string[];adultConfirmed?:boolean;blockedPeople?:string[];
   onPokerCall?:(active:boolean)=>void;
   self:Person;people:Person[];destination:Point;revision:number;frozen:boolean;low:boolean;
   preferences:Record<string,SocialPreference>;chatBubbles:Record<string,string>;bubble?:ReactNode;bubbleOwner?:string;

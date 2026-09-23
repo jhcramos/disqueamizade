@@ -28,7 +28,7 @@ export function hostCommand(s:LifeState,c:Command,visitors:Visitor[],now:number)
  if(c.action==='solo'||c.action==='socialOn'){
   s.social.solo[v.id]=c.action==='solo';s.social.welcomed[v.id]=now;
   if(c.action==='solo'){s.social.invites=s.social.invites.filter(i=>i.from!==v.id&&i.to!==v.id);companyCommand(s,{...c,action:'cancelCompany'},visitors,now);}
-  return c.action==='solo'?'Tudo bem! Dora e Téo vão deixar você explorar em paz.':'Dora e Téo podem voltar a convidar você.';
+  return c.action==='solo'?'Tudo bem! Jana e Harold vão deixar você explorar em paz.':'Jana e Harold podem voltar a convidar você.';
  }
  if(c.action==='introduce'||c.action==='together'||c.action==='passToy')return begin(s,c,visitors,now,c.action==='passToy'?'ball':c.action==='together'?'activity':'meet');
  const invite=s.social.invites.find(i=>i.id===c.target&&(i.from===v.id||i.to===v.id));
@@ -78,7 +78,7 @@ export function validSocial(value:unknown):value is HostSocial{
  return new Set(s.invites.map(i=>i.id)).size===s.invites.length&&s.invites.every(i=>str(i.id,100)&&str(i.from,100)&&str(i.to,100)&&str(i.fromName,24)&&str(i.toName,24)&&['dora','teo'].includes(i.host)&&['welcome','meet','activity','ball'].includes(i.kind)&&['pending','ready'].includes(i.stage)&&Number.isFinite(i.expires)&&str(i.topic,200)&&(!i.point||(Number.isFinite(i.point.x)&&Number.isFinite(i.point.z)&&houseWalkable(i.point))));
 }
 /** Invitations are personal; public speech is only emitted after acceptance. */
-export function personalLife(s:LifeState,id:string):LifeState{const state=structuredClone(s);state.social??=freshSocial();state.social.invites=state.social.invites.filter(i=>i.from===id||i.to===id);state.social.solo={[id]:!!state.social.solo[id]};state.social.welcomed={};const c=concierge(state);
+export function personalLife(s:LifeState,id:string):LifeState{const state=structuredClone(s);delete state.arrivals;state.social??=freshSocial();state.social.invites=state.social.invites.filter(i=>i.from===id||i.to===id);state.social.solo={[id]:!!state.social.solo[id]};state.social.welcomed={};const c=concierge(state);
  c.reservedSeats=c.circles.flatMap(r=>r.members.filter(m=>m.id!==id).map(m=>m.seat));
  c.requests=c.requests[id]?{[id]:c.requests[id]}:{};
  c.proposals=c.proposals.filter(p=>p.from===id||(p.to===id&&p.stage==='invited'));

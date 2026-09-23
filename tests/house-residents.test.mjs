@@ -43,7 +43,7 @@ test('fetch reservation prevents theft and interruption without losing the toy',
  assert.equal(toy.holder,'ana');assert.equal(toy.reserved,undefined);
 });
 test('prepared chores reserve and hold actual objects, then release after interruption',()=>{
- const s=createLife(0);tickLife(s,.1,[],20000);
+ const s=createLife(0);s.domestic.until=999999;tickLife(s,.1,[],20000);
  assert.equal(s.items.find(i=>i.id==='record').reserved,'teo');
  for(let i=0;i<250;i++)tickLife(s,.1,[],20100+i*100);
  assert.ok(s.memories.some(m=>m.includes('organizou os discos')));assert.ok(parseLife(s));
@@ -51,7 +51,7 @@ test('prepared chores reserve and hold actual objects, then release after interr
  assert.ok(!s.items.some(i=>i.holder==='dora'||i.reserved==='dora'));
 });
 test('snapshots reject duplicate ownership, impossible activities and off-floor actors',()=>{
- for(const mutate of [s=>{s.items[0].holder='ana';s.items[1].holder='ana';},s=>{s.residents[0].activity='nonsense';},s=>{s.residents[0].position={x:-10,z:-10.65};}]){const s=createLife();mutate(s);assert.equal(parseLife(s),null);}
+ for(const mutate of [s=>{s.items[0].holder='ana';s.items[1].holder='ana';},s=>{s.residents[0].activity='nonsense';},s=>{s.residents[0].position={x:-4.65,z:-7.4};}]){const s=createLife();mutate(s);assert.equal(parseLife(s),null);}
 });
 test('watering and preparing dog rest require the appropriate object and proximity',()=>{
  const s=createLife(0),a=visitor('ana',{...BOWL});

@@ -7,7 +7,7 @@ export function createResidentTransport(getVisitor:()=>Visitor,onState:(s:LifeSt
  const visitors=new Map<string,{visitor:Visitor;seen:number}>(),channel=new BroadcastChannel('house-residents-v1');
  let serverToken='',serverId='';
  const pending:Command[]=[];let processed=new Set<string>();
- try{const saved=parseLife(JSON.parse(localStorage.getItem('house-residents-v1')||'null'));if(saved){state=saved;state.items.forEach(returnItem);if(state.bed.holder)releaseBed(state,state.bed.holder);state.social.invites=[];state.social.solo={};state.social.welcomed={};state.social.concierge=freshConcierge();state.residents.forEach(r=>{r.path=[];r.until=Date.now()+({dora:4300,teo:8900,biscoito:1700}[r.id]);r.activity='idle';});}}catch{/* private storage: in-memory simulation still works */}
+ try{const saved=parseLife(JSON.parse(localStorage.getItem('house-residents-v1')||'null'));if(saved){state=saved;delete state.domestic;delete state.arrivals;state.items.forEach(returnItem);if(state.bed.holder)releaseBed(state,state.bed.holder);state.social.invites=[];state.social.solo={};state.social.welcomed={};state.social.concierge=freshConcierge();state.residents.forEach(r=>{r.path=[];r.until=Date.now()+({dora:4300,teo:8900,biscoito:1700}[r.id]);r.activity='idle';});}}catch{/* private storage: in-memory simulation still works */}
  const emit=()=>onState(structuredClone(state),mode);
  const send=(data:unknown)=>{if(!closed)channel.postMessage(data);};
  function accept(c:Command){if(processed.has(c.id))return;processed.add(c.id);if(processed.size>200)processed=new Set([...processed].slice(-100));

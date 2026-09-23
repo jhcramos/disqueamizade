@@ -8,6 +8,7 @@ import { presetAppearance } from '../../garage/avatarPresets';
 import { createResidentMotion } from './motion';
 import { BED, BOWL, ITEMS, type LifeState } from './model';
 import { disposeAvatar } from '../remoteActors';
+import { createHouseholdProps } from './householdProps';
 
 export type VisualResident = {
   id: 'dora' | 'teo' | 'biscoito';
@@ -145,10 +146,30 @@ function createItem(kind: VisualItem['kind']) {
   return root;
 }
 
-type Actor = { root: T.Group; model: T.Group; baseY: number; kind: string; stride:number; motion:ReturnType<typeof createResidentMotion> };
+const handDirection = new T.Vector3(), handTarget = new T.Vector3();
+/** Aim the two existing arm bones at a model-space grip, accounting for their nonuniform scale. */
+function poseWorkArm(arm: T.Object3D, elbow: T.Object3D, x: number, y: number, z: number) {
+  handTarget.set(x - arm.position.x, y - arm.position.y, z - arm.position.z);
+  const reach = handTarget.length();
+  let low = -Math.PI, high = -.95;
+  // This interval is monotonic from a folded elbow to the rig's maximum reach.
+  for (let i = 0; i < 12; i++) {
+    const bend = (low + high) / 2;
+    handDirection.set(0, arm.scale.y * (-.3 - .307 * Math.cos(bend) - .015 * Math.sin(bend)), arm.scale.z * (-.307 * Math.sin(bend) + .015 * Math.cos(bend)));
+    if (handDirection.length() < reach) low = bend; else high = bend;
+  }
+  const bend = (low + high) / 2;
+  handDirection.set(0, arm.scale.y * (-.3 - .307 * Math.cos(bend) - .015 * Math.sin(bend)), arm.scale.z * (-.307 * Math.sin(bend) + .015 * Math.cos(bend)));
+  arm.quaternion.setFromUnitVectors(handDirection.normalize(), handTarget.normalize());
+  elbow.rotation.set(bend, 0, 0);
+}
+
+type AdultJoints = {left: T.Object3D; right: T.Object3D; leftElbow: T.Object3D; rightElbow: T.Object3D; head: T.Object3D};
+type Actor = { joints?: AdultJoints; root: T.Group; model: T.Group; baseY: number; kind: string; stride:number; motion:ReturnType<typeof createResidentMotion> };
 
 export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterialScope) {
   const roots = new Map<string, T.Group>(), actors = new Map<string, Actor>();
+  const household = createHouseholdProps(scene);
   function remove(id: string) {
     const root = roots.get(id);
     if (root) { scene.remove(root); disposeAvatar(root); roots.delete(id); }
@@ -161,7 +182,12 @@ export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterial
     root.add(model);
     scene.add(root);
     roots.set(id, root);
-    const actor = { root, model, baseY: model.position.y, kind, stride: id==='dora'?.7:id==='teo'?2.6:4.1, motion:createResidentMotion() };
+    const actor: Actor = { root, model, baseY: model.position.y, kind, stride: id==='dora'?.7:id==='teo'?2.6:4.1, motion:createResidentMotion() };
+    if (kind === 'dora' || kind === 'teo') actor.joints = {
+      left: model.getObjectByName('adult-arm-left')!, right: model.getObjectByName('adult-arm-right')!,
+      leftElbow: model.getObjectByName('adult-arm-left-elbow')!, rightElbow: model.getObjectByName('adult-arm-right-elbow')!,
+      head: model.getObjectByName('avatar-head')!,
+    };
     actors.set(id, actor);
     return actor;
   }
@@ -203,6 +229,7 @@ export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterial
         if(teleport||reduced)root.rotation.y=display.angle;
         else root.rotation.y+=Math.atan2(Math.sin(display.angle-root.rotation.y),Math.cos(display.angle-root.rotation.y))*blend;
         const activity=display.activity.toLowerCase();
+        root.userData.householdActivity = activity;
         if (resident.id === 'biscoito') {
           const resting = /rest|sleep|nap|descans|dorm/.test(activity);
           const eager=activity==='eager'&&!moving;
@@ -227,7 +254,11 @@ export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterial
           const dancing = !moving && /dance|danç/.test(activity) && !reduced;
           animateAdult(model, (moving || dancing)&&!reduced, dancing ? seconds*1.3+actor.stride/8 : actor.stride/8, false, reduced ? 1 : frameDelta);
           model.position.y = actor.baseY + (moving&&!reduced?Math.abs(Math.sin(actor.stride))*.012:0);
-          const right = model.getObjectByName('adult-arm-right')!;
+          const {right, left, rightElbow, leftElbow, head} = actor.joints!;
+          left.rotation.y = right.rotation.y = 0;
+          left.rotation.z = -.08;
+          leftElbow.rotation.set(0, 0, 0);
+          rightElbow.rotation.set(0, 0, 0);
           const carrying = /coffee|drink|water|record|vinyl|caf[eé]|reg|disco/.test(activity);
           const greeting = /greet|wave|hello|saud|cumprim/.test(activity);
           const petting = /pet|carinh/.test(activity);
@@ -235,9 +266,30 @@ export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterial
             right.rotation.x = carrying ? -.8 : greeting ? -2.1 : -.55;
             right.rotation.z = greeting ? -.32 + (reduced ? 0 : Math.sin(seconds * 6) * .13) : -.08;
           } else right.rotation.z = .08;
-          const head = model.getObjectByName('avatar-head')!;
           head.rotation.y = !moving && !reduced && /chat|talk|convers/.test(activity) ? Math.sin(seconds * 1.4) * .10 : 0;
           head.rotation.x = petting ? .14 : 0;
+          const motion = reduced ? 0 : Math.sin(seconds * 3.4);
+          if (activity === 'guitar' && resident.id === 'teo') {
+            poseWorkArm(left, leftElbow, -.31, 1.20, .378);
+            poseWorkArm(right, rightElbow, .085 + motion * .025, 1.015 + motion * .055, .406);
+            head.rotation.x = .09;
+          } else if (activity === 'mow' && resident.id === 'teo') {
+            left.rotation.set(-.64, 0, .18);
+            right.rotation.set(-.64, 0, -.18);
+            leftElbow.rotation.x = rightElbow.rotation.x = -.58;
+            head.rotation.x = .07;
+          } else if (activity === 'dishes') {
+            poseWorkArm(left, leftElbow, -.13, 1.08, .36);
+            poseWorkArm(right, rightElbow, .035 + motion * .012, 1.10 + motion * .04, .385);
+            head.rotation.x = .14;
+          } else if (activity === 'laundry') {
+            poseWorkArm(left, leftElbow, -.16, 1.03 + motion * .014, .43);
+            poseWorkArm(right, rightElbow, .16, 1.03 - motion * .014, .43);
+            head.rotation.x = .11;
+          } else if (!moving && /chat|talk|convers/.test(activity)) {
+            right.rotation.x = -.22;
+            rightElbow.rotation.x = -.45 + motion * .1;
+          }
         }
       }
       for (const item of items) {
@@ -255,8 +307,9 @@ export function createResidentVisuals(scene: T.Scene, materials?: AvatarMaterial
         else if(item.flight&&Date.now()<item.flight.start+item.flight.duration){const p=ballFlightPose(item.flight,Date.now());actor.root.position.set(p.x,p.y,p.z);}
         else actor.root.position.set(item.position.x, item.height, item.position.z);
       }
+      household.sync(residents, roots, reduced);
     },
-    dispose() { for (const id of roots.keys()) remove(id); },
+    dispose() { household.dispose(); for (const id of roots.keys()) remove(id); },
   };
 }
 

@@ -31,7 +31,7 @@ export function createResidentMotion(delay=2000) {
       let p=a.position;
       for(const next of b.route){
         const length=distance(p,next);
-        if(remaining<=length&&length>0){const f=remaining/length;return {position:{x:p.x+(next.x-p.x)*f,z:p.z+(next.z-p.z)*f},angle:Math.atan2(next.x-p.x,next.z-p.z),activity:'walk'};}
+        if(remaining<=length&&length>0){const f=remaining/length;return {position:{x:p.x+(next.x-p.x)*f,z:p.z+(next.z-p.z)*f},angle:Math.atan2(next.x-p.x,next.z-p.z),activity:b.activity==='mow'?'mow':'walk'};}
         remaining-=length;p=next;
       }
       return b;
