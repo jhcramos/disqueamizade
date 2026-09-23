@@ -49,7 +49,7 @@ export function HomePage() {
         </Link>
         <nav aria-label="Navegação principal">
           <a href="#a-casa">A casa</a>
-          <Link to="/vizinhanca">Vizinhança</Link>
+          <Link to="/vizinhanca">Comprar terreno</Link>
           <a href="#seu-jeito">Avatares</a>
           <Link to="/rooms">Bate-papo</Link>
           <Link to="/blog">Blog</Link>

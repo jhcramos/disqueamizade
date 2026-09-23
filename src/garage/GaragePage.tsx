@@ -552,6 +552,7 @@ function GarageRoom({
           <label><span className="sr-only">Escolher ambiente</span><select value={room} disabled={!!net.invite} onChange={e => changeRoom(e.target.value as RoomId)}>
             {(['garage', 'living', 'bar'] as RoomId[]).map(id => <option key={id} value={id}>{ROOMS[id].name}{id === 'bar' ? ' · 18+' : ''}</option>)}
           </select><small>{net.connected ? `${roomPeople.length + 1} ${roomPeople.length ? 'pessoas' : 'pessoa'} aqui` : 'Reconectando à casa…'}</small></label>
+          <Link className="house-land-link" to="/vizinhanca" target="_blank" rel="noopener noreferrer" aria-label="Comprar terreno (abre em nova aba)">Comprar terreno</Link>
           {(call || social.session) && <button onClick={() => setMobilePanel('people')}>Conversa</button>}
           <button onClick={() => setMobilePanel(mobilePanel === 'menu' ? null : 'menu')} aria-label="Meu perfil e opções"><UserRound size={20} /></button>
         </header>
@@ -598,6 +599,7 @@ function GarageRoom({
           <strong>{ROOMS[room].name}</strong>
         </nav>
         <div className="topbar-actions">
+          <Link className="house-land-link" to="/vizinhanca" target="_blank" rel="noopener noreferrer" aria-label="Comprar terreno (abre em nova aba)"><House size={17} /> Comprar terreno</Link>
           <button onClick={() => setAccountOpen(true)}>
             <UserRound size={17} /> Perfil e amigos
           </button>

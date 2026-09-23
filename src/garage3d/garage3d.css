@@ -97,3 +97,6 @@
 @media(hover:hover) and (pointer:fine){.garage3d-seat-anchor:hover>.seat-indicator-hint{display:block}.garage3d-seat-indicator:hover .seat-indicator-symbol{background:#526647;color:#fffaf0}}
 
 .has-selected-seat .resident-controls,.has-selected-seat .garage3d-phone-prompt{display:none!important}
+
+.house-gesture-mouse{display:none}
+@media(hover:hover) and (pointer:fine){.house-gesture-mouse{display:inline}.house-gesture-touch{display:none}}

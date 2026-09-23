@@ -2946,3 +2946,14 @@
 .is-mobile-house .house-screen-toggle{display:none}
 .is-mobile-house[data-mobile-panel="chat"]{--sheet-height:min(390px,45dvh)}
 .is-mobile-house[data-mobile-panel="chat"] .garage-layout{bottom:calc(var(--dock-height) + var(--sheet-height))}
+
+/* Keep the land offer accessible without interrupting an active house visit. */
+.house-land-link{display:inline-flex;align-items:center;gap:7px;min-height:44px;color:var(--rust);font-size:13px;text-decoration:none}
+.house-land-link:hover{text-decoration:underline;text-underline-offset:4px}
+.house-land-link:focus-visible{outline:2px solid var(--rust);outline-offset:3px;border-radius:4px}
+.garage-app:not(.garage-entry) .garage-topbar{gap:24px}
+.topbar-actions .house-land-link{white-space:nowrap}
+.mobile-house-header label{min-width:0;flex:1}
+.mobile-house-header select{width:100%}
+.mobile-house-header .house-land-link{flex:0 0 72px;font-size:12px;line-height:1.25;text-align:center;justify-content:center}
+.is-mobile-house .topbar-actions .house-land-link{min-height:48px}
