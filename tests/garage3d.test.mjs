@@ -23,7 +23,7 @@ test('seat height accounts for the avatar hip and cushion clearance at different
   }
 });
 test('walking remains within the garage and rejects furniture targets',()=>{
-  for(const to of [{x:30,z:0},{x:0,z:-14},obstaclesFor('garage')[0],{x:NaN,z:0}])assert.deepEqual(route({x:0,z:2.8},to),[]);
+  for(const to of [{x:100,z:0},{x:0,z:-100},obstaclesFor('garage')[0],{x:NaN,z:0}])assert.deepEqual(route({x:0,z:2.8},to),[]);
 });
 test('the connected house reaches all 51 seats through real doorways',()=>{
   let origin=areaById('garage').arrival;
@@ -39,7 +39,7 @@ test('the connected house reaches all 51 seats through real doorways',()=>{
   }
 });
 test('house walls, swimming water and exterior boundaries remain blocked',()=>{
-  for(const p of [POOL,...WALLS,{x:13,z:0},{x:-17,z:-10},{x:NaN,z:0}]){
+  for(const p of [POOL,...WALLS,{x:53,z:0},{x:-53,z:-10},{x:NaN,z:0}]){
     assert.equal(houseWalkable(p),false);assert.deepEqual(houseRoute(areaById('garage').arrival,p),[]);
   }
   for(const a of HOUSE_AREAS){assert.ok(houseWalkable(a.arrival),a.id);assert.ok(houseRoute(areaById('garage').arrival,a.arrival).length,a.id);assert.ok(validShared(toShared(a.arrival,a.room),a.room),a.id);}

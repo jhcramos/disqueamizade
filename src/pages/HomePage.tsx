@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import "./house-home.css";
+import "./neighborhood-home.css";
 const rooms = [
   {
     id: "garage",
@@ -48,6 +49,7 @@ export function HomePage() {
         </Link>
         <nav aria-label="Navegação principal">
           <a href="#a-casa">A casa</a>
+          <Link to="/vizinhanca">Vizinhança</Link>
           <a href="#seu-jeito">Avatares</a>
           <Link to="/rooms">Bate-papo</Link>
           <Link to="/blog">Blog</Link>
@@ -82,6 +84,7 @@ export function HomePage() {
           <Link className="house-cta" to="/garagem">Entrar na casa <ArrowRight size={20} /></Link>
           <p className="whole-house-privacy"><CameraOff size={16} /> Câmera desligada ao entrar</p>
           <p className="whole-house-free">Sem cadastro para explorar.</p>
+          <Link className="house-neighborhood-link" to="/vizinhanca">Conheça os seis lotes da nossa vizinhança <ArrowUpRight size={16} /></Link>
           <Link className="house-classic" to="/rooms">Prefere salas de conversa? Ir ao bate-papo →</Link>
           <p className="whole-house-note">Prévia explorável · encontros online em preparação</p>
         </aside>

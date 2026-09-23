@@ -1,0 +1,23 @@
+.house-home .house-neighborhood-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 19px;
+  color: #7d483c;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.house-home .house-neighborhood-link svg { flex: none; }
+.house-home .house-neighborhood-link:hover { color: #a34228; text-decoration: underline; text-underline-offset: 3px; }
+.house-home .whole-house-entry > .house-classic {
+  color: #806b5f !important;
+  border-color: #c4b49f;
+  justify-content: center;
+  margin-top: 12px;
+}
+.house-home .house-neighborhood-link:focus-visible { outline-color: #a34228; }
+@media (max-width: 750px) {
+  .house-home .house-nav nav { flex-wrap: wrap; justify-content: flex-start; gap: 12px 19px; }
+  .house-home .house-neighborhood-link { margin-top: 13px; font-size: 11px; }
+}

@@ -1,7 +1,7 @@
 import {findThrowTarget} from './throwTarget.ts';
 import {freshSocial,validSocial,hostCommand,tickSocial,HOST_ACTIONS,type HostSocial} from './social.ts';
-import { areaAt, areaById, planPoint, OPENINGS } from '../areas.ts';
-import { houseRoute, houseWalkable, type Place } from '../layout.ts';
+import { areaById, planPoint, OPENINGS } from '../areas.ts';
+import { roomAt, houseRoute, houseWalkable, type Place } from '../layout.ts';
 export type ResidentId = 'dora' | 'teo' | 'biscoito';
 export type ItemId = 'coffee' | 'watering' | 'record' | 'toy';
 export type Visitor = { adult?:boolean; seat?:string; id:string; name:string; position:Place; frozen?:boolean; available?:boolean; publicId?:string; blocked?:string[] };
@@ -159,7 +159,7 @@ export function tickLife(s:LifeState,dt:number,visitors:Visitor[],now=Date.now()
 }
 /** Persistence and network snapshots are untrusted; only known actors/items and finite coordinates are accepted. */
 export function parseLife(raw:unknown):LifeState|null{
- try{const s=raw as LifeState,valid=(p:Place)=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&!!areaAt(p);
+ try{const s=raw as LifeState,valid=(p:Place)=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&!!roomAt(p);
  if(!s||s.version!==1||s.layoutVersion!==3||!Array.isArray(s.residents)||s.residents.length!==3||!Array.isArray(s.items)||s.items.length!==4)return null;
  if(new Set(s.residents.map(r=>r.id)).size!==3||s.residents.some(r=>!Object.prototype.hasOwnProperty.call(NAMES,r.id)||!valid(r.position)||!houseWalkable(r.position)||!['idle','walk','dance','water','record','rest','drink','greet','pet','fetch','bring','eager'].includes(r.activity)||!Number.isFinite(r.angle)||!Number.isFinite(r.until)||!Number.isInteger(r.step)||typeof r.activity!=='string'||r.activity.length>20||!Array.isArray(r.path)||r.path.length>400||r.path.some(p=>!valid(p)||!houseWalkable(p))))return null;
  if(new Set(s.items.map(i=>i.id)).size!==4||s.items.some(i=>!Object.prototype.hasOwnProperty.call(ITEMS,i.id)||i.kind!==i.id||(i.reserved!==undefined&&!Object.prototype.hasOwnProperty.call(NAMES,i.reserved))||!valid(i.position)||!Number.isFinite(i.height)||i.height<0||i.height>2||(i.holder!==undefined&&(typeof i.holder!=='string'||i.holder.length>100))))return null;

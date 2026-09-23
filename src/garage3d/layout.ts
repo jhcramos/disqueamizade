@@ -1,3 +1,5 @@
+import {inNeighborhood,NEIGHBORHOOD_OBSTACLES} from './neighborhood.ts';
+import {findWalkingRoute} from './walkingRoute.ts';
 import {HOUSE_AREAS,areaAt,areaById,planPoint,POOL,WALLS,FIXTURES,type Place,type RoomId} from './areas.ts';
 export type {Place,RoomId} from './areas.ts';
 export type Furniture=Place&{angle:number;name:string;count:number;color:string;stool?:boolean;spot?:string;area?:string;scale:number};
@@ -78,7 +80,7 @@ export function route(from:Place,to:Place,room:RoomId='garage'):Place[]{
   }return[];
 }
 export function worldPoint(p:Place,room:RoomId):Place{return{x:p.x+roomOffsets[room].x,z:p.z+roomOffsets[room].z};}
-export function roomAt(p:Place):RoomId|undefined{return areaAt(p)?.room;}
+export function roomAt(p:Place):RoomId|undefined{return areaAt(p)?.room??(onNeighborhoodFloor(p)?'garage':undefined);}
 export function nearbyPhone(p:Place):HousePhone|null{
   const room=roomAt(p);if(!room)return null;
   const candidates=phonesFor(room).map((phone,index)=>({...worldPoint(phone,room),room,index}));
@@ -99,24 +101,17 @@ export function routeToPhone(from:Place,room:RoomId,index:number):Place[]{
   const candidates=Array.from({length:12},(_,i)=>({x:center.x+Math.sin(i*Math.PI/6)*.85,z:center.z+Math.cos(i*Math.PI/6)*.85})).filter(houseWalkable).sort((a,b)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(b.x-from.x,b.z-from.z));
   for(const goal of candidates){const path=houseRoute(from,goal);if(path.length)return path;}return[];
 }
-const houseObstacles=roomIds.flatMap(room=>obstaclesFor(room).map(o=>({...o,...worldPoint(o,room)})));
-function onFloor(p:Place){return HOUSE_AREAS.some(a=>Math.abs(p.x-a.x)<=a.w/2+.001&&Math.abs(p.z-a.z)<=a.d/2+.001);}
+const houseObstacles=[...roomIds.flatMap(room=>obstaclesFor(room).map(o=>({...o,...worldPoint(o,room)}))),...WALLS,POOL,...NEIGHBORHOOD_OBSTACLES];
+// Preserve the measured house floor, including its recesses and water, while
+// connecting the existing garden paths to the new outdoor block.
+const houseEnvelope={minX:Math.min(...HOUSE_AREAS.map(a=>a.x-a.w/2)),maxX:Math.max(...HOUSE_AREAS.map(a=>a.x+a.w/2)),minZ:Math.min(...HOUSE_AREAS.map(a=>a.z-a.d/2)),maxZ:Math.max(...HOUSE_AREAS.map(a=>a.z+a.d/2))};
+function onNeighborhoodFloor(p:Place){return inNeighborhood(p)&&(p.x<houseEnvelope.minX||p.x>houseEnvelope.maxX||p.z<houseEnvelope.minZ||p.z>houseEnvelope.maxZ);}
+function onFloor(p:Place){return onNeighborhoodFloor(p)||HOUSE_AREAS.some(a=>Math.abs(p.x-a.x)<=a.w/2+.001&&Math.abs(p.z-a.z)<=a.d/2+.001);}
 export function houseWalkable(p:Place){
   if(!Number.isFinite(p.x)||!Number.isFinite(p.z))return false;
   if(![[0,0],[.18,0],[-.18,0],[0,.18],[0,-.18]].every(([x,z])=>onFloor({x:p.x+x,z:p.z+z})))return false;
-  return ![...houseObstacles,...WALLS,POOL].some(o=>Math.abs(p.x-o.x)<o.w/2+.13&&Math.abs(p.z-o.z)<o.d/2+.13);
+  return !houseObstacles.some(o=>Math.abs(p.x-o.x)<o.w/2+.13&&Math.abs(p.z-o.z)<o.d/2+.13);
 }
 export function houseRoute(from:Place,to:Place,people:Place[]=[]):Place[]{
-  const clear=(p:Place)=>houseWalkable(p)&&people.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=.54);
-  if(!clear(to))return[];
-  const step=.2,key=(p:Place)=>`${Math.round(p.x/step)},${Math.round(p.z/step)}`;
-  const origin={x:Math.round(from.x/step)*step,z:Math.round(from.z/step)*step};
-  const queue=[origin],seen=new Set([key(origin)]),previous=new Map<string,Place>();
-  for(let i=0;i<queue.length;i++){
-    const p=queue[i];
-    if(Math.hypot(p.x-to.x,p.z-to.z)<.25&&[.25,.5,.75].every(t=>clear({x:p.x+(to.x-p.x)*t,z:p.z+(to.z-p.z)*t}))){
-      const path=[to];let cursor=p;while(key(cursor)!==key(origin)){path.unshift(cursor);cursor=previous.get(key(cursor))!;}return path;
-    }
-    for(const[dx,dz]of[[step,0],[-step,0],[0,step],[0,-step]]){const n={x:p.x+dx,z:p.z+dz},id=key(n);if(!seen.has(id)&&clear(n)){seen.add(id);previous.set(id,p);queue.push(n);}}
-  }return[];
+  return findWalkingRoute(from,to,p=>houseWalkable(p)&&people.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>=.54));
 }

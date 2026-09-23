@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/THREE|WebGL|shader|uniform/i.test(m.text()))errors.push(m.text());});
+try{
+ await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/garagem?bairro=1`);
+ await page.getByRole('textbox',{name:'Como podemos chamar você?'}).fill('Vizinha teste');await page.getByRole('button',{name:'Entrar na casa',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.camera==='neighborhood');
+ await page.waitForTimeout(2200);
+ assert.equal(await page.locator('.neighborhood-lot-label:visible').count(),6);
+ await page.locator('.garage3d-stage').screenshot({path:'/tmp/neighborhood-desktop.png'});
+ console.log('PASS six 3D plots. Render metrics:',await page.locator('.garage3d-canvas').evaluate(e=>({draws:e.dataset.drawCalls,triangles:e.dataset.triangles})));
+ await page.getByRole('button',{name:'Conhecer lote 6 · Horizonte · R$ 999',exact:true}).click();
+ await page.getByRole('region',{name:'Terreno 6'}).waitFor();assert.equal(await page.getByRole('link',{name:'Ver proposta e condições'}).getAttribute('href'),'/vizinhanca?lote=6');
+ await page.getByRole('button',{name:'Passear até aqui',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.nearLot==='6',null,{timeout:55000});
+ console.log('PASS walks to actual plot sign',await page.locator('.garage3d-canvas').getAttribute('data-position'));
+ await page.getByRole('button',{name:'Conhecer',exact:true}).click();await page.getByRole('region',{name:'Terreno 6'}).waitFor();await page.getByRole('button',{name:'Fechar terreno'}).click();
+ await page.getByRole('button',{name:'Primeira pessoa',exact:true}).click();await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.ownAvatarVisible==='false');
+ await page.getByRole('button',{name:'Sair da primeira pessoa',exact:true}).click();
+ await page.getByRole('button',{name:'Voltar à casa',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.garage3d-canvas')?.dataset.area==='garage');
+ await page.getByRole('button',{name:'Vista da planta',exact:true}).click();assert.equal(await page.locator('.garage3d-room-marker').count(),21);
+ console.log('PASS return to unchanged house');
+ await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Vizinhança',exact:true}).click();await page.waitForTimeout(1800);
+ assert.equal(await page.locator('.neighborhood-lot-label:visible').count(),6);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.screenshot({path:'/tmp/neighborhood-mobile.png'});
+ await page.getByRole('button',{name:'Conhecer lote 2 · Ipê · R$ 999',exact:true}).click();await page.getByRole('region',{name:'Terreno 2'}).waitFor();await page.screenshot({path:'/tmp/neighborhood-mobile-detail.png'});
+ console.log('PASS mobile labels/details and first person');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:3000'}/vizinhanca?lote=4`);await page.getByRole('heading',{name:'Varanda',exact:true}).waitFor();
+ await page.getByRole('button',{name:/Selecionar lote 6/}).click();assert.match(await page.getByRole('link',{name:'Conversar sobre este lote'}).getAttribute('href'),/^mailto:contato@disqueamizade.com.br/);
+ assert.match(await page.getByRole('link',{name:/Caminhar até o lote 6/}).getAttribute('href'),/bairro=1&lote=6/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'/tmp/neighborhood-landing-mobile.png'});
+ await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'/tmp/neighborhood-landing-desktop.png'});
+ assert.deepEqual(errors,[]);console.log('PASS selected-lot landing, honest interest link, mobile/desktop, no JS/GPU errors');
+}finally{await page.close();await browser.close();}

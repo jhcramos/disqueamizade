@@ -1,8 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
 import {createLife,tickLife,applyCommand,parseLife,ITEMS} from '../src/garage3d/residents/model.ts';
 import {personalLife,tickSocial} from '../src/garage3d/residents/social.ts';
+import {planPoint,areaById} from '../src/garage3d/areas.ts';
 import {ballFlightPose} from '../src/garage3d/residents/ball.ts';
-const visitor=(id,x=-5,z=2.8)=>({id,name:id,position:{x,z}}),a=()=>visitor('Ana'),b=()=>visitor('Bia',-4,2.8);
+const start=planPoint(900,665),other=planPoint(945,665);
+const visitor=(id,x=start.x,z=start.z)=>({id,name:id,position:{x,z}}),a=()=>visitor('Ana'),b=()=>visitor('Bia',other.x,other.z);
 const command=(s,v,action,target,now,visitors)=>applyCommand(s,{id:randomUUID(),visitor:v,action,target},now,visitors);
 test('Layla approaches the holder and waits eagerly, with exactly one reserved fetch and return',()=>{
  const s=createLife(10000),v=visitor('Ana',ITEMS.toy.position.x,ITEMS.toy.position.z);s.residents[2].position={x:ITEMS.toy.position.x+.7,z:ITEMS.toy.position.z};
@@ -21,7 +23,7 @@ test('introductions require recipient consent and do not expose invitations to o
  command(s,one,'dismissHost',invitation.id,13000,others);assert.equal(s.social.invites.length,0);
 });
 test('solo mode, blocking, different rooms, busy and stale presence exclude candidates',()=>{
- for(const alter of [v=>{v.frozen=true;},v=>{v.available=false;},v=>{v.position={x:-5,z:-7};},v=>{v.blocked=['Ana'];}]){
+ for(const alter of [v=>{v.frozen=true;},v=>{v.available=false;},v=>{v.position={...areaById('living').arrival};},v=>{v.blocked=['Ana'];}]){
   const s=createLife(),one=a(),two=b();alter(two);command(s,one,'introduce','dora',10000,[one,two]);assert.equal(s.social.invites.length,0);
  }
  const s=createLife(),one=a(),two=b();command(s,two,'solo','dora',9000,[one,two]);command(s,one,'introduce','dora',10000,[one,two]);assert.equal(s.social.invites.length,0);
