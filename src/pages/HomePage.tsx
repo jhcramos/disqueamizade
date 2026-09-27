@@ -1,3 +1,5 @@
+import topics from "../../content/seo-topics.json";
+import {usePageSeo} from "@/magazine/usePageSeo";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -39,6 +41,7 @@ const rooms = [
   },
 ];
 export function HomePage() {
+  usePageSeo('Bate-papo online para conhecer pessoas | Disque Amizade', 'Bate-papo online, amizade e paquera em uma casa virtual com avatares. Explore ambientes, jogos de conversa e a Revista da Casa. Entre sem cadastro.', '/');
   const [roomIndex, setRoom] = useState(0),
     [look, setLook] = useState("caio");
   return (
@@ -52,7 +55,7 @@ export function HomePage() {
           <Link to="/vizinhanca">Comprar terreno</Link>
           <a href="#seu-jeito">Avatares</a>
           <Link to="/rooms">Bate-papo</Link>
-          <Link to="/blog">Blog</Link>
+          <Link to="/blog">Revista da Casa</Link>
         </nav>
         <Link className="house-account" to="/minha-conta">
           Meu perfil <ArrowUpRight size={16} />
@@ -61,7 +64,7 @@ export function HomePage() {
       <section className="whole-house-hero" aria-labelledby="welcome-title">
         <div className="whole-house-intro">
           <p className="house-eyebrow">UM LUGAR PARA ENCONTRAR SUA TURMA</p>
-          <h1 id="welcome-title">Entre. A <em>casa</em><br />também é sua.</h1>
+          <h1 id="welcome-title"><span style={{display:"block",fontSize:".32em",letterSpacing:".02em",marginBottom:12}}>Bate-papo online para conhecer pessoas.</span>Entre. A <em>casa</em><br />também é sua.</h1>
         </div>
         <figure className="whole-house-view">
           <img src="/garage/whole-house.webp" fetchPriority="high" width="1448" height="1086"
@@ -324,7 +327,7 @@ export function HomePage() {
           <h2>
             Tem muita conversa
             <br />
-            <em>no nosso blog.</em>
+            <em>na Revista da Casa.</em>
           </h2>
         </div>
         <div>
@@ -333,10 +336,11 @@ export function HomePage() {
             confiança.
           </p>
           <Link to="/blog">
-            Explorar o blog <ArrowUpRight size={24} />
+            Explorar a revista <ArrowUpRight size={24} />
           </Link>
         </div>
       </section>
+      <section className="house-seo-topics" aria-label="Encontre seu assunto"><h2>Que conversa combina com você?</h2><p>Amizade, paquera ou uma brincadeira para começar. Explore os guias antes de entrar na casa.</p><nav>{topics.map(t=><Link key={t.id} to={`/blog/temas/${t.id}`}>{t.label} ↗</Link>)}</nav></section>
       <section className="house-final">
         <p className="house-eyebrow">JÁ QUE VOCÊ CHEGOU ATÉ AQUI…</p>
         <h2>
@@ -361,7 +365,7 @@ export function HomePage() {
         </Link>
         <span>A casa é virtual. O encontro é humano.</span>
         <nav aria-label="Informações">
-          <Link to="/blog">Blog</Link>
+          <Link to="/blog">Revista da Casa</Link>
           <Link to="/termos">Termos</Link>
           <Link to="/privacidade">Privacidade</Link>
           <Link to="/diretrizes">Convivência</Link>

@@ -1250,3 +1250,5 @@
 }
 .house-nav .brand-logo img { background:#294432; border-radius:9px; padding:4px; }
 .house-nav .house-account { background:#b64c2a; }
+
+.house-seo-topics{padding:50px 5%;border-top:1px solid #ded3c1}.house-seo-topics h2{font-family:Georgia,serif;font-size:clamp(28px,3vw,42px);margin-bottom:16px}.house-seo-topics p{line-height:1.7;color:#786f68;max-width:700px}.house-seo-topics nav{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}.house-seo-topics a{padding:13px 18px;border:1px solid #ded3c1;border-radius:30px;color:#382638;text-decoration:none}.house-seo-topics a:hover{background:#eee4d4}

@@ -18,6 +18,7 @@ const VideoFiltersPage = lazy(() => import('./pages/VideoFiltersPage').then(m =>
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const LegalPage = lazy(() => import('./pages/LegalPage').then(m => ({ default: m.LegalPage })))
+const TopicPage = lazy(() => import("./pages/blog/TopicPage").then(m => ({default:m.TopicPage})))
 const BlogPage = lazy(() => import('./pages/blog/BlogPage').then(m => ({ default: m.BlogPage })))
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage').then(m => ({ default: m.BlogPostPage })))
 const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })))
@@ -70,6 +71,7 @@ function App() {
         
         {/* Blog — public, no auth required (SEO) */}
         <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/temas/:topic" element={<TopicPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
 
         {/* About — public, SEO */}

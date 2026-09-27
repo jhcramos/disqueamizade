@@ -1,3 +1,4 @@
+import topics from "../../../content/seo-topics.json";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Search, ArrowUpRight } from "lucide-react";
@@ -6,6 +7,8 @@ import { PlayCorner } from "@/magazine/PlayCorner";
 import "./magazine.css";
 export interface BlogPost {
   slug: string;
+  topic?: string;
+  topics?: string[];
   title: string;
   excerpt: string;
   content: string;
@@ -158,6 +161,7 @@ export function BlogPage() {
           <span>Perguntas para se aproximar.</span>
           <span>Uma casa para se encontrar.</span>
         </div>
+        <nav className="mag-topic-links" aria-label="Assuntos da revista">{topics.map(t=><Link key={t.id} to={`/blog/temas/${t.id}`}>{t.label} ↗</Link>)}</nav>
         <PlayCorner />
         <section id="leituras" className="mag-reading">
           <div className="mag-section-heading">

@@ -76,6 +76,7 @@ function writePage(routePath, html) {
   writeFileSync(join(dir, 'index.html'), html)
 }
 
+const topics = JSON.parse(readFileSync(join(ROOT, 'content/seo-topics.json'), 'utf8'))
 let count = 0
 
 // The directory also needs an index: direct /blog requests must resolve.
@@ -85,7 +86,15 @@ count++
 const indexPath = join(ROOT, 'public', 'magazine', 'catalog.json')
 if (existsSync(indexPath)) {
   const posts = JSON.parse(readFileSync(indexPath, 'utf-8'))
-  const magazineIntro = `<main><h1>Revista da Casa</h1><p>Amizade, encontros e ideias para começar uma boa conversa.</p><a href="/garagem">Entrar na casa</a><h2>Novos guias</h2><ul>${posts.filter(p=>p.featured).map(p=>`<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a><p>${esc(p.excerpt)}</p></li>`).join('')}</ul></main>`
+  const topicNav = `<nav aria-label="Temas da revista">${topics.map(t=>`<a href="/blog/temas/${t.id}">${esc(t.label)}</a>`).join(' · ')}</nav>`
+  for (const topic of topics) {
+    const selected = posts.filter(p=>p.topic===topic.id || topic.guideSlugs.includes(p.slug)).sort((a,b)=>Number(topic.guideSlugs.includes(b.slug))-Number(topic.guideSlugs.includes(a.slug))).slice(0,12)
+    const url = `${SITE}/blog/temas/${topic.id}`
+    const body = `<main><a href="/blog">Revista da Casa</a><h1>${esc(topic.title)}</h1><p>${esc(topic.intro)}</p><a href="${esc(topic.href)}">${esc(topic.cta)}</a>${topic.sections.map(s=>`<section><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p></section>`).join('')}<h2>Leituras sobre ${esc(topic.label)}</h2><ul>${selected.map(p=>`<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a><p>${esc(p.excerpt)}</p></li>`).join('')}</ul>${topicNav}</main>`
+    writePage(`blog/temas/${topic.id}`, renderPage({title:`${topic.title} | Disque Amizade`, description:topic.description,url,jsonld:{'@context':'https://schema.org','@type':'CollectionPage',name:topic.title,description:topic.description,url}}).replace('<div id="root"></div>',`<div id="root">${body}</div>`))
+    count++
+  }
+  const magazineIntro = `<main><h1>Revista da Casa</h1><p>Amizade, encontros e ideias para começar uma boa conversa.</p><a href="/garagem">Entrar na casa</a>${topicNav}<h2>Novos guias</h2><ul>${posts.filter(p=>p.featured).map(p=>`<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a><p>${esc(p.excerpt)}</p></li>`).join('')}</ul></main>`
   const magazineFile=join(DIST,'blog','index.html')
   writeFileSync(magazineFile,readFileSync(magazineFile,'utf8').replace('<div id="root"></div>',`<div id="root">${magazineIntro}</div>`))
   for (const p of posts) {
@@ -159,6 +168,10 @@ const sitemapPath=join(DIST,'sitemap.xml')
 if (existsSync(sitemapPath)) {
   let sitemap=readFileSync(sitemapPath,'utf8')
   const catalog=JSON.parse(readFileSync(indexPath,'utf8'))
+  for (const topic of topics) {
+    const loc=`${SITE}/blog/temas/${topic.id}`
+    if(!sitemap.includes(`<loc>${loc}</loc>`)) sitemap=sitemap.replace('</urlset>',`<url><loc>${loc}</loc></url>\n</urlset>`)
+  }
   for(const post of catalog) {
     const loc=`${SITE}/blog/${post.slug}`
     if(!sitemap.includes(`<loc>${loc}</loc>`)) sitemap=sitemap.replace('</urlset>',`<url><loc>${esc(loc)}</loc><lastmod>${esc(post.lastModified||post.date)}</lastmod></url>\n</urlset>`)

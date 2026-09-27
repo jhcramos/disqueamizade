@@ -1,0 +1,180 @@
+[
+  {
+    "id": "bate-papo",
+    "label": "Bate-papo online",
+    "title": "Bate-papo online: como escolher seu jeito de conversar",
+    "description": "Conheça formas de conversar online, escolher uma sala e começar um papo. Explore os guias e a casa virtual do Disque Amizade.",
+    "keywords": [
+      "bate papo online",
+      "chat online",
+      "salas de bate papo",
+      "conversar sem cadastro"
+    ],
+    "intro": "Uma sala de bate-papo é um ponto de encontro. O melhor começo não exige uma frase perfeita: um assunto em comum e espaço para a outra pessoa responder já ajudam. Aqui reunimos guias para escolher ambientes, participar de conversas e conhecer o Disque Amizade.",
+    "sections": [
+      {
+        "title": "Escolha pelo tipo de conversa",
+        "text": "Antes de entrar, pense no que você quer agora: conhecer alguém, conversar em grupo ou participar de uma brincadeira. Observe o tema e as regras do espaço. Uma sala vazia pode ser um começo, mas não é garantia de encontrar companhia naquele momento."
+      },
+      {
+        "title": "Como isso funciona na casa",
+        "text": "Na casa, você escolhe um avatar e explora ambientes como a garagem e a sala de estar. Há lugares para sentar, chat e atividades. Confira a disponibilidade indicada na entrada; câmera e microfone começam desligados, e participar de uma conversa continua sendo uma escolha sua."
+      }
+    ],
+    "cta": "Conhecer a casa",
+    "href": "/garagem",
+    "guideSlugs": [
+      "como-comecar-conversa-alem-do-oi",
+      "conversar-sem-parecer-entrevista"
+    ]
+  },
+  {
+    "id": "alternativas-uol",
+    "label": "Alternativas ao UOL",
+    "title": "Bate-papo tipo UOL: o que considerar ao procurar alternativas",
+    "description": "Procura um bate-papo tipo UOL? Compare proposta, privacidade e formas de conversar antes de escolher. Conheça a casa virtual Disque Amizade.",
+    "keywords": [
+      "bate papo tipo uol",
+      "alternativa ao bate papo uol",
+      "sites parecidos com bate papo uol"
+    ],
+    "intro": "Quem procura um bate-papo tipo UOL pode querer reencontrar a ideia de entrar numa sala e conversar por apelido. Vale separar essa familiaridade da experiência que você espera hoje: texto, vídeo, grupos por interesse ou um ambiente visual para explorar.",
+    "sections": [
+      {
+        "title": "O que comparar antes de escolher",
+        "text": "Observe como se entra, quais recursos pedem cadastro, o que outras pessoas conseguem ver e como sair ou bloquear um contato. Confira essas informações no próprio serviço: preços, disponibilidade e funcionalidades podem mudar. Evite decidir apenas por uma lista que promete que todos os chats funcionam da mesma maneira."
+      },
+      {
+        "title": "A proposta do Disque Amizade",
+        "text": "Nossa proposta é uma casa virtual com avatares e ambientes para conversar. Você pode explorar, sentar e descobrir atividades, com acesso opcional à câmera. A revista ajuda a encontrar assuntos para esses encontros. O Disque Amizade é um projeto independente, sem vínculo com o UOL; esta página não oferece acesso às salas daquele serviço."
+      }
+    ],
+    "cta": "Explorar a nossa casa",
+    "href": "/garagem",
+    "guideSlugs": [
+      "como-comecar-conversa-alem-do-oi",
+      "conhecer-pessoas-online-com-seguranca"
+    ]
+  },
+  {
+    "id": "amizade",
+    "label": "Fazer amigos",
+    "title": "Fazer amigos online: conversas que podem virar convivência",
+    "description": "Ideias para fazer amigos online, participar de grupos e retomar amizades. Leia os guias e encontre seu jeito de conversar na casa.",
+    "keywords": [
+      "fazer amigos online",
+      "conhecer gente nova",
+      "amizade depois dos 40",
+      "amizade na vida adulta"
+    ],
+    "intro": "Amizade costuma crescer com oportunidades de se reencontrar. Um jogo, uma música ou uma pergunta simples pode abrir a primeira conversa; voltar a trocar ideias dá espaço para descobrir afinidades sem exigir intimidade imediata.",
+    "sections": [
+      {
+        "title": "Comece com algo que vocês possam compartilhar",
+        "text": "Falar de um filme, uma receita ou um hobby permite participar sem expor detalhes pessoais. Compartilhe um pouco de você e dê tempo para a resposta. Não é preciso transformar cada conversa em uma amizade: uma troca agradável já tem valor."
+      },
+      {
+        "title": "Do primeiro oi ao reencontro",
+        "text": "Quando houver interesse dos dois lados, proponha continuar outro dia ou participar de uma atividade. Na casa, uma conta opcional permite guardar o avatar e enviar pedidos de amizade. A outra pessoa decide se aceita. Entre numa roda disponível ou use o baralho da revista para levar um assunto ao chat."
+      }
+    ],
+    "cta": "Levar um assunto à casa",
+    "href": "/garagem?assunto=amizade",
+    "guideSlugs": [
+      "fazer-amizades-na-vida-adulta",
+      "entrar-em-conversa-de-grupo",
+      "retomar-amizade-antiga"
+    ]
+  },
+  {
+    "id": "paquera",
+    "label": "Paquera e namoro",
+    "title": "Paquera online: perguntas, humor e espaço para se conhecer",
+    "description": "Cantadas leves, perguntas para conhecer alguém e convites sem pressão. Explore guias de paquera online e encontros com respeito.",
+    "keywords": [
+      "chat de paquera",
+      "perguntas para conhecer alguem",
+      "cantadas engracadas",
+      "conhecer solteiros"
+    ],
+    "intro": "Paquerar pode ser divertido quando existe liberdade para participar ou recusar. Em vez de procurar uma frase que funcione com qualquer pessoa, experimente um começo que combine com a situação e observe se a troca é recíproca.",
+    "sections": [
+      {
+        "title": "Um convite não é uma obrigação",
+        "text": "Uma resposta curta, um silêncio ou um emoji não revela tudo o que alguém sente. Fale com clareza, acompanhe a conversa e respeite um não. As cantadas da revista são uma brincadeira para testar seu humor; não prometem conquistar alguém nem garantir um encontro."
+      },
+      {
+        "title": "Conheça antes de presumir",
+        "text": "Participar de um ambiente de paquera não significa que toda pessoa esteja disponível para você ou procurando namoro. Pergunte com gentileza. Na casa, combine atividades e conversas respeitando as preferências que cada visitante escolheu compartilhar. Para encontros fora da internet, leia também o guia de cuidado nas primeiras conversas."
+      }
+    ],
+    "cta": "Conhecer os ambientes",
+    "href": "/garagem",
+    "guideSlugs": [
+      "cantadas-engracadas-com-respeito",
+      "reciprocidade-sem-adivinhar",
+      "convidar-para-um-cafe",
+      "aceitar-ou-recusar-convite"
+    ]
+  },
+  {
+    "id": "jogos",
+    "label": "Jogos para conhecer pessoas",
+    "title": "Jogos para conhecer pessoas e quebrar o gelo",
+    "description": "Perguntas, cantadas e brincadeiras de conversa para amizade e paquera. Escolha uma atividade e leve um assunto para a casa.",
+    "keywords": [
+      "jogos para conhecer pessoas",
+      "jogos para quebrar o gelo",
+      "brincadeiras de paquera",
+      "jogos de namoro"
+    ],
+    "intro": "Fazer alguma coisa juntos pode tornar o primeiro papo mais fácil. Aqui, jogos de namoro significa brincadeiras de conversa e aproximação entre adultos; não um simulador de romance com personagens fictícios nem uma promessa de encontrar um par.",
+    "sections": [
+      {
+        "title": "Cantada ou cilada?",
+        "text": "Leia uma frase e escolha sua reação: responderia, ri de vergonha ou passo. Não há placar público nem resposta certa. A graça é descobrir o que combina com você e lembrar que a outra pessoa pode ter outro senso de humor."
+      },
+      {
+        "title": "Um baralho que vira assunto",
+        "text": "Escolha perguntas leves, divertidas ou mais profundas. Quem participa pode responder ou passar. Ao levar uma pergunta para a casa, ela fica disponível como rascunho: você ainda escolhe se quer enviá-la ao chat. Para grupos novos, comece pelos temas leves e deixe a intimidade acontecer no ritmo de todos."
+      }
+    ],
+    "cta": "Experimentar as brincadeiras",
+    "href": "/blog#brincar",
+    "guideSlugs": [
+      "cantadas-engracadas-com-respeito",
+      "entrar-em-conversa-de-grupo",
+      "conversar-sem-parecer-entrevista"
+    ]
+  },
+  {
+    "id": "adultos",
+    "label": "Conversas 18+",
+    "title": "Bate-papo para adultos: amizade e paquera com respeito",
+    "description": "Entenda a proposta de conversa 18+ da casa: amizade, paquera e atividades entre adultos, com limites e escolhas respeitados.",
+    "keywords": [
+      "bate papo para adultos",
+      "salas de conversa 18+",
+      "salas adultas",
+      "bate papo 40+"
+    ],
+    "intro": "Salas adultas pode significar coisas diferentes em cada site. No Disque Amizade, a proposta é conversar entre maiores de 18 anos sobre amizade, vida cotidiana, interesses e paquera, seguindo as regras de convivência da casa.",
+    "sections": [
+      {
+        "title": "Mais de 18 anos não é consentimento para tudo",
+        "text": "Estar numa sala para adultos não autoriza mensagens invasivas, insistência ou exposição da outra pessoa. Cada visitante escolhe o que compartilhar e pode recusar um convite. Conheça as regras antes de participar e preserve informações como endereço, documentos e dados de acesso."
+      },
+      {
+        "title": "Escolha o clima, não uma promessa",
+        "text": "Um papo tranquilo, uma roda de música ou uma brincadeira pode combinar com diferentes momentos da vida. Termos como 30+ e 40+ ajudam a descrever interesses de conteúdo, mas não garantem quem estará presente. Use o chat no seu ritmo e só ative câmera e microfone quando quiser."
+      }
+    ],
+    "cta": "Conhecer a casa 18+",
+    "href": "/garagem",
+    "guideSlugs": [
+      "conhecer-pessoas-online-com-seguranca",
+      "aceitar-ou-recusar-convite",
+      "fazer-amizades-na-vida-adulta"
+    ]
+  }
+]

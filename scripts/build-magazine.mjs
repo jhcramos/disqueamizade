@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { classifyArticle } from "./classify-magazine.mjs";
 import sharp from "sharp";
 import { cleanArticle } from "./magazine-content.mjs";
 const root = resolve(import.meta.dirname, "..");
@@ -44,6 +45,7 @@ for (const post of merged.values()) {
     .filter(Boolean).length;
   const clean = {
     ...post,
+    ...classifyArticle(post),
     content,
     coverImage,
     image: coverImage,

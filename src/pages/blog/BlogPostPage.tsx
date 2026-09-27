@@ -1,3 +1,4 @@
+import topics from "../../../content/seo-topics.json";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BlogHeader } from "@/components/blog/BlogHeader";
@@ -125,9 +126,7 @@ export function BlogPostPage() {
         ) : (
           <>
             <header className="mag-post-heading">
-              <span className="mag-kicker">
-                {CATEGORY_NAMES[post.category] || "Conversas & descobertas"}
-              </span>
+              <span className="mag-kicker"><Link to={`/blog/temas/${post.topic || 'bate-papo'}`}>{topics.find(t=>t.id===post.topic)?.label || CATEGORY_NAMES[post.category] || 'Conversas & descobertas'}</Link></span>
               <h1>{post.title}</h1>
               <p className="mag-deck">{post.excerpt}</p>
               <div className="mag-byline">
