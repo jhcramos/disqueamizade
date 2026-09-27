@@ -19,3 +19,5 @@ Validation: Node tests for content safety and migration invariants, TypeScript, 
 - Dedicated spec review passed; quality review identified legacy extensionless links and social SVG previews, both corrected with tests and raster social cards.
 - Existing public archive is labeled as historical; its factual/editorial claims are not represented as freshly reviewed.
 - Publishing source remains jhcramos/disqueamizade, feat/garage-proximity-prototype; validate release before promoting domain.
+
+Production validation found Vercel cleanUrls strips .html before custom redirects. Added extensionless legacy redirect too, while excluding .json/.md data assets. Canonical article routes were already healthy.

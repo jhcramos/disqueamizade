@@ -44,6 +44,11 @@
       "source": "/blog-posts/:slug.html",
       "destination": "/blog/:slug",
       "permanent": true
+    },
+    {
+      "source": "/blog-posts/:slug([a-zA-Z0-9_-]+)",
+      "destination": "/blog/:slug",
+      "permanent": true
     }
   ]
 }
