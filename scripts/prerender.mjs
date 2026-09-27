@@ -79,12 +79,15 @@ function writePage(routePath, html) {
 let count = 0
 
 // The directory also needs an index: direct /blog requests must resolve.
-writePage('blog', renderPage({title: 'Blog do Disque Amizade', description: 'Conversas, amizade e encontros: descubra histórias e dicas no blog do Disque Amizade.', url: `${SITE}/blog`}))
+writePage('blog', renderPage({title: 'Revista da Casa — Um bom papo começa aqui', description: 'Amizade, encontros, cantadas e perguntas para se aproximar. Leia a Revista da Casa e leve a conversa para o Disque Amizade.', url: `${SITE}/blog`}))
 count++
 // ─── Blog ───
-const indexPath = join(ROOT, 'public', 'blog-posts', 'index.json')
+const indexPath = join(ROOT, 'public', 'magazine', 'catalog.json')
 if (existsSync(indexPath)) {
   const posts = JSON.parse(readFileSync(indexPath, 'utf-8'))
+  const magazineIntro = `<main><h1>Revista da Casa</h1><p>Amizade, encontros e ideias para começar uma boa conversa.</p><a href="/garagem">Entrar na casa</a><h2>Novos guias</h2><ul>${posts.filter(p=>p.featured).map(p=>`<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a><p>${esc(p.excerpt)}</p></li>`).join('')}</ul></main>`
+  const magazineFile=join(DIST,'blog','index.html')
+  writeFileSync(magazineFile,readFileSync(magazineFile,'utf8').replace('<div id="root"></div>',`<div id="root">${magazineIntro}</div>`))
   for (const p of posts) {
     if (!p.slug) continue
     const url = `${SITE}/blog/${p.slug}`
@@ -92,14 +95,14 @@ if (existsSync(indexPath)) {
       title: `${p.title} | Disque Amizade`,
       description: p.excerpt || '',
       url,
-      image: p.coverImage || p.image,
+      image: p.socialImage || p.coverImage || p.image,
       type: 'article',
       jsonld: {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: p.title,
         description: p.excerpt || '',
-        image: p.coverImage ? abs(p.coverImage) : undefined,
+        image: p.socialImage ? abs(p.socialImage) : undefined,
         datePublished: p.date,
         dateModified: p.lastModified || p.date,
         author: { '@type': 'Organization', name: 'Disque Amizade', url: SITE },
@@ -107,7 +110,9 @@ if (existsSync(indexPath)) {
         mainEntityOfPage: url,
       },
     })
-    writePage(`blog/${p.slug}`, html)
+    const article = JSON.parse(readFileSync(join(ROOT, 'public', 'magazine', `${p.slug}.json`), 'utf-8'))
+    const fallback = `<main><nav><a href="/blog">Revista da Casa</a> · <a href="/garagem">Entrar na casa</a></nav><article><h1>${esc(p.title)}</h1><p>${esc(p.excerpt)}</p>${article.content}</article><a href="/garagem">Leve a conversa para a casa</a></main>`
+    writePage(`blog/${p.slug}`, html.replace('<div id="root"></div>', `<div id="root">${fallback}</div>`))
     count++
   }
 }
@@ -148,3 +153,15 @@ for (const s of salas) {
 }
 
 console.log(`[prerender] ${count} páginas estáticas geradas (blog + salas).`)
+
+// Keep the public sitemap aligned with the recovered archive and the new guides.
+const sitemapPath=join(DIST,'sitemap.xml')
+if (existsSync(sitemapPath)) {
+  let sitemap=readFileSync(sitemapPath,'utf8')
+  const catalog=JSON.parse(readFileSync(indexPath,'utf8'))
+  for(const post of catalog) {
+    const loc=`${SITE}/blog/${post.slug}`
+    if(!sitemap.includes(`<loc>${loc}</loc>`)) sitemap=sitemap.replace('</urlset>',`<url><loc>${esc(loc)}</loc><lastmod>${esc(post.lastModified||post.date)}</lastmod></url>\n</urlset>`)
+  }
+  writeFileSync(sitemapPath,sitemap)
+}

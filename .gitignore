@@ -52,3 +52,7 @@ public/mediapipe/
 
 # Pré-visualizações locais do fluxo de design
 .superpowers/
+
+# Generated magazine catalog and sanitized article bodies
+/public/magazine/*.json
+/public/magazine/covers/*.png

@@ -1,3 +1,4 @@
+import { questionById } from "../magazine/prompts";
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, ChevronDown } from "lucide-react";
 import { AvatarPortrait } from "./AvatarPortrait";
@@ -20,6 +21,9 @@ export function RoomChat({
 }) {
   const [localOpen, setOpen] = useState(true),
     [text, setText] = useState("");
+  const [broughtQuestion, setBroughtQuestion] = useState(() =>
+    questionById(new URLSearchParams(window.location.search).get("assunto")),
+  );
   const [seen, setSeen] = useState<string | undefined>();
   const end = useRef<HTMLDivElement>(null);
   const latest = chat.messages[chat.messages.length - 1]?.id;
@@ -47,13 +51,46 @@ export function RoomChat({
         className="room-chat-toggle"
         aria-expanded={open}
         aria-controls="room-chat-content"
-        onClick={() => onExpandedChange ? onExpandedChange(!open) : setOpen(!open)}
+        onClick={() =>
+          onExpandedChange ? onExpandedChange(!open) : setOpen(!open)
+        }
       >
         <MessageCircle size={20} />
         <strong>Chat · {ROOMS[room].name}</strong>
         <span>{unread ? `${unread} novas` : "Dê um oi"}</span>
         <ChevronDown size={18} />
       </button>
+      {broughtQuestion && (
+        <div
+          className="room-chat-public"
+          style={{ padding: "14px 18px", borderBottom: "1px solid #ded3c1" }}
+        >
+          <strong>Um assunto da Revista da Casa</strong>
+          <p>{broughtQuestion.text}</p>
+          <button
+            type="button"
+            className="garage-secondary"
+            onClick={() => {
+              setText(broughtQuestion.text);
+              setOpen(true);
+              onExpandedChange?.(true);
+              setBroughtQuestion(undefined);
+            }}
+          >
+            Usar como rascunho
+          </button>{" "}
+          <button
+            type="button"
+            className="garage-secondary"
+            onClick={() => setBroughtQuestion(undefined)}
+          >
+            Descartar
+          </button>
+          <small style={{ display: "block", marginTop: 8 }}>
+            Nada será enviado até você tocar em enviar.
+          </small>
+        </div>
+      )}
       {open && (
         <div id="room-chat-content">
           <p className="room-chat-public">
