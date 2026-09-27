@@ -46,7 +46,7 @@
       "permanent": true
     },
     {
-      "source": "/blog-posts/:slug([a-zA-Z0-9_-]+)",
+      "source": "/blog-posts/:slug([^.]+)",
       "destination": "/blog/:slug",
       "permanent": true
     }
