@@ -100,3 +100,9 @@
 
 .house-gesture-mouse{display:none}
 @media(hover:hover) and (pointer:fine){.house-gesture-mouse{display:inline}.house-gesture-touch{display:none}}
+
+/* Independent thumb control: pointer capture keeps walking separate from looking. */
+.garage3d-page .house-walk-joystick{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));z-index:9;width:124px;height:124px;min-height:124px;padding:0;border-radius:50%;border:2px solid #fff8e880;background:#352d2938;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;opacity:.75}
+.house-walk-joystick:active{opacity:1;cursor:grabbing}.house-walk-joystick:disabled{display:none}.house-joystick-knob{display:block;width:48px;height:48px;border-radius:50%;background:#fff8e8bb;border:1px solid #fff8e8dd;box-shadow:0 2px 8px #211b2920;pointer-events:none}.house-joystick-label{position:absolute;bottom:9px;font-size:10px;color:#fff8e8;pointer-events:none}.is-first-person .resident-controls{bottom:158px}.is-first-person .garage3d-phone-prompt{left:auto;right:12px;bottom:20px;transform:none;max-width:calc(100% - 164px)}.is-first-person .garage3d-phone-prompt>svg,.is-first-person .garage3d-phone-prompt small{display:none}.garage3d-stage:has(input:focus,textarea:focus,[contenteditable=true]:focus) .house-walk-joystick{display:none}
+@media(max-width:700px){.garage3d-look-hint{font-size:9px;max-width:95%;white-space:normal;text-align:center}.is-mobile-house .is-live-house .is-first-person .garage3d-phone-prompt{bottom:20px}.is-first-person .garage3d-phone-prompt{flex-wrap:wrap;font-size:10px}.is-first-person .resident-controls{bottom:158px}}
+body:has(input:focus,textarea:focus,[contenteditable=true]:focus) .house-walk-joystick{display:none}
