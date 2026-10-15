@@ -1,3 +1,4 @@
+import {buildBillboards} from './buildBillboards';
 import * as T from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {LAND_PRICE,NEIGHBORHOOD_LOTS,NEIGHBORHOOD_TREES,NEIGHBORHOOD_BENCHES} from './neighborhood';
@@ -7,7 +8,8 @@ export function buildNeighborhood(scene:T.Scene){
  const root=new T.Group();root.name='disque-neighborhood';root.userData.neighborhood=true;scene.add(root);
  const cube=new T.BoxGeometry(1,1,1),sphere=new T.IcosahedronGeometry(1,1),parts=new Map<string,T.BufferGeometry[]>(),materials:T.Material[]=[],geometries:T.BufferGeometry[]=[],textures:T.Texture[]=[];
  function solid(color:string,x:number,y:number,z:number,w:number,h:number,d:number,round=false){const g=(round?sphere:cube).clone();g.scale(w,h,d);g.translate(x,y,z);const batch=parts.get(color)??[];batch.push(g);parts.set(color,batch);}
- solid('#80947a',0,-.24,0,107,.4,95);
+ solid('#80947a',0,-.24,0,114,.4,102);
+ const billboards=buildBillboards(root);
  solid('#5d6863',0,-.012,-43,104,.026,6);solid('#5d6863',0,-.012,43,104,.026,6);
  solid('#5d6863',-49,-.012,0,6,.026,86);solid('#5d6863',49,-.012,0,6,.026,86);
  for(const x of [-44.8,44.8]){solid('#d5cdbb',x,-.004,0,2.4,.034,80);solid('#f0e9d9',x+Math.sign(x)*1.16,.035,0,.12,.10,80);}
@@ -44,5 +46,5 @@ export function buildNeighborhood(scene:T.Scene){
  for(const x of [-30,30]){solid('#d9cfb8',x,-.008,0,3,.028,24);solid('#d9cfb8',x,-.007,0,26,.027,2.5);}
  for(const [color,list]of parts){const geometry=mergeGeometries(list,false)!;list.forEach(g=>g.dispose());geometries.push(geometry);const material=new T.MeshStandardMaterial({color,roughness:.95});materials.push(material);const mesh=new T.Mesh(geometry,material);mesh.receiveShadow=true;root.add(mesh);}
  cube.dispose();sphere.dispose();
- return{root,dispose(){scene.remove(root);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());}};
+ return{root,dispose(){billboards.dispose();scene.remove(root);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());}};
 }
