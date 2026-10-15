@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
+import {emptyNetwork,exchangeNetwork} from '../server/houseNetwork.ts';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({channel:'chrome',headless:true});const network=emptyNetwork(),errors=[];
+const html=()=>`<!doctype html><html><body style="margin:0"><div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/vehicles-fixture.tsx"></script></body></html>`;
+async function client(){const id=randomUUID(),context=await browser.newContext({viewport:{width:1000,height:900}});await context.route('**/api/house-residents',async route=>{const b=route.request().postDataJSON();if(b.feature!=='network')return route.fulfill({status:503,body:'{}'});if(b.hello)return route.fulfill({json:{token:id}});try{const r=exchangeNetwork(network,id,b,Date.now());return route.fulfill({json:r});}catch(e){return route.fulfill({status:e.message==='slow_down'?429:400,json:{error:e.message}});}});await context.route('**/vehicle-test?network&id=*',r=>r.fulfill({contentType:'text/html',body:html(id)}));const p=await context.newPage();p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.goto(`http://127.0.0.1:3000/vehicle-test?network&id=${id}`);await p.locator('.garage3d-canvas[data-vehicle-online=true]').waitFor();await p.getByRole('button',{name:'Buggies · passeio e corrida',exact:true}).click();return {p,context,id};}
+try{
+ const a=await client(),b=await client();
+ await a.p.locator('.vehicle-list>div').first().getByRole('button',{name:'Dirigir',exact:true}).click();await a.p.locator('[data-vehicle-role=driver]').waitFor();
+ await b.p.locator('.vehicle-list>div').first().getByRole('button',{name:'Carona',exact:true}).click();await b.p.locator('[data-vehicle-role=passenger]').waitFor();
+ assert.equal(network.vehicles.cars[0].passenger.id,b.id);assert.equal(await b.p.locator('.house-walk-joystick:visible').count(),0);
+ await a.p.getByRole('button',{name:'Recolher buggies'}).click();await b.p.getByRole('button',{name:'Recolher buggies'}).click();
+ const before=network.vehicles.cars[0].x;await a.p.keyboard.down('w');await a.p.waitForTimeout(900);await a.p.keyboard.up('w');await a.p.waitForTimeout(500);assert.ok(network.vehicles.cars[0].x<before-.2,'server car moves');
+ const posA=await a.p.locator('.garage3d-canvas').getAttribute('data-position'),posB=await b.p.locator('.garage3d-canvas').getAttribute('data-position');assert.ok(Math.abs(+posA.split(',')[0]-+posB.split(',')[0])<1.5,'passenger follows driver on another session');
+ await a.p.screenshot({path:'/tmp/house-buggies-driver.png'});await b.p.screenshot({path:'/tmp/house-buggies-passenger.png'});
+ await b.p.getByRole('button',{name:'Meu buggy · sair / corrida'}).click();await b.p.getByRole('button',{name:'Sair do buggy',exact:true}).click();await b.p.waitForFunction(()=>document.querySelector('.garage3d-canvas').dataset.vehicle==='');assert.equal(network.vehicles.cars[0].passenger,null);assert.equal(network.vehicles.cars[0].driver.id,a.id);
+ await a.p.setViewportSize({width:390,height:844});
+ const joystick=a.p.getByRole('button',{name:'Joystick para dirigir: arraste na direção desejada'});await joystick.waitFor({state:'visible'});const box=await joystick.boundingBox();const mobileBefore=network.vehicles.cars[0].x;await a.p.mouse.move(box.x+box.width/2,box.y+box.height/2);await a.p.mouse.down();await a.p.mouse.move(box.x+box.width/2,box.y+box.height/2-38);await a.p.waitForTimeout(1000);await a.p.mouse.up();await a.p.waitForTimeout(700);assert.ok(network.vehicles.cars[0].x<mobileBefore-.2,'mobile joystick drives');await a.p.screenshot({path:'/tmp/house-buggies-mobile.png'});
+ assert.deepEqual(errors,[]);console.log('PASS independent sessions: driver, passenger, movement, follow, dismount; no page errors');
+}finally{await browser.close();}

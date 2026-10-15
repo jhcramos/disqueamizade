@@ -1,15 +1,17 @@
+import {createVehicles,tickVehicles,vehicleCommand,riding,VEHICLE_CHANNEL,type Fleet} from '../src/garage3d/vehicles/model.ts';
+import {toWorld,toShared} from '../src/garage3d/coordinates.ts';
 import {parseWirePose,POSE_TTL,type WirePose} from '../src/garage3d/motion/wire.ts';
 import {parsePerson, type RoomId} from '../src/garage/model.ts';
 import {changeScreening,emptyScreening,type Screening} from '../src/garage/theatre/model.ts';
 export type Packet={id:string;channel:string;data:Record<string,any>;seq:number;at:number;from:string;to?:string};
 type Member={owner:string;seen:number;person:Record<string,any>;motion?:{pose:WirePose|null;at:number;captured:number}};
-export type NetworkState={seq:number;members:Record<string,Member>;packets:Packet[];departed?:Record<string,number>;screenings?:Partial<Record<RoomId,Screening>>};
+export type NetworkState={vehicles?:Fleet;seq:number;members:Record<string,Member>;packets:Packet[];departed?:Record<string,number>;screenings?:Partial<Record<RoomId,Screening>>};
 export const emptyNetwork=():NetworkState=>({seq:0,members:{},packets:[]});
 function releaseAbsentDJs(s:NetworkState){
  for(const [room,state]of Object.entries(s.screenings??{}))if(state.dj&&s.members[state.dj]?.person.room!==room){state.dj=null;state.revision++;}
 }
 const MAIN='disque-house-3d-v1';
-export const validChannel=(c:unknown):c is string=>typeof c==='string'&&(c===MAIN||/^disque-(room-chat-v1|social-v1|house-play-3d-v1|screening-v1|avatar-motion-v1):(garage|living|bar)$/.test(c));
+export const validChannel=(c:unknown):c is string=>typeof c==='string'&&(c===MAIN||c===VEHICLE_CHANNEL||/^disque-(room-chat-v1|social-v1|house-play-3d-v1|screening-v1|avatar-motion-v1):(garage|living|bar)$/.test(c));
 const uuid=(id:unknown):id is string=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
 const targetedHouse=new Set(['invite','accept','decline','cancel','roster','knock','knock-declined','ready','offer','answer','ice','media','end','exit']);
 /** Sender ownership and private addressing are enforced before storage/delivery. */
@@ -24,6 +26,10 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
  if(s.departed[session])throw new Error('departed');
  if(!previous&&Object.keys(s.members).length>=100)throw new Error('capacity');
  if(previous&&now-previous.seen<250)throw new Error('slow_down');
+ s.vehicles??=createVehicles(now);
+ const active=new Set(Object.entries(s.members).filter(([,m])=>now-m.seen<5000).map(([id])=>id));active.add(body.id);
+ const pedestrians=Object.entries(s.members).filter(([id,m])=>active.has(id)&&!riding(s.vehicles!,id)).map(([,m])=>toWorld(m.person.position,m.person.room??'garage'));
+ tickVehicles(s.vehicles,now,active,pedestrians);
  let me:Member|undefined=previous;
  const seen=new Set(s.packets.map(p=>p.id));
  // Presence establishes membership before room-specific messages in the same batch.
@@ -38,6 +44,11 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
    }else if(d.event==='leave'){if(!me)continue;}
    else if(targetedHouse.has(d.event)){if(!uuid(d.to))continue;to=d.to;}
    else continue;
+  }else if(raw.channel===VEHICLE_CHANNEL){
+   if(!me||d.type!=='command'||typeof d.action!=='string'||typeof d.car!=='string')continue;
+   const p=toWorld(me.person.position,me.person.room??'garage');
+   const result=vehicleCommand(s.vehicles,{...p,id:body.id,name:me.person.name,blocked:me.person.busy||!!me.person.seat},d.action,d.car,now,d.input);
+   s.packets.push({id:raw.id,channel:VEHICLE_CHANNEL,data:{type:'result',result,action:d.action,from:'house-server',to:body.id},from:'house-server',to:body.id,seq:++s.seq,at:now});seen.add(raw.id);continue;
   }else{
    if(!me||!raw.channel.endsWith(`:${me.person.room??'garage'}`))continue;
    if(raw.channel.startsWith('disque-avatar-motion-')){
@@ -69,12 +80,13 @@ export function exchangeNetwork(s:NetworkState,owner:string,body:any,now:number)
  if(me)me.seen=now;
  const cursor=Number.isSafeInteger(body.cursor)&&body.cursor>=0?body.cursor:0;
  const packets=s.packets.filter(p=>p.seq>cursor&&p.from!==body.id&&(!p.to||p.to===body.id)&&body.channels.includes(p.channel)&&
-  (p.channel===MAIN||p.channel.endsWith(`:${me?.person.room??'garage'}`)));
+  (p.channel===MAIN||p.channel===VEHICLE_CHANNEL||p.channel.endsWith(`:${me?.person.room??'garage'}`)));
  // Only public appearance is bootstrapped; no private history or ownership token.
+ for(const c of s.vehicles.cars)for(const r of [c.driver,c.passenger])if(r&&s.members[r.id]){s.members[r.id].person.position=toShared(c,'garage');s.members[r.id].person.room='garage';}
  const roster=Object.entries(s.members).filter(([id])=>id!==body.id).map(([,m])=>m.person);
  releaseAbsentDJs(s);
  const room=(me?.person.room??'garage') as RoomId;
  const screenings=me&&body.channels.includes(`disque-screening-v1:${room}`)?{[room]:s.screenings?.[room]??emptyScreening()}:{};
  const motions=me&&body.channels.includes(`disque-avatar-motion-v1:${room}`)?Object.entries(s.members).flatMap(([id,m])=>id!==body.id&&m.person.room===room&&!m.person.busy&&!m.person.seat&&m.motion?.pose&&now-m.motion.at<POSE_TTL?[{id,pose:m.motion.pose,age:Math.max(0,now-m.motion.at),room}]:[]):[];
- return {cursor:s.seq,packets,roster,screenings,serverNow:now,motions};
+ return {cursor:s.seq,packets,roster,screenings,serverNow:now,motions,vehicles:me&&body.channels.includes(VEHICLE_CHANNEL)?s.vehicles:undefined};
 }
