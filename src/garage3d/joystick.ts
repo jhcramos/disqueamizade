@@ -18,3 +18,16 @@ export function walkVector(yaw:number,stick:StickVector){
  const forward=-stick.y,side=stick.x,norm=Math.max(1,Math.hypot(forward,side));
  return {x:(Math.sin(yaw)*forward-Math.cos(yaw)*side)/norm,z:(Math.cos(yaw)*forward+Math.sin(yaw)*side)/norm};
 }
+
+/** Held arrows survive releasing a different key; shared by the accessible stick. */
+export function arrowVector(keys:ReadonlySet<string>):StickVector{
+ const x=Number(keys.has('ArrowRight'))-Number(keys.has('ArrowLeft'));
+ const y=Number(keys.has('ArrowDown'))-Number(keys.has('ArrowUp'));
+ const length=Math.max(1,Math.hypot(x,y));return {x:x/length,y:y/length};
+}
+
+/** A cancelled held key must be released and pressed again, not revived by repeat. */
+export function pressMovementKey(keys:Set<string>,key:string,repeat:boolean){
+ if(repeat&&!keys.has(key))return false;
+ keys.add(key);return true;
+}

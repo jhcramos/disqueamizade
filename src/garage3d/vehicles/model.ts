@@ -15,7 +15,9 @@ export function exitPoint(c:Car):XY{
 }
 export function driveVehicle(c:Car,dt:number,others:XY[],people:XY[]=[]){
  dt=Math.max(0,Math.min(.05,dt));const throttle=c.input.throttle;
- const desired=throttle*(throttle<0?3:8),change=dt*(throttle===0?16:6);
+ // Opposing input brakes to rest before engaging the other direction.
+ const braking=c.speed*throttle<0;
+ const desired=braking?0:throttle*(throttle<0?3:8),change=dt*(throttle===0||braking?16:6);
  c.speed+=Math.max(-change,Math.min(change,desired-c.speed));
  if(Math.abs(c.speed)<.015)c.speed=0;
  const yaw=c.yaw-c.input.steer*dt*1.4*Math.min(1,Math.abs(c.speed)/1.6)*Math.sign(c.speed);

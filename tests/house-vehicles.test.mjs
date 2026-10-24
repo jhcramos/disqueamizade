@@ -38,3 +38,17 @@ test('car collision and pedestrians stop the vehicle',()=>{
  for(let i=0;i<100;i++)driveVehicle(c,.05,[{x:initial-3,z:c.z}]);assert.ok(c.x>initial-.6);
  const d=createVehicles(0).cars[0];d.input={throttle:1,steer:0,at:0};for(let i=0;i<100;i++)driveVehicle(d,.05,[],[{x:initial-2,z:d.z}]);assert.ok(d.x>initial-.7);
 });
+test('opposing throttle brakes as strongly as release, reaches zero before reverse',()=>{
+ const braking=createVehicles(0).cars[0],coasting=structuredClone(braking);
+ braking.speed=coasting.speed=6;braking.input.throttle=-1;
+ driveVehicle(braking,.05,[]);driveVehicle(coasting,.05,[]);
+ assert.equal(braking.speed,coasting.speed);
+ for(let i=0;i<7;i++)driveVehicle(braking,.05,[]);
+ assert.equal(braking.speed,0);driveVehicle(braking,.05,[]);assert.ok(braking.speed<0);
+});
+test('steering reverses with reverse gear and cannot rotate a stopped buggy',()=>{
+ const c=createVehicles(0).cars[0];c.x=0;c.yaw=0;c.input.steer=1;
+ driveVehicle(c,.05,[]);assert.equal(c.yaw,0);
+ c.speed=1;c.input.throttle=1;driveVehicle(c,.05,[]);assert.ok(c.yaw<0);
+ c.yaw=0;c.speed=-1;c.input.throttle=-1;driveVehicle(c,.05,[]);assert.ok(c.yaw>0);
+});

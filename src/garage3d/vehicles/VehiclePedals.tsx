@@ -23,7 +23,7 @@ export function VehiclePedals({speed,disabled,onChange}:{speed:number;disabled:b
  onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();unlock();pointers.current.set(e.pointerId,pedal);e.currentTarget.setPointerCapture(e.pointerId);publish(pedal,true);}}
  onPointerUp={e=>{e.stopPropagation();end(e.pointerId);if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
  onPointerCancel={e=>end(e.pointerId)} onLostPointerCapture={e=>end(e.pointerId)}
- onKeyDown={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();unlock();publish(pedal,true);}}}
+ onKeyDown={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();if(e.repeat)return;unlock();publish(pedal,true);}}}
  onKeyUp={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();publish(pedal,false);}}} onBlur={()=>{for(const [id,p]of pointers.current)if(p===pedal)pointers.current.delete(id);publish(pedal,false);}}>{pedal==='gas'?'Acelerar':'Frear'}</button>)}</div>
  </div>;
 }
